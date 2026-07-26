@@ -1,0 +1,16 @@
+# Auto-hébergement (VPS) — voir docs/DEPLOIEMENT.md
+services:
+  petanque:
+    build: .
+    restart: unless-stopped
+    ports:
+      - '8787:8787'
+    environment:
+      DATA_DIR: /data
+      # Fixez un secret stable : openssl rand -hex 32
+      JWT_SECRET: ${JWT_SECRET:?definir JWT_SECRET dans .env}
+    volumes:
+      - petanque-data:/data
+
+volumes:
+  petanque-data:

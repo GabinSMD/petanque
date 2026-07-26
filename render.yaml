@@ -1,0 +1,16 @@
+# Déploiement Render — voir docs/DEPLOIEMENT.md
+services:
+  - type: web
+    name: petanque-concours
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: JWT_SECRET
+        generateValue: true
+    disk:
+      name: petanque-data
+      mountPath: /data
+      sizeGB: 1

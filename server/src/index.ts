@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { openDb } from './db.js';
 import { hashPassword, signToken, verifyPassword, verifyToken } from './security.js';
 import { registerSyncRoutes } from './sync.js';
-import { registerPublicRoutes } from './public.js';
+import { rateLimiter, registerPublicRoutes } from './public.js';
 import type { OrgRow, UserRow } from './db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -70,7 +70,13 @@ function publicUser(user: UserRow, org: OrgRow) {
 /* Authentification                                                    */
 /* ------------------------------------------------------------------ */
 
+/** Anti force-brute : 20 tentatives / 10 min / IP sur les routes d'auth. */
+const authLimit = rateLimiter(20, 10 * 60_000);
+
 app.post('/api/auth/register', async (req, reply) => {
+  if (!authLimit(req.ip)) {
+    return reply.code(429).send({ error: 'Trop de tentatives, réessayez plus tard' });
+  }
   const body = (req.body ?? {}) as Record<string, unknown>;
   const orgName = fieldStr(body.orgName, 2, 80);
   const userName = fieldStr(body.userName, 2, 80);
@@ -116,6 +122,9 @@ app.post('/api/auth/register', async (req, reply) => {
 });
 
 app.post('/api/auth/login', async (req, reply) => {
+  if (!authLimit(req.ip)) {
+    return reply.code(429).send({ error: 'Trop de tentatives, réessayez plus tard' });
+  }
   const body = (req.body ?? {}) as Record<string, unknown>;
   const email = fieldStr(body.email, 5, 120)?.toLowerCase() ?? null;
   const password = typeof body.password === 'string' ? body.password : null;
