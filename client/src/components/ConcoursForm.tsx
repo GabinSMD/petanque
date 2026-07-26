@@ -1,0 +1,134 @@
+import { useState, type FormEvent } from 'react';
+import type { Concours, ConcoursMode, TeamFormat } from '@shared';
+import type { ConcoursInput } from '../db/actions';
+import { FORMAT_LABELS, MODE_LABELS } from '../lib/labels';
+
+interface Props {
+  initial?: Concours;
+  onSubmit: (input: ConcoursInput) => void | Promise<void>;
+  onCancel: () => void;
+  /** Après tirage, la formule et la formation ne sont plus modifiables. */
+  lockStructure?: boolean;
+}
+
+export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Props) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [name, setName] = useState(initial?.name ?? '');
+  const [date, setDate] = useState(initial?.date ?? today);
+  const [lieu, setLieu] = useState(initial?.lieu ?? '');
+  const [format, setFormat] = useState<TeamFormat>(initial?.format ?? 'doublette');
+  const [mode, setMode] = useState<ConcoursMode>(initial?.mode ?? 'poules');
+  const [consolante, setConsolante] = useState(initial?.consolante ?? true);
+  const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
+  const [nbTerrains, setNbTerrains] = useState(initial?.nbTerrains ?? 8);
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    void onSubmit({
+      name: name.trim(),
+      date,
+      lieu: lieu.trim() || undefined,
+      format,
+      mode,
+      consolante,
+      scoreMax,
+      nbTerrains,
+    });
+  };
+
+  return (
+    <form className="concours-form" onSubmit={submit}>
+      <label>
+        Nom du concours
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Concours du club — doublettes"
+          required
+          minLength={2}
+        />
+      </label>
+      <div className="form-row">
+        <label>
+          Date
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+        </label>
+        <label>
+          Lieu
+          <input
+            value={lieu}
+            onChange={(e) => setLieu(e.target.value)}
+            placeholder="Boulodrome municipal"
+          />
+        </label>
+      </div>
+      <div className="form-row">
+        <label>
+          Formation
+          <select
+            value={format}
+            onChange={(e) => setFormat(e.target.value as TeamFormat)}
+            disabled={lockStructure}
+          >
+            {Object.entries(FORMAT_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Formule
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value as ConcoursMode)}
+            disabled={lockStructure}
+          >
+            {Object.entries(MODE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="form-row">
+        <label>
+          Terrains disponibles
+          <input
+            type="number"
+            min={1}
+            max={200}
+            value={nbTerrains}
+            onChange={(e) => setNbTerrains(Number(e.target.value))}
+          />
+        </label>
+        <label>
+          Parties en
+          <input
+            type="number"
+            min={7}
+            max={21}
+            value={scoreMax}
+            onChange={(e) => setScoreMax(Number(e.target.value))}
+          />
+        </label>
+      </div>
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          checked={consolante}
+          onChange={(e) => setConsolante(e.target.checked)}
+          disabled={lockStructure}
+        />
+        Consolante (repêchage des éliminés)
+      </label>
+      <div className="form-actions">
+        <button type="button" className="btn btn-ghost" onClick={onCancel}>
+          Annuler
+        </button>
+        <button className="btn btn-primary">{initial ? 'Enregistrer' : 'Créer le concours'}</button>
+      </div>
+    </form>
+  );
+}

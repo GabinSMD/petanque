@@ -1,0 +1,1221 @@
+/* ==================================================================
+   Pétanque Concours — thème « boulodrome »
+   ================================================================== */
+
+:root {
+  --bg: #f3f0e8;
+  --card: #ffffff;
+  --ink: #22301f;
+  --muted: #6d7a68;
+  --line: #e2ded2;
+  --accent: #1f7a4d;
+  --accent-dark: #16603b;
+  --accent-soft: #e3f1e9;
+  --terra: #c96f2e;
+  --terra-soft: #f7e8db;
+  --danger: #b23a2f;
+  --info: #2b6cb0;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(34, 48, 31, 0.12);
+  font-size: 15px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+h1, h2, h3, h4 {
+  margin: 0 0 0.4rem;
+  line-height: 1.2;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+input, select {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  max-width: 100%;
+}
+
+input:focus, select:focus, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ------------------------------ Layout ------------------------------ */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(180deg, var(--accent-dark), var(--accent));
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: var(--shadow);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.05rem;
+  letter-spacing: 0.2px;
+}
+
+.brand strong {
+  font-weight: 700;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.org-name {
+  font-weight: 600;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.2rem 1.1rem 3rem;
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------ Boutons ------------------------------ */
+
+.btn {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0.5rem 0.95rem;
+  font-weight: 600;
+  background: #e8e4d8;
+  color: var(--ink);
+  transition: background 0.15s, transform 0.05s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-dark);
+}
+
+.btn-primary:disabled {
+  background: #9db8a9;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: currentColor;
+  opacity: 0.85;
+}
+
+.app-header .btn-ghost {
+  color: #fff;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.btn-block {
+  width: 100%;
+  margin-top: 0.6rem;
+}
+
+.btn-icon {
+  border: none;
+  background: transparent;
+  padding: 0.15rem 0.3rem;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.btn-icon:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.btn-icon-danger:hover {
+  color: var(--danger);
+}
+
+/* --------------------------- Badge de synchro --------------------------- */
+
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.sync-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.sync-ok .sync-dot { background: #7ee2a8; }
+.sync-syncing .sync-dot { background: #8ecbff; animation: pulse 1s infinite; }
+.sync-offline .sync-dot { background: #d3cfc4; }
+.sync-error .sync-dot { background: #ffb08f; }
+.sync-idle .sync-dot { background: #ccc; }
+
+.sync-pending {
+  background: var(--terra);
+  border-radius: 999px;
+  padding: 0 0.45rem;
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  50% { opacity: 0.35; }
+}
+
+/* ------------------------------ Cartes ------------------------------ */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.9rem;
+}
+
+.concours-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.concours-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.concours-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.concours-card h2 {
+  font-size: 1.1rem;
+}
+
+.concours-card-meta {
+  color: var(--muted);
+  margin: 0.15rem 0 0.5rem;
+}
+
+.concours-card-tags {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.5rem;
+}
+
+.concours-card-count {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.tag {
+  display: inline-block;
+  background: #eee9dc;
+  border-radius: 5px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5b5344;
+}
+
+.tag-ok { background: var(--accent-soft); color: var(--accent-dark); }
+.tag-info { background: #e3edf7; color: var(--info); }
+.tag-danger { background: #f7e3e0; color: var(--danger); }
+
+.status-chip {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.status-inscriptions { background: #e3edf7; color: var(--info); }
+.status-poules { background: var(--terra-soft); color: var(--terra); }
+.status-tableau { background: var(--accent-soft); color: var(--accent-dark); }
+.status-termine { background: #ece9e2; color: var(--muted); }
+
+.empty-state {
+  background: var(--card);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 1.6rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin: 0.3rem 0;
+}
+
+/* ------------------------------ Modales ------------------------------ */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 28, 18, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4vh 1rem;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--card);
+  border-radius: var(--radius);
+  max-width: 560px;
+  width: 100%;
+  padding: 1.1rem 1.3rem 1.3rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+/* ---------------------------- Formulaires ---------------------------- */
+
+form label {
+  display: block;
+  margin-bottom: 0.7rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+form label input,
+form label select {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500 !important;
+}
+
+.checkbox-label input {
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+/* ------------------------------- Login ------------------------------- */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(31, 122, 77, 0.14), transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(201, 111, 46, 0.14), transparent 45%),
+    var(--bg);
+}
+
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(34, 48, 31, 0.15);
+  width: 100%;
+  max-width: 430px;
+  padding: 1.6rem 1.7rem;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.login-brand h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.login-tagline {
+  color: var(--muted);
+  margin: 0.5rem 0 1.1rem;
+}
+
+.login-tabs {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.login-tabs button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.55rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.login-tabs button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ------------------------------ Concours ------------------------------ */
+
+.concours-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+
+.concours-meta {
+  color: var(--muted);
+  margin: 0.2rem 0 0;
+}
+
+.concours-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.concours-actions .btn-ghost {
+  color: var(--ink);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: 0.55rem 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-radius: 8px 8px 0 0;
+  white-space: nowrap;
+}
+
+.tab.active {
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.toolbar-info {
+  font-weight: 600;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.stage-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.draw-panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.3rem 1.4rem;
+  max-width: 560px;
+  box-shadow: var(--shadow);
+}
+
+.draw-panel .btn-primary {
+  margin-top: 0.6rem;
+}
+
+/* ------------------------------- Équipes ------------------------------ */
+
+.team-add-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.8rem 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.team-add-players {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.player-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.licence-input {
+  width: 110px;
+  font-size: 0.85rem;
+}
+
+.club-input {
+  width: 150px;
+}
+
+.teams-table, .rank-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.teams-table th, .rank-table th {
+  text-align: left;
+  background: #ece8db;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.teams-table td, .rank-table td {
+  padding: 0.45rem 0.7rem;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.cell-number {
+  font-weight: 700;
+  width: 3rem;
+}
+
+.cell-actions {
+  white-space: nowrap;
+  width: 8rem;
+}
+
+.player-chip {
+  display: inline-block;
+  margin-right: 0.7rem;
+}
+
+.player-chip .licence {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: normal;
+}
+
+.row-forfait {
+  opacity: 0.55;
+}
+
+.row-editing {
+  background: var(--accent-soft);
+}
+
+.empty-cell {
+  text-align: center;
+  color: var(--muted);
+  padding: 1.2rem !important;
+}
+
+.teams-footer {
+  color: var(--muted);
+  margin-top: 0.6rem;
+}
+
+/* ------------------------------- Poules ------------------------------- */
+
+.poule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 0.9rem;
+}
+
+.poule-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.85rem;
+  box-shadow: var(--shadow);
+  break-inside: avoid;
+}
+
+.poule-complete {
+  border-color: var(--accent);
+}
+
+.poule-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.poule-card-head h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.terrain-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.terrain-label input, .match-terrain input {
+  width: 3.4rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.85rem;
+}
+
+.poule-teams {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.poule-teams li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.team-eliminated {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.poule-matches {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.poule-matches td {
+  padding: 0.3rem 0.25rem;
+  border-top: 1px dashed var(--line);
+  font-size: 0.9rem;
+}
+
+.match-label {
+  color: var(--muted);
+  font-size: 0.78rem !important;
+  width: 4.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.match-team {
+  max-width: 150px;
+}
+
+.match-team-right {
+  text-align: right;
+}
+
+.match-score {
+  text-align: center;
+  white-space: nowrap;
+  width: 10.5rem;
+}
+
+.match-terrain {
+  width: 3.6rem;
+}
+
+/* Libellés d'équipes */
+
+.team-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.team-number {
+  display: inline-block;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.05rem 0.35rem;
+  min-width: 1.3rem;
+  text-align: center;
+}
+
+.team-club {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.team-bye, .team-tbd {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.team-forfait {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Scores */
+
+.score-view {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.score-sep {
+  margin: 0 0.25rem;
+  color: var(--muted);
+}
+
+.score-win {
+  color: var(--accent-dark);
+}
+
+.score-done strong {
+  font-size: 1.02rem;
+}
+
+.score-bye, .score-tbd {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.score-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.score-form input {
+  width: 3.1rem;
+  padding: 0.25rem 0.3rem;
+  text-align: center;
+}
+
+.score-error {
+  color: var(--danger);
+  font-size: 0.78rem;
+  flex-basis: 100%;
+}
+
+/* ------------------------------- Tableau ------------------------------ */
+
+.bracket-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.8rem;
+}
+
+.bracket {
+  display: flex;
+  gap: 1.4rem;
+  align-items: stretch;
+  min-width: min-content;
+}
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  min-width: 250px;
+}
+
+.bracket-round-title {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.6rem;
+}
+
+.bracket-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 0.7rem;
+}
+
+.match-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 0.4rem 0.55rem;
+}
+
+.match-box-bye {
+  opacity: 0.6;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.match-box-done {
+  border-color: var(--accent);
+}
+
+.match-box-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.22rem 0;
+}
+
+.match-box-row + .match-box-row {
+  border-top: 1px dashed var(--line);
+}
+
+.match-box-row.winner {
+  font-weight: 700;
+}
+
+.match-box-row.winner .match-box-score {
+  background: var(--accent);
+  color: #fff;
+}
+
+.match-box-score {
+  min-width: 1.7rem;
+  text-align: center;
+  background: #eee9dc;
+  border-radius: 5px;
+  font-weight: 700;
+  padding: 0.05rem 0.3rem;
+}
+
+.match-box-form {
+  border-top: 1px solid var(--line);
+  margin-top: 0.3rem;
+  padding-top: 0.35rem;
+  text-align: center;
+}
+
+.champion-banner {
+  background: linear-gradient(90deg, var(--accent-soft), #fdf4d7);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+}
+
+/* ------------------------------ Résultats ----------------------------- */
+
+.results {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.result-section h2 {
+  margin-bottom: 0.6rem;
+}
+
+.rank-cell {
+  font-weight: 700;
+  width: 3.5rem;
+  font-size: 1.05rem;
+}
+
+.rank-label {
+  font-weight: 600;
+  width: 12rem;
+  color: var(--muted);
+}
+
+.rank-first {
+  background: #fdf8e2;
+}
+
+.rank-teams {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.4rem;
+}
+
+/* ---------------------------- Mode affichage --------------------------- */
+
+.display-page {
+  min-height: 100vh;
+  background: #14211a;
+  color: #f2f5ef;
+  padding: 1.4rem 2rem 3rem;
+  font-size: 1.15rem;
+}
+
+.display-head {
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  border-bottom: 2px solid #2c4234;
+  padding-bottom: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.display-head h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.display-head p {
+  color: #a9bfae;
+  margin: 0;
+  flex: 1;
+}
+
+.display-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.display-controls .btn {
+  color: #f2f5ef;
+}
+
+.display-section-title {
+  color: #8fd7ae;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 1rem;
+  margin: 1.4rem 0 0.7rem;
+}
+
+.display-champion {
+  background: #24402f;
+  border-color: #8fd7ae;
+  color: #fff;
+  font-size: 1.4rem;
+}
+
+.display-teams {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.4rem 1.2rem;
+}
+
+.display-team .team-number {
+  background: #8fd7ae;
+  color: #14211a;
+}
+
+.display-team .team-club {
+  color: #a9bfae;
+}
+
+.display-poules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1rem;
+}
+
+.display-poule {
+  background: #1c2f24;
+  border: 1px solid #2c4234;
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+}
+
+.display-poule h3 {
+  color: #8fd7ae;
+  margin-bottom: 0.5rem;
+}
+
+.display-poule ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.display-poule li {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+}
+
+.display-slot {
+  color: #a9bfae;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  width: 6.5rem;
+  flex-shrink: 0;
+}
+
+.display-match {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.display-match .winner {
+  color: #8fd7ae;
+  font-weight: 700;
+}
+
+.display-score {
+  background: #2c4234;
+  border-radius: 5px;
+  padding: 0 0.45rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tableau en mode affichage */
+
+.display-page .match-box {
+  background: #1c2f24;
+  border-color: #2c4234;
+  color: #f2f5ef;
+}
+
+.display-page .match-box-score {
+  background: #2c4234;
+  color: #fff;
+}
+
+.display-page .team-club {
+  color: #a9bfae;
+}
+
+.display-page .team-bye,
+.display-page .team-tbd {
+  color: #7d937f;
+}
+
+.display-page .match-box-row.winner .match-box-score {
+  background: #8fd7ae;
+  color: #14211a;
+}
+
+.bracket-compact {
+  font-size: 0.95rem;
+}
+
+/* ------------------------------ Impression ---------------------------- */
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  :root {
+    font-size: 12px;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .print-title {
+    margin-bottom: 0.8rem;
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.4rem;
+  }
+
+  .app-main {
+    max-width: none;
+    padding: 0;
+  }
+
+  .poule-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .poule-card, .match-box, .teams-table, .rank-table {
+    box-shadow: none;
+  }
+
+  .bracket-scroll {
+    overflow: visible;
+  }
+
+  .bracket {
+    gap: 0.8rem;
+  }
+
+  .bracket-round {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .match-box-form {
+    display: none;
+  }
+}
+
+/* ------------------------------ Responsive ---------------------------- */
+
+@media (max-width: 640px) {
+  .app-header {
+    flex-wrap: wrap;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .concours-head {
+    flex-direction: column;
+  }
+
+  .display-page {
+    padding: 1rem;
+  }
+}
