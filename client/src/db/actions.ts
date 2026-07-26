@@ -13,6 +13,7 @@ import {
   pouleSizes,
   propagate,
   recomputePoule,
+  autoAssignTerrains,
   rondeComplete,
   rondesTirees,
   seriesTirees,
@@ -475,6 +476,21 @@ async function recomputeAfter(concours: Concours, match: Match): Promise<void> {
 
 export async function setMatchTerrain(match: Match, terrain: number | null): Promise<void> {
   await putEntity('match', { ...match, terrain });
+}
+
+/** Affecte automatiquement les parties en attente aux terrains libres. */
+export async function autoAssignTerrainsAction(concours: Concours): Promise<number> {
+  const matches = await listByConcours('match', concours.id);
+  const assignments = autoAssignTerrains(matches, concours.nbTerrains);
+  if (assignments.length === 0) return 0;
+  const byId = new Map(matches.map((m) => [m.id, m]));
+  const updated: Match[] = [];
+  for (const a of assignments) {
+    const m = byId.get(a.matchId);
+    if (m) updated.push({ ...m, terrain: a.terrain });
+  }
+  await bulkPutEntities('match', updated);
+  return updated.length;
 }
 
 export async function setPouleTerrain(poule: Poule, terrain: number | null): Promise<void> {

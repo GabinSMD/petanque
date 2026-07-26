@@ -2674,6 +2674,109 @@ form label select {
   margin: 0;
 }
 
+/* ---------------------------- Plan des terrains ------------------------ */
+
+.terrain-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.terrain-cell {
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+  min-height: 5rem;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+}
+
+.terrain-free {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.terrain-busy {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.terrain-num {
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.terrain-busy .terrain-num {
+  color: var(--accent-dark);
+}
+
+.terrain-match {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.terrain-match-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.terrain-vs {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.terrain-empty {
+  font-style: italic;
+}
+
+.waiting-list {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.8rem 0.9rem;
+  box-shadow: var(--shadow);
+}
+
+.waiting-list ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.waiting-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  border-top: 1px dashed var(--line);
+  padding-top: 0.4rem;
+}
+
+.waiting-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  width: 9rem;
+  flex-shrink: 0;
+}
+
+.waiting-teams {
+  flex: 1;
+  font-weight: 600;
+}
+
+.waiting-assign {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
 /* ------------------------------ Animations ----------------------------- */
 
 @keyframes pop-in {

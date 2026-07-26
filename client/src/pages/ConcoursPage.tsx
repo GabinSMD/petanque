@@ -25,6 +25,7 @@ import { PoulesTab } from './tabs/PoulesTab';
 import { BracketTab } from './tabs/BracketTab';
 import { RondesTab } from './tabs/RondesTab';
 import { TirTab } from './tabs/TirTab';
+import { TerrainsTab } from './tabs/TerrainsTab';
 import { ResultsTab } from './tabs/ResultsTab';
 
 const DEFAULT_TAB: Record<ConcoursStatus, string> = {
@@ -71,6 +72,9 @@ export function ConcoursPage() {
       : rondesMode
         ? [{ key: 'rondes', label: '🔄 Rondes' }]
         : [{ key: 'tableau', label: '🏆 Tableau' }]),
+    ...(!tirMode && concours.status !== 'inscriptions'
+      ? [{ key: 'terrains', label: '🟦 Terrains' }]
+      : []),
     { key: 'resultats', label: '📋 Résultats' },
   ];
   const fallbackTab =
@@ -180,6 +184,14 @@ export function ConcoursPage() {
       )}
       {active === 'series' && (
         <TirTab concours={concours} teams={teams ?? []} matches={matches ?? []} />
+      )}
+      {active === 'terrains' && (
+        <TerrainsTab
+          concours={concours}
+          teams={teams ?? []}
+          poules={poules ?? []}
+          matches={matches ?? []}
+        />
       )}
       {active === 'tableau' && (
         <BracketTab concours={concours} teams={teams ?? []} matches={matches ?? []} poules={poules ?? []} />
