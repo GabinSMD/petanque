@@ -8,6 +8,7 @@ import {
   drawMeleeRonde,
   drawPoules,
   drawSwissRonde,
+  firstRoundSources,
   isByeMatch,
   pouleOutcome,
   pouleSizes,
@@ -289,15 +290,20 @@ export async function generateTableauFromPoules(concours: Concours): Promise<voi
 
   const main = drawMainFromPoules(concours.id, outcomes, ctx());
   let conso: Match[] = [];
+  let comp: Match[] = [];
   if (concours.consolante) {
     const eliminatedIds = outcomes.flatMap((o) => o.eliminated);
     const teams = await listByConcours('team', concours.id);
     const eliminated = teams.filter((t) => eliminatedIds.includes(t.id));
     if (eliminated.length >= 2) {
       conso = drawElimination(concours.id, 'consolante', eliminated, ctx());
+      if (concours.complementaire) {
+        const sources = firstRoundSources(conso, 'consolante');
+        comp = buildConsolanteFromSources(concours.id, sources, ctx(), 'complementaire');
+      }
     }
   }
-  await bulkPutEntities('match', [...main, ...conso]);
+  await bulkPutEntities('match', [...main, ...conso, ...comp]);
   await putEntity('concours', { ...concours, status: 'tableau' });
 }
 
@@ -310,14 +316,16 @@ export async function generateTableauDirect(
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
   const main = drawElimination(concours.id, 'principal', teams, ctx(), { avoidSameClub, seeds });
   let conso: Match[] = [];
+  let comp: Match[] = [];
   if (concours.consolante) {
-    const sources = main
-      .filter((m) => m.round === 0 && !isByeMatch(m))
-      .sort((a, b) => a.position - b.position)
-      .map((m) => m.id);
+    const sources = firstRoundSources(main, 'principal');
     conso = buildConsolanteFromSources(concours.id, sources, ctx());
+    if (concours.complementaire && conso.length > 0) {
+      const compSources = firstRoundSources(conso, 'consolante');
+      comp = buildConsolanteFromSources(concours.id, compSources, ctx(), 'complementaire');
+    }
   }
-  await bulkPutEntities('match', [...main, ...conso]);
+  await bulkPutEntities('match', [...main, ...conso, ...comp]);
   await putEntity('concours', { ...concours, status: 'tableau' });
 }
 

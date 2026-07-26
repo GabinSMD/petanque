@@ -62,6 +62,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
 
   const principalGroups = bracketRanking(matches, 'principal');
   const consolanteGroups = bracketRanking(matches, 'consolante');
+  const complementaireGroups = bracketRanking(matches, 'complementaire');
   const outcomes = poules.map((p) =>
     pouleOutcome(p, matches.filter((m) => m.pouleId === p.id)),
   );
@@ -116,6 +117,13 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
         <section className="result-section">
           <h2>Consolante</h2>
           <RankTable groups={consolanteGroups} teamsById={teamsById} />
+        </section>
+      )}
+
+      {complementaireGroups.length > 0 && (
+        <section className="result-section">
+          <h2>Complémentaire</h2>
+          <RankTable groups={complementaireGroups} teamsById={teamsById} />
         </section>
       )}
 

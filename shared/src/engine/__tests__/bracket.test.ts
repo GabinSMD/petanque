@@ -6,6 +6,7 @@ import {
   buildConsolanteFromSources,
   drawElimination,
   drawMainFromPoules,
+  firstRoundSources,
   nextPow2,
   propagate,
   roundLabel,
@@ -196,6 +197,46 @@ describe('consolante alimentée par les perdants', () => {
     const consoMatch = all.find((m) => m.stage === 'consolante')!;
     expect(consoMatch.teamAId).toBe(m0.teamBId); // le perdant est arrivé
     expect(consoMatch.teamBId).toBeNull();
+  });
+});
+
+describe('complémentaire (consolante à 2 niveaux)', () => {
+  it('est alimenté par les perdants du 1er tour de la consolante', () => {
+    const ctx = testCtx(7);
+    const main = drawElimination('c1', 'principal', makeTeams(8), ctx);
+    const mainSources = firstRoundSources(main, 'principal');
+    expect(mainSources).toHaveLength(4);
+
+    // Consolante : 4 perdants → tableau de 4 (2 parties au 1er tour).
+    const conso = buildConsolanteFromSources('c1', mainSources, ctx);
+    const consoSources = firstRoundSources(conso, 'consolante');
+    expect(consoSources).toHaveLength(2);
+
+    // Complémentaire : 2 perdants de la consolante → 1 partie.
+    const comp = buildConsolanteFromSources('c1', consoSources, ctx, 'complementaire');
+    expect(comp).toHaveLength(1);
+    expect(comp[0]!.stage).toBe('complementaire');
+    expect(comp[0]!.loserFromA).toBe(consoSources[0]);
+    expect(comp[0]!.loserFromB).toBe(consoSources[1]);
+
+    // Le perdant remonte en cascade : principal → consolante → complémentaire.
+    let all = [...main, ...conso, ...comp];
+    for (const id of mainSources) all = playBracketMatch(all, id, 13, 5);
+    const consoR0 = all.filter(
+      (m) => m.stage === 'consolante' && m.round === 0 && !isByeMatch(m),
+    );
+    expect(consoR0.every((m) => m.teamAId && m.teamBId)).toBe(true);
+
+    for (const m of consoR0) all = playBracketMatch(all, m.id, 13, 6);
+    const compMatch = all.find((m) => m.stage === 'complementaire')!;
+    expect(compMatch.teamAId).toBeTruthy();
+    expect(compMatch.teamBId).toBeTruthy();
+
+    // Jouer le complémentaire donne un vainqueur classable.
+    all = playBracketMatch(all, compMatch.id, 13, 7);
+    const groups = bracketRanking(all, 'complementaire');
+    expect(groups[0]).toMatchObject({ rank: 1, label: 'Vainqueur' });
+    expect(groups[0]!.teamIds).toHaveLength(1);
   });
 });
 

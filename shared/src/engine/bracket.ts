@@ -423,13 +423,16 @@ function separateHalves(units: Unit[], pouleOfTeam: Map<string, number>, ctx: En
 }
 
 /**
- * Consolante « à venir » : tableau dont le premier tour est alimenté par
- * les perdants des parties (réelles) du premier tour du principal.
+ * Tableau de repêchage « à venir » : son premier tour est alimenté par les
+ * perdants des parties (réelles) du premier tour du tableau source. Sert à
+ * la consolante (perdants du principal) comme au complémentaire (perdants de
+ * la consolante), d'où le paramètre `stage`.
  */
 export function buildConsolanteFromSources(
   concoursId: string,
   sourceMatchIds: string[],
   ctx: EngineCtx,
+  stage: MatchStage = 'consolante',
 ): Match[] {
   if (sourceMatchIds.length < 2) return [];
   const size = nextPow2(sourceMatchIds.length);
@@ -445,7 +448,18 @@ export function buildConsolanteFromSources(
     matchUnits.push({ a: { loserFrom: sources.shift()! }, b: { loserFrom: sources.shift()! } });
   }
   const units = spreadEvenly(matchUnits, byeUnits);
-  return createBracketMatches(concoursId, 'consolante', units, ctx);
+  return createBracketMatches(concoursId, stage, units, ctx);
+}
+
+/**
+ * Identifiants des parties « réelles » du premier tour d'un tableau (hors
+ * exempts), triés par position : ce sont les sources d'un repêchage.
+ */
+export function firstRoundSources(matches: Match[], stage: MatchStage): string[] {
+  return matches
+    .filter((m) => m.stage === stage && m.round === 0 && !isByeMatch(m))
+    .sort((a, b) => a.position - b.position)
+    .map((m) => m.id);
 }
 
 /** Fusionne les parties modifiées dans la liste d'origine. */

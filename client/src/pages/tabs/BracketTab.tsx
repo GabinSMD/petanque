@@ -19,7 +19,7 @@ interface Props {
 }
 
 export function BracketTab({ concours, teams, matches, poules }: Props) {
-  const [stage, setStage] = useState<'principal' | 'consolante'>('principal');
+  const [stage, setStage] = useState<'principal' | 'consolante' | 'complementaire'>('principal');
   const [avoidSameClub, setAvoidSameClub] = useState(true);
   const [seeds, setSeeds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +28,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
 
   const principal = matches.filter((m) => m.stage === 'principal');
   const consolante = matches.filter((m) => m.stage === 'consolante');
+  const complementaire = matches.filter((m) => m.stage === 'complementaire');
   const locked = concours.status === 'termine';
 
   /* --------------------------- Pas encore de tableau --------------------------- */
@@ -126,7 +127,8 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
   const champion = winnerOf(finale);
   const championTeam = champion ? teamsById.get(champion) : undefined;
 
-  const shownMatches = stage === 'principal' ? principal : consolante;
+  const shownMatches =
+    stage === 'principal' ? principal : stage === 'consolante' ? consolante : complementaire;
 
   return (
     <div className="tab-content">
@@ -145,6 +147,14 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
             >
               Consolante
             </button>
+            {complementaire.length > 0 && (
+              <button
+                className={stage === 'complementaire' ? 'tab active' : 'tab'}
+                onClick={() => setStage('complementaire')}
+              >
+                Complémentaire
+              </button>
+            )}
           </span>
         )}
         <span className="toolbar-actions">
@@ -193,7 +203,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
 
       {championTeam && (
         <div className="champion-banner">
-          🏆 Vainqueur{stage === 'consolante' ? ' du principal' : ''} :{' '}
+          🏆 Vainqueur{stage !== 'principal' ? ' du principal' : ''} :{' '}
           <strong>
             n°{championTeam.number} {teamDisplayName(championTeam)}
           </strong>
