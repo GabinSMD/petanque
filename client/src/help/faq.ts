@@ -299,6 +299,69 @@ export const FAQ: FaqEntry[] = [
     ],
   },
 
+  /* ------------------------------- Partage ------------------------------ */
+  {
+    id: 'partager-resultats',
+    category: 'Partage',
+    question: 'Comment partager les résultats avec les joueurs ?',
+    keywords: ['partager', 'lien', 'public', 'qr', 'telephone', 'spectateur', 'suivre'],
+    steps: [
+      'Dans le concours, cliquez sur « 🔗 Partager » puis « Créer le lien public ».',
+      'Copiez le lien (ou affichez/imprimez le QR code au boulodrome).',
+      'Les joueurs l\'ouvrent sur leur téléphone : poules, tableaux et classements se mettent à jour en direct, sans compte.',
+      'Le lien est révocable à tout moment depuis la même fenêtre.',
+    ],
+    note: 'Le lien nécessite du réseau côté spectateurs — la gestion à la table de marque reste, elle, 100 % hors-ligne.',
+  },
+  {
+    id: 'declarer-score',
+    category: 'Partage',
+    question: 'Les équipes peuvent-elles déclarer leurs scores elles-mêmes ?',
+    keywords: ['declarer', 'declaration', 'auto', 'arbitrage', 'equipes', 'valider', 'confirmation'],
+    intro:
+      'Oui — idéal pour les concours sans arbitre à chaque terrain (auto-arbitrage) :',
+    steps: [
+      'Partagez le lien public du concours (🔗 Partager).',
+      'Sur la page publique, une équipe utilise « 📣 Déclarer un score » : partie, son camp, score.',
+      'L\'équipe adverse déclare à son tour depuis son téléphone : si les scores concordent, la déclaration passe « ✓ concordante ».',
+      'À la table de marque, un bandeau « scores déclarés à valider » apparaît : appliquez le score concordant en un clic (ou tranchez un divergent).',
+    ],
+    note: 'La table de marque reste seule décisionnaire : rien ne s\'applique sans votre validation.',
+  },
+  {
+    id: 'importer-licencies',
+    category: 'Démarrer',
+    question: 'Comment importer les licenciés (CSV) ?',
+    keywords: ['import', 'licencies', 'csv', 'fichier', 'autocompletion', 'gagner du temps'],
+    steps: [
+      'Tableau de bord → « 📇 Licenciés » → choisissez votre fichier CSV (colonnes Nom, Prénom, Licence, Club — un modèle est téléchargeable).',
+      'À l\'inscription des équipes, tapez les premières lettres d\'un nom : licence et club se remplissent automatiquement.',
+      'Réimportez le fichier à jour quand vous voulez : les fiches existantes sont mises à jour, pas dupliquées.',
+    ],
+  },
+  {
+    id: 'inviter-club',
+    category: 'Démarrer',
+    question: 'Comment ajouter un co-organisateur (compte club) ?',
+    keywords: ['inviter', 'invitation', 'code', 'co organisateur', 'membre', 'rejoindre', 'equipe du club'],
+    steps: [
+      'Tableau de bord → « 👥 Mon club » → « Générer un code d\'invitation » (valable 7 jours).',
+      'Transmettez le code : sur « Créer un compte club », votre collègue le saisit dans « Code d\'invitation ».',
+      'Son compte rejoint votre club : mêmes concours, synchronisés entre tous les appareils.',
+    ],
+  },
+  {
+    id: 'indemnites',
+    category: 'Tableau',
+    question: 'Comment calculer les indemnités (prix) ?',
+    keywords: ['indemnites', 'prix', 'mise', 'argent', 'repartition', 'recompense', 'euros'],
+    steps: [
+      'Onglet « Résultats » → section « 💶 Indemnités » → « Calculer ».',
+      'Saisissez la mise par équipe et les frais d\'organisation (%).',
+      'La répartition est suggérée par groupe de classement (le vainqueur touche le double du finaliste, etc.), arrondie à 0,10 €, et s\'imprime avec les résultats.',
+    ],
+  },
+
   /* --------------------------- Hors ligne & SaaS ------------------------ */
   {
     id: 'hors-ligne',

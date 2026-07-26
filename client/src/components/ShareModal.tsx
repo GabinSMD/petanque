@@ -25,7 +25,8 @@ export function ShareModal({ concours, onClose }: Props) {
   useEffect(() => {
     if (guest) return;
     api<{ token: string | null }>(`/api/share/${concours.id}`)
-      .then((res) => setToken(res.token))
+      // Ne pas écraser un jeton créé entre-temps (course GET/POST).
+      .then((res) => setToken((prev) => prev ?? res.token))
       .catch((err) =>
         setError(err instanceof Error ? err.message : 'Serveur injoignable (hors ligne ?)'),
       );

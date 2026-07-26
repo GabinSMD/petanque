@@ -15,7 +15,8 @@ export class ApiError extends Error {
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const session = getSession();
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    // Un Content-Type JSON sans corps ferait rejeter la requête (400).
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers as Record<string, string> | undefined),
   };
   if (session?.token) headers.Authorization = `Bearer ${session.token}`;

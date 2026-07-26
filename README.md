@@ -70,6 +70,24 @@ scores, tableaux) et se synchronise dès que le réseau revient.
   recherche par mots-clés tolérante aux accents, boutons de navigation
   contextuelle — entièrement **hors-ligne**, aucun service externe.
 
+### Partage & auto-arbitrage
+- **Lien public** par concours (révocable, avec **QR code** à afficher au
+  boulodrome) : les joueurs suivent poules, tableaux et classements en
+  direct sur leur téléphone, sans compte.
+- **Auto-déclaration des scores** : une équipe déclare, l'adversaire
+  confirme depuis son propre téléphone ; la table de marque voit les
+  déclarations **concordantes** et les applique en un clic (elle reste
+  seule décisionnaire).
+- **Licenciés** : import CSV (Nom/Prénom/Licence/Club), autocomplétion aux
+  inscriptions, mise à jour sans doublons.
+- **Feuilles imprimables** : feuilles de poules officielles et tickets de
+  parties à distribuer.
+- **Multi-organisateurs** : codes d'invitation (7 jours) pour rejoindre le
+  club, liste des membres.
+- **Tir de précision** : séries de 20 boules (100 pts max), classement à la
+  meilleure série. **Indemnités** : répartition suggérée du pot par groupe
+  de classement.
+
 ### SaaS & hors-ligne
 - **Comptes club (multi-tenant)** : chaque organisation a ses concours, ses
   utilisateurs et son journal de modifications.
