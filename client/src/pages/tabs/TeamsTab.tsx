@@ -1,7 +1,9 @@
 import { useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import type { Concours, Player, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
+import { useLicencies } from '../../db/hooks';
 import { FORMAT_LABELS, PLAYERS_PER_TEAM, isIndividualMode } from '../../lib/labels';
 
 interface Props {
@@ -18,6 +20,18 @@ export function TeamsTab({ concours, teams }: Props) {
   const [club, setClub] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const firstInput = useRef<HTMLInputElement>(null);
+  const licencies = useLicencies() ?? [];
+  const licencieByName = new Map(licencies.map((l) => [l.name.toLowerCase(), l]));
+
+  /** Autocomplétion : un nom du fichier des licenciés remplit licence et club. */
+  const applyLicencie = (i: number, value: string) => {
+    const found = licencieByName.get(value.trim().toLowerCase());
+    if (!found) return;
+    if (found.licence) {
+      setLicences((prev) => prev.map((l, j) => (j === i && !l ? found.licence! : l)));
+    }
+    if (found.club && !club) setClub(found.club);
+  };
 
   // La formation peut changer tant qu'on est aux inscriptions.
   if (names.length !== nbPlayers) {
@@ -49,9 +63,11 @@ export function TeamsTab({ concours, teams }: Props) {
                 <input
                   ref={i === 0 ? firstInput : undefined}
                   value={names[i] ?? ''}
-                  onChange={(e) =>
-                    setNames(names.map((n, j) => (j === i ? e.target.value : n)))
-                  }
+                  list={licencies.length > 0 ? 'dl-licencies' : undefined}
+                  onChange={(e) => {
+                    setNames(names.map((n, j) => (j === i ? e.target.value : n)));
+                    applyLicencie(i, e.target.value);
+                  }}
                   placeholder={individual ? 'Nom du joueur' : `Joueur ${i + 1}`}
                   required={i === 0}
                 />
@@ -74,12 +90,31 @@ export function TeamsTab({ concours, teams }: Props) {
             list="clubs-connus"
           />
           <datalist id="clubs-connus">
-            {[...new Set(teams.map((t) => t.club).filter(Boolean))].map((c) => (
+            {[...new Set([
+              ...teams.map((t) => t.club),
+              ...licencies.map((l) => l.club),
+            ].filter(Boolean))].map((c) => (
               <option key={c} value={c} />
             ))}
           </datalist>
+          {licencies.length > 0 && (
+            <datalist id="dl-licencies">
+              {licencies.slice(0, 3000).map((l) => (
+                <option key={l.id} value={l.name}>
+                  {[l.licence, l.club].filter(Boolean).join(' · ')}
+                </option>
+              ))}
+            </datalist>
+          )}
           <button className="btn btn-primary">Inscrire</button>
         </form>
+      )}
+
+      {!locked && licencies.length === 0 && teams.length === 0 && (
+        <p className="hint no-print">
+          💡 Gagnez du temps : <Link to="/licencies">importez vos licenciés (CSV)</Link>{' '}
+          pour l'autocomplétion des noms, licences et clubs.
+        </p>
       )}
 
       {locked && (

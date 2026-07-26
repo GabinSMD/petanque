@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { createConcours, deleteConcours } from '../db/actions';
 import { db } from '../db/local';
@@ -47,13 +47,18 @@ export function DashboardPage() {
     <div className="page">
       <div className="page-head">
         <h1>Mes concours</h1>
-        <button
-          className="btn btn-primary"
-          data-tour="new-concours"
-          onClick={() => setCreating(true)}
-        >
-          + Nouveau concours
-        </button>
+        <span className="page-head-actions">
+          <Link className="btn btn-sm" to="/licencies">
+            📇 Licenciés
+          </Link>
+          <button
+            className="btn btn-primary"
+            data-tour="new-concours"
+            onClick={() => setCreating(true)}
+          >
+            + Nouveau concours
+          </button>
+        </span>
       </div>
 
       {concoursList && concoursList.length === 0 && (

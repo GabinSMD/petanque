@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ConcoursPage } from './pages/ConcoursPage';
 import { DisplayPage } from './pages/DisplayPage';
+import { LicenciesPage } from './pages/LicenciesPage';
 import { PublicPage } from './pages/PublicPage';
 
 function Layout() {
@@ -103,6 +104,7 @@ export function App() {
           }
         >
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/licencies" element={<LicenciesPage />} />
           <Route path="/concours/:id" element={<ConcoursPage />} />
           <Route path="/concours/:id/:tab" element={<ConcoursPage />} />
         </Route>

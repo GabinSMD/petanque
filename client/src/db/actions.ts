@@ -17,6 +17,7 @@ import {
   validateScore,
   type Concours,
   type ConcoursMode,
+  type Licencie,
   type Match,
   type Player,
   type Poule,
@@ -136,6 +137,78 @@ export async function updateTeam(team: Team): Promise<void> {
 
 export async function deleteTeam(team: Team): Promise<void> {
   await softDeleteMany([{ type: 'team', id: team.id }]);
+}
+
+/* ------------------------------------------------------------------ */
+/* Licenciés                                                           */
+/* ------------------------------------------------------------------ */
+
+export async function listLicencies(): Promise<Licencie[]> {
+  const rows = await db.entities
+    .where('[type+concoursId]')
+    .equals(['licencie', ''])
+    .toArray();
+  return rows
+    .filter((r) => r.deleted === 0 && r.data)
+    .map((r) => r.data as Licencie);
+}
+
+/** Import en masse : met à jour par n° de licence, sinon par nom+club. */
+export async function importLicencies(
+  incoming: { name: string; licence?: string; club?: string }[],
+): Promise<{ added: number; updated: number }> {
+  const existing = await listLicencies();
+  const byLicence = new Map(
+    existing.filter((l) => l.licence).map((l) => [l.licence!, l]),
+  );
+  const byNameClub = new Map(
+    existing.map((l) => [`${l.name.toLowerCase()}|${(l.club ?? '').toLowerCase()}`, l]),
+  );
+
+  const toPut: Licencie[] = [];
+  let added = 0;
+  let updated = 0;
+  for (const row of incoming) {
+    const match =
+      (row.licence && byLicence.get(row.licence)) ||
+      byNameClub.get(`${row.name.toLowerCase()}|${(row.club ?? '').toLowerCase()}`);
+    if (match) {
+      if (
+        match.name !== row.name ||
+        match.licence !== row.licence ||
+        match.club !== row.club
+      ) {
+        toPut.push({ ...match, ...row });
+        updated += 1;
+      }
+    } else {
+      const licencie: Licencie = {
+        id: crypto.randomUUID(),
+        name: row.name,
+        licence: row.licence,
+        club: row.club,
+        updatedAt: monotonicNow(),
+      };
+      toPut.push(licencie);
+      byNameClub.set(
+        `${row.name.toLowerCase()}|${(row.club ?? '').toLowerCase()}`,
+        licencie,
+      );
+      if (row.licence) byLicence.set(row.licence, licencie);
+      added += 1;
+    }
+  }
+  await bulkPutEntities('licencie', toPut);
+  return { added, updated };
+}
+
+export async function deleteLicencie(id: string): Promise<void> {
+  await softDeleteMany([{ type: 'licencie', id }]);
+}
+
+export async function deleteAllLicencies(): Promise<void> {
+  const all = await listLicencies();
+  await softDeleteMany(all.map((l) => ({ type: 'licencie' as const, id: l.id })));
 }
 
 /* ------------------------------------------------------------------ */

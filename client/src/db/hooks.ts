@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSyncExternalStore } from 'react';
-import type { Concours, Match, Poule, Team } from '@shared';
+import type { Concours, Licencie, Match, Poule, Team } from '@shared';
 import { db } from './local';
 import {
   getLastSyncAt,
@@ -52,6 +52,19 @@ export function usePoules(concoursId: string | undefined): Poule[] | undefined {
 
 export function useMatches(concoursId: string | undefined): Match[] | undefined {
   return useEntityList<Match>('match', concoursId);
+}
+
+export function useLicencies(): Licencie[] | undefined {
+  return useLiveQuery(async () => {
+    const rows = await db.entities
+      .where('[type+concoursId]')
+      .equals(['licencie', ''])
+      .toArray();
+    return rows
+      .filter((r) => r.deleted === 0 && r.data)
+      .map((r) => r.data as Licencie)
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  }, []);
 }
 
 export function usePendingCount(): number {

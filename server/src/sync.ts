@@ -4,7 +4,7 @@ import { nextSeq } from './db.js';
 import type { EntityRow } from './db.js';
 import type { AuthContext } from './index.js';
 
-const ENTITY_TYPES = new Set(['concours', 'team', 'poule', 'match']);
+const ENTITY_TYPES = new Set(['concours', 'team', 'poule', 'match', 'licencie']);
 const MAX_CHANGES_PER_PUSH = 2000;
 const PULL_PAGE_SIZE = 2000;
 

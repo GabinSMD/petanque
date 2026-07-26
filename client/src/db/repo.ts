@@ -17,7 +17,9 @@ export function monotonicNow(): string {
 }
 
 function concoursIdOf<T extends EntityType>(type: T, data: EntityDataMap[T]): string {
-  return type === 'concours' ? data.id : (data as { concoursId: string }).concoursId;
+  if (type === 'concours') return data.id;
+  // Les licenciés sont rattachés à l'organisation, pas à un concours.
+  return (data as { concoursId?: string }).concoursId ?? '';
 }
 
 /** Écrit une entité locale et la marque à synchroniser. */

@@ -106,13 +106,25 @@ export interface Match {
   updatedAt: string;
 }
 
+/**
+ * Licencié du fichier club/comité (import CSV) : sert à l'autocomplétion
+ * des inscriptions. Rattaché à l'organisation, pas à un concours.
+ */
+export interface Licencie {
+  id: string;
+  name: string;
+  licence?: string;
+  club?: string;
+  updatedAt: string;
+}
+
 /* ------------------------------------------------------------------ */
 /* Protocole de synchronisation SaaS                                   */
 /* ------------------------------------------------------------------ */
 
-export type EntityType = 'concours' | 'team' | 'poule' | 'match';
+export type EntityType = 'concours' | 'team' | 'poule' | 'match' | 'licencie';
 
-export const ENTITY_TYPES: EntityType[] = ['concours', 'team', 'poule', 'match'];
+export const ENTITY_TYPES: EntityType[] = ['concours', 'team', 'poule', 'match', 'licencie'];
 
 export interface SyncChange {
   type: EntityType;
