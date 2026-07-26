@@ -18,7 +18,7 @@ export function SyncBadge() {
 
   if (status === 'auth') {
     return (
-      <Link to="/login" className={`sync-badge ${info.cls}`}>
+      <Link to="/login" className={`sync-badge ${info.cls}`} data-tour="sync">
         <span className="sync-dot" /> {info.text} — se reconnecter
       </Link>
     );
@@ -27,6 +27,7 @@ export function SyncBadge() {
   return (
     <button
       className={`sync-badge ${info.cls}`}
+      data-tour="sync"
       onClick={() => void syncNow()}
       title="Forcer une synchronisation"
     >

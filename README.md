@@ -39,6 +39,18 @@ scores, tableaux) et se synchronise dès que le réseau revient.
 - **Impression** : feuilles de poules, tableaux et résultats via la mise en
   page d'impression du navigateur.
 
+### Prise en main
+- **Tutoriel intégré** : écran de bienvenue à la première utilisation, visite
+  guidée interactive (mise en lumière des éléments de l'interface) et
+  **concours d'exemple** pré-rempli pour s'entraîner sans risque.
+- **Bandeau « prochaine étape »** : chaque concours indique en permanence où
+  vous en êtes et quoi faire ensuite (inscriptions → tirage → scores →
+  tableau → clôture).
+- **Assistant intégré** 💬 : une vingtaine de guides pas-à-pas (tirer les
+  poules, corriger un score, consolante, forfait, affichage TV, hors-ligne…),
+  recherche par mots-clés tolérante aux accents, boutons de navigation
+  contextuelle — entièrement **hors-ligne**, aucun service externe.
+
 ### SaaS & hors-ligne
 - **Comptes club (multi-tenant)** : chaque organisation a ses concours, ses
   utilisateurs et son journal de modifications.
@@ -137,9 +149,9 @@ docker run -p 8787:8787 -v petanque-data:/app/server/data petanque-concours
   exempts, l'appariement premiers/seconds, la consolante alimentée par les
   perdants et les classements.
 - Un test de bout en bout (Playwright) a validé le parcours complet :
-  inscription club → concours → 7 équipes → poules → tableau → consolante →
-  vainqueur → synchronisation serveur → **rechargement de l'application hors
-  ligne**.
+  inscription club → visite guidée → assistant (réponse pas-à-pas) →
+  concours → 7 équipes → poules → tableau → consolante → vainqueur →
+  synchronisation serveur → **rechargement de l'application hors ligne**.
 
 ## Feuille de route
 

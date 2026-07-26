@@ -6,6 +6,7 @@ import { db } from '../db/local';
 import { useConcoursList } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
 import { Modal } from '../components/Modal';
+import { WelcomeModal, isWelcomeDone } from '../components/WelcomeModal';
 import { FORMAT_LABELS, MODE_LABELS, STATUS_LABELS, formatDateFr } from '../lib/labels';
 
 function useTeamCounts(): Map<string, number> {
@@ -27,6 +28,7 @@ export function DashboardPage() {
   const concoursList = useConcoursList();
   const teamCounts = useTeamCounts();
   const [creating, setCreating] = useState(false);
+  const [welcome, setWelcome] = useState(() => !isWelcomeDone());
 
   const remove = async (id: string, name: string) => {
     if (window.confirm(`Supprimer le concours « ${name} » et toutes ses données ?`)) {
@@ -38,7 +40,11 @@ export function DashboardPage() {
     <div className="page">
       <div className="page-head">
         <h1>Mes concours</h1>
-        <button className="btn btn-primary" onClick={() => setCreating(true)}>
+        <button
+          className="btn btn-primary"
+          data-tour="new-concours"
+          onClick={() => setCreating(true)}
+        >
           + Nouveau concours
         </button>
       </div>
@@ -108,6 +114,8 @@ export function DashboardPage() {
           />
         </Modal>
       )}
+
+      {welcome && <WelcomeModal onClose={() => setWelcome(false)} />}
     </div>
   );
 }

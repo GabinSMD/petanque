@@ -72,6 +72,34 @@ export async function deleteConcours(concoursId: string): Promise<void> {
   );
 }
 
+/** Concours pré-rempli pour découvrir l'application sans risque. */
+export async function createDemoConcours(): Promise<string> {
+  const id = await createConcours({
+    name: 'Concours d\'exemple — doublettes',
+    date: new Date().toISOString().slice(0, 10),
+    lieu: 'Boulodrome de démonstration',
+    format: 'doublette',
+    mode: 'poules',
+    consolante: true,
+    scoreMax: 13,
+    nbTerrains: 8,
+  });
+  const demo: [string, string, string][] = [
+    ['Marius Ferrand', 'Fernand Gasquet', 'La Boule Joyeuse'],
+    ['Odette Blanc', 'Lucien Roux', 'La Boule Joyeuse'],
+    ['Paul Escartefigue', 'César Olive', 'Pétanque du Port'],
+    ['Honoré Panisse', 'Baptiste Cabris', 'Pétanque du Port'],
+    ['Jeannette Micoulin', 'Rosa Torres', 'Les Boulistes du Moulin'],
+    ['Ange Leandri', 'Toinou Garcia', 'Les Boulistes du Moulin'],
+    ['Mireille Fabre', 'Norbert Long', 'Amicale des Platanes'],
+    ['Étienne Brun', 'Félix Imbert', 'Amicale des Platanes'],
+  ];
+  for (const [a, b, club] of demo) {
+    await addTeam(id, [{ name: a }, { name: b }], club);
+  }
+  return id;
+}
+
 /* ------------------------------------------------------------------ */
 /* Équipes                                                             */
 /* ------------------------------------------------------------------ */

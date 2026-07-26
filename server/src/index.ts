@@ -155,7 +155,9 @@ registerSyncRoutes(app, db, (req) => authenticate(req.headers.authorization));
 /* ------------------------------------------------------------------ */
 
 if (existsSync(CLIENT_DIST)) {
-  await app.register(fastifyStatic, { root: CLIENT_DIST, wildcard: false });
+  // wildcard:true résout les fichiers à la requête : un nouveau build du
+  // client est servi sans redémarrage du serveur.
+  await app.register(fastifyStatic, { root: CLIENT_DIST, wildcard: true });
   app.setNotFoundHandler((req, reply) => {
     if (req.url.startsWith('/api/') || req.method !== 'GET') {
       return reply.code(404).send({ error: 'Introuvable' });

@@ -4,6 +4,8 @@ import { useSession } from './db/hooks';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
 import { SyncBadge } from './components/SyncBadge';
+import { ChatBot } from './components/ChatBot';
+import { TourHost } from './components/Tour';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ConcoursPage } from './pages/ConcoursPage';
@@ -51,6 +53,8 @@ function Layout() {
       <main className="app-main">
         <Outlet />
       </main>
+      <ChatBot />
+      <TourHost />
     </div>
   );
 }

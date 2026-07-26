@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import type { ConcoursStatus } from '@shared';
+import type { Concours, ConcoursStatus, Match, Poule, Team } from '@shared';
+import { pouleOutcome, pouleSizes, winnerOf } from '@shared';
 import { updateConcours } from '../db/actions';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
@@ -61,11 +62,16 @@ export function ConcoursPage() {
           <span className={`status-chip status-${concours.status}`}>
             {STATUS_LABELS[concours.status]}
           </span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>
+          <button
+            className="btn btn-ghost btn-sm"
+            data-tour="params"
+            onClick={() => setEditing(true)}
+          >
             ⚙ Paramètres
           </button>
           <a
             className="btn btn-ghost btn-sm"
+            data-tour="affichage"
             href={`/concours/${concours.id}/affichage`}
             target="_blank"
             rel="noreferrer"
@@ -79,7 +85,16 @@ export function ConcoursPage() {
         </div>
       </div>
 
-      <nav className="tabs no-print">
+      <NextStepBanner
+        concours={concours}
+        teams={teams ?? []}
+        poules={poules ?? []}
+        matches={matches ?? []}
+        activeTab={active}
+        onGo={(tab) => navigate(`/concours/${concours.id}/${tab}`, { replace: true })}
+      />
+
+      <nav className="tabs no-print" data-tour="tabs">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -122,6 +137,136 @@ export function ConcoursPage() {
             }}
           />
         </Modal>
+      )}
+    </div>
+  );
+}
+
+interface NextStep {
+  icon: string;
+  text: string;
+  /** Onglet où se joue la prochaine action. */
+  tab?: string;
+}
+
+function nextStepOf(
+  concours: Concours,
+  teams: Team[],
+  poules: Poule[],
+  matches: Match[],
+): NextStep {
+  const active = teams.filter((t) => !t.forfait).length;
+
+  if (concours.status === 'inscriptions') {
+    if (concours.mode === 'poules') {
+      if (active < 4) {
+        return {
+          icon: '✍️',
+          text: `Inscrivez vos équipes (${active}/4 minimum pour des poules).`,
+          tab: 'equipes',
+        };
+      }
+      if (!pouleSizes(active)) {
+        return {
+          icon: '⚠️',
+          text: `${active} équipes ne se répartissent pas en poules — inscrivez-en une de plus (ou retirez-en une).`,
+          tab: 'equipes',
+        };
+      }
+      return {
+        icon: '🎲',
+        text: `${active} équipes prêtes : place au tirage des poules !`,
+        tab: 'poules',
+      };
+    }
+    return active < 2
+      ? { icon: '✍️', text: 'Inscrivez au moins 2 équipes.', tab: 'equipes' }
+      : { icon: '🎲', text: `${active} équipes prêtes : tirez le tableau !`, tab: 'tableau' };
+  }
+
+  if (concours.status === 'poules') {
+    const pouleMatches = matches.filter((m) => m.stage === 'poule');
+    const remaining = pouleMatches.filter((m) => !m.done).length;
+    if (remaining > 0) {
+      return {
+        icon: '⏱',
+        text: `Saisissez les scores : ${remaining} partie${remaining > 1 ? 's' : ''} de poule restante${remaining > 1 ? 's' : ''}.`,
+        tab: 'poules',
+      };
+    }
+    const complete = poules.every((p) =>
+      pouleOutcome(p, pouleMatches.filter((m) => m.pouleId === p.id)).complete,
+    );
+    if (complete) {
+      return {
+        icon: '🏁',
+        text: 'Toutes les poules sont terminées : générez le tableau final.',
+        tab: 'poules',
+      };
+    }
+  }
+
+  if (concours.status === 'tableau') {
+    const bracket = matches.filter((m) => m.stage !== 'poule');
+    const playable = bracket.filter((m) => !m.done && m.teamAId && m.teamBId).length;
+    const maxRound = bracket.length
+      ? Math.max(...bracket.filter((m) => m.stage === 'principal').map((m) => m.round))
+      : 0;
+    const finale = bracket.find(
+      (m) => m.stage === 'principal' && m.round === maxRound && m.position === 0,
+    );
+    if (winnerOf(finale)) {
+      return {
+        icon: '🏆',
+        text: 'La finale est jouée ! Clôturez le concours pour figer le palmarès.',
+        tab: 'tableau',
+      };
+    }
+    return {
+      icon: '⏱',
+      text: `Tableau en cours : ${playable} partie${playable > 1 ? 's' : ''} à saisir.`,
+      tab: 'tableau',
+    };
+  }
+
+  return {
+    icon: '🎉',
+    text: 'Concours terminé — consultez le palmarès ou imprimez les résultats.',
+    tab: 'resultats',
+  };
+}
+
+const TAB_NAMES: Record<string, string> = {
+  equipes: 'Équipes',
+  poules: 'Poules',
+  tableau: 'Tableau',
+  resultats: 'Résultats',
+};
+
+function NextStepBanner({
+  concours,
+  teams,
+  poules,
+  matches,
+  activeTab,
+  onGo,
+}: {
+  concours: Concours;
+  teams: Team[];
+  poules: Poule[];
+  matches: Match[];
+  activeTab: string;
+  onGo: (tab: string) => void;
+}) {
+  const step = nextStepOf(concours, teams, poules, matches);
+  return (
+    <div className="next-step no-print" data-tour="next-step">
+      <span className="next-step-icon">{step.icon}</span>
+      <span className="next-step-text">{step.text}</span>
+      {step.tab && step.tab !== activeTab && (
+        <button className="btn btn-sm next-step-go" onClick={() => onGo(step.tab!)}>
+          Aller à l'onglet {TAB_NAMES[step.tab] ?? step.tab} →
+        </button>
       )}
     </div>
   );
