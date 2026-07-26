@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { bracketRanking, pouleOutcome } from '@shared';
+import { bracketRanking, pouleOutcome, rondeStandings } from '@shared';
+import { StandingsTable } from '../../components/StandingsTable';
 import { TeamLabel } from '../../components/TeamLabel';
+import { isIndividualMode, isRondesMode } from '../../lib/labels';
 
 interface Props {
   concours: Concours;
@@ -12,6 +14,30 @@ interface Props {
 
 export function ResultsTab({ concours, teams, poules, matches }: Props) {
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
+  if (isRondesMode(concours.mode)) {
+    const played = matches.some((m) => m.stage === 'ronde' && m.done);
+    if (!played) {
+      return (
+        <div className="tab-content">
+          <p className="empty-state">Le classement apparaîtra dès les premières parties saisies.</p>
+        </div>
+      );
+    }
+    return (
+      <div className="tab-content results">
+        <section className="result-section">
+          <h2>
+            Classement général{isIndividualMode(concours.mode) ? ' (individuel)' : ''}
+          </h2>
+          <StandingsTable
+            standings={rondeStandings(teams, matches)}
+            teamsById={teamsById}
+          />
+        </section>
+      </div>
+    );
+  }
 
   const principalGroups = bracketRanking(matches, 'principal');
   const consolanteGroups = bracketRanking(matches, 'consolante');

@@ -1,21 +1,31 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Concours, ConcoursStatus, Match, Poule, Team } from '@shared';
-import { pouleOutcome, pouleSizes, winnerOf } from '@shared';
+import { pouleOutcome, pouleSizes, rondesTirees, winnerOf } from '@shared';
 import { updateConcours } from '../db/actions';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
 import { Modal } from '../components/Modal';
-import { FORMAT_LABELS, MODE_LABELS, STATUS_LABELS, formatDateFr } from '../lib/labels';
+import {
+  FORMAT_LABELS,
+  MODE_LABELS,
+  STATUS_LABELS,
+  entrantWord,
+  formatDateFr,
+  isIndividualMode,
+  isRondesMode,
+} from '../lib/labels';
 import { TeamsTab } from './tabs/TeamsTab';
 import { PoulesTab } from './tabs/PoulesTab';
 import { BracketTab } from './tabs/BracketTab';
+import { RondesTab } from './tabs/RondesTab';
 import { ResultsTab } from './tabs/ResultsTab';
 
 const DEFAULT_TAB: Record<ConcoursStatus, string> = {
   inscriptions: 'equipes',
   poules: 'poules',
   tableau: 'tableau',
+  rondes: 'rondes',
   termine: 'resultats',
 };
 
@@ -38,11 +48,17 @@ export function ConcoursPage() {
     );
   }
 
+  const rondesMode = isRondesMode(concours.mode);
   const tabs = [
-    { key: 'equipes', label: `Équipes (${teams?.length ?? 0})` },
-    ...(concours.mode === 'poules' ? [{ key: 'poules', label: 'Poules' }] : []),
-    { key: 'tableau', label: 'Tableau' },
-    { key: 'resultats', label: 'Résultats' },
+    {
+      key: 'equipes',
+      label: `👥 ${isIndividualMode(concours.mode) ? 'Participants' : 'Équipes'} (${teams?.length ?? 0})`,
+    },
+    ...(concours.mode === 'poules' ? [{ key: 'poules', label: '🎲 Poules' }] : []),
+    ...(rondesMode
+      ? [{ key: 'rondes', label: '🔄 Rondes' }]
+      : [{ key: 'tableau', label: '🏆 Tableau' }]),
+    { key: 'resultats', label: '📋 Résultats' },
   ];
   const active = tabs.some((t) => t.key === tab) ? tab! : DEFAULT_TAB[concours.status];
 
@@ -56,6 +72,7 @@ export function ConcoursPage() {
             {concours.lieu ? ` · ${concours.lieu}` : ''} · {FORMAT_LABELS[concours.format]} ·{' '}
             {MODE_LABELS[concours.mode]}
             {concours.consolante ? ' · Consolante' : ''} · Parties en {concours.scoreMax} pts
+            {concours.tempsLimite ? ` · Temps limité ${concours.tempsLimite} min` : ''}
           </p>
         </div>
         <div className="concours-actions">
@@ -118,6 +135,9 @@ export function ConcoursPage() {
       {active === 'poules' && (
         <PoulesTab concours={concours} teams={teams ?? []} poules={poules ?? []} matches={matches ?? []} />
       )}
+      {active === 'rondes' && (
+        <RondesTab concours={concours} teams={teams ?? []} matches={matches ?? []} />
+      )}
       {active === 'tableau' && (
         <BracketTab concours={concours} teams={teams ?? []} matches={matches ?? []} poules={poules ?? []} />
       )}
@@ -156,6 +176,53 @@ function nextStepOf(
   matches: Match[],
 ): NextStep {
   const active = teams.filter((t) => !t.forfait).length;
+
+  if (isRondesMode(concours.mode)) {
+    const word = entrantWord(concours.mode, active > 1);
+    if (concours.status === 'inscriptions') {
+      if (active < 2) {
+        return {
+          icon: '✍️',
+          text: `Inscrivez vos ${entrantWord(concours.mode, true)} (2 minimum).`,
+          tab: 'equipes',
+        };
+      }
+      return {
+        icon: '🎲',
+        text:
+          concours.mode === 'championnat'
+            ? `${active} ${word} : générez le calendrier !`
+            : `${active} ${word} prêt${isIndividualMode(concours.mode) ? 's' : 'es'} : tirez la ronde 1 !`,
+        tab: 'rondes',
+      };
+    }
+    if (concours.status === 'rondes') {
+      const rondeMs = matches.filter((m) => m.stage === 'ronde');
+      const tirees = rondesTirees(rondeMs);
+      const pending = rondeMs.filter((m) => !m.done).length;
+      const planned =
+        concours.mode === 'championnat' ? tirees : (concours.nbRondes ?? 4);
+      if (pending > 0) {
+        return {
+          icon: '⏱',
+          text: `Saisissez les scores : ${pending} partie${pending > 1 ? 's' : ''} restante${pending > 1 ? 's' : ''}.`,
+          tab: 'rondes',
+        };
+      }
+      if (tirees < planned) {
+        return {
+          icon: '🎲',
+          text: `Ronde ${tirees} terminée : tirez la ronde ${tirees + 1}.`,
+          tab: 'rondes',
+        };
+      }
+      return {
+        icon: '🏁',
+        text: 'Toutes les rondes sont jouées : clôturez le concours (onglet Rondes).',
+        tab: 'rondes',
+      };
+    }
+  }
 
   if (concours.status === 'inscriptions') {
     if (concours.mode === 'poules') {

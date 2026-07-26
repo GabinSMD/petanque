@@ -6,13 +6,20 @@
 /** Formation des équipes. */
 export type TeamFormat = 'tete_a_tete' | 'doublette' | 'triplette';
 
-/** Déroulement du concours. */
-export type ConcoursMode = 'poules' | 'elimination_directe';
+/**
+ * Formule du concours :
+ * - poules : poules de 3/4 puis tableau (le classique FFPJP)
+ * - elimination_directe : tableau à la coupe
+ * - melee : inscriptions individuelles, équipes tirées au sort à chaque ronde
+ * - suisse : N rondes, appariement par classement, personne n'est éliminé
+ * - championnat : toutes rondes (chacun rencontre chacun)
+ */
+export type ConcoursMode = 'poules' | 'elimination_directe' | 'melee' | 'suisse' | 'championnat';
 
 /** Cycle de vie d'un concours. */
-export type ConcoursStatus = 'inscriptions' | 'poules' | 'tableau' | 'termine';
+export type ConcoursStatus = 'inscriptions' | 'poules' | 'tableau' | 'rondes' | 'termine';
 
-export type MatchStage = 'poule' | 'principal' | 'consolante';
+export type MatchStage = 'poule' | 'principal' | 'consolante' | 'ronde';
 
 /** Rôle d'une partie au sein d'une poule. */
 export type PouleSlot = 'M1' | 'M2' | 'GAGNANTS' | 'PERDANTS' | 'BARRAGE';
@@ -35,6 +42,10 @@ export interface Concours {
   /** Score gagnant d'une mène complète (13 en pétanque). */
   scoreMax: number;
   nbTerrains: number;
+  /** Nombre de rondes prévues (mêlée, système suisse). */
+  nbRondes?: number;
+  /** Durée indicative des parties en minutes (parties au temps). */
+  tempsLimite?: number;
   status: ConcoursStatus;
   note?: string;
   createdAt: string;
@@ -76,6 +87,12 @@ export interface Match {
   position: number;
   teamAId: string | null;
   teamBId: string | null;
+  /**
+   * Mêlée : identifiants des participants de chaque côté (les « équipes »
+   * n'existent que le temps d'une ronde et peuvent être inégales, 3 contre 2).
+   */
+  playersA?: string[];
+  playersB?: string[];
   /** Exempt (place vide au cadrage) : l'équipe en face passe directement. */
   byeA?: boolean;
   byeB?: boolean;

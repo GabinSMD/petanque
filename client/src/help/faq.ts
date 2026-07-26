@@ -30,15 +30,70 @@ export const FAQ: FaqEntry[] = [
     category: 'Démarrer',
     question: 'Comment créer un concours ?',
     keywords: ['creer', 'nouveau', 'concours', 'organiser', 'commencer', 'demarrer'],
+    intro: 'La création se fait en 3 étapes guidées :',
     steps: [
       'Sur le tableau de bord, cliquez sur « + Nouveau concours ».',
-      'Renseignez le nom, la date et le lieu.',
-      'Choisissez la formation : tête-à-tête, doublette ou triplette.',
-      'Choisissez la formule : « Poules puis élimination » (la plus courante) ou « Élimination directe ».',
-      'Cochez « Consolante » si les éliminés doivent être repêchés dans un second tableau.',
-      'Indiquez le nombre de terrains et validez avec « Créer le concours ».',
+      'Étape 1 — choisissez la formule : chaque carte explique en une phrase à qui elle s\'adresse (poules, élimination directe, mêlée, suisse, championnat).',
+      'Étape 2 — choisissez la formation : tête-à-tête, doublette ou triplette.',
+      'Étape 3 — le nom est proposé automatiquement ; ajustez date, lieu, terrains, points, rondes ou consolante selon la formule.',
+      'Validez avec « Créer le concours 🎉 ».',
     ],
     action: { label: 'Aller au tableau de bord', path: '/' },
+  },
+  {
+    id: 'choisir-formule',
+    category: 'Formules',
+    question: 'Quelle formule choisir ?',
+    keywords: ['formule', 'choisir', 'quelle', 'mode', 'type', 'difference', 'conseil', 'laquelle'],
+    intro: 'Un repère rapide :',
+    steps: [
+      '🎯 Poules puis élimination : le classique des concours officiels — équitable, 2 à 5 parties par équipe.',
+      '⚡ Élimination directe : le plus rapide — qui perd sort (ajoutez la consolante pour faire rejouer les perdants du 1er tour).',
+      '🎲 Mêlée tournante : convivial en club — chacun s\'inscrit seul, les équipes changent à chaque ronde, classement individuel.',
+      '⚖️ Système suisse : personne n\'est éliminé, tout le monde joue le même nombre de parties (souvent 4 ou 5).',
+      '🏅 Championnat : chacun rencontre chacun — parfait jusqu\'à 8 équipes environ.',
+    ],
+  },
+  {
+    id: 'melee',
+    category: 'Formules',
+    question: 'Comment organiser une mêlée ?',
+    keywords: ['melee', 'tournante', 'individuel', 'tire au sort', 'panachee', 'amis'],
+    intro:
+      'En mêlée, on s\'inscrit seul : les équipes sont tirées au sort à chaque ronde et le classement est individuel (victoires puis goal-average).',
+    steps: [
+      'Créez un concours en choisissant « Mêlée tournante », puis la taille des équipes tirées (doublettes en général).',
+      'Onglet « Participants » : inscrivez chaque joueur individuellement.',
+      'Onglet « Rondes » : « 🎲 Tirer la ronde 1 » — les équipes s\'affichent, saisissez les scores.',
+      'Quand la ronde est complète, tirez la suivante : nouvelles équipes tirées au sort.',
+      'Le classement individuel se met à jour en direct ; clôturez après la dernière ronde.',
+    ],
+    note:
+      'Si l\'effectif ne tombe pas juste, l\'application forme des équipes inégales comme à la vraie mêlée (une triplette peut rencontrer une doublette) : personne n\'est exempt.',
+  },
+  {
+    id: 'suisse',
+    category: 'Formules',
+    question: 'Comment fonctionne le système suisse ?',
+    keywords: ['suisse', 'systeme', 'rondes', 'appariement', 'classement', 'buchholz'],
+    steps: [
+      'Créez un concours « Système suisse » et choisissez le nombre de rondes (4 ou 5 en général).',
+      'Ronde 1 : tirage aléatoire. Ensuite, les équipes de même niveau se rencontrent (1er contre 2e, etc.), sans revanche.',
+      'Effectif impair : l\'équipe la moins bien classée n\'ayant pas encore été exempte gagne d\'office 13 à 7.',
+      'Le classement (victoires puis goal-average) se met à jour à chaque saisie.',
+    ],
+  },
+  {
+    id: 'championnat',
+    category: 'Formules',
+    question: 'Comment faire un championnat (toutes rondes) ?',
+    keywords: ['championnat', 'toutes rondes', 'round robin', 'chacun', 'calendrier'],
+    steps: [
+      'Créez un concours « Championnat » : le calendrier complet est généré d\'un coup (chacun rencontre chacun).',
+      'Effectif impair : chaque équipe se repose une ronde, tout le monde joue autant de parties.',
+      'Saisissez les scores ronde par ronde ; le classement finalise aux victoires puis au goal-average.',
+    ],
+    note: 'Au-delà de 8 équipes le nombre de parties devient vite important — préférez alors le système suisse.',
   },
   {
     id: 'inscrire-equipes',
@@ -321,9 +376,9 @@ export const FAQ: FaqEntry[] = [
 /** Suggestions mises en avant à l'ouverture de l'assistant. */
 export const FEATURED_IDS = [
   'creer-concours',
+  'choisir-formule',
   'tirer-poules',
   'saisir-score',
   'corriger-score',
-  'consolante',
   'hors-ligne',
 ];

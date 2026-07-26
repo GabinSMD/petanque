@@ -1,0 +1,247 @@
+import { useState, type FormEvent } from 'react';
+import type { ConcoursMode, TeamFormat } from '@shared';
+import type { ConcoursInput } from '../db/actions';
+import {
+  FORMAT_LABELS,
+  MODE_INFO,
+  MODE_LABELS,
+  isIndividualMode,
+  isRondesMode,
+  suggestedName,
+} from '../lib/labels';
+
+interface Props {
+  onSubmit: (input: ConcoursInput) => void | Promise<void>;
+  onCancel: () => void;
+}
+
+const MODES: ConcoursMode[] = ['poules', 'elimination_directe', 'melee', 'suisse', 'championnat'];
+const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
+const FORMAT_EMOJI: Record<TeamFormat, string> = {
+  tete_a_tete: '🧍',
+  doublette: '🧍🧍',
+  triplette: '🧍🧍🧍',
+};
+
+/**
+ * Création de concours en 3 étapes pensées pour les novices :
+ * formule (en langage courant) → formation → détails pré-remplis.
+ */
+export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [step, setStep] = useState(0);
+  const [mode, setMode] = useState<ConcoursMode | null>(null);
+  const [format, setFormat] = useState<TeamFormat | null>(null);
+  const [name, setName] = useState('');
+  const [nameTouched, setNameTouched] = useState(false);
+  const [date, setDate] = useState(today);
+  const [lieu, setLieu] = useState('');
+  const [nbTerrains, setNbTerrains] = useState(8);
+  const [scoreMax, setScoreMax] = useState(13);
+  const [nbRondes, setNbRondes] = useState(4);
+  const [tempsLimite, setTempsLimite] = useState<number | ''>('');
+  const [consolante, setConsolante] = useState(true);
+
+  const pickMode = (m: ConcoursMode) => {
+    setMode(m);
+    setStep(1);
+  };
+
+  const pickFormat = (f: TeamFormat) => {
+    setFormat(f);
+    if (!nameTouched && mode) setName(suggestedName(mode, f, date));
+    setStep(2);
+  };
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!mode || !format) return;
+    void onSubmit({
+      name: name.trim() || suggestedName(mode, format, date),
+      date,
+      lieu: lieu.trim() || undefined,
+      format,
+      mode,
+      consolante: MODE_INFO[mode].consolante ? consolante : false,
+      scoreMax,
+      nbTerrains,
+      nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
+      tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
+    });
+  };
+
+  return (
+    <div className="wizard">
+      <div className="wizard-progress" aria-hidden>
+        {['Formule', 'Formation', 'Détails'].map((label, i) => (
+          <span key={label} className={`wizard-dot${i === step ? ' current' : ''}${i < step ? ' done' : ''}`}>
+            <em>{i + 1}</em> {label}
+          </span>
+        ))}
+      </div>
+
+      {step === 0 && (
+        <div>
+          <p className="wizard-question">Quel type de concours organisez-vous ?</p>
+          <div className="mode-cards">
+            {MODES.map((m) => (
+              <button key={m} type="button" className="mode-card" onClick={() => pickMode(m)}>
+                <span className="mode-card-emoji">{MODE_INFO[m].emoji}</span>
+                <span className="mode-card-body">
+                  <strong>{MODE_LABELS[m]}</strong>
+                  <span className="mode-card-tagline">{MODE_INFO[m].tagline}</span>
+                  <span className="mode-card-desc">{MODE_INFO[m].description}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn btn-ghost" onClick={onCancel}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 1 && mode && (
+        <div>
+          <p className="wizard-question">
+            {isIndividualMode(mode)
+              ? 'Quelle taille d\'équipes tire-t-on au sort à chaque ronde ?'
+              : 'En quelle formation joue-t-on ?'}
+          </p>
+          <div className="format-cards">
+            {FORMATS.map((f) => (
+              <button key={f} type="button" className="format-card" onClick={() => pickFormat(f)}>
+                <span className="format-card-emoji">{FORMAT_EMOJI[f]}</span>
+                <strong>{FORMAT_LABELS[f]}</strong>
+                <span className="mode-card-tagline">
+                  {f === 'tete_a_tete' ? '1 joueur' : f === 'doublette' ? '2 joueurs' : '3 joueurs'}
+                  {isIndividualMode(mode) && f !== 'tete_a_tete' ? ' tirés au sort' : ''}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn btn-ghost" onClick={() => setStep(0)}>
+              ← Retour
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && mode && format && (
+        <form onSubmit={submit}>
+          <p className="wizard-recap">
+            {MODE_INFO[mode].emoji} {MODE_LABELS[mode]} · {FORMAT_LABELS[format]}
+            {isIndividualMode(mode) && ' · inscriptions individuelles'}
+          </p>
+          <label>
+            Nom du concours
+            <input
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setNameTouched(true);
+              }}
+              required
+              minLength={2}
+            />
+          </label>
+          <div className="form-row">
+            <label>
+              Date
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  if (!nameTouched) setName(suggestedName(mode, format, e.target.value));
+                }}
+                required
+              />
+            </label>
+            <label>
+              Lieu (facultatif)
+              <input
+                value={lieu}
+                onChange={(e) => setLieu(e.target.value)}
+                placeholder="Boulodrome municipal"
+              />
+            </label>
+          </div>
+          <div className="form-row">
+            <label>
+              Terrains disponibles
+              <input
+                type="number"
+                min={1}
+                max={200}
+                value={nbTerrains}
+                onChange={(e) => setNbTerrains(Number(e.target.value))}
+              />
+            </label>
+            <label>
+              Parties en (points)
+              <input
+                type="number"
+                min={7}
+                max={21}
+                value={scoreMax}
+                onChange={(e) => setScoreMax(Number(e.target.value))}
+              />
+            </label>
+          </div>
+          <div className="form-row">
+            {isRondesMode(mode) && mode !== 'championnat' && (
+              <label>
+                Nombre de rondes
+                <input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={nbRondes}
+                  onChange={(e) => setNbRondes(Number(e.target.value))}
+                />
+              </label>
+            )}
+            <label>
+              Temps limité (min, facultatif)
+              <input
+                type="number"
+                min={15}
+                max={180}
+                value={tempsLimite}
+                placeholder="—"
+                onChange={(e) =>
+                  setTempsLimite(e.target.value === '' ? '' : Number(e.target.value))
+                }
+              />
+            </label>
+          </div>
+          {MODE_INFO[mode].consolante && (
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={consolante}
+                onChange={(e) => setConsolante(e.target.checked)}
+              />
+              Consolante (les éliminés rejouent dans un second tableau)
+            </label>
+          )}
+          {mode === 'championnat' && (
+            <p className="hint">
+              Le nombre de rondes découle de l'effectif : chacun rencontre chacun.
+            </p>
+          )}
+          <div className="form-actions">
+            <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>
+              ← Retour
+            </button>
+            <button className="btn btn-primary">Créer le concours 🎉</button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}

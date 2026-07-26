@@ -4,10 +4,17 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { createConcours, deleteConcours } from '../db/actions';
 import { db } from '../db/local';
 import { useConcoursList } from '../db/hooks';
-import { ConcoursForm } from '../components/ConcoursForm';
+import { CreateConcoursWizard } from '../components/CreateConcoursWizard';
 import { Modal } from '../components/Modal';
 import { WelcomeModal, isWelcomeDone } from '../components/WelcomeModal';
-import { FORMAT_LABELS, MODE_LABELS, STATUS_LABELS, formatDateFr } from '../lib/labels';
+import {
+  FORMAT_LABELS,
+  MODE_INFO,
+  MODE_LABELS,
+  STATUS_LABELS,
+  entrantWord,
+  formatDateFr,
+} from '../lib/labels';
 
 function useTeamCounts(): Map<string, number> {
   return (
@@ -91,12 +98,14 @@ export function DashboardPage() {
             </p>
             <p className="concours-card-tags">
               <span className="tag">{FORMAT_LABELS[c.format]}</span>
-              <span className="tag">{MODE_LABELS[c.mode]}</span>
+              <span className="tag">
+                {MODE_INFO[c.mode].emoji} {MODE_LABELS[c.mode]}
+              </span>
               {c.consolante && <span className="tag">Consolante</span>}
             </p>
             <p className="concours-card-count">
-              {teamCounts.get(c.id) ?? 0} équipe{(teamCounts.get(c.id) ?? 0) > 1 ? 's' : ''}{' '}
-              inscrite{(teamCounts.get(c.id) ?? 0) > 1 ? 's' : ''}
+              {teamCounts.get(c.id) ?? 0}{' '}
+              {entrantWord(c.mode, (teamCounts.get(c.id) ?? 0) > 1)}
             </p>
           </div>
         ))}
@@ -104,7 +113,7 @@ export function DashboardPage() {
 
       {creating && (
         <Modal title="Nouveau concours" onClose={() => setCreating(false)}>
-          <ConcoursForm
+          <CreateConcoursWizard
             onCancel={() => setCreating(false)}
             onSubmit={async (input) => {
               const id = await createConcours(input);

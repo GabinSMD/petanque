@@ -1,11 +1,18 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import type { Match, Poule, Team } from '@shared';
-import { pouleOutcome, winnerOf } from '@shared';
+import type { Concours, Match, Poule, Team } from '@shared';
+import { pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { BracketView } from './tabs/BracketTab';
+import { SideLabel } from './tabs/RondesTab';
+import { StandingsTable } from '../components/StandingsTable';
 import { teamDisplayName } from '../components/TeamLabel';
-import { POULE_SLOT_LABELS, STATUS_LABELS, formatDateFr } from '../lib/labels';
+import {
+  POULE_SLOT_LABELS,
+  STATUS_LABELS,
+  formatDateFr,
+  isRondesMode,
+} from '../lib/labels';
 
 /**
  * Mode affichage public (TV / vidéoprojecteur) : lecture seule,
@@ -87,7 +94,12 @@ export function DisplayPage() {
         <DisplayPoules poules={poules} matches={matches} teamsById={teamsById} />
       )}
 
-      {(concours.status === 'tableau' || concours.status === 'termine') && (
+      {isRondesMode(concours.mode) &&
+        (concours.status === 'rondes' || concours.status === 'termine') && (
+          <DisplayRondes concours={concours} matches={matches} teams={teams} teamsById={teamsById} />
+        )}
+
+      {!isRondesMode(concours.mode) && (concours.status === 'tableau' || concours.status === 'termine') && (
         <>
           <section>
             <h2 className="display-section-title">Concours principal</h2>
@@ -115,6 +127,65 @@ export function DisplayPage() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function DisplayRondes({
+  concours,
+  matches,
+  teams,
+  teamsById,
+}: {
+  concours: Concours;
+  matches: Match[];
+  teams: Team[];
+  teamsById: Map<string, Team>;
+}) {
+  const rondeMs = matches.filter((m) => m.stage === 'ronde');
+  const tirees = rondesTirees(rondeMs);
+  if (tirees === 0) return null;
+  const current = rondeMs
+    .filter((m) => m.round === tirees - 1)
+    .sort((a, b) => a.position - b.position);
+  const standings = rondeStandings(teams, rondeMs);
+
+  return (
+    <div className="display-rondes">
+      <section>
+        <h2 className="display-section-title">
+          Ronde {tirees}
+          {concours.nbRondes && concours.mode !== 'championnat'
+            ? ` / ${concours.nbRondes}`
+            : ''}
+        </h2>
+        <div className="display-poule">
+          <ul>
+            {current.map((m) => (
+              <li key={m.id}>
+                <span className="display-slot">
+                  {m.terrain ? `Terrain ${m.terrain}` : `Partie ${m.position + 1}`}
+                </span>
+                <span className="display-match">
+                  <span className={m.done && (m.scoreA ?? 0) > (m.scoreB ?? 0) ? 'winner' : ''}>
+                    <SideLabel match={m} side="A" teamsById={teamsById} />
+                  </span>
+                  <span className="display-score">
+                    {m.done ? `${m.scoreA} – ${m.scoreB}` : 'vs'}
+                  </span>
+                  <span className={m.done && (m.scoreB ?? 0) > (m.scoreA ?? 0) ? 'winner' : ''}>
+                    <SideLabel match={m} side="B" teamsById={teamsById} />
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+      <section>
+        <h2 className="display-section-title">Classement</h2>
+        <StandingsTable standings={standings} teamsById={teamsById} limit={12} compact />
+      </section>
     </div>
   );
 }

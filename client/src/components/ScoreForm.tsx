@@ -26,7 +26,9 @@ export function ScoreForm({ concours, match, disabled, editOnly }: Props) {
   if (match.byeA || match.byeB) {
     return <span className="score-view score-bye">exempt</span>;
   }
-  if (!match.teamAId || !match.teamBId) {
+  const sideAKnown = Boolean(match.teamAId || (match.playersA && match.playersA.length > 0));
+  const sideBKnown = Boolean(match.teamBId || (match.playersB && match.playersB.length > 0));
+  if (!sideAKnown || !sideBKnown) {
     return <span className="score-view score-tbd">—</span>;
   }
 

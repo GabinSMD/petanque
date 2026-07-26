@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { Concours, ConcoursMode, TeamFormat } from '@shared';
 import type { ConcoursInput } from '../db/actions';
-import { FORMAT_LABELS, MODE_LABELS } from '../lib/labels';
+import { FORMAT_LABELS, MODE_INFO, MODE_LABELS, isRondesMode } from '../lib/labels';
 
 interface Props {
   initial?: Concours;
@@ -21,6 +21,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
   const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
   const [nbTerrains, setNbTerrains] = useState(initial?.nbTerrains ?? 8);
+  const [nbRondes, setNbRondes] = useState(initial?.nbRondes ?? 4);
+  const [tempsLimite, setTempsLimite] = useState<number | ''>(initial?.tempsLimite ?? '');
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -30,9 +32,11 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       lieu: lieu.trim() || undefined,
       format,
       mode,
-      consolante,
+      consolante: MODE_INFO[mode].consolante ? consolante : false,
       scoreMax,
       nbTerrains,
+      nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
+      tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
     });
   };
 
@@ -114,15 +118,44 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           />
         </label>
       </div>
-      <label className="checkbox-label">
-        <input
-          type="checkbox"
-          checked={consolante}
-          onChange={(e) => setConsolante(e.target.checked)}
-          disabled={lockStructure}
-        />
-        Consolante (repêchage des éliminés)
-      </label>
+      <div className="form-row">
+        {isRondesMode(mode) && mode !== 'championnat' && (
+          <label>
+            Nombre de rondes
+            <input
+              type="number"
+              min={1}
+              max={12}
+              value={nbRondes}
+              onChange={(e) => setNbRondes(Number(e.target.value))}
+            />
+          </label>
+        )}
+        <label>
+          Temps limité (min, facultatif)
+          <input
+            type="number"
+            min={15}
+            max={180}
+            value={tempsLimite}
+            placeholder="—"
+            onChange={(e) =>
+              setTempsLimite(e.target.value === '' ? '' : Number(e.target.value))
+            }
+          />
+        </label>
+      </div>
+      {MODE_INFO[mode].consolante && (
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={consolante}
+            onChange={(e) => setConsolante(e.target.checked)}
+            disabled={lockStructure}
+          />
+          Consolante (repêchage des éliminés)
+        </label>
+      )}
       <div className="form-actions">
         <button type="button" className="btn btn-ghost" onClick={onCancel}>
           Annuler

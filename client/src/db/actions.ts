@@ -1,14 +1,19 @@
 import {
+  buildChampionnat,
   buildConsolanteFromSources,
   defaultCtx,
   drawElimination,
   drawMainFromPoules,
+  drawMeleeRonde,
   drawPoules,
+  drawSwissRonde,
   isByeMatch,
   pouleOutcome,
   pouleSizes,
   propagate,
   recomputePoule,
+  rondeComplete,
+  rondesTirees,
   validateScore,
   type Concours,
   type ConcoursMode,
@@ -43,6 +48,8 @@ export interface ConcoursInput {
   consolante: boolean;
   scoreMax: number;
   nbTerrains: number;
+  nbRondes?: number;
+  tempsLimite?: number;
 }
 
 export async function createConcours(input: ConcoursInput): Promise<string> {
@@ -241,6 +248,74 @@ export async function cancelTableau(concours: Concours): Promise<void> {
 }
 
 /* ------------------------------------------------------------------ */
+/* Rondes (mêlée, système suisse, championnat)                         */
+/* ------------------------------------------------------------------ */
+
+const TEAM_SIZE: Record<TeamFormat, number> = {
+  tete_a_tete: 1,
+  doublette: 2,
+  triplette: 3,
+};
+
+/**
+ * Tire la ronde suivante (mêlée / suisse) ou génère le calendrier
+ * complet (championnat).
+ */
+export async function tirerRonde(concours: Concours): Promise<void> {
+  const entrants = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
+  if (entrants.length < 2) throw new Error('Il faut au moins 2 inscrits');
+  const matches = await listByConcours('match', concours.id);
+  const round = rondesTirees(matches);
+
+  let created: Match[];
+  if (concours.mode === 'championnat') {
+    if (round > 0) throw new Error('Le calendrier du championnat est déjà généré');
+    created = buildChampionnat(concours.id, entrants, ctx());
+  } else if (concours.mode === 'melee') {
+    if (round > 0 && !rondeComplete(matches, round - 1)) {
+      throw new Error('Terminez la ronde en cours avant d\'en tirer une nouvelle');
+    }
+    created = drawMeleeRonde(concours.id, entrants, round, TEAM_SIZE[concours.format], ctx());
+  } else if (concours.mode === 'suisse') {
+    if (round > 0 && !rondeComplete(matches, round - 1)) {
+      throw new Error('Terminez la ronde en cours avant d\'en tirer une nouvelle');
+    }
+    created = drawSwissRonde(concours.id, entrants, matches, round, ctx());
+  } else {
+    throw new Error('Cette formule ne se joue pas en rondes');
+  }
+
+  // Terrains par défaut, dans la limite du disponible.
+  let terrain = 1;
+  for (const m of created) {
+    if (!m.byeB && terrain <= concours.nbTerrains) m.terrain = terrain++;
+  }
+  await bulkPutEntities('match', created);
+  if (concours.status !== 'rondes') {
+    await putEntity('concours', { ...concours, status: 'rondes' });
+  }
+}
+
+/**
+ * Annule la dernière ronde tirée (mêlée / suisse) ou tout le calendrier
+ * (championnat). Retour aux inscriptions s'il ne reste plus de ronde.
+ */
+export async function annulerDerniereRonde(concours: Concours): Promise<void> {
+  const matches = (await listByConcours('match', concours.id)).filter(
+    (m) => m.stage === 'ronde',
+  );
+  if (matches.length === 0) return;
+  const last = Math.max(...matches.map((m) => m.round));
+  const toDelete =
+    concours.mode === 'championnat' ? matches : matches.filter((m) => m.round === last);
+  await softDeleteMany(toDelete.map((m) => ({ type: 'match' as const, id: m.id })));
+  const remaining = matches.length - toDelete.length;
+  if (remaining === 0) {
+    await putEntity('concours', { ...concours, status: 'inscriptions' });
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Scores                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -263,6 +338,7 @@ export async function clearScore(concours: Concours, match: Match): Promise<void
 
 /** Répercute une saisie : poule ou tableau, corrections en cascade comprises. */
 async function recomputeAfter(concours: Concours, match: Match): Promise<void> {
+  if (match.stage === 'ronde') return; // les rondes sont plates : rien à propager
   if (match.stage === 'poule' && match.pouleId) {
     const poule = await getEntity('poule', match.pouleId);
     if (!poule) return;

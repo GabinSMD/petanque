@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import type { Concours, Player, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
-import { PLAYERS_PER_TEAM } from '../../lib/labels';
+import { FORMAT_LABELS, PLAYERS_PER_TEAM, isIndividualMode } from '../../lib/labels';
 
 interface Props {
   concours: Concours;
@@ -10,7 +10,8 @@ interface Props {
 }
 
 export function TeamsTab({ concours, teams }: Props) {
-  const nbPlayers = PLAYERS_PER_TEAM[concours.format];
+  const individual = isIndividualMode(concours.mode);
+  const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
   const locked = concours.status !== 'inscriptions';
   const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
   const [licences, setLicences] = useState<string[]>(Array(nbPlayers).fill(''));
@@ -51,7 +52,7 @@ export function TeamsTab({ concours, teams }: Props) {
                   onChange={(e) =>
                     setNames(names.map((n, j) => (j === i ? e.target.value : n)))
                   }
-                  placeholder={`Joueur ${i + 1}`}
+                  placeholder={individual ? 'Nom du joueur' : `Joueur ${i + 1}`}
                   required={i === 0}
                 />
                 <input
@@ -92,7 +93,7 @@ export function TeamsTab({ concours, teams }: Props) {
         <thead>
           <tr>
             <th>N°</th>
-            <th>Joueurs</th>
+            <th>{individual ? 'Participant' : 'Joueurs'}</th>
             <th>Club</th>
             <th className="no-print">Actions</th>
           </tr>
@@ -156,7 +157,9 @@ export function TeamsTab({ concours, teams }: Props) {
           {teams.length === 0 && (
             <tr>
               <td colSpan={4} className="empty-cell">
-                Aucune équipe inscrite.
+                {individual
+                  ? 'Aucun participant inscrit — chacun s\'inscrit seul, les équipes seront tirées au sort.'
+                  : 'Aucune équipe inscrite.'}
               </td>
             </tr>
           )}
@@ -164,11 +167,16 @@ export function TeamsTab({ concours, teams }: Props) {
       </table>
 
       <p className="teams-footer">
-        <strong>{teams.length}</strong> équipe{teams.length > 1 ? 's' : ''} inscrite
-        {teams.length > 1 ? 's' : ''}
+        <strong>{teams.length}</strong>{' '}
+        {individual
+          ? `participant${teams.length > 1 ? 's' : ''} inscrit${teams.length > 1 ? 's' : ''}`
+          : `équipe${teams.length > 1 ? 's' : ''} inscrite${teams.length > 1 ? 's' : ''}`}
         {concours.mode === 'poules' &&
           teams.length > 0 &&
           (summary ? ` → ${summary}` : ' — effectif incompatible avec des poules (4, 6, 7, 8… équipes)')}
+        {individual &&
+          teams.length > 1 &&
+          ` → ${FORMAT_LABELS[concours.format].toLowerCase()}s tirées au sort à chaque ronde`}
       </p>
     </div>
   );
