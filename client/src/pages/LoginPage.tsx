@@ -34,6 +34,7 @@ export function LoginPage() {
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -51,6 +52,7 @@ export function LoginPage() {
               userName,
               email,
               password,
+              inviteCode: inviteCode.trim() || undefined,
             });
       if (wasGuest) {
         // Données créées en mode invité : proposer de les rattacher au compte.
@@ -124,14 +126,26 @@ export function LoginPage() {
         <form onSubmit={(e) => void submit(e)}>
           {mode === 'register' && (
             <>
+              {!inviteCode.trim() && (
+                <label>
+                  Nom du club / de l'organisation
+                  <input
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    placeholder="La Boule Joyeuse"
+                    required
+                    minLength={2}
+                  />
+                </label>
+              )}
               <label>
-                Nom du club / de l'organisation
+                Code d'invitation{' '}
+                <span className="label-hint">(facultatif — pour rejoindre un club existant)</span>
                 <input
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="La Boule Joyeuse"
-                  required
-                  minLength={2}
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                  placeholder="Ex. K7MT2WQD"
+                  maxLength={20}
                 />
               </label>
               <label>

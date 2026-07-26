@@ -4,9 +4,11 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { createConcours, deleteConcours } from '../db/actions';
 import { db } from '../db/local';
 import { useConcoursList } from '../db/hooks';
+import { ClubModal } from '../components/ClubModal';
 import { CreateConcoursWizard } from '../components/CreateConcoursWizard';
 import { Modal } from '../components/Modal';
 import { WelcomeModal, isWelcomeDone } from '../components/WelcomeModal';
+import { useSession } from '../db/hooks';
 import {
   FORMAT_LABELS,
   MODE_INFO,
@@ -35,7 +37,9 @@ export function DashboardPage() {
   const concoursList = useConcoursList();
   const teamCounts = useTeamCounts();
   const [creating, setCreating] = useState(false);
+  const [club, setClub] = useState(false);
   const [welcome, setWelcome] = useState(() => !isWelcomeDone());
+  const session = useSession();
 
   const remove = async (id: string, name: string) => {
     if (window.confirm(`Supprimer le concours « ${name} » et toutes ses données ?`)) {
@@ -48,6 +52,11 @@ export function DashboardPage() {
       <div className="page-head">
         <h1>Mes concours</h1>
         <span className="page-head-actions">
+          {!session?.guest && (
+            <button className="btn btn-sm" onClick={() => setClub(true)}>
+              👥 Mon club
+            </button>
+          )}
           <Link className="btn btn-sm" to="/licencies">
             📇 Licenciés
           </Link>
@@ -129,6 +138,7 @@ export function DashboardPage() {
         </Modal>
       )}
 
+      {club && <ClubModal onClose={() => setClub(false)} />}
       {welcome && <WelcomeModal onClose={() => setWelcome(false)} />}
     </div>
   );

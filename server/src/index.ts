@@ -9,7 +9,7 @@ import { openDb } from './db.js';
 import { hashPassword, signToken, verifyPassword, verifyToken } from './security.js';
 import { registerSyncRoutes } from './sync.js';
 import { rateLimiter, registerPublicRoutes } from './public.js';
-import type { OrgRow, UserRow } from './db.js';
+import type { InviteRow, OrgRow, UserRow } from './db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -82,9 +82,13 @@ app.post('/api/auth/register', async (req, reply) => {
   const userName = fieldStr(body.userName, 2, 80);
   const email = fieldStr(body.email, 5, 120)?.toLowerCase() ?? null;
   const password = typeof body.password === 'string' ? body.password : null;
+  const inviteCode = fieldStr(body.inviteCode, 4, 20)?.toUpperCase() ?? null;
 
-  if (!orgName || !userName || !email || !email.includes('@')) {
+  if (!userName || !email || !email.includes('@')) {
     return reply.code(400).send({ error: 'Champs invalides' });
+  }
+  if (!inviteCode && !orgName) {
+    return reply.code(400).send({ error: 'Nom du club requis (ou code d\'invitation)' });
   }
   if (!password || password.length < 8) {
     return reply.code(400).send({ error: 'Mot de passe : 8 caractères minimum' });
@@ -94,16 +98,31 @@ app.post('/api/auth/register', async (req, reply) => {
     return reply.code(409).send({ error: 'Un compte existe déjà avec cet e-mail' });
   }
 
+  // Rejoindre un club existant via un code d'invitation.
+  let joinOrg: OrgRow | null = null;
+  if (inviteCode) {
+    const invite = db
+      .prepare('SELECT * FROM invites WHERE code = ? AND expires_at > ?')
+      .get(inviteCode, new Date().toISOString()) as unknown as InviteRow | undefined;
+    if (!invite) {
+      return reply.code(400).send({ error: 'Code d\'invitation invalide ou expiré' });
+    }
+    joinOrg = db.prepare('SELECT * FROM orgs WHERE id = ?').get(invite.org_id) as unknown as OrgRow;
+  }
+
   const now = new Date().toISOString();
-  const orgId = randomUUID();
+  const orgId = joinOrg?.id ?? randomUUID();
+  const finalOrgName = joinOrg?.name ?? orgName!;
   const userId = randomUUID();
   db.exec('BEGIN');
   try {
-    db.prepare('INSERT INTO orgs (id, name, seq, created_at) VALUES (?, ?, 0, ?)').run(
-      orgId,
-      orgName,
-      now,
-    );
+    if (!joinOrg) {
+      db.prepare('INSERT INTO orgs (id, name, seq, created_at) VALUES (?, ?, 0, ?)').run(
+        orgId,
+        finalOrgName,
+        now,
+      );
+    }
     db.prepare(
       'INSERT INTO users (id, org_id, email, name, pass_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)',
     ).run(userId, orgId, email, userName, hashPassword(password), now);
@@ -117,8 +136,39 @@ app.post('/api/auth/register', async (req, reply) => {
   return {
     token,
     user: { id: userId, email, name: userName },
-    org: { id: orgId, name: orgName },
+    org: { id: orgId, name: finalOrgName },
   };
+});
+
+/* ------------------------------------------------------------------ */
+/* Club : membres et invitations                                       */
+/* ------------------------------------------------------------------ */
+
+const INVITE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+app.post('/api/org/invites', async (req, reply) => {
+  const auth = authenticate(req.headers.authorization);
+  if (!auth) return reply.code(401).send({ error: 'Non authentifié' });
+  const bytes = randomBytes(8);
+  const code = [...bytes].map((b) => INVITE_ALPHABET[b % INVITE_ALPHABET.length]).join('');
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 7 * 24 * 3600 * 1000).toISOString();
+  db.prepare('INSERT INTO invites (code, org_id, created_at, expires_at) VALUES (?, ?, ?, ?)').run(
+    code,
+    auth.orgId,
+    now.toISOString(),
+    expiresAt,
+  );
+  return { code, expiresAt };
+});
+
+app.get('/api/org/members', async (req, reply) => {
+  const auth = authenticate(req.headers.authorization);
+  if (!auth) return reply.code(401).send({ error: 'Non authentifié' });
+  const rows = db
+    .prepare('SELECT id, name, email, created_at FROM users WHERE org_id = ? ORDER BY created_at')
+    .all(auth.orgId) as unknown as Pick<UserRow, 'id' | 'name' | 'email' | 'created_at'>[];
+  return { members: rows };
 });
 
 app.post('/api/auth/login', async (req, reply) => {

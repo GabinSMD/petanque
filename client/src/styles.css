@@ -571,6 +571,41 @@ form label select {
   margin: 0.5rem 0 0;
 }
 
+.label-hint {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.club-members {
+  list-style: none;
+  margin: 0.3rem 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.invite-code-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.invite-code {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+}
+
+.invite-code-box .hint {
+  flex-basis: 100%;
+}
+
 .btn-header-cta {
   background: #fff;
   color: var(--accent-dark);
