@@ -1,9 +1,21 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BouleLogo } from '../App';
-import { getMeta, wipeLocalData } from '../db/local';
+import {
+  adoptLocalDataForNewOrg,
+  getMeta,
+  hasLocalConcours,
+  setMeta,
+  wipeLocalData,
+} from '../db/local';
 import { postJson } from '../lib/api';
-import { getSession, setSession, type Session } from '../lib/session';
+import {
+  GUEST_ORG_ID,
+  getSession,
+  setSession,
+  startGuestSession,
+  type Session,
+} from '../lib/session';
 import { syncNow } from '../sync/engine';
 
 type Mode = 'login' | 'register';
@@ -30,6 +42,7 @@ export function LoginPage() {
     setError(null);
     setBusy(true);
     try {
+      const wasGuest = getSession()?.guest === true;
       const res =
         mode === 'login'
           ? await postJson<AuthResponse>('/api/auth/login', { email, password })
@@ -39,10 +52,25 @@ export function LoginPage() {
               email,
               password,
             });
-      // Les données locales appartiennent à une organisation : purge si on change.
-      const localOrg = await getMeta<string>('orgId');
-      if (localOrg && localOrg !== res.org.id) {
-        await wipeLocalData();
+      if (wasGuest) {
+        // Données créées en mode invité : proposer de les rattacher au compte.
+        if (
+          (await hasLocalConcours()) &&
+          window.confirm(
+            'Conserver les concours créés en mode invité et les rattacher à ce ' +
+              'compte ? Ils seront alors sauvegardés en ligne.',
+          )
+        ) {
+          await adoptLocalDataForNewOrg();
+        } else {
+          await wipeLocalData();
+        }
+      } else {
+        // Les données locales appartiennent à une organisation : purge si on change.
+        const localOrg = await getMeta<string>('orgId');
+        if (localOrg && localOrg !== res.org.id) {
+          await wipeLocalData();
+        }
       }
       setSession({ token: res.token, user: res.user, org: res.org });
       void syncNow();
@@ -154,7 +182,44 @@ export function LoginPage() {
             Continuer hors ligne — {existing.org.name}
           </button>
         )}
+
+        {!existing?.guest && (
+          <>
+            <div className="login-divider">ou</div>
+            <button
+              className="btn btn-block"
+              type="button"
+              onClick={() => void startGuest()}
+            >
+              🚀 Essayer sans compte (mode invité)
+            </button>
+            <p className="login-guest-hint">
+              Tout fonctionne, mais uniquement sur cet appareil. Créez un compte plus
+              tard : vos concours invité pourront y être rattachés et sauvegardés en
+              ligne.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
+
+  async function startGuest(): Promise<void> {
+    const localOrg = await getMeta<string>('orgId');
+    if (localOrg && localOrg !== GUEST_ORG_ID) {
+      if (
+        !window.confirm(
+          'Des données d\'un autre compte existent sur cet appareil : elles seront ' +
+            'effacées pour démarrer le mode invité. Continuer ?',
+        )
+      ) {
+        return;
+      }
+      await wipeLocalData();
+    }
+    await setMeta('orgId', GUEST_ORG_ID);
+    startGuestSession();
+    void syncNow(); // met immédiatement le badge en « Mode invité »
+    navigate('/', { replace: true });
+  }
 }

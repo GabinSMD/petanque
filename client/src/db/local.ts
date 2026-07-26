@@ -57,3 +57,22 @@ export async function wipeLocalData(): Promise<void> {
     await db.meta.clear();
   });
 }
+
+/**
+ * Rattache les données locales (mode invité) à un nouveau compte : tout
+ * est re-marqué « à pousser » et le curseur repart de zéro — la prochaine
+ * synchronisation envoie l'intégralité au serveur du compte.
+ */
+export async function adoptLocalDataForNewOrg(): Promise<void> {
+  await db.transaction('rw', db.entities, db.meta, async () => {
+    await db.entities.toCollection().modify({ dirty: 1 });
+    await db.meta.delete('cursor');
+    await db.meta.delete('orgId');
+  });
+}
+
+/** Y a-t-il au moins un concours vivant sur cet appareil ? */
+export async function hasLocalConcours(): Promise<boolean> {
+  const rows = await db.entities.where('type').equals('concours').toArray();
+  return rows.some((r) => r.deleted === 0);
+}

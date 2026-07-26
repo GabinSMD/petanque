@@ -13,16 +13,15 @@ import { DisplayPage } from './pages/DisplayPage';
 
 function Layout() {
   const session = useSession();
+  const guest = session?.guest === true;
 
   const logout = async () => {
-    if (
-      !window.confirm(
-        'Se déconnecter ? Les données locales de cet appareil seront effacées ' +
-          '(elles restent sauvegardées sur le serveur si elles ont été synchronisées).',
-      )
-    ) {
-      return;
-    }
+    const message = guest
+      ? 'Quitter le mode invité ? Vos concours ne sont PAS sauvegardés en ligne : ' +
+        'ils seront définitivement effacés. Créez plutôt un compte pour les conserver.'
+      : 'Se déconnecter ? Les données locales de cet appareil seront effacées ' +
+        '(elles restent sauvegardées sur le serveur si elles ont été synchronisées).';
+    if (!window.confirm(message)) return;
     await wipeLocalData();
     clearSession();
   };
@@ -43,8 +42,13 @@ function Layout() {
               <span className="org-name" title={session.user.name}>
                 {session.org.name}
               </span>
+              {guest && (
+                <Link className="btn btn-sm btn-header-cta" to="/login">
+                  Créer un compte
+                </Link>
+              )}
               <button className="btn btn-ghost btn-sm" onClick={() => void logout()}>
-                Déconnexion
+                {guest ? 'Quitter' : 'Déconnexion'}
               </button>
             </div>
           )}

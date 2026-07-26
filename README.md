@@ -73,6 +73,11 @@ scores, tableaux) et se synchronise dès que le réseau revient.
 ### SaaS & hors-ligne
 - **Comptes club (multi-tenant)** : chaque organisation a ses concours, ses
   utilisateurs et son journal de modifications.
+- **Mode invité** : tout essayer **sans créer de compte** — les données
+  restent sur l'appareil ; à la création d'un compte, l'application propose
+  de **rattacher les concours invité** (ils sont alors poussés au serveur).
+- **Stockage persistant** : `navigator.storage.persist()` est demandé au
+  démarrage pour interdire au navigateur de purger les données locales.
 - **Local-first / PWA** : l'interface lit et écrit d'abord dans IndexedDB ;
   le service worker met l'application en cache — rechargez la page sans
   réseau, tout est là. Installable sur mobile/tablette.

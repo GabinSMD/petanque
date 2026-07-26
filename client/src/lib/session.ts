@@ -19,6 +19,20 @@ export interface Session {
   token: string;
   user: SessionUser;
   org: SessionOrg;
+  /** Mode invité : aucune synchronisation, données sur cet appareil. */
+  guest?: boolean;
+}
+
+/** Identifiant d'organisation réservé au mode invité. */
+export const GUEST_ORG_ID = 'invite-local';
+
+export function startGuestSession(): void {
+  setSession({
+    token: '',
+    guest: true,
+    user: { id: 'invite', name: 'Invité', email: '' },
+    org: { id: GUEST_ORG_ID, name: 'Mode invité' },
+  });
 }
 
 const SESSION_KEY = 'petanque.session';
@@ -36,7 +50,7 @@ export function getSession(): Session | null {
       return cached;
     }
     const parsed = JSON.parse(raw) as Session;
-    cached = parsed.token && parsed.org?.id ? parsed : null;
+    cached = (parsed.token || parsed.guest) && parsed.org?.id ? parsed : null;
   } catch {
     cached = null;
   }

@@ -3,10 +3,12 @@ import ReactDOM from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
 import { startSyncLoop } from './sync/engine';
+import { ensurePersistentStorage } from './lib/storage';
 import './styles.css';
 
 registerSW({ immediate: true });
 startSyncLoop();
+void ensurePersistentStorage();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -313,7 +313,8 @@ export const FAQ: FaqEntry[] = [
       'Le badge en haut passe en « Hors ligne » et compte les modifications en attente.',
       'Au retour du réseau, tout s\'envoie automatiquement (ou cliquez sur le badge pour forcer).',
     ],
-    note: 'Installez l\'application (menu du navigateur → « Installer ») pour la retrouver même après un redémarrage de la tablette.',
+    note:
+      'Installez l\'application (menu du navigateur → « Installer ») pour la retrouver même après un redémarrage de la tablette. Au premier lancement, l\'application demande aussi le « stockage persistant » : le navigateur s\'interdit alors de purger vos données locales.',
   },
   {
     id: 'multi-appareils',
@@ -326,6 +327,20 @@ export const FAQ: FaqEntry[] = [
       'En cas de double saisie sur la même partie, la plus récente l\'emporte (résolution automatique).',
     ],
     note: 'Astuce : un appareil à la table de marque pour les scores, un autre branché à la TV en mode Affichage.',
+  },
+  {
+    id: 'mode-invite',
+    category: 'Hors ligne',
+    question: 'Peut-on essayer sans créer de compte ?',
+    keywords: ['invite', 'essai', 'essayer', 'sans compte', 'tester', 'gratuit', 'inscription'],
+    intro: 'Oui : le mode invité donne accès à tout, sans compte.',
+    steps: [
+      'Sur l\'écran de connexion, choisissez « 🚀 Essayer sans compte ».',
+      'Tout fonctionne (formules, tirages, scores, affichage TV…) mais uniquement sur cet appareil : rien n\'est envoyé en ligne.',
+      'Pour sauvegarder et synchroniser : cliquez sur « Créer un compte » (badge du haut) — l\'application propose alors de rattacher vos concours invité au compte.',
+    ],
+    note:
+      'Attention : en mode invité, « Quitter » efface définitivement les données de l\'appareil.',
   },
   {
     id: 'badge-sync',

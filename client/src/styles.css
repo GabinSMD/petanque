@@ -237,6 +237,7 @@ input:focus, select:focus, button:focus-visible {
 .sync-offline .sync-dot { background: #d3cfc4; }
 .sync-error .sync-dot { background: #ffb08f; }
 .sync-idle .sync-dot { background: #ccc; }
+.sync-guest .sync-dot { background: #f2cd6b; }
 
 .sync-pending {
   background: var(--terra);
@@ -482,6 +483,34 @@ form label select {
 .login-tabs button.active {
   background: var(--accent);
   color: #fff;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 0.9rem 0 0.5rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+
+.login-guest-hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 0.5rem 0 0;
+}
+
+.btn-header-cta {
+  background: #fff;
+  color: var(--accent-dark);
+  font-weight: 700;
 }
 
 /* ------------------------------ Concours ------------------------------ */

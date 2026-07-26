@@ -3,7 +3,7 @@ import { db, getMeta, setMeta, wipeLocalData, type EntityRecord } from '../db/lo
 import { ApiError, postJson } from '../lib/api';
 import { getDeviceId, getSession } from '../lib/session';
 
-export type SyncStatus = 'idle' | 'offline' | 'syncing' | 'synced' | 'error' | 'auth';
+export type SyncStatus = 'idle' | 'guest' | 'offline' | 'syncing' | 'synced' | 'error' | 'auth';
 
 interface ServerChange {
   type: EntityType;
@@ -70,6 +70,12 @@ export async function syncNow(): Promise<void> {
   const session = getSession();
   if (!session) {
     setStatus('idle');
+    return;
+  }
+  if (session.guest) {
+    // Mode invité : tout reste local. Les entités gardent dirty=1, si bien
+    // qu'un rattachement ultérieur à un compte pousse tout d'un coup.
+    setStatus('guest');
     return;
   }
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
