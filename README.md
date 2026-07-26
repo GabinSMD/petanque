@@ -10,7 +10,22 @@ scores, tableaux) et se synchronise dès que le réseau revient.
 
 ### Gestion sportive
 - **Concours** en tête-à-tête, doublette ou triplette ; parties en 13 points
-  (configurable, ex. 11) ; nombre de terrains.
+  (configurable, ex. 11) ; nombre de terrains ; parties en temps limité
+  (indication de durée).
+- **Toutes les formules de jeu** :
+  - **Poules puis élimination** (le classique FFPJP) ;
+  - **Élimination directe** (avec consolante possible) ;
+  - **Mêlée tournante** : inscriptions individuelles, équipes tirées au sort
+    à chaque ronde — effectifs inégaux gérés comme sur le terrain (une
+    triplette peut rencontrer une doublette, personne n'est exempt),
+    classement individuel ;
+  - **Système suisse** : ronde 1 aléatoire puis appariement par classement
+    sans revanche, exempt gagnant 13-7 en effectif impair (jamais deux fois
+    le même) ;
+  - **Championnat toutes rondes** : calendrier complet généré d'un coup
+    (méthode du cercle), ronde de repos en effectif impair.
+- **Classements en rondes** : victoires, puis goal-average, puis points
+  marqués — mis à jour en direct à chaque saisie.
 - **Inscriptions** : équipes numérotées, joueurs avec n° de licence optionnel,
   club, forfaits, verrouillage après tirage.
 - **Poules à la FFPJP** : poules de 4 complétées par des poules de 3
@@ -40,6 +55,10 @@ scores, tableaux) et se synchronise dès que le réseau revient.
   page d'impression du navigateur.
 
 ### Prise en main
+- **Création guidée en 3 étapes** : des cartes de formules en langage
+  courant (« le classique des concours officiels », « idéal club & amis —
+  chacun pour soi »…), la formation illustrée, puis un nom proposé
+  automatiquement.
 - **Tutoriel intégré** : écran de bienvenue à la première utilisation, visite
   guidée interactive (mise en lumière des éléments de l'interface) et
   **concours d'exemple** pré-rempli pour s'entraîner sans risque.
