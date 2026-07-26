@@ -2674,6 +2674,79 @@ form label select {
   margin: 0;
 }
 
+/* ---------------------------- Têtes de série --------------------------- */
+
+.seed-picker {
+  margin: 0.5rem 0;
+}
+
+.seed-picker-body {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.6rem;
+  margin-top: 0.4rem;
+  background: #f7f9fd;
+}
+
+.seed-list {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.seed-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.seed-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.seed-search {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.seed-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+.seed-chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.seed-chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
 /* ---------------------------- Plan des terrains ------------------------ */
 
 .terrain-board {

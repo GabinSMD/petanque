@@ -40,12 +40,15 @@ export interface PouleDraw {
 
 export interface DrawPoulesOptions {
   avoidSameClub?: boolean;
+  /** Têtes de série (ids ordonnés) : réparties dans des poules différentes. */
+  seeds?: string[];
 }
 
 /**
  * Tirage au sort des poules : mélange des équipes, découpage en poules
  * de 4 puis de 3, avec une passe de réparation pour éviter (au mieux)
- * deux équipes du même club dans une poule.
+ * deux équipes du même club dans une poule. Les têtes de série éventuelles
+ * sont réparties une par poule (poules différentes).
  */
 export function drawPoules(
   concoursId: string,
@@ -56,14 +59,42 @@ export function drawPoules(
   const sizes = pouleSizes(teams.length);
   if (!sizes) return null;
 
-  let pool = shuffle(teams, ctx.rng);
+  const groups: Team[][] = sizes.map(() => []);
+  const seedIds = opts.seeds ?? [];
+  const byId = new Map(teams.map((t) => [t.id, t]));
 
-  // Découpage initial.
-  const groups: Team[][] = [];
-  let offset = 0;
-  for (const size of sizes) {
-    groups.push(pool.slice(offset, offset + size));
-    offset += size;
+  if (seedIds.length > 0) {
+    // Placement des têtes de série, une par poule (en tournant si besoin).
+    const seeded = seedIds.map((id) => byId.get(id)).filter((t): t is Team => Boolean(t));
+    let gi = 0;
+    for (const team of seeded) {
+      let tries = 0;
+      while (groups[gi]!.length >= sizes[gi]! && tries < groups.length) {
+        gi = (gi + 1) % groups.length;
+        tries++;
+      }
+      groups[gi]!.push(team);
+      gi = (gi + 1) % groups.length;
+    }
+    // Répartition aléatoire du reste dans les places libres.
+    const seedSet = new Set(seedIds);
+    const rest = shuffle(
+      teams.filter((t) => !seedSet.has(t.id)),
+      ctx.rng,
+    );
+    let ri = 0;
+    for (let g = 0; g < groups.length; g++) {
+      while (groups[g]!.length < sizes[g]! && ri < rest.length) {
+        groups[g]!.push(rest[ri++]!);
+      }
+    }
+  } else {
+    const pool = shuffle(teams, ctx.rng);
+    let offset = 0;
+    for (let g = 0; g < sizes.length; g++) {
+      groups[g] = pool.slice(offset, offset + sizes[g]!);
+      offset += sizes[g]!;
+    }
   }
 
   if (opts.avoidSameClub) {

@@ -166,11 +166,34 @@ export function propagate(all: Match[]): Match[] {
 export interface EliminationDrawOptions {
   avoidSameClub?: boolean;
   teamsById?: Map<string, Team>;
+  /** Têtes de série (ids ordonnés) : placées aux positions standard du tableau. */
+  seeds?: string[];
+}
+
+/**
+ * Ordre standard des têtes de série dans un tableau de taille `size`
+ * (1, size, size/2… répartis pour que les têtes se rencontrent le plus
+ * tard possible). Retourne, pour chaque position, le numéro de tête.
+ */
+export function seedSlotOrder(size: number): number[] {
+  let slots = [1, 2];
+  while (slots.length < size) {
+    const sum = slots.length * 2 + 1;
+    const next: number[] = [];
+    for (const s of slots) {
+      next.push(s);
+      next.push(sum - s);
+    }
+    slots = next;
+  }
+  return slots;
 }
 
 /**
  * Tirage d'un tableau à élimination directe : mélange, exempts répartis
  * régulièrement, réparation « même club » optionnelle au premier tour.
+ * Avec des têtes de série, celles-ci sont placées aux positions standard
+ * (exempts prioritaires aux mieux classées) pour se rencontrer tardivement.
  */
 export function drawElimination(
   concoursId: string,
@@ -182,21 +205,51 @@ export function drawElimination(
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
   const bracketSize = nextPow2(teams.length);
   const byes = bracketSize - teams.length;
+  const seedIds = opts.seeds ?? [];
 
-  const pool = shuffle(teams, ctx.rng);
-  const byeTeams = pool.slice(0, byes);
-  const playing = pool.slice(byes);
+  let units: Unit[];
 
-  const pairs: [Team, Team][] = [];
-  for (let i = 0; i < playing.length; i += 2) {
-    pairs.push([playing[i]!, playing[i + 1]!]);
+  if (seedIds.length > 0) {
+    // Placement par têtes de série : slot k reçoit la k-ième équipe (têtes
+    // en tête), les slots au-delà de l'effectif sont des exempts.
+    const byId = new Map(teams.map((t) => [t.id, t]));
+    const seeded = seedIds.map((id) => byId.get(id)).filter((t): t is Team => Boolean(t));
+    const seedSet = new Set(seeded.map((t) => t.id));
+    const rest = shuffle(
+      teams.filter((t) => !seedSet.has(t.id)),
+      ctx.rng,
+    );
+    const ranked = [...seeded, ...rest]; // rang 1..n
+
+    const order = seedSlotOrder(bracketSize); // numéro de tête par position
+    const slots: (Team | null)[] = order.map((seedNum) =>
+      seedNum <= ranked.length ? ranked[seedNum - 1]! : null,
+    );
+
+    units = [];
+    for (let i = 0; i < slots.length; i += 2) {
+      const a = slots[i];
+      const b = slots[i + 1];
+      if (a && b) units.push({ a: teamSlot(a.id), b: teamSlot(b.id) });
+      else if (a) units.push({ a: teamSlot(a.id), b: { bye: true } });
+      else if (b) units.push({ a: teamSlot(b.id), b: { bye: true } });
+      else units.push({ a: { bye: true }, b: { bye: true } });
+    }
+  } else {
+    const pool = shuffle(teams, ctx.rng);
+    const byeTeams = pool.slice(0, byes);
+    const playing = pool.slice(byes);
+
+    const pairs: [Team, Team][] = [];
+    for (let i = 0; i < playing.length; i += 2) {
+      pairs.push([playing[i]!, playing[i + 1]!]);
+    }
+    if (opts.avoidSameClub) repairSameClubPairs(pairs, ctx);
+
+    const byeUnits: Unit[] = byeTeams.map((t) => ({ a: teamSlot(t.id), b: { bye: true } }));
+    const matchUnits: Unit[] = pairs.map(([a, b]) => ({ a: teamSlot(a.id), b: teamSlot(b.id) }));
+    units = spreadEvenly(matchUnits, byeUnits);
   }
-
-  if (opts.avoidSameClub) repairSameClubPairs(pairs, ctx);
-
-  const byeUnits: Unit[] = byeTeams.map((t) => ({ a: teamSlot(t.id), b: { bye: true } }));
-  const matchUnits: Unit[] = pairs.map(([a, b]) => ({ a: teamSlot(a.id), b: teamSlot(b.id) }));
-  const units = spreadEvenly(matchUnits, byeUnits);
 
   const matches = createBracketMatches(concoursId, stage, units, ctx);
   return applyChanges(matches, propagate(matches));

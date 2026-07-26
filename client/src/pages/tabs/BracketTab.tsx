@@ -8,6 +8,7 @@ import {
   updateConcours,
 } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
+import { SeedPicker } from '../../components/SeedPicker';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 export function BracketTab({ concours, teams, matches, poules }: Props) {
   const [stage, setStage] = useState<'principal' | 'consolante'>('principal');
   const [avoidSameClub, setAvoidSameClub] = useState(true);
+  const [seeds, setSeeds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
@@ -51,6 +53,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               />
               Éviter deux équipes du même club au premier tour
             </label>
+            <SeedPicker teams={teams} seeds={seeds} onChange={setSeeds} />
             {error && <p className="form-error">{error}</p>}
             <button
               className="btn btn-primary"
@@ -58,7 +61,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               onClick={() => {
                 setBusy(true);
                 setError(null);
-                generateTableauDirect(concours, avoidSameClub)
+                generateTableauDirect(concours, avoidSameClub, seeds)
                   .catch((err) =>
                     setError(err instanceof Error ? err.message : 'Tirage impossible'),
                   )

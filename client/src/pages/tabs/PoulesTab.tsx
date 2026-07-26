@@ -10,6 +10,7 @@ import {
   setPouleTerrain,
 } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
+import { SeedPicker } from '../../components/SeedPicker';
 import { TeamLabel } from '../../components/TeamLabel';
 import { POULE_SLOT_LABELS } from '../../lib/labels';
 
@@ -22,6 +23,7 @@ interface Props {
 
 export function PoulesTab({ concours, teams, poules, matches }: Props) {
   const [avoidSameClub, setAvoidSameClub] = useState(true);
+  const [seeds, setSeeds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Repli des poules : undefined = défaut (les terminées sont repliées).
@@ -41,7 +43,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
     setError(null);
     setBusy(true);
     try {
-      await generatePoules(concours, avoidSameClub);
+      await generatePoules(concours, avoidSameClub, seeds);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Tirage impossible');
     } finally {
@@ -95,6 +97,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             />
             Éviter deux équipes du même club dans une poule
           </label>
+          <SeedPicker teams={teams} seeds={seeds} onChange={setSeeds} />
           {error && <p className="form-error">{error}</p>}
           <button
             className="btn btn-primary"
