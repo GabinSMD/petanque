@@ -9,6 +9,7 @@ import { DeclarationsWatch } from '../components/DeclarationsWatch';
 import { Modal } from '../components/Modal';
 import { QuickScore } from '../components/QuickScore';
 import { ShareModal } from '../components/ShareModal';
+import { useCallNotifier } from '../lib/notifier';
 import {
   FORMAT_LABELS,
   MODE_LABELS,
@@ -43,6 +44,7 @@ export function ConcoursPage() {
   const matches = useMatches(id);
   const [editing, setEditing] = useState(false);
   const [sharing, setSharing] = useState(false);
+  useCallNotifier(concours, teams ?? [], poules ?? [], matches ?? []);
 
   if (!concours) {
     return (

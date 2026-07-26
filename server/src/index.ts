@@ -9,6 +9,7 @@ import { openDb } from './db.js';
 import { hashPassword, signToken, verifyPassword, verifyToken } from './security.js';
 import { registerSyncRoutes } from './sync.js';
 import { rateLimiter, registerPublicRoutes } from './public.js';
+import { registerPushRoutes } from './push.js';
 import type { InviteRow, OrgRow, UserRow } from './db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -210,6 +211,7 @@ app.get('/api/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 
 registerSyncRoutes(app, db, (req) => authenticate(req.headers.authorization));
 registerPublicRoutes(app, db, (req) => authenticate(req.headers.authorization));
+registerPushRoutes(app, db, DATA_DIR, (req) => authenticate(req.headers.authorization));
 
 /* ------------------------------------------------------------------ */
 /* Client statique (PWA) — production                                  */

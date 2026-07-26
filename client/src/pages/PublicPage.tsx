@@ -2,12 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
-import {
-  declarableMatches,
-  matchLabel,
-  pendingMatchesForTeam,
-  sideName,
-} from '../lib/matchLabel';
+import { matchLabel, pendingMatchesForTeam, sideName, teamSideInMatch } from '../lib/matchLabel';
+import { followedTeams, pushSupported, subscribeForTeams } from '../lib/push';
 import { BracketView } from './tabs/BracketTab';
 import { SideLabel } from './tabs/RondesTab';
 import { StandingsTable } from '../components/StandingsTable';
@@ -40,15 +36,35 @@ interface PublicData {
   generatedAt: string;
 }
 
+type PublicMode = 'choose' | 'play' | 'watch';
+
 /**
- * Page publique en lecture seule (spectateurs et joueurs, sur téléphone) :
- * aucune authentification, rafraîchissement automatique.
+ * Page publique (QR code) avec deux parcours :
+ *  - « Je joue » : on saisit son numéro d'équipe et on ne voit que ce qui
+ *    la concerne (sa partie, sa déclaration de score, ses notifications) ;
+ *  - « Je consulte » : l'affichage complet des résultats.
+ * Aucune authentification ; rafraîchissement automatique.
  */
 export function PublicPage() {
   const { token } = useParams<{ token: string }>();
   const [data, setData] = useState<PublicData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [mode, setMode] = useState<PublicMode>(
+    () => (localStorage.getItem(`petanque.pubmode.${token}`) as PublicMode) || 'choose',
+  );
+  const [teamNumber, setTeamNumber] = useState(
+    () => localStorage.getItem(`petanque.pubteam.${token}`) || '',
+  );
+
+  const chooseMode = (m: PublicMode) => {
+    setMode(m);
+    localStorage.setItem(`petanque.pubmode.${token}`, m);
+  };
+  const changeTeamNumber = (n: string) => {
+    setTeamNumber(n);
+    localStorage.setItem(`petanque.pubteam.${token}`, n);
+  };
 
   const load = useCallback(async () => {
     try {
@@ -97,14 +113,12 @@ export function PublicPage() {
     );
   }
 
-  const { concours, poules, matches } = data;
+  const { concours, matches } = data;
   const principal = matches.filter((m) => m.stage === 'principal');
-  const consolante = matches.filter((m) => m.stage === 'consolante');
   const maxRound = principal.length ? Math.max(...principal.map((m) => m.round)) : 0;
   const finale = principal.find((m) => m.round === maxRound && m.position === 0);
   const champion = winnerOf(finale);
   const championTeam = champion ? teamsById.get(champion) : undefined;
-  const rondes = isRondesMode(concours.mode);
 
   return (
     <div className="public-page">
@@ -121,7 +135,8 @@ export function PublicPage() {
           </span>
           {updatedAt && (
             <span className="public-updated">
-              Actualisé à {updatedAt}{error ? ' (hors ligne)' : ''}
+              Actualisé à {updatedAt}
+              {error ? ' (hors ligne)' : ''}
             </span>
           )}
         </p>
@@ -136,15 +151,352 @@ export function PublicPage() {
         </div>
       )}
 
-      {token && (
-        <DeclareCard data={data} token={token} teamsById={teamsById} onDeclared={load} />
+      {mode !== 'choose' && (
+        <div className="public-modeswitch no-print">
+          <button
+            className={mode === 'play' ? 'active' : ''}
+            onClick={() => chooseMode('play')}
+          >
+            🎯 Je joue
+          </button>
+          <button
+            className={mode === 'watch' ? 'active' : ''}
+            onClick={() => chooseMode('watch')}
+          >
+            📺 Je consulte
+          </button>
+        </div>
       )}
 
+      {mode === 'choose' && (
+        <div className="public-chooser">
+          <p>Que souhaitez-vous faire ?</p>
+          <button className="public-choice" onClick={() => chooseMode('play')}>
+            <span className="public-choice-emoji">🎯</span>
+            <span>
+              <strong>Je joue</strong>
+              <small>Ma partie, déclarer mon score, être prévenu·e</small>
+            </span>
+          </button>
+          <button className="public-choice" onClick={() => chooseMode('watch')}>
+            <span className="public-choice-emoji">📺</span>
+            <span>
+              <strong>Je consulte</strong>
+              <small>Tous les résultats en direct</small>
+            </span>
+          </button>
+        </div>
+      )}
+
+      {mode === 'play' && token && (
+        <PlayerPanel
+          data={data}
+          token={token}
+          teamsById={teamsById}
+          teamNumber={teamNumber}
+          onChangeTeam={changeTeamNumber}
+          onDeclared={load}
+          onWatch={() => chooseMode('watch')}
+        />
+      )}
+
+      {mode === 'watch' && <ResultsView data={data} teamsById={teamsById} />}
+
+      <footer className="public-footer">Résultats en direct — Pétanque Concours</footer>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Parcours « Je joue »                                                */
+/* ------------------------------------------------------------------ */
+
+function PlayerPanel({
+  data,
+  token,
+  teamsById,
+  teamNumber,
+  onChangeTeam,
+  onDeclared,
+  onWatch,
+}: {
+  data: PublicData;
+  token: string;
+  teamsById: Map<string, Team>;
+  teamNumber: string;
+  onChangeTeam: (n: string) => void;
+  onDeclared: () => void | Promise<void>;
+  onWatch: () => void;
+}) {
+  const [input, setInput] = useState(teamNumber);
+  const byNumber = useMemo(() => new Map(data.teams.map((t) => [t.number, t])), [data.teams]);
+
+  const num = teamNumber.trim() === '' ? null : Number(teamNumber);
+  const team = num !== null && Number.isInteger(num) ? byNumber.get(num) : undefined;
+
+  // Étape 1 : saisir son numéro d'équipe.
+  if (!team) {
+    return (
+      <section className="result-section player-ask">
+        <h2>🎯 Votre numéro d'équipe</h2>
+        <p className="hint">Il figure sur votre ticket / dossard.</p>
+        <form
+          className="player-ask-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onChangeTeam(input.trim());
+          }}
+        >
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="ex. 47"
+            autoFocus
+          />
+          <button className="btn btn-primary">Valider</button>
+        </form>
+        {teamNumber && !team && <p className="form-error">Aucune équipe n°{teamNumber}.</p>}
+        <button className="btn btn-ghost btn-block" onClick={onWatch}>
+          📺 ou consulter tous les résultats
+        </button>
+      </section>
+    );
+  }
+
+  const pending = pendingMatchesForTeam(team.id, data.matches);
+
+  return (
+    <>
+      <section className="result-section player-me">
+        <div className="player-me-head">
+          <div>
+            <span className="team-number">{team.number}</span>{' '}
+            <strong>{teamDisplayName(team)}</strong>
+            {team.club && <span className="team-club"> {team.club}</span>}
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={() => onChangeTeam('')}>
+            Changer
+          </button>
+        </div>
+        <NotifyButton token={token} teamNumber={team.number} />
+      </section>
+
+      {pending.length === 0 ? (
+        <section className="result-section">
+          <p className="player-idle">
+            🕐 Aucune partie à jouer pour l'instant.
+            <br />
+            {pushSupported()
+              ? 'Activez les notifications ci-dessus : vous serez prévenu·e dès votre prochaine convocation (barrage, tour suivant…).'
+              : 'Revenez consulter régulièrement votre prochaine convocation.'}
+          </p>
+        </section>
+      ) : (
+        pending.map((m) => (
+          <MyMatchDeclare
+            key={m.id}
+            data={data}
+            token={token}
+            match={m}
+            team={team}
+            teamsById={teamsById}
+            onDeclared={onDeclared}
+          />
+        ))
+      )}
+
+      <button className="btn btn-ghost btn-block no-print" onClick={onWatch}>
+        📺 Voir tous les résultats
+      </button>
+    </>
+  );
+}
+
+function NotifyButton({ token, teamNumber }: { token: string; teamNumber: number }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>(
+    followedTeams(token).includes(teamNumber) ? 'done' : 'idle',
+  );
+  const [msg, setMsg] = useState<string | null>(null);
+
+  if (!pushSupported()) {
+    return (
+      <p className="hint">
+        🔔 Les notifications ne sont pas gérées par ce navigateur (essayez Chrome, ou
+        installez l'application).
+      </p>
+    );
+  }
+
+  if (state === 'done') {
+    return <p className="notify-on">🔔 Notifications activées pour cette équipe.</p>;
+  }
+
+  return (
+    <div className="notify-box">
+      <button
+        className="btn btn-primary btn-sm"
+        disabled={state === 'busy'}
+        onClick={async () => {
+          setState('busy');
+          setMsg(null);
+          const res = await subscribeForTeams(token, [teamNumber]);
+          if (res.ok) {
+            setState('done');
+          } else {
+            setState('error');
+            setMsg(res.reason);
+          }
+        }}
+      >
+        {state === 'busy' ? '…' : '🔔 Être prévenu·e quand je suis appelé·e'}
+      </button>
+      {msg && <p className="hint">{msg}</p>}
+    </div>
+  );
+}
+
+function MyMatchDeclare({
+  data,
+  token,
+  match,
+  team,
+  teamsById,
+  onDeclared,
+}: {
+  data: PublicData;
+  token: string;
+  match: Match;
+  team: Team;
+  teamsById: Map<string, Team>;
+  onDeclared: () => void | Promise<void>;
+}) {
+  const side = teamSideInMatch(match, team.id)!;
+  const [sa, setSa] = useState('');
+  const [sb, setSb] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const decls = data.declarations.filter((d) => d.matchId === match.id);
+  const mine = decls.find((d) => d.side === side);
+  const other = decls.find((d) => d.side !== side);
+  const agreement = mine && other && mine.scoreA === other.scoreA && mine.scoreB === other.scoreB;
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/public/${token}/declarations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchId: match.id, side, scoreA: Number(sa), scoreB: Number(sb) }),
+      });
+      const body = (await res.json()) as { error?: string; agreement?: boolean };
+      if (!res.ok) throw new Error(body.error ?? `Erreur ${res.status}`);
+      setMessage(
+        body.agreement
+          ? '✅ Score confirmé par les deux équipes — la table de marque va le valider.'
+          : '📨 Déclaration envoyée — en attente de la confirmation de l\'équipe adverse.',
+      );
+      await onDeclared();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Envoi impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="result-section declare-card">
+      <h2>📣 Votre partie</h2>
+      <p className="declare-picked">
+        <strong>{matchLabel(match, data.poules, data.matches)}</strong>
+        {match.terrain ? ` · Terrain ${match.terrain}` : ''}
+        <br />
+        {sideName(match, 'A', teamsById)} <em>contre</em> {sideName(match, 'B', teamsById)}
+      </p>
+      <form className="declare-form" onSubmit={(e) => void submit(e)}>
+        <p className="hint">Votre partie est finie ? Déclarez le score :</p>
+        <div className="declare-scores">
+          <label className={side === 'A' ? 'declare-mine' : ''}>
+            {sideName(match, 'A', teamsById)}
+            {side === 'A' && ' (vous)'}
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={30}
+              value={sa}
+              onChange={(e) => setSa(e.target.value)}
+              required
+            />
+          </label>
+          <span className="score-sep">–</span>
+          <label className={side === 'B' ? 'declare-mine' : ''}>
+            {sideName(match, 'B', teamsById)}
+            {side === 'B' && ' (vous)'}
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={30}
+              value={sb}
+              onChange={(e) => setSb(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+        <button className="btn btn-primary" disabled={busy}>
+          Envoyer la déclaration
+        </button>
+      </form>
+      {message && <p className="import-message">{message}</p>}
+      {error && <p className="form-error">{error}</p>}
+      {(mine || other) && (
+        <p className="declare-state">
+          {mine ? `Vous : ${mine.scoreA}–${mine.scoreB}` : 'Vous : pas encore'} ·{' '}
+          {other ? `Adverse : ${other.scoreA}–${other.scoreB}` : 'Adverse : en attente'} —{' '}
+          {agreement ? (
+            <span className="tag tag-ok">✓ concordant</span>
+          ) : mine && other ? (
+            <span className="tag tag-danger">⚠ divergent</span>
+          ) : (
+            <span className="tag tag-info">⏳ en attente</span>
+          )}
+        </p>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Parcours « Je consulte » — affichage complet                        */
+/* ------------------------------------------------------------------ */
+
+function ResultsView({
+  data,
+  teamsById,
+}: {
+  data: PublicData;
+  teamsById: Map<string, Team>;
+}) {
+  const { concours, poules, matches } = data;
+  const principal = matches.filter((m) => m.stage === 'principal');
+  const consolante = matches.filter((m) => m.stage === 'consolante');
+  const rondes = isRondesMode(concours.mode);
+
+  return (
+    <>
       {concours.status === 'inscriptions' && (
         <section className="result-section">
           <h2>Équipes inscrites ({data.teams.length})</h2>
           <ul className="public-teams">
-            {data.teams
+            {[...data.teams]
               .sort((a, b) => a.number - b.number)
               .map((t) => (
                 <li key={t.id}>
@@ -159,7 +511,7 @@ export function PublicPage() {
         <section className="result-section">
           <h2>Poules</h2>
           <div className="public-poules">
-            {poules
+            {[...poules]
               .sort((a, b) => a.index - b.index)
               .map((poule) => {
                 const pm = matches
@@ -246,8 +598,7 @@ export function PublicPage() {
                 .filter(
                   (m) =>
                     m.stage === 'ronde' &&
-                    m.round ===
-                      rondesTirees(matches.filter((x) => x.stage === 'ronde')) - 1,
+                    m.round === rondesTirees(matches.filter((x) => x.stage === 'ronde')) - 1,
                 )
                 .sort((a, b) => a.position - b.position)
                 .map((m) => (
@@ -274,245 +625,6 @@ export function PublicPage() {
           </section>
         </>
       )}
-
-      <footer className="public-footer">
-        Résultats en direct — Pétanque Concours
-      </footer>
-    </div>
-  );
-}
-
-/**
- * Auto-arbitrage : chaque équipe déclare son score depuis son téléphone ;
- * quand les deux camps concordent, la table de marque valide en un clic.
- */
-function DeclareCard({
-  data,
-  token,
-  teamsById,
-  onDeclared,
-}: {
-  data: PublicData;
-  token: string;
-  teamsById: Map<string, Team>;
-  onDeclared: () => void | Promise<void>;
-}) {
-  const pending = useMemo(() => declarableMatches(data.matches), [data.matches]);
-  const byNumber = useMemo(
-    () => new Map(data.teams.map((t) => [t.number, t])),
-    [data.teams],
-  );
-  const [teamNum, setTeamNum] = useState('');
-  const [numError, setNumError] = useState<string | null>(null);
-  const [matchId, setMatchId] = useState('');
-  const [side, setSide] = useState<'A' | 'B' | ''>('');
-  const [sa, setSa] = useState('');
-  const [sb, setSb] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  if (pending.length === 0 && data.declarations.length === 0) return null;
-  const match = pending.find((m) => m.id === matchId);
-
-  /** Saisie du n° d'équipe : présélectionne sa partie et son camp. */
-  const applyTeamNumber = (value: string) => {
-    setTeamNum(value);
-    setNumError(null);
-    setMessage(null);
-    if (value.trim() === '') {
-      setMatchId('');
-      setSide('');
-      return;
-    }
-    const n = Number(value);
-    const team = Number.isInteger(n) ? byNumber.get(n) : undefined;
-    if (!team) {
-      setNumError(`Aucune équipe n°${value}`);
-      setMatchId('');
-      setSide('');
-      return;
-    }
-    const own = pendingMatchesForTeam(team.id, data.matches);
-    if (own.length === 0) {
-      setNumError(`Équipe n°${team.number} : aucune partie à déclarer pour le moment.`);
-      setMatchId('');
-      setSide('');
-      return;
-    }
-    const m = own[0]!;
-    setMatchId(m.id);
-    setSide(
-      m.teamAId === team.id || m.playersA?.includes(team.id) ? 'A' : 'B',
-    );
-  };
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!match || !side) return;
-    setBusy(true);
-    setError(null);
-    setMessage(null);
-    try {
-      const res = await fetch(`/api/public/${token}/declarations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          matchId: match.id,
-          side,
-          scoreA: Number(sa),
-          scoreB: Number(sb),
-        }),
-      });
-      const body = (await res.json()) as { error?: string; agreement?: boolean };
-      if (!res.ok) throw new Error(body.error ?? `Erreur ${res.status}`);
-      setMessage(
-        body.agreement
-          ? '✅ Les deux équipes concordent — la table de marque va valider le score.'
-          : '📨 Déclaration enregistrée — en attente de la confirmation de l\'équipe adverse.',
-      );
-      setMatchId('');
-      setSide('');
-      setSa('');
-      setSb('');
-      setTeamNum('');
-      await onDeclared();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Envoi impossible');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const declsByMatch = new Map<string, PublicDeclaration[]>();
-  for (const d of data.declarations) {
-    declsByMatch.set(d.matchId, [...(declsByMatch.get(d.matchId) ?? []), d]);
-  }
-
-  return (
-    <section className="result-section declare-card">
-      <h2>📣 Déclarer un score</h2>
-      <p className="hint">
-        Votre partie est finie ? Déclarez le score : quand l'équipe adverse le confirme
-        depuis son téléphone, la table de marque n'a plus qu'à valider.
-      </p>
-      {pending.length > 0 && (
-        <form className="declare-form" onSubmit={(e) => void submit(e)}>
-          <label className="declare-number">
-            Votre numéro d'équipe
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              value={teamNum}
-              onChange={(e) => applyTeamNumber(e.target.value)}
-              placeholder="ex. 47"
-              autoComplete="off"
-            />
-          </label>
-          {numError && <p className="hint">{numError}</p>}
-          <details className="declare-alt">
-            <summary>ou choisir la partie dans la liste</summary>
-            <select
-              value={matchId}
-              onChange={(e) => {
-                setMatchId(e.target.value);
-                setSide('');
-                setTeamNum('');
-              }}
-            >
-              <option value="">— Choisir la partie —</option>
-              {pending.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {matchLabel(m, data.poules, data.matches)} :{' '}
-                  {sideName(m, 'A', teamsById)} / {sideName(m, 'B', teamsById)}
-                </option>
-              ))}
-            </select>
-          </details>
-          {match && (
-            <p className="declare-picked">
-              <strong>{matchLabel(match, data.poules, data.matches)}</strong> —{' '}
-              {sideName(match, 'A', teamsById)} <em>contre</em>{' '}
-              {sideName(match, 'B', teamsById)}
-            </p>
-          )}
-          {match && (
-            <>
-              <label>
-                Vous êtes
-                <select
-                  value={side}
-                  onChange={(e) => setSide(e.target.value as 'A' | 'B')}
-                  required
-                >
-                  <option value="">— Votre équipe —</option>
-                  <option value="A">{sideName(match, 'A', teamsById)}</option>
-                  <option value="B">{sideName(match, 'B', teamsById)}</option>
-                </select>
-              </label>
-              <div className="declare-scores">
-                <label>
-                  {sideName(match, 'A', teamsById)}
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={30}
-                    value={sa}
-                    onChange={(e) => setSa(e.target.value)}
-                    required
-                  />
-                </label>
-                <span className="score-sep">–</span>
-                <label>
-                  {sideName(match, 'B', teamsById)}
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={30}
-                    value={sb}
-                    onChange={(e) => setSb(e.target.value)}
-                    required
-                  />
-                </label>
-              </div>
-              <button className="btn btn-primary" disabled={busy || !side}>
-                Envoyer la déclaration
-              </button>
-            </>
-          )}
-        </form>
-      )}
-      {message && <p className="import-message">{message}</p>}
-      {error && <p className="form-error">{error}</p>}
-
-      {declsByMatch.size > 0 && (
-        <ul className="declare-status">
-          {[...declsByMatch.entries()].map(([mid, decls]) => {
-            const m = data.matches.find((x) => x.id === mid);
-            if (!m) return null;
-            const a = decls.find((d) => d.side === 'A');
-            const b = decls.find((d) => d.side === 'B');
-            const agreement = a && b && a.scoreA === b.scoreA && a.scoreB === b.scoreB;
-            return (
-              <li key={mid}>
-                <strong>{matchLabel(m, data.poules, data.matches)}</strong> :{' '}
-                {a ? `${a.scoreA}–${a.scoreB} (camp A)` : 'camp A en attente'} ·{' '}
-                {b ? `${b.scoreA}–${b.scoreB} (camp B)` : 'camp B en attente'} —{' '}
-                {agreement ? (
-                  <span className="tag tag-ok">✓ concordant, validation en cours</span>
-                ) : a && b ? (
-                  <span className="tag tag-danger">⚠ divergent</span>
-                ) : (
-                  <span className="tag tag-info">⏳ en attente de l'adversaire</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
+    </>
   );
 }

@@ -52,6 +52,37 @@ export function teamSideInMatch(m: Match, teamId: string): 'A' | 'B' | null {
   return null;
 }
 
+/** Numéros de dossard des équipes engagées dans une partie (mêlée comprise). */
+export function matchTeamNumbers(m: Match, teamsById: Map<string, Team>): number[] {
+  const ids = [
+    ...(m.playersA ?? (m.teamAId ? [m.teamAId] : [])),
+    ...(m.playersB ?? (m.teamBId ? [m.teamBId] : [])),
+  ];
+  return ids
+    .map((id) => teamsById.get(id)?.number)
+    .filter((n): n is number => typeof n === 'number');
+}
+
+/**
+ * Une partie « notable » convoque des équipes à une nouvelle étape :
+ * barrage, partie des gagnants/perdants, tour de tableau, nouvelle ronde.
+ * Les toutes premières parties (M1/M2 de poule, 1re ronde) sont exclues :
+ * les équipes sont déjà sur place au lancement.
+ */
+export function isNotableCall(m: Match): boolean {
+  if (m.done || isByeMatch(m)) return false;
+  const known =
+    Boolean(m.teamAId || (m.playersA && m.playersA.length)) &&
+    Boolean(m.teamBId || (m.playersB && m.playersB.length));
+  if (!known) return false;
+  if (m.stage === 'poule') {
+    return m.pouleSlot === 'GAGNANTS' || m.pouleSlot === 'PERDANTS' || m.pouleSlot === 'BARRAGE';
+  }
+  if (m.stage === 'ronde') return m.round >= 1;
+  if (m.stage === 'principal' || m.stage === 'consolante') return true;
+  return false;
+}
+
 /**
  * Parties « prêtes à saisir » impliquant l'équipe (deux camps connus,
  * pas terminées) — triées poules puis rondes puis tableaux.

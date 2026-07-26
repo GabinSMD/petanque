@@ -97,8 +97,40 @@ export function openDb(path: string): DatabaseSync {
 
     CREATE INDEX IF NOT EXISTS idx_decl_org ON declarations(org_id, applied);
     CREATE INDEX IF NOT EXISTS idx_decl_match ON declarations(match_id, side);
+
+    CREATE TABLE IF NOT EXISTS push_subs (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      concours_id TEXT NOT NULL,
+      team_number INTEGER NOT NULL,
+      endpoint TEXT NOT NULL,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      UNIQUE (concours_id, team_number, endpoint)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_push_lookup ON push_subs(concours_id, team_number);
+
+    CREATE TABLE IF NOT EXISTS notified_calls (
+      concours_id TEXT NOT NULL,
+      match_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (concours_id, match_id)
+    );
   `);
   return db;
+}
+
+export interface PushSubRow {
+  id: string;
+  org_id: string;
+  concours_id: string;
+  team_number: number;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
 }
 
 export interface DeclarationRow {

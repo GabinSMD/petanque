@@ -339,6 +339,32 @@ export const FAQ: FaqEntry[] = [
     note: 'Le lien nécessite du réseau côté spectateurs — la gestion à la table de marque reste, elle, 100 % hors-ligne.',
   },
   {
+    id: 'parcours-public',
+    category: 'Partage',
+    question: 'Le QR code : « Je joue » ou « Je consulte » ?',
+    keywords: ['je joue', 'je consulte', 'parcours', 'qr', 'public', 'mode', 'joueur', 'spectateur'],
+    intro: 'À l\'ouverture du lien public, deux choix :',
+    steps: [
+      '🎯 « Je joue » : saisissez votre numéro d\'équipe — vous ne voyez que ce qui vous concerne (votre partie, la déclaration de votre score, vos notifications).',
+      '📺 « Je consulte » : l\'affichage complet (poules, tableaux, classements) en direct.',
+      'On bascule d\'un mode à l\'autre à tout moment via les onglets en haut ; le choix est mémorisé sur le téléphone.',
+    ],
+  },
+  {
+    id: 'notifications',
+    category: 'Partage',
+    question: 'Être prévenu sur son téléphone quand on est appelé',
+    keywords: ['notification', 'prevenu', 'push', 'appele', 'convocation', 'telephone', 'alerte', 'barrage', 'sonner'],
+    intro:
+      'Les équipes peuvent être notifiées sur leur téléphone (barrage, tour suivant…) sans surveiller l\'écran ni venir à la table.',
+    steps: [
+      'Partagez le lien public (🔗 Partager) — QR code au boulodrome.',
+      'Le joueur ouvre le lien, choisit « 🎯 Je joue », saisit son n° d\'équipe puis « 🔔 Être prévenu·e ».',
+      'À chaque convocation (partie des gagnants/perdants, barrage, nouveau tour, nouvelle ronde), son téléphone reçoit une notification — même application fermée.',
+    ],
+    note: 'Nécessite un navigateur compatible (Chrome/Edge/Firefox, ou l\'application installée) et l\'autorisation des notifications. La table de marque n\'a rien à faire : les convocations partent automatiquement.',
+  },
+  {
     id: 'declarer-score',
     category: 'Partage',
     question: 'Les équipes peuvent-elles déclarer leurs scores elles-mêmes ?',

@@ -72,8 +72,14 @@ scores, tableaux) et se synchronise dès que le réseau revient.
 
 ### Partage & auto-arbitrage
 - **Lien public** par concours (révocable, avec **QR code** à afficher au
-  boulodrome) : les joueurs suivent poules, tableaux et classements en
-  direct sur leur téléphone, sans compte.
+  boulodrome) avec **deux parcours** : *« Je joue »* (on saisit son numéro
+  d'équipe et on ne voit que sa partie, sa déclaration, ses notifications)
+  et *« Je consulte »* (affichage complet en direct), sans compte.
+- **Notifications push** : une équipe s'abonne par son numéro et reçoit une
+  alerte sur son téléphone à chaque convocation (barrage, tour suivant…) —
+  même application fermée. La table de marque n'a rien à faire : les
+  convocations sont détectées côté client et relayées par le serveur
+  (Web Push / VAPID, dédupliqué par partie).
 - **Auto-déclaration des scores** : une équipe déclare, l'adversaire
   confirme depuis son propre téléphone ; la table de marque voit les
   déclarations **concordantes** et les applique en un clic (elle reste

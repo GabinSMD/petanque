@@ -2170,6 +2170,116 @@ form label select {
   padding-top: 0.8rem;
 }
 
+/* ----------------------- Parcours public (QR code) --------------------- */
+
+.public-modeswitch {
+  display: inline-flex;
+  gap: 0.3rem;
+  background: #e3e8f4;
+  border-radius: 999px;
+  padding: 0.25rem;
+  margin: 0 auto 0.4rem;
+}
+
+.public-modeswitch button {
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.public-modeswitch button.active {
+  background: #fff;
+  color: var(--accent-dark);
+  box-shadow: 0 1px 3px rgba(31, 44, 28, 0.18);
+}
+
+.public-chooser {
+  display: grid;
+  gap: 0.7rem;
+  text-align: center;
+}
+
+.public-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  text-align: left;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow);
+  transition: border-color 0.12s, transform 0.08s;
+}
+
+.public-choice:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.public-choice-emoji {
+  font-size: 2rem;
+}
+
+.public-choice strong {
+  display: block;
+  font-size: 1.15rem;
+}
+
+.public-choice small {
+  color: var(--muted);
+}
+
+.player-ask-form {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.player-ask-form input {
+  flex: 1;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.player-me-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+}
+
+.player-idle {
+  text-align: center;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.notify-box {
+  margin-top: 0.6rem;
+}
+
+.notify-on {
+  margin: 0.6rem 0 0;
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+.declare-mine {
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.declare-state {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
 /* --------------------------- Auto-déclaration --------------------------- */
 
 .declare-card {
