@@ -13,6 +13,7 @@ import {
   FORMAT_LABELS,
   MODE_INFO,
   MODE_LABELS,
+  dateLongFr,
   entrantWord,
   formatDateFr,
   isTirMode,
@@ -40,7 +41,22 @@ export function DashboardPage() {
   const [creating, setCreating] = useState(false);
   const [club, setClub] = useState(false);
   const [welcome, setWelcome] = useState(() => !isWelcomeDone());
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
   const session = useSession();
+
+  const categories = [
+    ...new Set((concoursList ?? []).map((c) => c.category).filter((c): c is string => Boolean(c))),
+  ].sort((a, b) => a.localeCompare(b, 'fr'));
+
+  const filtered = (concoursList ?? []).filter(
+    (c) => !categoryFilter || c.category === categoryFilter,
+  );
+
+  // Regroupement par journée (date), déjà triées du plus récent au plus ancien.
+  const byDate = new Map<string, typeof filtered>();
+  for (const c of filtered) {
+    byDate.set(c.date, [...(byDate.get(c.date) ?? []), c]);
+  }
 
   const remove = async (id: string, name: string) => {
     if (window.confirm(`Supprimer le concours « ${name} » et toutes ses données ?`)) {
@@ -81,50 +97,81 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="card-grid">
-        {concoursList?.map((c) => (
-          <div
-            key={c.id}
-            className="concours-card"
-            onClick={() => navigate(`/concours/${c.id}`)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && navigate(`/concours/${c.id}`)}
+      {categories.length > 0 && (
+        <div className="category-filter no-print">
+          <button
+            className={`chip-filter${categoryFilter === '' ? ' active' : ''}`}
+            onClick={() => setCategoryFilter('')}
           >
-            <div className="concours-card-head">
-              <span className={`status-chip status-${c.status}`}>
-                {statusLabel(c.mode, c.status)}
-              </span>
-              <button
-                className="btn-icon btn-icon-danger no-print"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void remove(c.id, c.name);
-                }}
-                title="Supprimer"
+            Toutes
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              className={`chip-filter${categoryFilter === cat ? ' active' : ''}`}
+              onClick={() => setCategoryFilter(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {[...byDate.entries()].map(([date, list]) => (
+        <section key={date} className="journee">
+          <h2 className="journee-head">
+            {dateLongFr(date)}
+            <span className="journee-count">
+              {list.length} concours{list.length > 1 ? '' : ''}
+            </span>
+          </h2>
+          <div className="card-grid">
+            {list.map((c) => (
+              <div
+                key={c.id}
+                className="concours-card"
+                onClick={() => navigate(`/concours/${c.id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/concours/${c.id}`)}
               >
-                🗑
-              </button>
-            </div>
-            <h2>{c.name}</h2>
-            <p className="concours-card-meta">
-              {formatDateFr(c.date)}
-              {c.lieu ? ` · ${c.lieu}` : ''}
-            </p>
-            <p className="concours-card-tags">
-              {!isTirMode(c.mode) && <span className="tag">{FORMAT_LABELS[c.format]}</span>}
-              <span className="tag">
-                {MODE_INFO[c.mode].emoji} {MODE_LABELS[c.mode]}
-              </span>
-              {c.consolante && <span className="tag">Consolante</span>}
-            </p>
-            <p className="concours-card-count">
-              {teamCounts.get(c.id) ?? 0}{' '}
-              {entrantWord(c.mode, (teamCounts.get(c.id) ?? 0) > 1)}
-            </p>
+                <div className="concours-card-head">
+                  <span className={`status-chip status-${c.status}`}>
+                    {statusLabel(c.mode, c.status)}
+                  </span>
+                  <button
+                    className="btn-icon btn-icon-danger no-print"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void remove(c.id, c.name);
+                    }}
+                    title="Supprimer"
+                  >
+                    🗑
+                  </button>
+                </div>
+                <h2>{c.name}</h2>
+                <p className="concours-card-meta">
+                  {formatDateFr(c.date)}
+                  {c.lieu ? ` · ${c.lieu}` : ''}
+                </p>
+                <p className="concours-card-tags">
+                  {c.category && <span className="tag tag-cat">{c.category}</span>}
+                  {!isTirMode(c.mode) && <span className="tag">{FORMAT_LABELS[c.format]}</span>}
+                  <span className="tag">
+                    {MODE_INFO[c.mode].emoji} {MODE_LABELS[c.mode]}
+                  </span>
+                  {c.consolante && <span className="tag">Consolante</span>}
+                </p>
+                <p className="concours-card-count">
+                  {teamCounts.get(c.id) ?? 0}{' '}
+                  {entrantWord(c.mode, (teamCounts.get(c.id) ?? 0) > 1)}
+                </p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </section>
+      ))}
 
       {creating && (
         <Modal title="Nouveau concours" onClose={() => setCreating(false)}>

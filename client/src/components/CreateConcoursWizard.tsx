@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { ConcoursMode, TeamFormat } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
+  CATEGORY_SUGGESTIONS,
   FORMAT_LABELS,
   MODE_INFO,
   MODE_LABELS,
@@ -44,6 +45,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const [nameTouched, setNameTouched] = useState(false);
   const [date, setDate] = useState(today);
   const [lieu, setLieu] = useState('');
+  const [category, setCategory] = useState('');
   const [nbTerrains, setNbTerrains] = useState(8);
   const [scoreMax, setScoreMax] = useState(13);
   const [nbRondes, setNbRondes] = useState(4);
@@ -78,6 +80,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       lieu: lieu.trim() || undefined,
       format,
       mode,
+      category: category.trim() || undefined,
       consolante: MODE_INFO[mode].consolante ? consolante : false,
       scoreMax,
       nbTerrains,
@@ -191,6 +194,20 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
               />
             </label>
           </div>
+          <label>
+            Catégorie (facultatif)
+            <input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Seniors, Vétérans, Féminines, Jeunes…"
+              list="wizard-categories"
+            />
+            <datalist id="wizard-categories">
+              {CATEGORY_SUGGESTIONS.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </label>
           <div className="form-row">
             <label>
               Terrains disponibles

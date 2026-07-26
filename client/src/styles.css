@@ -303,6 +303,50 @@ input:focus, select:focus, button:focus-visible {
   gap: 0.9rem;
 }
 
+.category-filter {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.chip-filter {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.28rem 0.8rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.chip-filter.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.journee {
+  margin-bottom: 1.4rem;
+}
+
+.journee-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 1.05rem;
+  color: var(--accent-dark);
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.7rem;
+}
+
+.journee-count {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
 .concours-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -358,6 +402,7 @@ input:focus, select:focus, button:focus-visible {
   color: #4a5677;
 }
 
+.tag-cat { background: #efe3f7; color: #6b3a8c; }
 .tag-ok { background: var(--accent-soft); color: var(--accent-dark); }
 .tag-info { background: #e3edf7; color: var(--info); }
 .tag-danger { background: #f7e3e0; color: var(--danger); }

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { Concours, ConcoursMode, TeamFormat } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
+  CATEGORY_SUGGESTIONS,
   FORMAT_LABELS,
   MODE_INFO,
   MODE_LABELS,
@@ -24,6 +25,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [lieu, setLieu] = useState(initial?.lieu ?? '');
   const [format, setFormat] = useState<TeamFormat>(initial?.format ?? 'doublette');
   const [mode, setMode] = useState<ConcoursMode>(initial?.mode ?? 'poules');
+  const [category, setCategory] = useState(initial?.category ?? '');
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
   const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
   const [nbTerrains, setNbTerrains] = useState(initial?.nbTerrains ?? 8);
@@ -38,6 +40,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       lieu: lieu.trim() || undefined,
       format,
       mode,
+      category: category.trim() || undefined,
       consolante: MODE_INFO[mode].consolante ? consolante : false,
       scoreMax,
       nbTerrains,
@@ -72,6 +75,20 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           />
         </label>
       </div>
+      <label>
+        Catégorie
+        <input
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="Seniors, Vétérans, Féminines, Jeunes…"
+          list="form-categories"
+        />
+        <datalist id="form-categories">
+          {CATEGORY_SUGGESTIONS.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+      </label>
       <div className="form-row">
         <label>
           Formation

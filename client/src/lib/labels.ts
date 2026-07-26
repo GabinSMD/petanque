@@ -128,6 +128,31 @@ export function formatDateFr(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
+const WEEKDAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
+/** Date longue « Samedi 26/07/2026 » (en-têtes de journée). */
+export function dateLongFr(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  return `${WEEKDAYS[day]} ${formatDateFr(iso)}`;
+}
+
+/** Catégories FFPJP courantes, proposées à la création (champ libre). */
+export const CATEGORY_SUGGESTIONS = [
+  'Seniors',
+  'Vétérans',
+  'Féminines',
+  'Jeunes',
+  'Juniors',
+  'Cadets',
+  'Minimes',
+  'Promotion',
+  'Honneur',
+  'Open',
+  'Mixte',
+];
+
 /** Nom de concours proposé automatiquement dans l'assistant de création. */
 export function suggestedName(mode: ConcoursMode, format: TeamFormat, date: string): string {
   if (mode === 'tir_precision') return `Tir de précision du ${formatDateFr(date)}`;

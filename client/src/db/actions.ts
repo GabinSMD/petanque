@@ -49,6 +49,7 @@ export interface ConcoursInput {
   lieu?: string;
   format: TeamFormat;
   mode: ConcoursMode;
+  category?: string;
   consolante: boolean;
   scoreMax: number;
   nbTerrains: number;

@@ -85,6 +85,7 @@ export function ConcoursPage() {
           <p className="concours-meta">
             {formatDateFr(concours.date)}
             {concours.lieu ? ` · ${concours.lieu}` : ''}
+            {concours.category ? ` · ${concours.category}` : ''}
             {!tirMode && ` · ${FORMAT_LABELS[concours.format]}`} · {MODE_LABELS[concours.mode]}
             {concours.consolante ? ' · Consolante' : ''}
             {!tirMode && ` · Parties en ${concours.scoreMax} pts`}

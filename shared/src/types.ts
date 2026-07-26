@@ -44,6 +44,8 @@ export interface Concours {
   lieu?: string;
   format: TeamFormat;
   mode: ConcoursMode;
+  /** Catégorie (Seniors, Vétérans, Féminines, Jeunes…) — facultatif. */
+  category?: string;
   /** Consolante : repêchage des éliminés (poules ou 1er tour). */
   consolante: boolean;
   /** Score gagnant d'une mène complète (13 en pétanque). */
