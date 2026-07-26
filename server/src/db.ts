@@ -82,8 +82,35 @@ export function openDb(path: string): DatabaseSync {
       created_at TEXT NOT NULL,
       expires_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS declarations (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      concours_id TEXT NOT NULL,
+      match_id TEXT NOT NULL,
+      side TEXT NOT NULL,
+      score_a INTEGER NOT NULL,
+      score_b INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      applied INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_decl_org ON declarations(org_id, applied);
+    CREATE INDEX IF NOT EXISTS idx_decl_match ON declarations(match_id, side);
   `);
   return db;
+}
+
+export interface DeclarationRow {
+  id: string;
+  org_id: string;
+  concours_id: string;
+  match_id: string;
+  side: string;
+  score_a: number;
+  score_b: number;
+  created_at: string;
+  applied: number;
 }
 
 export interface ShareRow {

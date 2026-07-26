@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
+import { declarableMatches, matchLabel, sideName } from '../lib/matchLabel';
 import { BracketView } from './tabs/BracketTab';
 import { SideLabel } from './tabs/RondesTab';
 import { StandingsTable } from '../components/StandingsTable';
@@ -17,11 +18,20 @@ import {
   statusLabel,
 } from '../lib/labels';
 
+interface PublicDeclaration {
+  matchId: string;
+  side: 'A' | 'B';
+  scoreA: number;
+  scoreB: number;
+  createdAt: string;
+}
+
 interface PublicData {
   concours: Concours;
   teams: Team[];
   poules: Poule[];
   matches: Match[];
+  declarations: PublicDeclaration[];
   generatedAt: string;
 }
 
@@ -35,35 +45,32 @@ export function PublicPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    let stop = false;
-    const load = async () => {
-      try {
-        const res = await fetch(`/api/public/${token}`);
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `Erreur ${res.status}`);
-        }
-        const payload = (await res.json()) as PublicData;
-        if (!stop) {
-          setData(payload);
-          setError(null);
-          setUpdatedAt(new Date().toLocaleTimeString('fr-FR'));
-        }
-      } catch (err) {
-        if (!stop) setError(err instanceof Error ? err.message : 'Erreur réseau');
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/public/${token}`);
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? `Erreur ${res.status}`);
       }
-    };
+      const payload = (await res.json()) as PublicData;
+      setData(payload);
+      setError(null);
+      setUpdatedAt(new Date().toLocaleTimeString('fr-FR'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur réseau');
+    }
+  }, [token]);
+
+  useEffect(() => {
     void load();
     const timer = window.setInterval(() => void load(), 15_000);
     const onVisible = () => document.visibilityState === 'visible' && void load();
     document.addEventListener('visibilitychange', onVisible);
     return () => {
-      stop = true;
       window.clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [token]);
+  }, [load]);
 
   const teamsById = useMemo(
     () => new Map((data?.teams ?? []).map((t) => [t.id, t])),
@@ -122,6 +129,10 @@ export function PublicPage() {
             n°{championTeam.number} {teamDisplayName(championTeam)}
           </strong>
         </div>
+      )}
+
+      {token && (
+        <DeclareCard data={data} token={token} teamsById={teamsById} onDeclared={load} />
       )}
 
       {concours.status === 'inscriptions' && (
@@ -263,5 +274,181 @@ export function PublicPage() {
         Résultats en direct — Pétanque Concours
       </footer>
     </div>
+  );
+}
+
+/**
+ * Auto-arbitrage : chaque équipe déclare son score depuis son téléphone ;
+ * quand les deux camps concordent, la table de marque valide en un clic.
+ */
+function DeclareCard({
+  data,
+  token,
+  teamsById,
+  onDeclared,
+}: {
+  data: PublicData;
+  token: string;
+  teamsById: Map<string, Team>;
+  onDeclared: () => void | Promise<void>;
+}) {
+  const pending = useMemo(() => declarableMatches(data.matches), [data.matches]);
+  const [matchId, setMatchId] = useState('');
+  const [side, setSide] = useState<'A' | 'B' | ''>('');
+  const [sa, setSa] = useState('');
+  const [sb, setSb] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  if (pending.length === 0 && data.declarations.length === 0) return null;
+  const match = pending.find((m) => m.id === matchId);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!match || !side) return;
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/public/${token}/declarations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matchId: match.id,
+          side,
+          scoreA: Number(sa),
+          scoreB: Number(sb),
+        }),
+      });
+      const body = (await res.json()) as { error?: string; agreement?: boolean };
+      if (!res.ok) throw new Error(body.error ?? `Erreur ${res.status}`);
+      setMessage(
+        body.agreement
+          ? '✅ Les deux équipes concordent — la table de marque va valider le score.'
+          : '📨 Déclaration enregistrée — en attente de la confirmation de l\'équipe adverse.',
+      );
+      setMatchId('');
+      setSide('');
+      setSa('');
+      setSb('');
+      await onDeclared();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Envoi impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const declsByMatch = new Map<string, PublicDeclaration[]>();
+  for (const d of data.declarations) {
+    declsByMatch.set(d.matchId, [...(declsByMatch.get(d.matchId) ?? []), d]);
+  }
+
+  return (
+    <section className="result-section declare-card">
+      <h2>📣 Déclarer un score</h2>
+      <p className="hint">
+        Votre partie est finie ? Déclarez le score : quand l'équipe adverse le confirme
+        depuis son téléphone, la table de marque n'a plus qu'à valider.
+      </p>
+      {pending.length > 0 && (
+        <form className="declare-form" onSubmit={(e) => void submit(e)}>
+          <label>
+            Partie
+            <select
+              value={matchId}
+              onChange={(e) => {
+                setMatchId(e.target.value);
+                setSide('');
+              }}
+              required
+            >
+              <option value="">— Choisir la partie —</option>
+              {pending.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {matchLabel(m, data.poules, data.matches)} :{' '}
+                  {sideName(m, 'A', teamsById)} / {sideName(m, 'B', teamsById)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {match && (
+            <>
+              <label>
+                Vous êtes
+                <select
+                  value={side}
+                  onChange={(e) => setSide(e.target.value as 'A' | 'B')}
+                  required
+                >
+                  <option value="">— Votre équipe —</option>
+                  <option value="A">{sideName(match, 'A', teamsById)}</option>
+                  <option value="B">{sideName(match, 'B', teamsById)}</option>
+                </select>
+              </label>
+              <div className="declare-scores">
+                <label>
+                  {sideName(match, 'A', teamsById)}
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={30}
+                    value={sa}
+                    onChange={(e) => setSa(e.target.value)}
+                    required
+                  />
+                </label>
+                <span className="score-sep">–</span>
+                <label>
+                  {sideName(match, 'B', teamsById)}
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={30}
+                    value={sb}
+                    onChange={(e) => setSb(e.target.value)}
+                    required
+                  />
+                </label>
+              </div>
+              <button className="btn btn-primary" disabled={busy || !side}>
+                Envoyer la déclaration
+              </button>
+            </>
+          )}
+        </form>
+      )}
+      {message && <p className="import-message">{message}</p>}
+      {error && <p className="form-error">{error}</p>}
+
+      {declsByMatch.size > 0 && (
+        <ul className="declare-status">
+          {[...declsByMatch.entries()].map(([mid, decls]) => {
+            const m = data.matches.find((x) => x.id === mid);
+            if (!m) return null;
+            const a = decls.find((d) => d.side === 'A');
+            const b = decls.find((d) => d.side === 'B');
+            const agreement = a && b && a.scoreA === b.scoreA && a.scoreB === b.scoreB;
+            return (
+              <li key={mid}>
+                <strong>{matchLabel(m, data.poules, data.matches)}</strong> :{' '}
+                {a ? `${a.scoreA}–${a.scoreB} (camp A)` : 'camp A en attente'} ·{' '}
+                {b ? `${b.scoreA}–${b.scoreB} (camp B)` : 'camp B en attente'} —{' '}
+                {agreement ? (
+                  <span className="tag tag-ok">✓ concordant, validation en cours</span>
+                ) : a && b ? (
+                  <span className="tag tag-danger">⚠ divergent</span>
+                ) : (
+                  <span className="tag tag-info">⏳ en attente de l'adversaire</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }

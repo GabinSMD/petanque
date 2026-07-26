@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { DatabaseSync } from 'node:sqlite';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import type { AuthContext } from './index.js';
-import type { EntityRow, ShareRow } from './db.js';
+import type { DeclarationRow, EntityRow, ShareRow } from './db.js';
 
 /**
  * Limiteur de débit minimaliste en mémoire (par IP) — suffisant pour un
@@ -121,12 +121,148 @@ export function registerPublicRoutes(
     const byType = (t: string) =>
       children.filter((r) => r.type === t && r.data).map((r) => JSON.parse(r.data!));
 
+    const declarations = selectDeclarations
+      .all(share.org_id, share.concours_id)
+      .map((r) => {
+        const row = r as unknown as DeclarationRow;
+        return {
+          matchId: row.match_id,
+          side: row.side,
+          scoreA: row.score_a,
+          scoreB: row.score_b,
+          createdAt: row.created_at,
+        };
+      });
+
     return {
       concours: JSON.parse(concoursRow.data),
       teams: byType('team'),
       poules: byType('poule'),
       matches: byType('match'),
+      declarations,
       generatedAt: new Date().toISOString(),
     };
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Auto-déclaration des scores (auto-arbitrage)                      */
+  /* ---------------------------------------------------------------- */
+
+  const declareLimit = rateLimiter(30, 60_000);
+  const selectDeclarations = db.prepare(
+    'SELECT * FROM declarations WHERE org_id = ? AND concours_id = ? AND applied = 0',
+  );
+  const deleteSideDeclaration = db.prepare(
+    'DELETE FROM declarations WHERE match_id = ? AND side = ? AND applied = 0',
+  );
+  const insertDeclaration = db.prepare(`
+    INSERT INTO declarations (id, org_id, concours_id, match_id, side, score_a, score_b, created_at, applied)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+  `);
+  const selectMatchEntity = db.prepare(
+    "SELECT data FROM entities WHERE org_id = ? AND type = 'match' AND id = ? AND deleted = 0",
+  );
+  const selectOtherSide = db.prepare(
+    'SELECT * FROM declarations WHERE match_id = ? AND side = ? AND applied = 0',
+  );
+
+  /**
+   * Une équipe déclare le score de sa partie depuis le lien public.
+   * Quand les deux camps déclarent le même score, la déclaration est
+   * « concordante » — la table de marque n'a plus qu'à l'appliquer.
+   */
+  app.post('/api/public/:token/declarations', async (req, reply) => {
+    if (!declareLimit(req.ip)) {
+      return reply.code(429).send({ error: 'Trop de déclarations, patientez' });
+    }
+    const { token } = req.params as { token: string };
+    const share = selectByToken.get(token) as unknown as ShareRow | undefined;
+    if (!share) return reply.code(404).send({ error: 'Lien inconnu ou révoqué' });
+
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const matchId = typeof body.matchId === 'string' ? body.matchId : '';
+    const side = body.side === 'A' || body.side === 'B' ? body.side : null;
+    const scoreA = Number(body.scoreA);
+    const scoreB = Number(body.scoreB);
+    if (
+      !matchId ||
+      matchId.length > 64 ||
+      !side ||
+      !Number.isInteger(scoreA) ||
+      !Number.isInteger(scoreB) ||
+      scoreA < 0 ||
+      scoreB < 0 ||
+      scoreA > 30 ||
+      scoreB > 30 ||
+      scoreA === scoreB
+    ) {
+      return reply.code(400).send({ error: 'Déclaration invalide' });
+    }
+    const matchRow = selectMatchEntity.get(share.org_id, matchId) as unknown as
+      | { data: string }
+      | undefined;
+    if (!matchRow) return reply.code(404).send({ error: 'Partie introuvable' });
+    const match = JSON.parse(matchRow.data) as { concoursId?: string; done?: boolean };
+    if (match.concoursId !== share.concours_id) {
+      return reply.code(404).send({ error: 'Partie introuvable' });
+    }
+    if (match.done) {
+      return reply.code(409).send({ error: 'Le score de cette partie est déjà validé' });
+    }
+
+    // Une déclaration par camp : la plus récente remplace la précédente.
+    deleteSideDeclaration.run(matchId, side);
+    insertDeclaration.run(
+      randomUUID(),
+      share.org_id,
+      share.concours_id,
+      matchId,
+      side,
+      scoreA,
+      scoreB,
+      new Date().toISOString(),
+    );
+
+    const other = selectOtherSide.get(matchId, side === 'A' ? 'B' : 'A') as unknown as
+      | DeclarationRow
+      | undefined;
+    const agreement = Boolean(other && other.score_a === scoreA && other.score_b === scoreB);
+    return { ok: true, agreement };
+  });
+
+  /** Déclarations en attente pour la table de marque (authentifié). */
+  app.get('/api/declarations', async (req, reply) => {
+    const auth = authenticate(req);
+    if (!auth) return reply.code(401).send({ error: 'Non authentifié' });
+    const { concoursId } = req.query as { concoursId?: string };
+    const rows = (
+      concoursId
+        ? selectDeclarations.all(auth.orgId, concoursId)
+        : db
+            .prepare('SELECT * FROM declarations WHERE org_id = ? AND applied = 0')
+            .all(auth.orgId)
+    ) as unknown as DeclarationRow[];
+    return {
+      declarations: rows.map((r) => ({
+        id: r.id,
+        concoursId: r.concours_id,
+        matchId: r.match_id,
+        side: r.side,
+        scoreA: r.score_a,
+        scoreB: r.score_b,
+        createdAt: r.created_at,
+      })),
+    };
+  });
+
+  /** La table de marque solde les déclarations d'une partie. */
+  app.delete('/api/declarations/match/:matchId', async (req, reply) => {
+    const auth = authenticate(req);
+    if (!auth) return reply.code(401).send({ error: 'Non authentifié' });
+    const { matchId } = req.params as { matchId: string };
+    db.prepare(
+      'UPDATE declarations SET applied = 1 WHERE org_id = ? AND match_id = ?',
+    ).run(auth.orgId, matchId);
+    return { ok: true };
   });
 }

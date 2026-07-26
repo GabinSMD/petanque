@@ -5,6 +5,7 @@ import { pouleOutcome, pouleSizes, rondesTirees, seriesTirees, winnerOf } from '
 import { updateConcours } from '../db/actions';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
+import { DeclarationsWatch } from '../components/DeclarationsWatch';
 import { Modal } from '../components/Modal';
 import { ShareModal } from '../components/ShareModal';
 import {
@@ -128,6 +129,13 @@ export function ConcoursPage() {
         matches={matches ?? []}
         activeTab={active}
         onGo={(tab) => navigate(`/concours/${concours.id}/${tab}`, { replace: true })}
+      />
+
+      <DeclarationsWatch
+        concours={concours}
+        teams={teams ?? []}
+        poules={poules ?? []}
+        matches={matches ?? []}
       />
 
       <nav className="tabs no-print" data-tour="tabs">
