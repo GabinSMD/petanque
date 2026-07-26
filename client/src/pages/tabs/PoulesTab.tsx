@@ -24,6 +24,8 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
   const [avoidSameClub, setAvoidSameClub] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Repli des poules : undefined = défaut (les terminées sont repliées).
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
   const activeTeams = teams.filter((t) => !t.forfait);
@@ -114,6 +116,25 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
         </span>
         {error && <span className="form-error">{error}</span>}
         <span className="toolbar-actions">
+          {poules.length > 4 && (
+            <>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() =>
+                  setOverrides(Object.fromEntries(poules.map((p) => [p.id, false])))
+                }
+              >
+                Tout déplier
+              </button>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setOverrides({})}
+                title="Replie les poules terminées"
+              >
+                Replier les terminées
+              </button>
+            </>
+          )}
           <a
             className="btn btn-ghost btn-sm"
             href={`/concours/${concours.id}/imprimer/poules`}
@@ -154,17 +175,25 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
       </div>
 
       <div className="poule-grid">
-        {poules.map((poule, i) => (
-          <PouleCard
-            key={poule.id}
-            concours={concours}
-            poule={poule}
-            matches={pouleMatches(poule)}
-            outcome={outcomes[i]!}
-            teamsById={teamsById}
-            locked={scoresLocked}
-          />
-        ))}
+        {poules.map((poule, i) => {
+          const outcome = outcomes[i]!;
+          const collapsed = overrides[poule.id] ?? outcome.complete;
+          return (
+            <PouleCard
+              key={poule.id}
+              concours={concours}
+              poule={poule}
+              matches={pouleMatches(poule)}
+              outcome={outcome}
+              teamsById={teamsById}
+              locked={scoresLocked}
+              collapsed={collapsed}
+              onToggle={() =>
+                setOverrides((o) => ({ ...o, [poule.id]: !collapsed }))
+              }
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -177,6 +206,8 @@ function PouleCard({
   outcome,
   teamsById,
   locked,
+  collapsed,
+  onToggle,
 }: {
   concours: Concours;
   poule: Poule;
@@ -184,6 +215,8 @@ function PouleCard({
   outcome: ReturnType<typeof pouleOutcome>;
   teamsById: Map<string, Team>;
   locked: boolean;
+  collapsed: boolean;
+  onToggle: () => void;
 }) {
   const ordered = [...matches].sort((a, b) => a.position - b.position);
   const remaining = pouleRemaining(matches);
@@ -196,21 +229,37 @@ function PouleCard({
   };
 
   return (
-    <section className={`poule-card${outcome.complete ? ' poule-complete' : ''}`}>
+    <section
+      className={`poule-card${outcome.complete ? ' poule-complete' : ''}${
+        collapsed ? ' poule-collapsed' : ''
+      }`}
+    >
       <header className="poule-card-head">
-        <h3>Poule {poule.index}</h3>
-        <label className="terrain-label no-print">
-          Terrain
-          <input
-            type="number"
-            min={1}
-            value={poule.terrain ?? ''}
-            placeholder="–"
-            onChange={(e) =>
-              void setPouleTerrain(poule, e.target.value ? Number(e.target.value) : null)
-            }
-          />
-        </label>
+        <button
+          className="poule-toggle no-print"
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Déplier' : 'Replier'}
+        >
+          {collapsed ? '▸' : '▾'}
+        </button>
+        <h3 onClick={onToggle} className="poule-title">
+          Poule {poule.index}
+        </h3>
+        {!collapsed && (
+          <label className="terrain-label no-print">
+            Terrain
+            <input
+              type="number"
+              min={1}
+              value={poule.terrain ?? ''}
+              placeholder="–"
+              onChange={(e) =>
+                void setPouleTerrain(poule, e.target.value ? Number(e.target.value) : null)
+              }
+            />
+          </label>
+        )}
         {outcome.complete ? (
           <span className="tag tag-ok">Terminée</span>
         ) : (
@@ -218,6 +267,24 @@ function PouleCard({
         )}
       </header>
 
+      {collapsed && (
+        <p className="poule-collapsed-summary" onClick={onToggle}>
+          {outcome.complete && outcome.q1 && outcome.q2 ? (
+            <>
+              Qualifiés : <strong>n°{teamsById.get(outcome.q1)?.number}</strong> et{' '}
+              <strong>n°{teamsById.get(outcome.q2)?.number}</strong>
+            </>
+          ) : (
+            <>
+              Équipes n°
+              {poule.teamIds.map((id) => teamsById.get(id)?.number).filter(Boolean).join(', ')}
+            </>
+          )}
+        </p>
+      )}
+
+      {collapsed ? null : (
+      <>
       <ul className="poule-teams">
         {poule.teamIds.map((tid) => {
           const b = badge(tid);
@@ -264,6 +331,8 @@ function PouleCard({
           ))}
         </tbody>
       </table>
+      </>
+      )}
     </section>
   );
 }

@@ -178,6 +178,31 @@ export const FAQ: FaqEntry[] = [
     note: 'Pas de match nul en pétanque : l\'application refuse un score invalide et vous l\'explique.',
   },
   {
+    id: 'saisie-rapide',
+    category: 'Scores',
+    question: 'Saisir un score vite quand il y a beaucoup d\'équipes',
+    keywords: ['rapide', 'vite', 'nombreux', 'beaucoup', 'numero', 'dossard', 'chercher', 'trouver', '64'],
+    intro:
+      'La barre « ⚡ Saisie rapide » en haut du concours évite de chercher dans les poules :',
+    steps: [
+      'Tapez le numéro de dossard de l\'équipe qui vient de finir (ex. 47).',
+      'Sa partie en cours s\'affiche aussitôt, avec les deux équipes : saisissez le score et « OK ».',
+      'Le champ se vide et reprend le focus — enchaînez le numéro suivant.',
+    ],
+    note: 'Astuce complémentaire : dans l\'onglet Poules, « Replier les terminées » masque les poules finies pour ne garder à l\'écran que celles en cours.',
+  },
+  {
+    id: 'replier-poules',
+    category: 'Poules',
+    question: 'Comment masquer/replier les poules terminées ?',
+    keywords: ['replier', 'masquer', 'collapse', 'reduire', 'terminees', 'cacher', 'poules'],
+    steps: [
+      'Onglet « Poules » : les poules terminées se replient automatiquement (résumé des qualifiés).',
+      'Cliquez sur l\'en-tête d\'une poule (ou le chevron ▸) pour la déplier/replier.',
+      'Boutons « Tout déplier » / « Replier les terminées » pour agir en masse.',
+    ],
+  },
+  {
     id: 'corriger-score',
     category: 'Scores',
     question: 'Comment corriger ou effacer un score ?',

@@ -7,6 +7,7 @@ import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
 import { DeclarationsWatch } from '../components/DeclarationsWatch';
 import { Modal } from '../components/Modal';
+import { QuickScore } from '../components/QuickScore';
 import { ShareModal } from '../components/ShareModal';
 import {
   FORMAT_LABELS,
@@ -137,6 +138,15 @@ export function ConcoursPage() {
         poules={poules ?? []}
         matches={matches ?? []}
       />
+
+      {concours.status !== 'termine' && !tirMode && (
+        <QuickScore
+          concours={concours}
+          teams={teams ?? []}
+          poules={poules ?? []}
+          matches={matches ?? []}
+        />
+      )}
 
       <nav className="tabs no-print" data-tour="tabs">
         {tabs.map((t) => (

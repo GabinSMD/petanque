@@ -8,6 +8,8 @@ interface Props {
   disabled?: boolean;
   /** Partie terminée : n'afficher que le bouton de correction (les scores sont déjà visibles ailleurs). */
   editOnly?: boolean;
+  /** Appelé après une saisie réussie (saisie rapide : revenir au champ n°). */
+  onSaved?: () => void;
 }
 
 /**
@@ -17,7 +19,7 @@ interface Props {
  * - Partie jouable : deux champs + validation.
  * - Partie terminée : scores affichés, bouton « corriger ».
  */
-export function ScoreForm({ concours, match, disabled, editOnly }: Props) {
+export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Props) {
   const [editing, setEditing] = useState(false);
   const [a, setA] = useState('');
   const [b, setB] = useState('');
@@ -43,6 +45,7 @@ export function ScoreForm({ concours, match, disabled, editOnly }: Props) {
       setEditing(false);
       setA('');
       setB('');
+      onSaved?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Score invalide');
     }

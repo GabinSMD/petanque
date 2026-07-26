@@ -44,3 +44,26 @@ export function declarableMatches(matches: Match[]): Match[] {
       Boolean(m.teamBId || (m.playersB && m.playersB.length)),
   );
 }
+
+/** Le camp (A/B) de l'équipe dans la partie, ou null si absente. */
+export function teamSideInMatch(m: Match, teamId: string): 'A' | 'B' | null {
+  if (m.teamAId === teamId || m.playersA?.includes(teamId)) return 'A';
+  if (m.teamBId === teamId || m.playersB?.includes(teamId)) return 'B';
+  return null;
+}
+
+/**
+ * Parties « prêtes à saisir » impliquant l'équipe (deux camps connus,
+ * pas terminées) — triées poules puis rondes puis tableaux.
+ */
+export function pendingMatchesForTeam(teamId: string, matches: Match[]): Match[] {
+  const order: Record<string, number> = { poule: 0, ronde: 1, principal: 2, consolante: 3 };
+  return declarableMatches(matches)
+    .filter((m) => teamSideInMatch(m, teamId) !== null)
+    .sort(
+      (a, b) =>
+        (order[a.stage] ?? 9) - (order[b.stage] ?? 9) ||
+        a.round - b.round ||
+        a.position - b.position,
+    );
+}

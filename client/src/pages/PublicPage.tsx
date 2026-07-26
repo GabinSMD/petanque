@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
-import { declarableMatches, matchLabel, sideName } from '../lib/matchLabel';
+import {
+  declarableMatches,
+  matchLabel,
+  pendingMatchesForTeam,
+  sideName,
+} from '../lib/matchLabel';
 import { BracketView } from './tabs/BracketTab';
 import { SideLabel } from './tabs/RondesTab';
 import { StandingsTable } from '../components/StandingsTable';
@@ -293,6 +298,12 @@ function DeclareCard({
   onDeclared: () => void | Promise<void>;
 }) {
   const pending = useMemo(() => declarableMatches(data.matches), [data.matches]);
+  const byNumber = useMemo(
+    () => new Map(data.teams.map((t) => [t.number, t])),
+    [data.teams],
+  );
+  const [teamNum, setTeamNum] = useState('');
+  const [numError, setNumError] = useState<string | null>(null);
   const [matchId, setMatchId] = useState('');
   const [side, setSide] = useState<'A' | 'B' | ''>('');
   const [sa, setSa] = useState('');
@@ -303,6 +314,38 @@ function DeclareCard({
 
   if (pending.length === 0 && data.declarations.length === 0) return null;
   const match = pending.find((m) => m.id === matchId);
+
+  /** Saisie du n° d'équipe : présélectionne sa partie et son camp. */
+  const applyTeamNumber = (value: string) => {
+    setTeamNum(value);
+    setNumError(null);
+    setMessage(null);
+    if (value.trim() === '') {
+      setMatchId('');
+      setSide('');
+      return;
+    }
+    const n = Number(value);
+    const team = Number.isInteger(n) ? byNumber.get(n) : undefined;
+    if (!team) {
+      setNumError(`Aucune équipe n°${value}`);
+      setMatchId('');
+      setSide('');
+      return;
+    }
+    const own = pendingMatchesForTeam(team.id, data.matches);
+    if (own.length === 0) {
+      setNumError(`Équipe n°${team.number} : aucune partie à déclarer pour le moment.`);
+      setMatchId('');
+      setSide('');
+      return;
+    }
+    const m = own[0]!;
+    setMatchId(m.id);
+    setSide(
+      m.teamAId === team.id || m.playersA?.includes(team.id) ? 'A' : 'B',
+    );
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -332,6 +375,7 @@ function DeclareCard({
       setSide('');
       setSa('');
       setSb('');
+      setTeamNum('');
       await onDeclared();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Envoi impossible');
@@ -354,15 +398,28 @@ function DeclareCard({
       </p>
       {pending.length > 0 && (
         <form className="declare-form" onSubmit={(e) => void submit(e)}>
-          <label>
-            Partie
+          <label className="declare-number">
+            Votre numéro d'équipe
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={teamNum}
+              onChange={(e) => applyTeamNumber(e.target.value)}
+              placeholder="ex. 47"
+              autoComplete="off"
+            />
+          </label>
+          {numError && <p className="hint">{numError}</p>}
+          <details className="declare-alt">
+            <summary>ou choisir la partie dans la liste</summary>
             <select
               value={matchId}
               onChange={(e) => {
                 setMatchId(e.target.value);
                 setSide('');
+                setTeamNum('');
               }}
-              required
             >
               <option value="">— Choisir la partie —</option>
               {pending.map((m) => (
@@ -372,7 +429,14 @@ function DeclareCard({
                 </option>
               ))}
             </select>
-          </label>
+          </details>
+          {match && (
+            <p className="declare-picked">
+              <strong>{matchLabel(match, data.poules, data.matches)}</strong> —{' '}
+              {sideName(match, 'A', teamsById)} <em>contre</em>{' '}
+              {sideName(match, 'B', teamsById)}
+            </p>
+          )}
           {match && (
             <>
               <label>

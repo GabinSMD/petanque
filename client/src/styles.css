@@ -2316,6 +2316,129 @@ form label select {
   }
 }
 
+/* --------------------------- Saisie rapide ----------------------------- */
+
+.quick-score {
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.quick-score-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.quick-score-bar label {
+  margin-bottom: 0;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.quick-score-bar input {
+  width: 7rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.quick-score-msg {
+  margin: 0.5rem 0 0;
+}
+
+.quick-score-matches {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.quick-score-row {
+  border-top: 1px dashed var(--line);
+  padding-top: 0.5rem;
+}
+
+.quick-score-label {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.quick-score-teams {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+/* --------------------------- Poules repliées --------------------------- */
+
+.poule-toggle {
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--muted);
+  padding: 0 0.3rem 0 0;
+  cursor: pointer;
+}
+
+.poule-title {
+  cursor: pointer;
+  flex: 1;
+}
+
+.poule-collapsed {
+  align-self: start;
+}
+
+.poule-collapsed .poule-card-head {
+  margin-bottom: 0;
+}
+
+.poule-collapsed-summary {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* ---------------------- Déclaration publique par n° -------------------- */
+
+.declare-number input {
+  width: 8rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.declare-alt {
+  font-size: 0.85rem;
+}
+
+.declare-alt summary {
+  color: var(--accent-dark);
+  cursor: pointer;
+  margin-bottom: 0.4rem;
+}
+
+.declare-alt select {
+  width: 100%;
+}
+
+.declare-picked {
+  background: var(--accent-soft);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  margin: 0;
+}
+
 /* ------------------------------ Animations ----------------------------- */
 
 @keyframes pop-in {
