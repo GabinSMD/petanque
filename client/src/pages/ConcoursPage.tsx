@@ -8,6 +8,7 @@ import { ConcoursForm } from '../components/ConcoursForm';
 import { DeclarationsWatch } from '../components/DeclarationsWatch';
 import { Modal } from '../components/Modal';
 import { QuickScore } from '../components/QuickScore';
+import { RoundTimer } from '../components/RoundTimer';
 import { ShareModal } from '../components/ShareModal';
 import { useCallNotifier } from '../lib/notifier';
 import {
@@ -133,6 +134,10 @@ export function ConcoursPage() {
           </button>
         </div>
       </div>
+
+      {concours.tempsLimite && concours.status !== 'inscriptions' && concours.status !== 'termine' && (
+        <RoundTimer concoursId={concours.id} minutes={concours.tempsLimite} />
+      )}
 
       <NextStepBanner
         concours={concours}

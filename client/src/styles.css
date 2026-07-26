@@ -874,6 +874,54 @@ form label select {
   font-variant-numeric: tabular-nums;
 }
 
+.round-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  border: 1px solid #c3d0f0;
+}
+.round-timer .timer-clock {
+  font-size: 1.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--accent-dark);
+}
+.round-timer .timer-state {
+  font-weight: 600;
+  color: var(--muted);
+}
+.round-timer .timer-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 0.4rem;
+}
+.round-timer.timer-warning {
+  background: #fff4e0;
+  border-color: #f0d29a;
+}
+.round-timer.timer-warning .timer-clock,
+.round-timer.timer-warning .timer-state {
+  color: #a05a00;
+}
+.round-timer.timer-expired {
+  background: #f9e2df;
+  border-color: #e6b0a8;
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+.round-timer.timer-expired .timer-clock,
+.round-timer.timer-expired .timer-state {
+  color: var(--danger);
+}
+@keyframes timer-pulse {
+  50% { border-color: var(--danger); }
+}
+
 .qualifies-banner {
   margin: 0 0 0.6rem;
   padding: 0.5rem 0.75rem;
