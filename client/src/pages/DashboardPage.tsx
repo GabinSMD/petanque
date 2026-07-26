@@ -13,9 +13,10 @@ import {
   FORMAT_LABELS,
   MODE_INFO,
   MODE_LABELS,
-  STATUS_LABELS,
   entrantWord,
   formatDateFr,
+  isTirMode,
+  statusLabel,
 } from '../lib/labels';
 
 function useTeamCounts(): Map<string, number> {
@@ -92,7 +93,7 @@ export function DashboardPage() {
           >
             <div className="concours-card-head">
               <span className={`status-chip status-${c.status}`}>
-                {STATUS_LABELS[c.status]}
+                {statusLabel(c.mode, c.status)}
               </span>
               <button
                 className="btn-icon btn-icon-danger no-print"
@@ -111,7 +112,7 @@ export function DashboardPage() {
               {c.lieu ? ` · ${c.lieu}` : ''}
             </p>
             <p className="concours-card-tags">
-              <span className="tag">{FORMAT_LABELS[c.format]}</span>
+              {!isTirMode(c.mode) && <span className="tag">{FORMAT_LABELS[c.format]}</span>}
               <span className="tag">
                 {MODE_INFO[c.mode].emoji} {MODE_LABELS[c.mode]}
               </span>

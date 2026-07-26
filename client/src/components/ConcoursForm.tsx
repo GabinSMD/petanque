@@ -1,7 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import type { Concours, ConcoursMode, TeamFormat } from '@shared';
 import type { ConcoursInput } from '../db/actions';
-import { FORMAT_LABELS, MODE_INFO, MODE_LABELS, isRondesMode } from '../lib/labels';
+import {
+  FORMAT_LABELS,
+  MODE_INFO,
+  MODE_LABELS,
+  isRondesMode,
+  isTirMode,
+} from '../lib/labels';
 
 interface Props {
   initial?: Concours;
@@ -119,9 +125,9 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         </label>
       </div>
       <div className="form-row">
-        {isRondesMode(mode) && mode !== 'championnat' && (
+        {((isRondesMode(mode) && mode !== 'championnat') || isTirMode(mode)) && (
           <label>
-            Nombre de rondes
+            {isTirMode(mode) ? 'Nombre de séries' : 'Nombre de rondes'}
             <input
               type="number"
               min={1}
@@ -131,19 +137,21 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             />
           </label>
         )}
-        <label>
-          Temps limité (min, facultatif)
-          <input
-            type="number"
-            min={15}
-            max={180}
-            value={tempsLimite}
-            placeholder="—"
-            onChange={(e) =>
-              setTempsLimite(e.target.value === '' ? '' : Number(e.target.value))
-            }
-          />
-        </label>
+        {!isTirMode(mode) && (
+          <label>
+            Temps limité (min, facultatif)
+            <input
+              type="number"
+              min={15}
+              max={180}
+              value={tempsLimite}
+              placeholder="—"
+              onChange={(e) =>
+                setTempsLimite(e.target.value === '' ? '' : Number(e.target.value))
+              }
+            />
+          </label>
+        )}
       </div>
       {MODE_INFO[mode].consolante && (
         <label className="checkbox-label">

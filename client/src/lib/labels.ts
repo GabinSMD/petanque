@@ -18,6 +18,7 @@ export const MODE_LABELS: Record<ConcoursMode, string> = {
   melee: 'Mêlée tournante',
   suisse: 'Système suisse',
   championnat: 'Championnat (toutes rondes)',
+  tir_precision: 'Tir de précision',
 };
 
 export interface ModeInfo {
@@ -29,6 +30,8 @@ export interface ModeInfo {
   individual?: boolean;
   /** Formule « en rondes » (pas d'élimination, classement final). */
   rondes?: boolean;
+  /** Discipline en séries de tir (pas de parties). */
+  tir?: boolean;
   /** La consolante a du sens pour cette formule. */
   consolante?: boolean;
 }
@@ -70,7 +73,25 @@ export const MODE_INFO: Record<ConcoursMode, ModeInfo> = {
       'Toutes les rencontres sont jouées (idéal jusqu\'à 8 équipes environ). Le calendrier complet est généré d\'un coup.',
     rondes: true,
   },
+  tir_precision: {
+    emoji: '🏹',
+    tagline: 'La discipline de précision',
+    description:
+      'Chaque tireur réalise des séries de 20 boules sur 5 ateliers (100 points max). Classement à la meilleure série, départage au total.',
+    individual: true,
+    tir: true,
+  },
 };
+
+export function isTirMode(mode: ConcoursMode): boolean {
+  return MODE_INFO[mode].tir === true;
+}
+
+/** Libellé de statut contextualisé (les séries du tir sont des « rondes »). */
+export function statusLabel(mode: ConcoursMode, status: ConcoursStatus): string {
+  if (isTirMode(mode) && status === 'rondes') return 'Séries en cours';
+  return STATUS_LABELS[status];
+}
 
 export function isRondesMode(mode: ConcoursMode): boolean {
   return MODE_INFO[mode].rondes === true;
@@ -81,7 +102,7 @@ export function isIndividualMode(mode: ConcoursMode): boolean {
 }
 
 export function entrantWord(mode: ConcoursMode, plural = false): string {
-  const word = isIndividualMode(mode) ? 'participant' : 'équipe';
+  const word = isTirMode(mode) ? 'tireur' : isIndividualMode(mode) ? 'participant' : 'équipe';
   return plural ? `${word}s` : word;
 }
 
@@ -109,12 +130,14 @@ export function formatDateFr(iso: string): string {
 
 /** Nom de concours proposé automatiquement dans l'assistant de création. */
 export function suggestedName(mode: ConcoursMode, format: TeamFormat, date: string): string {
+  if (mode === 'tir_precision') return `Tir de précision du ${formatDateFr(date)}`;
   const prefix: Record<ConcoursMode, string> = {
     poules: 'Concours',
     elimination_directe: 'Concours',
     melee: 'Mêlée',
     suisse: 'Concours (suisse)',
     championnat: 'Championnat',
+    tir_precision: 'Tir de précision',
   };
   const f = FORMAT_LABELS[format].toLowerCase();
   const fPlural = format === 'tete_a_tete' ? f : `${f}s`;

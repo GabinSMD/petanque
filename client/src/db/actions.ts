@@ -1,6 +1,7 @@
 import {
   buildChampionnat,
   buildConsolanteFromSources,
+  creerSerieTir,
   defaultCtx,
   drawElimination,
   drawMainFromPoules,
@@ -14,7 +15,9 @@ import {
   recomputePoule,
   rondeComplete,
   rondesTirees,
+  seriesTirees,
   validateScore,
+  validateTirScore,
   type Concours,
   type ConcoursMode,
   type Licencie,
@@ -386,6 +389,46 @@ export async function annulerDerniereRonde(concours: Concours): Promise<void> {
   if (remaining === 0) {
     await putEntity('concours', { ...concours, status: 'inscriptions' });
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tir de précision                                                    */
+/* ------------------------------------------------------------------ */
+
+/** Ouvre une nouvelle série : une feuille de tir par participant. */
+export async function ajouterSerieTir(concours: Concours): Promise<void> {
+  const tireurs = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
+  if (tireurs.length < 1) throw new Error('Inscrivez au moins un tireur');
+  const matches = await listByConcours('match', concours.id);
+  const serie = seriesTirees(matches);
+  const created = creerSerieTir(concours.id, tireurs, serie, ctx());
+  await bulkPutEntities('match', created);
+  if (concours.status !== 'rondes') {
+    await putEntity('concours', { ...concours, status: 'rondes' });
+  }
+}
+
+export async function annulerDerniereSerie(concours: Concours): Promise<void> {
+  const matches = (await listByConcours('match', concours.id)).filter(
+    (m) => m.stage === 'ronde',
+  );
+  if (matches.length === 0) return;
+  const last = Math.max(...matches.map((m) => m.round));
+  const toDelete = matches.filter((m) => m.round === last);
+  await softDeleteMany(toDelete.map((m) => ({ type: 'match' as const, id: m.id })));
+  if (matches.length === toDelete.length) {
+    await putEntity('concours', { ...concours, status: 'inscriptions' });
+  }
+}
+
+export async function setTirScore(match: Match, score: number): Promise<void> {
+  const check = validateTirScore(score);
+  if (!check.ok) throw new Error(check.error);
+  await putEntity('match', { ...match, scoreA: score, done: true });
+}
+
+export async function clearTirScore(match: Match): Promise<void> {
+  await putEntity('match', { ...match, scoreA: null, done: false });
 }
 
 /* ------------------------------------------------------------------ */

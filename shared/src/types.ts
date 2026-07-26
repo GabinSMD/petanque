@@ -13,8 +13,15 @@ export type TeamFormat = 'tete_a_tete' | 'doublette' | 'triplette';
  * - melee : inscriptions individuelles, équipes tirées au sort à chaque ronde
  * - suisse : N rondes, appariement par classement, personne n'est éliminé
  * - championnat : toutes rondes (chacun rencontre chacun)
+ * - tir_precision : séries de tir individuelles (100 points max)
  */
-export type ConcoursMode = 'poules' | 'elimination_directe' | 'melee' | 'suisse' | 'championnat';
+export type ConcoursMode =
+  | 'poules'
+  | 'elimination_directe'
+  | 'melee'
+  | 'suisse'
+  | 'championnat'
+  | 'tir_precision';
 
 /** Cycle de vie d'un concours. */
 export type ConcoursStatus = 'inscriptions' | 'poules' | 'tableau' | 'rondes' | 'termine';
@@ -42,10 +49,13 @@ export interface Concours {
   /** Score gagnant d'une mène complète (13 en pétanque). */
   scoreMax: number;
   nbTerrains: number;
-  /** Nombre de rondes prévues (mêlée, système suisse). */
+  /** Nombre de rondes prévues (mêlée, système suisse) ou de séries (tir). */
   nbRondes?: number;
   /** Durée indicative des parties en minutes (parties au temps). */
   tempsLimite?: number;
+  /** Indemnités : mise par équipe (€) et frais d'organisation (%). */
+  miseParEquipe?: number;
+  fraisPct?: number;
   status: ConcoursStatus;
   note?: string;
   createdAt: string;

@@ -7,11 +7,13 @@ import { BracketView } from './tabs/BracketTab';
 import { SideLabel } from './tabs/RondesTab';
 import { StandingsTable } from '../components/StandingsTable';
 import { teamDisplayName } from '../components/TeamLabel';
+import { TirRanking } from '../components/TirRanking';
 import {
   POULE_SLOT_LABELS,
-  STATUS_LABELS,
   formatDateFr,
   isRondesMode,
+  isTirMode,
+  statusLabel,
 } from '../lib/labels';
 
 /**
@@ -51,7 +53,8 @@ export function DisplayPage() {
         <h1>{concours.name}</h1>
         <p>
           {formatDateFr(concours.date)}
-          {concours.lieu ? ` · ${concours.lieu}` : ''} · {STATUS_LABELS[concours.status]}
+          {concours.lieu ? ` · ${concours.lieu}` : ''} ·{' '}
+          {statusLabel(concours.mode, concours.status)}
         </p>
         <div className="display-controls no-print">
           <button
@@ -97,6 +100,14 @@ export function DisplayPage() {
       {isRondesMode(concours.mode) &&
         (concours.status === 'rondes' || concours.status === 'termine') && (
           <DisplayRondes concours={concours} matches={matches} teams={teams} teamsById={teamsById} />
+        )}
+
+      {isTirMode(concours.mode) &&
+        (concours.status === 'rondes' || concours.status === 'termine') && (
+          <section>
+            <h2 className="display-section-title">Classement du tir</h2>
+            <TirRanking teams={teams} matches={matches} teamsById={teamsById} limit={15} />
+          </section>
         )}
 
       {!isRondesMode(concours.mode) && (concours.status === 'tableau' || concours.status === 'termine') && (

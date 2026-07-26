@@ -7,6 +7,7 @@ import {
   MODE_LABELS,
   isIndividualMode,
   isRondesMode,
+  isTirMode,
   suggestedName,
 } from '../lib/labels';
 
@@ -15,7 +16,14 @@ interface Props {
   onCancel: () => void;
 }
 
-const MODES: ConcoursMode[] = ['poules', 'elimination_directe', 'melee', 'suisse', 'championnat'];
+const MODES: ConcoursMode[] = [
+  'poules',
+  'elimination_directe',
+  'melee',
+  'suisse',
+  'championnat',
+  'tir_precision',
+];
 const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
 const FORMAT_EMOJI: Record<TeamFormat, string> = {
   tete_a_tete: '🧍',
@@ -44,6 +52,14 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
 
   const pickMode = (m: ConcoursMode) => {
     setMode(m);
+    if (isTirMode(m)) {
+      // Pas de formation en tir de précision : on passe aux détails.
+      setFormat('tete_a_tete');
+      if (!nameTouched) setName(suggestedName(m, 'tete_a_tete', date));
+      setNbRondes(2);
+      setStep(2);
+      return;
+    }
     setStep(1);
   };
 
@@ -65,8 +81,12 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       consolante: MODE_INFO[mode].consolante ? consolante : false,
       scoreMax,
       nbTerrains,
-      nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
-      tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
+      nbRondes:
+        (isRondesMode(mode) && mode !== 'championnat') || isTirMode(mode)
+          ? nbRondes
+          : undefined,
+      tempsLimite:
+        tempsLimite === '' || isTirMode(mode) ? undefined : Number(tempsLimite),
     });
   };
 
@@ -133,7 +153,8 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       {step === 2 && mode && format && (
         <form onSubmit={submit}>
           <p className="wizard-recap">
-            {MODE_INFO[mode].emoji} {MODE_LABELS[mode]} · {FORMAT_LABELS[format]}
+            {MODE_INFO[mode].emoji} {MODE_LABELS[mode]}
+            {!isTirMode(mode) && ` · ${FORMAT_LABELS[format]}`}
             {isIndividualMode(mode) && ' · inscriptions individuelles'}
           </p>
           <label>
@@ -193,9 +214,9 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
             </label>
           </div>
           <div className="form-row">
-            {isRondesMode(mode) && mode !== 'championnat' && (
+            {((isRondesMode(mode) && mode !== 'championnat') || isTirMode(mode)) && (
               <label>
-                Nombre de rondes
+                {isTirMode(mode) ? 'Nombre de séries' : 'Nombre de rondes'}
                 <input
                   type="number"
                   min={1}
@@ -205,19 +226,21 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 />
               </label>
             )}
-            <label>
-              Temps limité (min, facultatif)
-              <input
-                type="number"
-                min={15}
-                max={180}
-                value={tempsLimite}
-                placeholder="—"
-                onChange={(e) =>
-                  setTempsLimite(e.target.value === '' ? '' : Number(e.target.value))
-                }
-              />
-            </label>
+            {!isTirMode(mode) && (
+              <label>
+                Temps limité (min, facultatif)
+                <input
+                  type="number"
+                  min={15}
+                  max={180}
+                  value={tempsLimite}
+                  placeholder="—"
+                  onChange={(e) =>
+                    setTempsLimite(e.target.value === '' ? '' : Number(e.target.value))
+                  }
+                />
+              </label>
+            )}
           </div>
           {MODE_INFO[mode].consolante && (
             <label className="checkbox-label">

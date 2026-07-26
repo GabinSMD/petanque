@@ -6,13 +6,15 @@ import { BracketView } from './tabs/BracketTab';
 import { SideLabel } from './tabs/RondesTab';
 import { StandingsTable } from '../components/StandingsTable';
 import { TeamLabel, teamDisplayName } from '../components/TeamLabel';
+import { TirRanking } from '../components/TirRanking';
 import {
   FORMAT_LABELS,
   MODE_LABELS,
   POULE_SLOT_LABELS,
-  STATUS_LABELS,
   formatDateFr,
   isRondesMode,
+  isTirMode,
+  statusLabel,
 } from '../lib/labels';
 
 interface PublicData {
@@ -103,7 +105,7 @@ export function PublicPage() {
         </p>
         <p className="public-status">
           <span className={`status-chip status-${concours.status}`}>
-            {STATUS_LABELS[concours.status]}
+            {statusLabel(concours.mode, concours.status)}
           </span>
           {updatedAt && (
             <span className="public-updated">
@@ -209,6 +211,13 @@ export function PublicPage() {
             locked
             compact
           />
+        </section>
+      )}
+
+      {isTirMode(concours.mode) && matches.some((m) => m.stage === 'ronde') && (
+        <section className="result-section">
+          <h2>Classement du tir de précision</h2>
+          <TirRanking teams={data.teams} matches={matches} teamsById={teamsById} />
         </section>
       )}
 

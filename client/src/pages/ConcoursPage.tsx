@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Concours, ConcoursStatus, Match, Poule, Team } from '@shared';
-import { pouleOutcome, pouleSizes, rondesTirees, winnerOf } from '@shared';
+import { pouleOutcome, pouleSizes, rondesTirees, seriesTirees, winnerOf } from '@shared';
 import { updateConcours } from '../db/actions';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
@@ -10,16 +10,18 @@ import { ShareModal } from '../components/ShareModal';
 import {
   FORMAT_LABELS,
   MODE_LABELS,
-  STATUS_LABELS,
   entrantWord,
   formatDateFr,
   isIndividualMode,
   isRondesMode,
+  isTirMode,
+  statusLabel,
 } from '../lib/labels';
 import { TeamsTab } from './tabs/TeamsTab';
 import { PoulesTab } from './tabs/PoulesTab';
 import { BracketTab } from './tabs/BracketTab';
 import { RondesTab } from './tabs/RondesTab';
+import { TirTab } from './tabs/TirTab';
 import { ResultsTab } from './tabs/ResultsTab';
 
 const DEFAULT_TAB: Record<ConcoursStatus, string> = {
@@ -51,18 +53,25 @@ export function ConcoursPage() {
   }
 
   const rondesMode = isRondesMode(concours.mode);
+  const tirMode = isTirMode(concours.mode);
   const tabs = [
     {
       key: 'equipes',
-      label: `👥 ${isIndividualMode(concours.mode) ? 'Participants' : 'Équipes'} (${teams?.length ?? 0})`,
+      label: `👥 ${
+        tirMode ? 'Tireurs' : isIndividualMode(concours.mode) ? 'Participants' : 'Équipes'
+      } (${teams?.length ?? 0})`,
     },
     ...(concours.mode === 'poules' ? [{ key: 'poules', label: '🎲 Poules' }] : []),
-    ...(rondesMode
-      ? [{ key: 'rondes', label: '🔄 Rondes' }]
-      : [{ key: 'tableau', label: '🏆 Tableau' }]),
+    ...(tirMode
+      ? [{ key: 'series', label: '🏹 Séries' }]
+      : rondesMode
+        ? [{ key: 'rondes', label: '🔄 Rondes' }]
+        : [{ key: 'tableau', label: '🏆 Tableau' }]),
     { key: 'resultats', label: '📋 Résultats' },
   ];
-  const active = tabs.some((t) => t.key === tab) ? tab! : DEFAULT_TAB[concours.status];
+  const fallbackTab =
+    tirMode && concours.status === 'rondes' ? 'series' : DEFAULT_TAB[concours.status];
+  const active = tabs.some((t) => t.key === tab) ? tab! : fallbackTab;
 
   return (
     <div className="page">
@@ -71,15 +80,16 @@ export function ConcoursPage() {
           <h1>{concours.name}</h1>
           <p className="concours-meta">
             {formatDateFr(concours.date)}
-            {concours.lieu ? ` · ${concours.lieu}` : ''} · {FORMAT_LABELS[concours.format]} ·{' '}
-            {MODE_LABELS[concours.mode]}
-            {concours.consolante ? ' · Consolante' : ''} · Parties en {concours.scoreMax} pts
+            {concours.lieu ? ` · ${concours.lieu}` : ''}
+            {!tirMode && ` · ${FORMAT_LABELS[concours.format]}`} · {MODE_LABELS[concours.mode]}
+            {concours.consolante ? ' · Consolante' : ''}
+            {!tirMode && ` · Parties en ${concours.scoreMax} pts`}
             {concours.tempsLimite ? ` · Temps limité ${concours.tempsLimite} min` : ''}
           </p>
         </div>
         <div className="concours-actions">
           <span className={`status-chip status-${concours.status}`}>
-            {STATUS_LABELS[concours.status]}
+            {statusLabel(concours.mode, concours.status)}
           </span>
           <button
             className="btn btn-ghost btn-sm"
@@ -147,6 +157,9 @@ export function ConcoursPage() {
       {active === 'rondes' && (
         <RondesTab concours={concours} teams={teams ?? []} matches={matches ?? []} />
       )}
+      {active === 'series' && (
+        <TirTab concours={concours} teams={teams ?? []} matches={matches ?? []} />
+      )}
       {active === 'tableau' && (
         <BracketTab concours={concours} teams={teams ?? []} matches={matches ?? []} poules={poules ?? []} />
       )}
@@ -187,6 +200,43 @@ function nextStepOf(
   matches: Match[],
 ): NextStep {
   const active = teams.filter((t) => !t.forfait).length;
+
+  if (isTirMode(concours.mode)) {
+    if (concours.status === 'inscriptions') {
+      return active < 1
+        ? { icon: '✍️', text: 'Inscrivez vos tireurs.', tab: 'equipes' }
+        : {
+            icon: '🏹',
+            text: `${active} tireur${active > 1 ? 's' : ''} prêt${active > 1 ? 's' : ''} : ouvrez la série 1 !`,
+            tab: 'series',
+          };
+    }
+    if (concours.status === 'rondes') {
+      const serieMs = matches.filter((m) => m.stage === 'ronde');
+      const pending = serieMs.filter((m) => !m.done).length;
+      const series = seriesTirees(serieMs);
+      const planned = concours.nbRondes ?? 2;
+      if (pending > 0) {
+        return {
+          icon: '⏱',
+          text: `Saisissez les scores : ${pending} feuille${pending > 1 ? 's' : ''} de tir restante${pending > 1 ? 's' : ''} (série ${series}).`,
+          tab: 'series',
+        };
+      }
+      if (series < planned) {
+        return {
+          icon: '🏹',
+          text: `Série ${series} complète : ouvrez la série ${series + 1}.`,
+          tab: 'series',
+        };
+      }
+      return {
+        icon: '🏁',
+        text: 'Toutes les séries sont tirées : clôturez le concours.',
+        tab: 'series',
+      };
+    }
+  }
 
   if (isRondesMode(concours.mode)) {
     const word = entrantWord(concours.mode, active > 1);
