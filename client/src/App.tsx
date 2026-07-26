@@ -8,6 +8,7 @@ import { ChatBot } from './components/ChatBot';
 import { TourHost } from './components/Tour';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { PalmaresPage } from './pages/PalmaresPage';
 import { ConcoursPage } from './pages/ConcoursPage';
 import { DisplayPage } from './pages/DisplayPage';
 import { LicenciesPage } from './pages/LicenciesPage';
@@ -113,6 +114,7 @@ export function App() {
           }
         >
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/palmares" element={<PalmaresPage />} />
           <Route path="/licencies" element={<LicenciesPage />} />
           <Route path="/concours/:id" element={<ConcoursPage />} />
           <Route path="/concours/:id/:tab" element={<ConcoursPage />} />

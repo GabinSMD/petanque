@@ -6,6 +6,7 @@ import { StandingsTable } from '../../components/StandingsTable';
 import { TeamLabel } from '../../components/TeamLabel';
 import { TirRanking } from '../../components/TirRanking';
 import { isIndividualMode, isRondesMode, isTirMode } from '../../lib/labels';
+import { exportBackupJSON, exportClassementCSV, exportEngagesCSV } from '../../lib/export';
 
 interface Props {
   concours: Concours;
@@ -28,6 +29,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
     }
     return (
       <div className="tab-content results">
+        <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
         <section className="result-section">
           <h2>Classement du tir de précision</h2>
           <TirRanking teams={teams} matches={matches} teamsById={teamsById} />
@@ -47,6 +49,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
     }
     return (
       <div className="tab-content results">
+        <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
         <section className="result-section">
           <h2>
             Classement général{isIndividualMode(concours.mode) ? ' (individuel)' : ''}
@@ -92,6 +95,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
 
   return (
     <div className="tab-content results">
+      <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
       {principalGroups.length > 0 && (
         <section className="result-section">
           <h2>Concours principal</h2>
@@ -252,6 +256,33 @@ function IndemnitesSection({
         </>
       )}
     </section>
+  );
+}
+
+function ExportBar({ concours, teams, poules, matches }: Props) {
+  return (
+    <div className="export-bar no-print">
+      <span className="export-bar-label">Exporter :</span>
+      <button
+        className="btn btn-ghost btn-sm"
+        onClick={() => exportClassementCSV(concours, teams, poules, matches)}
+      >
+        📊 Classement (CSV)
+      </button>
+      <button
+        className="btn btn-ghost btn-sm"
+        onClick={() => exportEngagesCSV(concours, teams)}
+      >
+        📋 Engagés (CSV)
+      </button>
+      <button
+        className="btn btn-ghost btn-sm"
+        onClick={() => exportBackupJSON(concours, teams, poules, matches)}
+        title="Sauvegarde complète réimportable"
+      >
+        💾 Sauvegarde (JSON)
+      </button>
+    </div>
   );
 }
 

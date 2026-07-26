@@ -77,6 +77,9 @@ export function DashboardPage() {
           <Link className="btn btn-sm" to="/licencies">
             📇 Licenciés
           </Link>
+          <Link className="btn btn-sm" to="/palmares">
+            🏆 Palmarès
+          </Link>
           <button
             className="btn btn-primary"
             data-tour="new-concours"

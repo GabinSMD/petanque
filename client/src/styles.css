@@ -922,6 +922,46 @@ form label select {
   50% { border-color: var(--danger); }
 }
 
+.export-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.export-bar-label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.palmares-section { margin-bottom: 2rem; }
+.palmares-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.palmares-table th,
+.palmares-table td {
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.palmares-table th {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.palmares-winner { font-weight: 600; }
+.palmares-club,
+.palmares-date { color: var(--muted); font-weight: 400; }
+.palmares-count {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
 .qualifies-banner {
   margin: 0 0 0.6rem;
   padding: 0.5rem 0.75rem;
