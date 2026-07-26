@@ -907,7 +907,32 @@ form label select {
 }
 
 .match-terrain {
-  width: 3.6rem;
+  width: 5rem;
+}
+
+.terrain-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-left: 2px solid var(--line);
+  padding-left: 0.35rem;
+}
+
+.terrain-field-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+
+.terrain-field input {
+  width: 2.6rem;
+  padding: 0.2rem 0.3rem;
+  background: #f1f4fa;
+}
+
+.score-form .btn-sm {
+  padding: 0.25rem 0.5rem;
 }
 
 /* Libellés d'équipes */
@@ -1017,6 +1042,61 @@ form label select {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.bracket-collapse-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 0.2rem;
+  font-size: 0.8rem;
+}
+
+.bracket-collapse-btn:hover {
+  color: var(--accent);
+}
+
+.bracket-round-collapsed {
+  align-self: stretch;
+  min-width: 2.4rem;
+  border: 1px dashed var(--line);
+  background: var(--accent-soft);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.2rem;
+  color: var(--accent-dark);
+}
+
+.bracket-round-collapsed:hover {
+  border-color: var(--accent);
+}
+
+.bracket-round-collapsed-title,
+.bracket-round-collapsed-meta {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bracket-round-collapsed-title {
+  font-weight: 700;
+}
+
+.bracket-round-collapsed-meta {
+  color: var(--muted);
 }
 
 .bracket-column {

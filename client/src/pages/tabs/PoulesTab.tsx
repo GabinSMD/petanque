@@ -316,16 +316,19 @@ function PouleCard({
                 <TeamLabel team={m.teamBId ? teamsById.get(m.teamBId) : null} compact />
               </td>
               <td className="match-terrain no-print">
-                <input
-                  type="number"
-                  min={1}
-                  value={m.terrain ?? ''}
-                  placeholder="T"
-                  title="Terrain"
-                  onChange={(e) =>
-                    void setMatchTerrain(m, e.target.value ? Number(e.target.value) : null)
-                  }
-                />
+                <span className="terrain-field" title="Terrain de jeu">
+                  <span className="terrain-field-label">Terr.</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={m.terrain ?? ''}
+                    placeholder="–"
+                    aria-label="Terrain"
+                    onChange={(e) =>
+                      void setMatchTerrain(m, e.target.value ? Number(e.target.value) : null)
+                    }
+                  />
+                </span>
               </td>
             </tr>
           ))}

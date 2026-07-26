@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FocusEvent, type FormEvent } from 'react';
 import type { Concours, Match } from '@shared';
 import { clearScore, setScore } from '../db/actions';
 
@@ -14,16 +14,15 @@ interface Props {
 
 /**
  * Saisie / correction du score d'une partie.
- * - Partie exemptée : rien à saisir.
- * - Partie en attente de participants : tiret.
- * - Partie jouable : deux champs + validation.
- * - Partie terminée : scores affichés, bouton « corriger ».
+ * Les deux scores se valident automatiquement (touche Entrée, ou dès qu'on
+ * quitte les cases une fois les deux remplies) — aucun bouton à cliquer.
  */
 export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Props) {
   const [editing, setEditing] = useState(false);
   const [a, setA] = useState('');
   const [b, setB] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   if (match.byeA || match.byeB) {
     return <span className="score-view score-bye">exempt</span>;
@@ -37,8 +36,9 @@ export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Prop
   const ready = !match.done;
   const showForm = ready || editing;
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  /** Valide dès que les deux cases sont remplies ; sinon ne fait rien. */
+  const tryCommit = async () => {
+    if (a.trim() === '' || b.trim() === '') return;
     setError(null);
     try {
       await setScore(concours, match, Number(a), Number(b));
@@ -49,6 +49,17 @@ export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Prop
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Score invalide');
     }
+  };
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    void tryCommit();
+  };
+
+  /** Sauvegarde en quittant la saisie (sauf si le focus reste dans le formulaire). */
+  const onBlur = (e: FocusEvent<HTMLFormElement>) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    void tryCommit();
   };
 
   const startEdit = () => {
@@ -100,7 +111,7 @@ export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Prop
   if (disabled) return <span className="score-view score-tbd">—</span>;
 
   return (
-    <form className="score-form" onSubmit={(e) => void submit(e)}>
+    <form ref={formRef} className="score-form" onSubmit={submit} onBlur={onBlur}>
       <input
         type="number"
         inputMode="numeric"
@@ -109,7 +120,7 @@ export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Prop
         value={a}
         onChange={(e) => setA(e.target.value)}
         aria-label="Score équipe A"
-        required
+        placeholder="–"
       />
       <span className="score-sep">–</span>
       <input
@@ -120,11 +131,14 @@ export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Prop
         value={b}
         onChange={(e) => setB(e.target.value)}
         aria-label="Score équipe B"
-        required
+        placeholder="–"
       />
-      <button className="btn btn-primary btn-sm" title="Valider">
-        OK
-      </button>
+      {/* Bouton de confirmation optionnel (surtout utile sur tablette). */}
+      {a.trim() !== '' && b.trim() !== '' && (
+        <button className="btn btn-primary btn-sm" title="Valider le score" aria-label="Valider">
+          ✓
+        </button>
+      )}
       {editing && (
         <>
           <button

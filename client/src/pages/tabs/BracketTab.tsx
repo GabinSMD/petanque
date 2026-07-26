@@ -223,6 +223,15 @@ export function BracketView({
   locked: boolean;
   compact?: boolean;
 }) {
+  const [collapsedRounds, setCollapsedRounds] = useState<Set<number>>(new Set());
+  const toggleRound = (r: number) =>
+    setCollapsedRounds((prev) => {
+      const next = new Set(prev);
+      if (next.has(r)) next.delete(r);
+      else next.add(r);
+      return next;
+    });
+
   if (stageMatches.length === 0) {
     return <p className="hint">Pas de parties dans ce tableau.</p>;
   }
@@ -247,9 +256,40 @@ export function BracketView({
   return (
     <div className={`bracket-scroll${compact ? ' bracket-compact' : ''}`}>
       <div className="bracket">
-        {rounds.map((roundMatches, r) => (
+        {rounds.map((roundMatches, r) => {
+          if (collapsedRounds.has(r)) {
+            const remaining = roundMatches.filter((m) => !m.done && !isByeMatch(m)).length;
+            return (
+              <button
+                key={r}
+                className="bracket-round-collapsed no-print"
+                onClick={() => toggleRound(r)}
+                title="Déplier ce tour"
+              >
+                <span className="bracket-round-collapsed-title">
+                  {roundLabel(size, r, hasByes)}
+                </span>
+                <span className="bracket-round-collapsed-meta">
+                  ▸ {roundMatches.length} partie{roundMatches.length > 1 ? 's' : ''}
+                  {remaining > 0 ? ` · ${remaining} à jouer` : ' · terminé'}
+                </span>
+              </button>
+            );
+          }
+          return (
           <div className="bracket-round" key={r}>
-            <h4 className="bracket-round-title">{roundLabel(size, r, hasByes)}</h4>
+            <h4 className="bracket-round-title">
+              {!compact && rounds.length > 2 && (
+                <button
+                  className="bracket-collapse-btn no-print"
+                  onClick={() => toggleRound(r)}
+                  title="Replier ce tour"
+                >
+                  ▾
+                </button>
+              )}
+              {roundLabel(size, r, hasByes)}
+            </h4>
             <div className="bracket-column">
               {roundMatches.map((m) => (
                 <div
@@ -310,7 +350,8 @@ export function BracketView({
               ))}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
