@@ -91,6 +91,9 @@ input:focus, select:focus, button:focus-visible {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.55rem 1.1rem 0.65rem;
+  padding-top: calc(0.55rem + env(safe-area-inset-top));
+  padding-left: calc(1.1rem + env(safe-area-inset-left));
+  padding-right: calc(1.1rem + env(safe-area-inset-right));
   background: linear-gradient(180deg, #101f52, var(--accent));
   color: #fff;
   position: sticky;
@@ -1729,10 +1732,48 @@ form label select {
 
 /* ------------------------------ Assistant ------------------------------ */
 
+/* ---------------------- Bannière d'installation (PWA) --------------------- */
+.install-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  padding-bottom: calc(0.7rem + env(safe-area-inset-bottom));
+  padding-left: calc(1rem + env(safe-area-inset-left));
+  padding-right: calc(1rem + env(safe-area-inset-right));
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 18px rgba(18, 30, 60, 0.12);
+  animation: pop-in 0.2s ease-out;
+}
+.install-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.install-text {
+  flex: 1;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+.install-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  /* Dégage la pastille d'aide flottante (coin bas-droit). */
+  margin-right: 4rem;
+}
+
 .help-fab {
   position: fixed;
   right: 1.1rem;
   bottom: 1.1rem;
+  right: calc(1.1rem + env(safe-area-inset-right));
+  bottom: calc(1.1rem + env(safe-area-inset-bottom));
   z-index: 80;
   width: 3.4rem;
   height: 3.4rem;
@@ -3053,6 +3094,12 @@ form label select {
     flex-wrap: wrap;
   }
 
+  .app-main {
+    padding: 0.9rem 0.8rem 4.5rem;
+    padding-left: calc(0.8rem + env(safe-area-inset-left));
+    padding-right: calc(0.8rem + env(safe-area-inset-right));
+  }
+
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -3089,4 +3136,72 @@ form label select {
   .format-cards {
     grid-template-columns: 1fr;
   }
+
+  /* Onglets du concours : collants sous l'en-tête, défilement horizontal. */
+  nav.tabs {
+    position: sticky;
+    top: calc(2.9rem + env(safe-area-inset-top));
+    z-index: 15;
+    display: flex;
+    width: 100%;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  nav.tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Cibles tactiles plus généreuses (≥ 44 px recommandés). */
+  .tab {
+    padding: 0.6rem 1rem;
+  }
+  .btn,
+  .btn-sm {
+    min-height: 2.6rem;
+  }
+  .btn-icon {
+    min-width: 2.4rem;
+    min-height: 2.4rem;
+  }
+
+  /* Tableaux larges : défilement horizontal encapsulé. */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -0.2rem;
+  }
+
+  /* En-tête de tableau de bord : boutons sur toute la largeur. */
+  .page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+  .page-head-actions {
+    flex-wrap: wrap;
+  }
+
+  /* Barres d'outils / export : cassables sans déborder. */
+  .export-bar,
+  .toolbar {
+    gap: 0.4rem;
+  }
+
+  /* La bannière d'installation laisse la place à la pastille d'aide. */
+  .install-text {
+    font-size: 0.86rem;
+  }
+}
+
+/* Écran tactile fin : pas d'effets de survol persistants. */
+@media (hover: none) {
+  .help-fab:hover {
+    transform: none;
+  }
+}
+
+/* Utilitaire générique de défilement horizontal (tables, brackets). */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }

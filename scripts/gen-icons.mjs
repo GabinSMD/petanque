@@ -67,14 +67,20 @@ const RIM = hex('#4a545e');
 const COCHONNET = hex('#d21c34');
 const COCHONNET_RIM = hex('#7c1220');
 
-function draw(size) {
+/**
+ * Dessine la boule + cochonnet sur fond fédéral.
+ * `scale` recentre le motif (icône « maskable » : le contenu tient dans la
+ * zone de sécurité circulaire de ~80% qu'Android peut rogner).
+ */
+function draw(size, scale = 1) {
   const px = Buffer.alloc(size * size * 4);
   const cx = size / 2;
   const cy = size / 2;
-  const r = size * 0.33;
-  const jx = size * 0.72;
-  const jy = size * 0.73;
-  const jr = size * 0.1;
+  const r = size * 0.33 * scale;
+  // Cochonnet décalé du centre, décalage lui aussi mis à l'échelle.
+  const jx = cx + size * 0.22 * scale;
+  const jy = cy + size * 0.23 * scale;
+  const jr = size * 0.1 * scale;
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -89,13 +95,13 @@ function draw(size) {
         color = STEEL.map((c, i) => Math.round(c + (STEEL_DARK[i] - c) * t));
         // Stries horizontales.
         const dy = Math.abs(y - cy);
-        const band = size * 0.115;
-        if (Math.abs(dy - band) < size * 0.014) color = RIM;
+        const band = size * 0.115 * scale;
+        if (Math.abs(dy - band) < size * 0.014 * scale) color = RIM;
         // Liseré.
-        if (db >= r - size * 0.02) color = RIM;
+        if (db >= r - size * 0.02 * scale) color = RIM;
       }
       if (dj <= jr) {
-        color = dj >= jr - size * 0.018 ? COCHONNET_RIM : COCHONNET;
+        color = dj >= jr - size * 0.018 * scale ? COCHONNET_RIM : COCHONNET;
       }
 
       const o = (y * size + x) * 4;
@@ -108,8 +114,16 @@ function draw(size) {
   return px;
 }
 
-for (const size of [192, 512]) {
-  const file = join(outDir, `pwa-${size}.png`);
-  writeFileSync(file, encodePng(size, draw(size)));
+const write = (name, size, scale) => {
+  const file = join(outDir, name);
+  writeFileSync(file, encodePng(size, draw(size, scale)));
   console.log(`✔ ${file}`);
-}
+};
+
+// Icônes « any » (plein cadre) et « maskable » (motif recentré à 72%).
+write('pwa-192.png', 192, 1);
+write('pwa-512.png', 512, 1);
+write('maskable-192.png', 192, 0.72);
+write('maskable-512.png', 512, 0.72);
+// Icône Apple (opaque, coins arrondis par iOS lui-même).
+write('apple-touch-icon.png', 180, 1);

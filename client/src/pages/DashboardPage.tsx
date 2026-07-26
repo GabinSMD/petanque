@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { createConcours, deleteConcours } from '../db/actions';
 import { db } from '../db/local';
@@ -39,7 +39,17 @@ export function DashboardPage() {
   const concoursList = useConcoursList();
   const teamCounts = useTeamCounts();
   const [creating, setCreating] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [club, setClub] = useState(false);
+
+  // Raccourci PWA « Nouveau concours » (?nouveau=1) : ouvre l'assistant.
+  useEffect(() => {
+    if (searchParams.get('nouveau') !== null) {
+      setCreating(true);
+      searchParams.delete('nouveau');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const [welcome, setWelcome] = useState(() => !isWelcomeDone());
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const session = useSession();

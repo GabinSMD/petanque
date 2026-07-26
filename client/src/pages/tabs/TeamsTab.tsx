@@ -131,6 +131,7 @@ export function TeamsTab({ concours, teams }: Props) {
         </p>
       )}
 
+      <div className="table-scroll">
       <table className="teams-table">
         <thead>
           <tr>
@@ -221,6 +222,7 @@ export function TeamsTab({ concours, teams }: Props) {
           )}
         </tbody>
       </table>
+      </div>
 
       <p className="teams-footer">
         <strong>{teams.length}</strong>{' '}

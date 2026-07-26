@@ -117,6 +117,7 @@ export function PalmaresPage() {
         <>
           <section className="palmares-section">
             <h2>Tableau d'honneur</h2>
+            <div className="table-scroll">
             <table className="palmares-table">
               <thead>
                 <tr>
@@ -151,11 +152,13 @@ export function PalmaresPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </section>
 
           {clubBoard.length > 0 && (
             <section className="palmares-section">
               <h2>Classement des clubs</h2>
+              <div className="table-scroll">
               <table className="palmares-table">
                 <thead>
                   <tr>
@@ -174,6 +177,7 @@ export function PalmaresPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </section>
           )}
         </>

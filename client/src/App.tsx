@@ -5,6 +5,7 @@ import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
 import { SyncBadge } from './components/SyncBadge';
 import { ChatBot } from './components/ChatBot';
+import { InstallPrompt } from './components/InstallPrompt';
 import { TourHost } from './components/Tour';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -121,6 +122,7 @@ export function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <InstallPrompt />
     </BrowserRouter>
   );
 }
