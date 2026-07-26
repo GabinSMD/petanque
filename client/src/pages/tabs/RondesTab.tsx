@@ -1,0 +1,240 @@
+import { useMemo, useState } from 'react';
+import type { Concours, Match, Team } from '@shared';
+import { championnatRondes, rondeComplete, rondeStandings, rondesTirees } from '@shared';
+import { annulerDerniereRonde, setMatchTerrain, tirerRonde, updateConcours } from '../../db/actions';
+import { ScoreForm } from '../../components/ScoreForm';
+import { StandingsTable } from '../../components/StandingsTable';
+import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
+import { MODE_INFO, entrantWord, isIndividualMode } from '../../lib/labels';
+
+interface Props {
+  concours: Concours;
+  teams: Team[];
+  matches: Match[];
+}
+
+export function RondesTab({ concours, teams, matches }: Props) {
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
+  const active = teams.filter((t) => !t.forfait);
+  const rondeMatches = matches.filter((m) => m.stage === 'ronde');
+  const tirees = rondesTirees(rondeMatches);
+  const planned =
+    concours.mode === 'championnat'
+      ? tirees > 0
+        ? tirees
+        : championnatRondes(Math.max(active.length, 2))
+      : (concours.nbRondes ?? 4);
+  const currentComplete = tirees > 0 && rondeComplete(rondeMatches, tirees - 1);
+  const allDone = tirees >= planned && currentComplete && rondeMatches.every((m) => m.done);
+  const standings = rondeStandings(teams, rondeMatches);
+  const locked = concours.status === 'termine';
+
+  const doTirer = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await tirerRonde(concours);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Tirage impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* ------------------------- Aucune ronde tirée ------------------------- */
+
+  if (tirees === 0) {
+    return (
+      <div className="tab-content">
+        <div className="draw-panel">
+          <h2>{concours.mode === 'championnat' ? 'Calendrier du championnat' : 'Première ronde'}</h2>
+          <p>
+            {active.length} {entrantWord(concours.mode, active.length > 1)} (hors forfaits).{' '}
+            {MODE_INFO[concours.mode].description}
+          </p>
+          {concours.mode !== 'championnat' && (
+            <p className="hint">
+              {planned} rondes prévues — modifiable dans ⚙ Paramètres.
+            </p>
+          )}
+          {error && <p className="form-error">{error}</p>}
+          <button
+            className="btn btn-primary"
+            disabled={active.length < 2 || busy}
+            onClick={() => void doTirer()}
+          >
+            🎲 {concours.mode === 'championnat' ? 'Générer le calendrier' : 'Tirer la ronde 1'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* --------------------------- Rondes en cours -------------------------- */
+
+  const rondes: Match[][] = [];
+  for (let r = tirees - 1; r >= 0; r--) {
+    rondes.push(rondeMatches.filter((m) => m.round === r).sort((a, b) => a.position - b.position));
+  }
+
+  return (
+    <div className="tab-content">
+      <div className="toolbar no-print">
+        <span className="toolbar-info">
+          Ronde {tirees} / {planned}
+          {currentComplete ? ' — terminée' : ''}
+        </span>
+        {error && <span className="form-error">{error}</span>}
+        <span className="toolbar-actions">
+          <a
+            className="btn btn-ghost btn-sm"
+            href={`/concours/${concours.id}/imprimer/parties`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            🎫 Tickets de parties
+          </a>
+          {!locked && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                const msg =
+                  concours.mode === 'championnat'
+                    ? 'Annuler tout le calendrier du championnat (et ses scores) ?'
+                    : `Annuler la ronde ${tirees} (et ses scores) ?`;
+                if (window.confirm(msg)) void annulerDerniereRonde(concours);
+              }}
+            >
+              {concours.mode === 'championnat' ? 'Annuler le calendrier' : 'Annuler la dernière ronde'}
+            </button>
+          )}
+          {!locked && concours.mode !== 'championnat' && tirees < planned && (
+            <button
+              className="btn btn-primary"
+              disabled={!currentComplete || busy}
+              title={currentComplete ? '' : 'Terminez la ronde en cours'}
+              onClick={() => void doTirer()}
+            >
+              🎲 Tirer la ronde {tirees + 1}
+            </button>
+          )}
+          {!locked && allDone && (
+            <button
+              className="btn btn-primary"
+              onClick={() => void updateConcours({ ...concours, status: 'termine' })}
+            >
+              Clôturer le concours
+            </button>
+          )}
+          {locked && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => void updateConcours({ ...concours, status: 'rondes' })}
+            >
+              Rouvrir le concours
+            </button>
+          )}
+        </span>
+      </div>
+
+      <div className="rondes-layout">
+        <div className="rondes-matches">
+          {rondes.map((ms, idx) => {
+            const num = tirees - idx;
+            const complete = ms.every((m) => m.done);
+            return (
+              <section key={num} className="ronde-section">
+                <h3 className="ronde-title">
+                  Ronde {num}{' '}
+                  {complete ? (
+                    <span className="tag tag-ok">terminée</span>
+                  ) : (
+                    <span className="tag">{ms.filter((m) => !m.done).length} à saisir</span>
+                  )}
+                </h3>
+                <table className="poule-matches ronde-table">
+                  <tbody>
+                    {ms.map((m) => (
+                      <tr key={m.id}>
+                        <td className="match-team">
+                          <SideLabel match={m} side="A" teamsById={teamsById} />
+                        </td>
+                        <td className="match-score">
+                          <ScoreForm concours={concours} match={m} disabled={locked} />
+                        </td>
+                        <td className="match-team match-team-right">
+                          <SideLabel match={m} side="B" teamsById={teamsById} />
+                        </td>
+                        <td className="match-terrain no-print">
+                          {!m.byeB && (
+                            <input
+                              type="number"
+                              min={1}
+                              value={m.terrain ?? ''}
+                              placeholder="T"
+                              title="Terrain"
+                              onChange={(e) =>
+                                void setMatchTerrain(
+                                  m,
+                                  e.target.value ? Number(e.target.value) : null,
+                                )
+                              }
+                            />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+            );
+          })}
+        </div>
+
+        <aside className="rondes-standings">
+          <h3>
+            Classement {isIndividualMode(concours.mode) ? 'individuel' : ''}
+            <span className="hint"> — victoires puis goal-average</span>
+          </h3>
+          <StandingsTable standings={standings} teamsById={teamsById} />
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+/** Côté d'une partie de ronde : équipe classique ou joueurs tirés (mêlée). */
+export function SideLabel({
+  match,
+  side,
+  teamsById,
+}: {
+  match: Match;
+  side: 'A' | 'B';
+  teamsById: Map<string, Team>;
+}) {
+  const bye = side === 'A' ? match.byeA : match.byeB;
+  if (bye) return <span className="team-label team-bye">Exempt</span>;
+
+  const players = side === 'A' ? match.playersA : match.playersB;
+  if (players && players.length > 0) {
+    return (
+      <span className="melee-side">
+        {players.map((id) => {
+          const t = teamsById.get(id);
+          return (
+            <span key={id} className="melee-player">
+              {t ? teamDisplayName(t) : '…'}
+            </span>
+          );
+        })}
+      </span>
+    );
+  }
+
+  const teamId = side === 'A' ? match.teamAId : match.teamBId;
+  return <TeamLabel team={teamId ? teamsById.get(teamId) : null} compact />;
+}

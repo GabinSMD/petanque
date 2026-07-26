@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+client/dev-dist/
+
+# Base de données locale du serveur
+server/data/
+*.sqlite
+*.sqlite-journal
+*.db
+
+# Environnement
+.env
+.env.local
+
+# Divers
+.DS_Store
+*.log
+coverage/
