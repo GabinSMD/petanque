@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import type { Concours, ConcoursMode, TeamFormat } from '@shared';
+import type { Concours, ConcoursMode, Discipline, TeamFormat } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
   CATEGORY_SUGGESTIONS,
+  DISCIPLINE_LABELS,
   FORMAT_LABELS,
   MODE_INFO,
   MODE_LABELS,
@@ -26,7 +27,11 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [format, setFormat] = useState<TeamFormat>(initial?.format ?? 'doublette');
   const [mode, setMode] = useState<ConcoursMode>(initial?.mode ?? 'poules');
   const [category, setCategory] = useState(initial?.category ?? '');
+  const [discipline, setDiscipline] = useState<Discipline>(initial?.discipline ?? 'petanque');
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
+  const [complementaire, setComplementaire] = useState(initial?.complementaire ?? false);
+  const [nbQualifies, setNbQualifies] = useState<number | ''>(initial?.nbQualifies ?? '');
+  const [miseParEquipe, setMiseParEquipe] = useState<number | ''>(initial?.miseParEquipe ?? '');
   const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
   const [nbTerrains, setNbTerrains] = useState(initial?.nbTerrains ?? 8);
   const [nbRondes, setNbRondes] = useState(initial?.nbRondes ?? 4);
@@ -40,12 +45,16 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       lieu: lieu.trim() || undefined,
       format,
       mode,
+      discipline,
       category: category.trim() || undefined,
+      nbQualifies: nbQualifies === '' ? undefined : Number(nbQualifies),
       consolante: MODE_INFO[mode].consolante ? consolante : false,
+      complementaire: MODE_INFO[mode].consolante && consolante ? complementaire : false,
       scoreMax,
       nbTerrains,
       nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
       tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
+      miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
     });
   };
 
@@ -75,20 +84,36 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           />
         </label>
       </div>
-      <label>
-        Catégorie
-        <input
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          placeholder="Seniors, Vétérans, Féminines, Jeunes…"
-          list="form-categories"
-        />
-        <datalist id="form-categories">
-          {CATEGORY_SUGGESTIONS.map((c) => (
-            <option key={c} value={c} />
-          ))}
-        </datalist>
-      </label>
+      <div className="form-row">
+        <label>
+          Discipline
+          <select
+            value={discipline}
+            onChange={(e) => setDiscipline(e.target.value as Discipline)}
+            disabled={lockStructure}
+          >
+            {Object.entries(DISCIPLINE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Catégorie
+          <input
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="Seniors, Vétérans, Féminines…"
+            list="form-categories"
+          />
+          <datalist id="form-categories">
+            {CATEGORY_SUGGESTIONS.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </label>
+      </div>
       <div className="form-row">
         <label>
           Formation
@@ -170,16 +195,60 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           </label>
         )}
       </div>
-      {MODE_INFO[mode].consolante && (
-        <label className="checkbox-label">
+      <div className="form-row">
+        <label>
+          Mise par équipe (€, facultatif)
           <input
-            type="checkbox"
-            checked={consolante}
-            onChange={(e) => setConsolante(e.target.checked)}
-            disabled={lockStructure}
+            type="number"
+            min={0}
+            max={1000}
+            step={0.5}
+            value={miseParEquipe}
+            placeholder="—"
+            onChange={(e) =>
+              setMiseParEquipe(e.target.value === '' ? '' : Number(e.target.value))
+            }
           />
-          Consolante (repêchage des éliminés)
         </label>
+        {!isRondesMode(mode) && !isTirMode(mode) && (
+          <label>
+            Qualifiés pour la suite (facultatif)
+            <input
+              type="number"
+              min={0}
+              max={512}
+              value={nbQualifies}
+              placeholder="—"
+              onChange={(e) =>
+                setNbQualifies(e.target.value === '' ? '' : Number(e.target.value))
+              }
+            />
+          </label>
+        )}
+      </div>
+      {MODE_INFO[mode].consolante && (
+        <>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={consolante}
+              onChange={(e) => setConsolante(e.target.checked)}
+              disabled={lockStructure}
+            />
+            Consolante (repêchage des éliminés)
+          </label>
+          {consolante && (
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={complementaire}
+                onChange={(e) => setComplementaire(e.target.checked)}
+                disabled={lockStructure}
+              />
+              Complémentaire (2ᵉ repêchage : perdants de la consolante)
+            </label>
+          )}
+        </>
       )}
       <div className="form-actions">
         <button type="button" className="btn btn-ghost" onClick={onCancel}>

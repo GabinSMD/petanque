@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import type { ConcoursMode, TeamFormat } from '@shared';
+import type { ConcoursMode, Discipline, TeamFormat } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
   CATEGORY_SUGGESTIONS,
+  DISCIPLINE_LABELS,
   FORMAT_LABELS,
   MODE_INFO,
   MODE_LABELS,
@@ -46,10 +47,12 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const [date, setDate] = useState(today);
   const [lieu, setLieu] = useState('');
   const [category, setCategory] = useState('');
+  const [discipline, setDiscipline] = useState<Discipline>('petanque');
   const [nbTerrains, setNbTerrains] = useState(8);
   const [scoreMax, setScoreMax] = useState(13);
   const [nbRondes, setNbRondes] = useState(4);
   const [tempsLimite, setTempsLimite] = useState<number | ''>('');
+  const [miseParEquipe, setMiseParEquipe] = useState<number | ''>('');
   const [consolante, setConsolante] = useState(true);
 
   const pickMode = (m: ConcoursMode) => {
@@ -80,6 +83,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       lieu: lieu.trim() || undefined,
       format,
       mode,
+      discipline,
       category: category.trim() || undefined,
       consolante: MODE_INFO[mode].consolante ? consolante : false,
       scoreMax,
@@ -90,6 +94,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
           : undefined,
       tempsLimite:
         tempsLimite === '' || isTirMode(mode) ? undefined : Number(tempsLimite),
+      miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
     });
   };
 
@@ -194,20 +199,35 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
               />
             </label>
           </div>
-          <label>
-            Catégorie (facultatif)
-            <input
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Seniors, Vétérans, Féminines, Jeunes…"
-              list="wizard-categories"
-            />
-            <datalist id="wizard-categories">
-              {CATEGORY_SUGGESTIONS.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-          </label>
+          <div className="form-row">
+            <label>
+              Discipline
+              <select
+                value={discipline}
+                onChange={(e) => setDiscipline(e.target.value as Discipline)}
+              >
+                {Object.entries(DISCIPLINE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Catégorie (facultatif)
+              <input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Seniors, Vétérans, Féminines…"
+                list="wizard-categories"
+              />
+              <datalist id="wizard-categories">
+                {CATEGORY_SUGGESTIONS.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </label>
+          </div>
           <div className="form-row">
             <label>
               Terrains disponibles
@@ -258,6 +278,20 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 />
               </label>
             )}
+            <label>
+              Mise par équipe (€, facultatif)
+              <input
+                type="number"
+                min={0}
+                max={1000}
+                step={0.5}
+                value={miseParEquipe}
+                placeholder="—"
+                onChange={(e) =>
+                  setMiseParEquipe(e.target.value === '' ? '' : Number(e.target.value))
+                }
+              />
+            </label>
           </div>
           {MODE_INFO[mode].consolante && (
             <label className="checkbox-label">

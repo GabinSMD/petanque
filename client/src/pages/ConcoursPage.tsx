@@ -11,6 +11,7 @@ import { QuickScore } from '../components/QuickScore';
 import { ShareModal } from '../components/ShareModal';
 import { useCallNotifier } from '../lib/notifier';
 import {
+  DISCIPLINE_LABELS,
   FORMAT_LABELS,
   MODE_LABELS,
   entrantWord,
@@ -89,6 +90,9 @@ export function ConcoursPage() {
           <p className="concours-meta">
             {formatDateFr(concours.date)}
             {concours.lieu ? ` · ${concours.lieu}` : ''}
+            {concours.discipline === 'jeu_provencal'
+              ? ` · ${DISCIPLINE_LABELS.jeu_provencal}`
+              : ''}
             {concours.category ? ` · ${concours.category}` : ''}
             {!tirMode && ` · ${FORMAT_LABELS[concours.format]}`} · {MODE_LABELS[concours.mode]}
             {concours.consolante ? ' · Consolante' : ''}

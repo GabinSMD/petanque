@@ -66,6 +66,18 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
     pouleOutcome(p, matches.filter((m) => m.pouleId === p.id)),
   );
 
+  // Qualifiés pour une phase suivante : les meilleurs du tableau principal.
+  const qualifiedIds = useMemo(() => {
+    const n = concours.nbQualifies ?? 0;
+    const ids = new Set<string>();
+    if (n <= 0) return ids;
+    for (const g of principalGroups) {
+      if (ids.size >= n) break;
+      g.teamIds.forEach((id) => ids.add(id));
+    }
+    return ids;
+  }, [principalGroups, concours.nbQualifies]);
+
   const hasAnything =
     principalGroups.length > 0 || consolanteGroups.length > 0 || outcomes.length > 0;
 
@@ -82,7 +94,17 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
       {principalGroups.length > 0 && (
         <section className="result-section">
           <h2>Concours principal</h2>
-          <RankTable groups={principalGroups} teamsById={teamsById} />
+          {qualifiedIds.size > 0 && (
+            <p className="qualifies-banner">
+              🎫 {qualifiedIds.size} qualifié{qualifiedIds.size > 1 ? 's' : ''} pour la phase
+              suivante (les mieux classés).
+            </p>
+          )}
+          <RankTable
+            groups={principalGroups}
+            teamsById={teamsById}
+            qualifiedIds={qualifiedIds}
+          />
         </section>
       )}
 
@@ -228,9 +250,11 @@ function IndemnitesSection({
 function RankTable({
   groups,
   teamsById,
+  qualifiedIds,
 }: {
   groups: ReturnType<typeof bracketRanking>;
   teamsById: Map<string, Team>;
+  qualifiedIds?: Set<string>;
 }) {
   return (
     <table className="rank-table">
@@ -246,6 +270,9 @@ function RankTable({
                 {g.teamIds.map((id) => (
                   <li key={id}>
                     <TeamLabel team={teamsById.get(id)} />
+                    {qualifiedIds?.has(id) && (
+                      <span className="tag tag-qualifie">Qualifié</span>
+                    )}
                   </li>
                 ))}
               </ul>

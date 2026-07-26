@@ -26,7 +26,10 @@ export type ConcoursMode =
 /** Cycle de vie d'un concours. */
 export type ConcoursStatus = 'inscriptions' | 'poules' | 'tableau' | 'rondes' | 'termine';
 
-export type MatchStage = 'poule' | 'principal' | 'consolante' | 'ronde';
+export type MatchStage = 'poule' | 'principal' | 'consolante' | 'complementaire' | 'ronde';
+
+/** Discipline fédérale (le jeu diffère, la gestion est identique). */
+export type Discipline = 'petanque' | 'jeu_provencal';
 
 /** Rôle d'une partie au sein d'une poule. */
 export type PouleSlot = 'M1' | 'M2' | 'GAGNANTS' | 'PERDANTS' | 'BARRAGE';
@@ -44,8 +47,14 @@ export interface Concours {
   lieu?: string;
   format: TeamFormat;
   mode: ConcoursMode;
+  /** Discipline (pétanque par défaut). */
+  discipline?: Discipline;
   /** Catégorie (Seniors, Vétérans, Féminines, Jeunes…) — facultatif. */
   category?: string;
+  /** Nombre de qualifiés pour une phase suivante (championnat qualificatif). */
+  nbQualifies?: number;
+  /** Consolante à 2 niveaux : ajoute un complémentaire (perdants de la consolante). */
+  complementaire?: boolean;
   /** Consolante : repêchage des éliminés (poules ou 1er tour). */
   consolante: boolean;
   /** Score gagnant d'une mène complète (13 en pétanque). */
@@ -72,6 +81,8 @@ export interface Team {
   players: Player[];
   club?: string;
   forfait: boolean;
+  /** Engagement réglé (suivi de caisse). */
+  paid?: boolean;
   updatedAt: string;
 }
 

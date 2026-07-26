@@ -99,7 +99,7 @@ export function propagate(all: Match[]): Match[] {
     return next;
   };
 
-  for (const stage of ['principal', 'consolante'] as const) {
+  for (const stage of ['principal', 'consolante', 'complementaire'] as const) {
     const stageMatches = all.filter((m) => m.stage === stage);
     if (stageMatches.length === 0) continue;
     const keyToId = new Map(stageMatches.map((m) => [`${m.round}:${m.position}`, m.id]));

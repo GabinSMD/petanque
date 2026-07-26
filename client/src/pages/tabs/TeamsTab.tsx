@@ -53,6 +53,10 @@ export function TeamsTab({ concours, teams }: Props) {
   };
 
   const summary = concours.mode === 'poules' ? pouleSummary(teams.length) : null;
+  const mise = concours.miseParEquipe ?? 0;
+  const trackPaid = mise > 0;
+  const paidCount = teams.filter((t) => t.paid && !t.forfait).length;
+  const engagements = teams.filter((t) => !t.forfait).length;
 
   return (
     <div className="tab-content">
@@ -133,6 +137,7 @@ export function TeamsTab({ concours, teams }: Props) {
             <th>N°</th>
             <th>{individual ? 'Participant' : 'Joueurs'}</th>
             <th>Club</th>
+            {trackPaid && <th className="cell-paid">Réglé</th>}
             <th className="no-print">Actions</th>
           </tr>
         </thead>
@@ -143,6 +148,7 @@ export function TeamsTab({ concours, teams }: Props) {
                 key={team.id}
                 team={team}
                 nbPlayers={nbPlayers}
+                trackPaid={trackPaid}
                 onDone={() => setEditingId(null)}
               />
             ) : (
@@ -158,6 +164,18 @@ export function TeamsTab({ concours, teams }: Props) {
                   {team.forfait && <span className="tag tag-danger">Forfait</span>}
                 </td>
                 <td>{team.club ?? ''}</td>
+                {trackPaid && (
+                  <td className="cell-paid">
+                    <label className="paid-toggle" title="Engagement réglé">
+                      <input
+                        type="checkbox"
+                        checked={team.paid ?? false}
+                        onChange={(e) => void updateTeam({ ...team, paid: e.target.checked })}
+                      />
+                      <span>{team.paid ? `${mise.toLocaleString('fr-FR')} €` : '—'}</span>
+                    </label>
+                  </td>
+                )}
                 <td className="no-print cell-actions">
                   {!locked && (
                     <button
@@ -194,7 +212,7 @@ export function TeamsTab({ concours, teams }: Props) {
           )}
           {teams.length === 0 && (
             <tr>
-              <td colSpan={4} className="empty-cell">
+              <td colSpan={trackPaid ? 5 : 4} className="empty-cell">
                 {individual
                   ? 'Aucun participant inscrit — chacun s\'inscrit seul, les équipes seront tirées au sort.'
                   : 'Aucune équipe inscrite.'}
@@ -216,6 +234,17 @@ export function TeamsTab({ concours, teams }: Props) {
           teams.length > 1 &&
           ` → ${FORMAT_LABELS[concours.format].toLowerCase()}s tirées au sort à chaque ronde`}
       </p>
+
+      {trackPaid && engagements > 0 && (
+        <p className="caisse-summary">
+          💰 Caisse : <strong>{paidCount}/{engagements}</strong> engagement
+          {engagements > 1 ? 's' : ''} réglé{paidCount > 1 ? 's' : ''} ·{' '}
+          <strong>{(paidCount * mise).toLocaleString('fr-FR')} €</strong> encaissés
+          {paidCount < engagements && (
+            <> · reste {((engagements - paidCount) * mise).toLocaleString('fr-FR')} € à percevoir</>
+          )}
+        </p>
+      )}
     </div>
   );
 }
@@ -223,10 +252,12 @@ export function TeamsTab({ concours, teams }: Props) {
 function TeamEditRow({
   team,
   nbPlayers,
+  trackPaid,
   onDone,
 }: {
   team: Team;
   nbPlayers: number;
+  trackPaid: boolean;
   onDone: () => void;
 }) {
   const [names, setNames] = useState<string[]>(
@@ -271,6 +302,7 @@ function TeamEditRow({
       <td>
         <input value={club} onChange={(e) => setClub(e.target.value)} placeholder="Club" />
       </td>
+      {trackPaid && <td className="cell-paid">—</td>}
       <td className="cell-actions">
         <button className="btn btn-primary btn-sm" onClick={() => void save()}>
           OK

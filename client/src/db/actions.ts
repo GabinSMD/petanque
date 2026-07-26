@@ -21,6 +21,7 @@ import {
   validateTirScore,
   type Concours,
   type ConcoursMode,
+  type Discipline,
   type Licencie,
   type Match,
   type Player,
@@ -50,12 +51,16 @@ export interface ConcoursInput {
   lieu?: string;
   format: TeamFormat;
   mode: ConcoursMode;
+  discipline?: Discipline;
   category?: string;
+  nbQualifies?: number;
   consolante: boolean;
+  complementaire?: boolean;
   scoreMax: number;
   nbTerrains: number;
   nbRondes?: number;
   tempsLimite?: number;
+  miseParEquipe?: number;
 }
 
 export async function createConcours(input: ConcoursInput): Promise<string> {

@@ -406,6 +406,11 @@ input:focus, select:focus, button:focus-visible {
 .tag-ok { background: var(--accent-soft); color: var(--accent-dark); }
 .tag-info { background: #e3edf7; color: var(--info); }
 .tag-danger { background: #f7e3e0; color: var(--danger); }
+.tag-qualifie {
+  background: #e2f4e6;
+  color: #216b32;
+  margin-left: 0.4rem;
+}
 
 .status-chip {
   display: inline-block;
@@ -849,6 +854,34 @@ form label select {
 .teams-footer {
   color: var(--muted);
   margin-top: 0.6rem;
+}
+
+.caisse-summary {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff8e6;
+  border: 1px solid #f0e0b0;
+  border-radius: 8px;
+  color: #6b5410;
+}
+
+.cell-paid { text-align: center; white-space: nowrap; }
+.paid-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.qualifies-banner {
+  margin: 0 0 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: #e2f4e6;
+  border: 1px solid #b6ddc0;
+  border-radius: 8px;
+  color: #216b32;
+  font-weight: 600;
 }
 
 /* ------------------------------- Poules ------------------------------- */

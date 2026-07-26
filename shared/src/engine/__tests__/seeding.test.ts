@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { drawPoules } from '../poules';
-import { drawElimination, seedSlotOrder, winnerOf } from '../bracket';
-import { isByeMatch } from '../match';
+import { drawElimination, seedSlotOrder } from '../bracket';
+import { isByeMatch, winnerOf } from '../match';
 import { makeTeams, testCtx } from './helpers';
 
 describe('têtes de série — poules', () => {

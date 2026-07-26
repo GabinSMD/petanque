@@ -1,4 +1,9 @@
-import type { ConcoursMode, ConcoursStatus, TeamFormat } from '@shared';
+import type { ConcoursMode, ConcoursStatus, Discipline, TeamFormat } from '@shared';
+
+export const DISCIPLINE_LABELS: Record<Discipline, string> = {
+  petanque: 'Pétanque',
+  jeu_provencal: 'Jeu provençal',
+};
 
 export const FORMAT_LABELS: Record<TeamFormat, string> = {
   tete_a_tete: 'Tête-à-tête',
