@@ -1,23 +1,25 @@
 /* ==================================================================
-   Pétanque Concours — thème « boulodrome »
+   Pétanque Concours — thème fédéral bleu · blanc · rouge
+   (palette inspirée des couleurs de la FFPJP, sans usage du logo
+   officiel qui est une marque protégée)
    ================================================================== */
 
 :root {
-  --bg: #f4f1e9;
+  --bg: #f1f4fa;
   --card: #ffffff;
-  --ink: #1f2c1c;
-  --muted: #68755f;
-  --line: #e3dfd2;
-  --accent: #1f7a4d;
-  --accent-dark: #15593a;
-  --accent-soft: #e3f1e9;
-  --terra: #c96f2e;
-  --terra-soft: #f7e8db;
+  --ink: #16203a;
+  --muted: #5b6579;
+  --line: #dbe1ee;
+  --accent: #1d3d9c;
+  --accent-dark: #12277a;
+  --accent-soft: #e6ecfb;
+  --terra: #d21c34;
+  --terra-soft: #fbe3e8;
   --danger: #b23a2f;
   --info: #2b6cb0;
   --radius: 12px;
-  --shadow: 0 1px 2px rgba(31, 44, 28, 0.06), 0 2px 8px rgba(31, 44, 28, 0.08);
-  --shadow-lift: 0 4px 10px rgba(31, 44, 28, 0.1), 0 10px 30px rgba(31, 44, 28, 0.12);
+  --shadow: 0 1px 2px rgba(20, 30, 58, 0.06), 0 2px 8px rgba(20, 30, 58, 0.08);
+  --shadow-lift: 0 4px 10px rgba(20, 30, 58, 0.1), 0 10px 30px rgba(20, 30, 58, 0.12);
   font-size: 15px;
 }
 
@@ -34,14 +36,25 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg);
   color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #cfe0ff;
 }
 
 h1, h2, h3, h4 {
   margin: 0 0 0.4rem;
   line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+h1 {
+  font-weight: 800;
 }
 
 button {
@@ -77,13 +90,29 @@ input:focus, select:focus, button:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.55rem 1.1rem;
-  background: linear-gradient(180deg, var(--accent-dark), var(--accent));
+  padding: 0.55rem 1.1rem 0.65rem;
+  background: linear-gradient(180deg, #101f52, var(--accent));
   color: #fff;
   position: sticky;
   top: 0;
   z-index: 20;
   box-shadow: var(--shadow);
+}
+
+/* Liseré tricolore fédéral sous l'en-tête. */
+.app-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    #1d3d9c 0 34%,
+    #ffffff 34% 67%,
+    #d21c34 67% 100%
+  );
 }
 
 .brand {
@@ -145,7 +174,7 @@ input:focus, select:focus, button:focus-visible {
   border-radius: 7px;
   padding: 0.5rem 0.95rem;
   font-weight: 600;
-  background: #e8e4d8;
+  background: #e7ebf5;
   color: var(--ink);
   transition: background 0.15s, transform 0.05s;
   text-decoration: none;
@@ -157,18 +186,18 @@ input:focus, select:focus, button:focus-visible {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, #269059, var(--accent) 55%, var(--accent-dark));
+  background: linear-gradient(180deg, #2c55d4, var(--accent) 55%, var(--accent-dark));
   color: #fff;
-  box-shadow: 0 1px 3px rgba(21, 89, 58, 0.4);
+  box-shadow: 0 1px 3px rgba(18, 39, 122, 0.4);
 }
 
 .btn-primary:hover {
   filter: brightness(1.06);
-  box-shadow: 0 3px 8px rgba(21, 89, 58, 0.35);
+  box-shadow: 0 3px 8px rgba(18, 39, 122, 0.35);
 }
 
 .btn-primary:disabled {
-  background: #9db8a9;
+  background: #9aabd9;
   cursor: not-allowed;
 }
 
@@ -234,7 +263,7 @@ input:focus, select:focus, button:focus-visible {
 
 .sync-ok .sync-dot { background: #7ee2a8; }
 .sync-syncing .sync-dot { background: #8ecbff; animation: pulse 1s infinite; }
-.sync-offline .sync-dot { background: #d3cfc4; }
+.sync-offline .sync-dot { background: #c7cede; }
 .sync-error .sync-dot { background: #ffb08f; }
 .sync-idle .sync-dot { background: #ccc; }
 .sync-guest .sync-dot { background: #f2cd6b; }
@@ -305,12 +334,12 @@ input:focus, select:focus, button:focus-visible {
 
 .tag {
   display: inline-block;
-  background: #eee9dc;
+  background: #e9edf6;
   border-radius: 5px;
   padding: 0.1rem 0.5rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #5b5344;
+  color: #4a5677;
 }
 
 .tag-ok { background: var(--accent-soft); color: var(--accent-dark); }
@@ -328,7 +357,7 @@ input:focus, select:focus, button:focus-visible {
 .status-inscriptions { background: #e3edf7; color: var(--info); }
 .status-poules { background: var(--terra-soft); color: var(--terra); }
 .status-tableau { background: var(--accent-soft); color: var(--accent-dark); }
-.status-termine { background: #ece9e2; color: var(--muted); }
+.status-termine { background: #e8eaf0; color: var(--muted); }
 
 .empty-state {
   background: var(--card);
@@ -355,7 +384,8 @@ input:focus, select:focus, button:focus-visible {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(20, 28, 18, 0.55);
+  background: rgba(10, 16, 35, 0.55);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -432,8 +462,8 @@ form label select {
   justify-content: center;
   padding: 1rem;
   background:
-    radial-gradient(circle at 20% 10%, rgba(31, 122, 77, 0.14), transparent 45%),
-    radial-gradient(circle at 85% 85%, rgba(201, 111, 46, 0.14), transparent 45%),
+    radial-gradient(circle at 20% 10%, rgba(29, 61, 156, 0.16), transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(210, 28, 52, 0.12), transparent 45%),
     var(--bg);
 }
 
@@ -441,10 +471,28 @@ form label select {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
-  box-shadow: 0 10px 40px rgba(34, 48, 31, 0.15);
+  box-shadow: 0 10px 40px rgba(20, 30, 58, 0.15);
   width: 100%;
   max-width: 430px;
   padding: 1.6rem 1.7rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Liseré tricolore en tête de la carte de connexion. */
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    #1d3d9c 0 34%,
+    #e8ecf7 34% 67%,
+    #d21c34 67% 100%
+  );
 }
 
 .login-brand {
@@ -543,7 +591,7 @@ form label select {
 .tabs {
   display: inline-flex;
   gap: 0.3rem;
-  background: #e9e5d8;
+  background: #e3e8f4;
   border-radius: 999px;
   padding: 0.28rem;
   margin-bottom: 1rem;
@@ -569,7 +617,7 @@ form label select {
 .tab.active {
   color: var(--accent-dark);
   background: #fff;
-  box-shadow: 0 1px 3px rgba(31, 44, 28, 0.18);
+  box-shadow: 0 1px 3px rgba(20, 30, 58, 0.18);
 }
 
 .toolbar {
@@ -656,7 +704,7 @@ form label select {
 
 .teams-table th, .rank-table th {
   text-align: left;
-  background: #ece8db;
+  background: #e9edf6;
   padding: 0.5rem 0.7rem;
   font-size: 0.85rem;
 }
@@ -970,7 +1018,7 @@ form label select {
 .match-box-score {
   min-width: 1.7rem;
   text-align: center;
-  background: #eee9dc;
+  background: #e9edf6;
   border-radius: 5px;
   font-weight: 700;
   padding: 0.05rem 0.3rem;
@@ -1032,8 +1080,8 @@ form label select {
 
 .display-page {
   min-height: 100vh;
-  background: #14211a;
-  color: #f2f5ef;
+  background: #0c1226;
+  color: #f2f5fb;
   padding: 1.4rem 2rem 3rem;
   font-size: 1.15rem;
 }
@@ -1043,7 +1091,8 @@ form label select {
   align-items: baseline;
   gap: 1.2rem;
   flex-wrap: wrap;
-  border-bottom: 2px solid #2c4234;
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(90deg, #1d3d9c 0 34%, #f2f5fb 34% 67%, #d21c34 67% 100%) 1;
   padding-bottom: 0.7rem;
   margin-bottom: 1.2rem;
 }
@@ -1054,7 +1103,7 @@ form label select {
 }
 
 .display-head p {
-  color: #a9bfae;
+  color: #9aa7c9;
   margin: 0;
   flex: 1;
 }
@@ -1065,11 +1114,11 @@ form label select {
 }
 
 .display-controls .btn {
-  color: #f2f5ef;
+  color: #f2f5fb;
 }
 
 .display-section-title {
-  color: #8fd7ae;
+  color: #93b4ff;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-size: 1rem;
@@ -1077,8 +1126,8 @@ form label select {
 }
 
 .display-champion {
-  background: #24402f;
-  border-color: #8fd7ae;
+  background: #1e2a4d;
+  border-color: #93b4ff;
   color: #fff;
   font-size: 1.4rem;
 }
@@ -1090,12 +1139,12 @@ form label select {
 }
 
 .display-team .team-number {
-  background: #8fd7ae;
-  color: #14211a;
+  background: #93b4ff;
+  color: #0c1226;
 }
 
 .display-team .team-club {
-  color: #a9bfae;
+  color: #9aa7c9;
 }
 
 .display-poules {
@@ -1105,14 +1154,14 @@ form label select {
 }
 
 .display-poule {
-  background: #1c2f24;
-  border: 1px solid #2c4234;
+  background: #151d38;
+  border: 1px solid #263356;
   border-radius: 10px;
   padding: 0.7rem 0.9rem;
 }
 
 .display-poule h3 {
-  color: #8fd7ae;
+  color: #93b4ff;
   margin-bottom: 0.5rem;
 }
 
@@ -1131,7 +1180,7 @@ form label select {
 }
 
 .display-slot {
-  color: #a9bfae;
+  color: #9aa7c9;
   font-size: 0.78rem;
   text-transform: uppercase;
   width: 6.5rem;
@@ -1146,12 +1195,12 @@ form label select {
 }
 
 .display-match .winner {
-  color: #8fd7ae;
+  color: #93b4ff;
   font-weight: 700;
 }
 
 .display-score {
-  background: #2c4234;
+  background: #263356;
   border-radius: 5px;
   padding: 0 0.45rem;
   font-variant-numeric: tabular-nums;
@@ -1160,28 +1209,28 @@ form label select {
 /* Tableau en mode affichage */
 
 .display-page .match-box {
-  background: #1c2f24;
-  border-color: #2c4234;
-  color: #f2f5ef;
+  background: #151d38;
+  border-color: #263356;
+  color: #f2f5fb;
 }
 
 .display-page .match-box-score {
-  background: #2c4234;
+  background: #263356;
   color: #fff;
 }
 
 .display-page .team-club {
-  color: #a9bfae;
+  color: #9aa7c9;
 }
 
 .display-page .team-bye,
 .display-page .team-tbd {
-  color: #7d937f;
+  color: #7482a3;
 }
 
 .display-page .match-box-row.winner .match-box-score {
-  background: #8fd7ae;
-  color: #14211a;
+  background: #93b4ff;
+  color: #0c1226;
 }
 
 .bracket-compact {
@@ -1254,8 +1303,8 @@ form label select {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  background: linear-gradient(90deg, var(--accent-soft), #f6f2e4);
-  border: 1px solid #cfe4d7;
+  background: linear-gradient(90deg, var(--accent-soft), #f3f6fd);
+  border: 1px solid #c9d7f2;
   border-radius: var(--radius);
   padding: 0.6rem 0.9rem;
   margin-bottom: 1rem;
@@ -1329,13 +1378,13 @@ form label select {
 }
 
 .tour-backdrop-dim {
-  background: rgba(18, 28, 18, 0.55);
+  background: rgba(10, 16, 35, 0.55);
 }
 
 .tour-spotlight {
   position: fixed;
   border-radius: 12px;
-  box-shadow: 0 0 0 9999px rgba(18, 28, 18, 0.62), 0 0 0 3px rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 0 9999px rgba(10, 16, 35, 0.62), 0 0 0 3px rgba(255, 255, 255, 0.65);
   transition: all 0.25s ease;
   pointer-events: none;
   z-index: 91;
@@ -1358,7 +1407,7 @@ form label select {
 
 .tour-card p {
   margin: 0 0 0.8rem;
-  color: #3c4a38;
+  color: #33405e;
 }
 
 .tour-controls {
@@ -1393,19 +1442,19 @@ form label select {
   border-radius: 50%;
   border: none;
   font-size: 1.4rem;
-  background: linear-gradient(180deg, #269059, var(--accent-dark));
+  background: linear-gradient(180deg, #2c55d4, var(--accent-dark));
   color: #fff;
-  box-shadow: 0 4px 14px rgba(21, 89, 58, 0.45);
+  box-shadow: 0 4px 14px rgba(18, 39, 122, 0.45);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .help-fab:hover {
   transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 8px 20px rgba(21, 89, 58, 0.5);
+  box-shadow: 0 8px 20px rgba(18, 39, 122, 0.5);
 }
 
 .help-fab-open {
-  background: #3c4a38;
+  background: #33405e;
 }
 
 .chat-panel {
@@ -1461,7 +1510,7 @@ form label select {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  background: #faf8f2;
+  background: #f7f9fd;
 }
 
 .chat-bubble {
@@ -1593,7 +1642,7 @@ form label select {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--muted);
-  background: #eee9dc;
+  background: #e9edf6;
   border-radius: 999px;
   padding: 0.22rem 0.7rem 0.22rem 0.3rem;
 }
@@ -1761,7 +1810,7 @@ form label select {
 }
 
 .melee-player {
-  background: #eee9dc;
+  background: #e9edf6;
   border-radius: 6px;
   padding: 0.08rem 0.45rem;
   font-size: 0.86rem;
@@ -1805,15 +1854,15 @@ form label select {
 
 .display-page .standings-table td,
 .display-page .standings-table th {
-  border-color: #2c4234;
+  border-color: #263356;
 }
 
 .display-page .standing-top {
-  background: #24402f;
+  background: #1e2a4d;
 }
 
 .display-page .standing-wins {
-  color: #8fd7ae;
+  color: #93b4ff;
 }
 
 .display-rondes {
@@ -1824,8 +1873,8 @@ form label select {
 }
 
 .display-rondes .melee-player {
-  background: #2c4234;
-  color: #f2f5ef;
+  background: #263356;
+  color: #f2f5fb;
 }
 
 /* ------------------------------ Animations ----------------------------- */

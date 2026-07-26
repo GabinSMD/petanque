@@ -60,12 +60,12 @@ const hex = (h) => [
   parseInt(h.slice(5, 7), 16),
 ];
 
-const BG = hex('#1f7a4d');
+const BG = hex('#1d3d9c');
 const STEEL = hex('#d8dde2');
 const STEEL_DARK = hex('#8b969f');
 const RIM = hex('#4a545e');
-const COCHONNET = hex('#e0862c');
-const COCHONNET_RIM = hex('#8a4d12');
+const COCHONNET = hex('#d21c34');
+const COCHONNET_RIM = hex('#7c1220');
 
 function draw(size) {
   const px = Buffer.alloc(size * size * 4);

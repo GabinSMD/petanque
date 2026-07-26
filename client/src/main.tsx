@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
 import { startSyncLoop } from './sync/engine';
 import { ensurePersistentStorage } from './lib/storage';
+import '@fontsource-variable/inter';
 import './styles.css';
 
 registerSW({ immediate: true });

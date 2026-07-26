@@ -15,8 +15,8 @@ export default defineConfig({
         description:
           'Gestion de concours de pétanque : poules, tableaux, consolante — fonctionne sans connexion.',
         lang: 'fr',
-        theme_color: '#1f7a4d',
-        background_color: '#f5f3ee',
+        theme_color: '#1d3d9c',
+        background_color: '#f1f4fa',
         display: 'standalone',
         start_url: '/',
         icons: [
@@ -26,6 +26,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
