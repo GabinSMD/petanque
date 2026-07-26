@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ConcoursPage } from './pages/ConcoursPage';
 import { DisplayPage } from './pages/DisplayPage';
+import { PublicPage } from './pages/PublicPage';
 
 function Layout() {
   const session = useSession();
@@ -85,6 +86,7 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/p/:token" element={<PublicPage />} />
         <Route
           path="/concours/:id/affichage"
           element={

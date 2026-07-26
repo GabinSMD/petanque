@@ -1877,6 +1877,147 @@ form label select {
   color: #f2f5fb;
 }
 
+/* --------------------------- Partage & page publique ------------------- */
+
+.share-url {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0.7rem 0;
+}
+
+.share-url input {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.share-qr {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  margin: 0.7rem 0;
+}
+
+.share-qr-svg {
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+  background: #fff;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.share-qr-svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.public-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1rem 0.9rem 3rem;
+  display: grid;
+  gap: 1.1rem;
+}
+
+.public-head {
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(90deg, #1d3d9c 0 34%, #dbe1ee 34% 67%, #d21c34 67% 100%) 1;
+  padding-bottom: 0.7rem;
+}
+
+.public-head h1 {
+  font-size: 1.5rem;
+}
+
+.public-status {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0.4rem 0 0;
+}
+
+.public-updated {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.public-teams {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.35rem;
+}
+
+.public-poules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.8rem;
+}
+
+.public-poule {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+  box-shadow: var(--shadow);
+}
+
+.public-poule h3 {
+  font-size: 0.95rem;
+  color: var(--accent-dark);
+}
+
+.public-poule ul, .public-ronde {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.public-poule li, .public-ronde li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  border-top: 1px dashed var(--line);
+  padding-top: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.public-slot {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  width: 4.5rem;
+  flex-shrink: 0;
+}
+
+.public-match {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.public-score {
+  font-variant-numeric: tabular-nums;
+  background: #e9edf6;
+  border-radius: 5px;
+  padding: 0 0.4rem;
+}
+
+.public-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+}
+
 /* ------------------------------ Animations ----------------------------- */
 
 @keyframes pop-in {

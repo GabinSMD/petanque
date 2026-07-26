@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { openDb } from './db.js';
 import { hashPassword, signToken, verifyPassword, verifyToken } from './security.js';
 import { registerSyncRoutes } from './sync.js';
+import { registerPublicRoutes } from './public.js';
 import type { OrgRow, UserRow } from './db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -31,7 +32,7 @@ function loadSecret(): string {
 }
 const JWT_SECRET = loadSecret();
 
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: true, trustProxy: true });
 
 await app.register(cors, { origin: true });
 
@@ -149,6 +150,7 @@ app.get('/api/health', async () => ({ ok: true, ts: new Date().toISOString() }))
 /* ------------------------------------------------------------------ */
 
 registerSyncRoutes(app, db, (req) => authenticate(req.headers.authorization));
+registerPublicRoutes(app, db, (req) => authenticate(req.headers.authorization));
 
 /* ------------------------------------------------------------------ */
 /* Client statique (PWA) — production                                  */

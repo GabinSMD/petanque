@@ -6,6 +6,7 @@ import { updateConcours } from '../db/actions';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
 import { Modal } from '../components/Modal';
+import { ShareModal } from '../components/ShareModal';
 import {
   FORMAT_LABELS,
   MODE_LABELS,
@@ -37,6 +38,7 @@ export function ConcoursPage() {
   const poules = usePoules(id);
   const matches = useMatches(id);
   const [editing, setEditing] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   if (!concours) {
     return (
@@ -96,6 +98,13 @@ export function ConcoursPage() {
           >
             📺 Affichage
           </a>
+          <button
+            className="btn btn-ghost btn-sm"
+            data-tour="share"
+            onClick={() => setSharing(true)}
+          >
+            🔗 Partager
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>
             🖨 Imprimer
           </button>
@@ -144,6 +153,8 @@ export function ConcoursPage() {
       {active === 'resultats' && (
         <ResultsTab concours={concours} teams={teams ?? []} poules={poules ?? []} matches={matches ?? []} />
       )}
+
+      {sharing && <ShareModal concours={concours} onClose={() => setSharing(false)} />}
 
       {editing && (
         <Modal title="Paramètres du concours" onClose={() => setEditing(false)}>

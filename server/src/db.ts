@@ -65,8 +65,40 @@ export function openDb(path: string): DatabaseSync {
     );
 
     CREATE INDEX IF NOT EXISTS idx_entities_org_seq ON entities(org_id, seq);
+
+    CREATE TABLE IF NOT EXISTS shares (
+      token TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES orgs(id),
+      concours_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      revoked INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_shares_concours ON shares(org_id, concours_id);
+
+    CREATE TABLE IF NOT EXISTS invites (
+      code TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES orgs(id),
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
   `);
   return db;
+}
+
+export interface ShareRow {
+  token: string;
+  org_id: string;
+  concours_id: string;
+  created_at: string;
+  revoked: number;
+}
+
+export interface InviteRow {
+  code: string;
+  org_id: string;
+  created_at: string;
+  expires_at: string;
 }
 
 /** Numéro de séquence suivant pour l'oplog d'une organisation. */
