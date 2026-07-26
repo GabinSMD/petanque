@@ -1,0 +1,34 @@
+[Unit]
+# Service systemd — Pétanque Concours (API + client construit)
+# Copier dans /etc/systemd/system/petanque.service puis :
+#   sudo systemctl daemon-reload && sudo systemctl enable --now petanque
+Description=Pétanque Concours
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=petanque
+WorkingDirectory=/opt/petanque/app
+# Le serveur n'écoute qu'en local : Caddy (ou le tunnel) l'expose en HTTPS.
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=8787
+Environment=DATA_DIR=/opt/petanque/data
+# Secret de session : décommentez pour le fixer (sinon généré et persisté
+# dans DATA_DIR/.jwt-secret au premier démarrage).
+# Environment=JWT_SECRET=collez_ici_le_resultat_de_openssl_rand_hex_32
+# Adresse de contact incluse dans les notifications push (recommandé).
+Environment=VAPID_SUBJECT=mailto:contact@exemple.fr
+ExecStart=/usr/bin/node server/dist/index.js
+Restart=on-failure
+RestartSec=3
+# Durcissement léger.
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/petanque/data
+
+[Install]
+WantedBy=multi-user.target

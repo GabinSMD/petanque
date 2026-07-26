@@ -1,0 +1,12 @@
+# Caddy — reverse proxy + HTTPS automatique (Let's Encrypt).
+# Remplacez le nom de domaine par le vôtre (ex. monclub.duckdns.org).
+# Copier dans /etc/caddy/Caddyfile puis : sudo systemctl reload caddy
+#
+# Caddy obtient et renouvelle seul le certificat TLS : il faut que les
+# ports 80 et 443 soient ouverts (pare-feu cloud Oracle + iptables) et que
+# le domaine pointe vers l'IP publique de la VM.
+
+monclub.duckdns.org {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8787
+}

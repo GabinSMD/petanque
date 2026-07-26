@@ -7,6 +7,10 @@ construit. Base SQLite sur disque — prévoyez un **volume persistant**.
 > et l'installation PWA l'exigent. Fly/Render le fournissent d'office ;
 > sur VPS, placez un reverse-proxy (Caddy, Traefik, Nginx + certbot).
 
+> 💶 **Hébergement gratuit à vie** : voir [DEPLOIEMENT-ORACLE.md](./DEPLOIEMENT-ORACLE.md)
+> (VM Oracle Cloud « Always Free » + Caddy/DuckDNS ou Cloudflare Tunnel,
+> script `deploy/setup-oracle.sh` clé en main).
+
 ## Variables d'environnement
 
 | Variable     | Rôle                                            |
