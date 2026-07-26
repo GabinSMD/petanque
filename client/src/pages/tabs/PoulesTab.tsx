@@ -114,6 +114,22 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
         </span>
         {error && <span className="form-error">{error}</span>}
         <span className="toolbar-actions">
+          <a
+            className="btn btn-ghost btn-sm"
+            href={`/concours/${concours.id}/imprimer/poules`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            🖨 Feuilles de poules
+          </a>
+          <a
+            className="btn btn-ghost btn-sm"
+            href={`/concours/${concours.id}/imprimer/parties`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            🎫 Tickets de parties
+          </a>
           {concours.status === 'poules' && (
             <>
               <button className="btn btn-ghost btn-sm" onClick={() => void doCancel()}>

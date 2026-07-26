@@ -11,6 +11,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ConcoursPage } from './pages/ConcoursPage';
 import { DisplayPage } from './pages/DisplayPage';
 import { LicenciesPage } from './pages/LicenciesPage';
+import { PrintPage } from './pages/PrintPage';
 import { PublicPage } from './pages/PublicPage';
 
 function Layout() {
@@ -93,6 +94,14 @@ export function App() {
           element={
             <RequireAuth>
               <DisplayPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/concours/:id/imprimer/:doc"
+          element={
+            <RequireAuth>
+              <PrintPage />
             </RequireAuth>
           }
         />

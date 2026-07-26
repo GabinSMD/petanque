@@ -89,6 +89,14 @@ export function RondesTab({ concours, teams, matches }: Props) {
         </span>
         {error && <span className="form-error">{error}</span>}
         <span className="toolbar-actions">
+          <a
+            className="btn btn-ghost btn-sm"
+            href={`/concours/${concours.id}/imprimer/parties`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            🎫 Tickets de parties
+          </a>
           {!locked && (
             <button
               className="btn btn-ghost btn-sm"

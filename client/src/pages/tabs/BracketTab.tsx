@@ -145,6 +145,14 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
           </span>
         )}
         <span className="toolbar-actions">
+          <a
+            className="btn btn-ghost btn-sm"
+            href={`/concours/${concours.id}/imprimer/parties`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            🎫 Tickets de parties
+          </a>
           {!locked && (
             <button
               className="btn btn-ghost btn-sm"

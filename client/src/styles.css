@@ -2034,6 +2034,160 @@ form label select {
   padding-top: 0.8rem;
 }
 
+/* ------------------------- Documents imprimables ------------------------ */
+
+.print-page {
+  background: #fff;
+  color: #000;
+  min-height: 100vh;
+  padding: 1.2rem 1.4rem;
+  max-width: 900px;
+  margin: 0 auto;
+  font-size: 13px;
+}
+
+.print-controls {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.print-doc-head {
+  border-bottom: 2px solid #000;
+  margin-bottom: 1rem;
+  padding-bottom: 0.4rem;
+}
+
+.print-doc-head h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.print-doc-head p {
+  margin: 0.15rem 0 0;
+}
+
+.print-poules {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.print-poule {
+  border: 1.5px solid #000;
+  border-radius: 6px;
+  padding: 0.7rem 0.9rem;
+  break-inside: avoid;
+}
+
+.print-poule h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.4rem;
+}
+
+.print-poule-teams {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.15rem 1rem;
+}
+
+.print-poule-matches {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.print-poule-matches td {
+  border-top: 1px solid #999;
+  padding: 0.45rem 0.4rem;
+}
+
+.print-slot {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 700;
+  width: 6rem;
+}
+
+.print-score-box {
+  width: 3rem;
+  border: 1.5px solid #000 !important;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.print-tickets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+.print-ticket {
+  border: 1.5px dashed #000;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  break-inside: avoid;
+  text-align: center;
+}
+
+.print-ticket p {
+  margin: 0.15rem 0;
+}
+
+.print-ticket-concours {
+  font-size: 0.72rem;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.print-ticket-title {
+  font-weight: 700;
+  border-bottom: 1px solid #999;
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.35rem !important;
+}
+
+.print-ticket-team {
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.print-ticket-vs {
+  color: #666;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.print-ticket-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem !important;
+  font-size: 0.9rem;
+}
+
+.print-box {
+  display: inline-block;
+  width: 2rem;
+  height: 1.1rem;
+  border: 1.5px solid #000;
+  vertical-align: middle;
+}
+
+@media print {
+  .print-page {
+    padding: 0;
+    max-width: none;
+    font-size: 12px;
+  }
+
+  @page {
+    margin: 12mm;
+  }
+}
+
 /* ------------------------------ Animations ----------------------------- */
 
 @keyframes pop-in {
