@@ -2674,6 +2674,58 @@ form label select {
   margin: 0;
 }
 
+/* --------------------------- Pré-inscriptions -------------------------- */
+
+.register-player {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.register-player input:first-child {
+  flex: 2;
+}
+
+.register-player input:last-child {
+  flex: 1;
+}
+
+.registrations-panel {
+  background: #fff7e6;
+  border: 1px solid #e6c976;
+  border-radius: var(--radius);
+  padding: 0.8rem 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.registrations-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.registrations-panel ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.registrations-panel li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  border-top: 1px dashed #e6c976;
+  padding-top: 0.4rem;
+}
+
+.reg-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
 /* ---------------------------- Têtes de série --------------------------- */
 
 .seed-picker {

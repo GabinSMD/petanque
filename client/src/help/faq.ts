@@ -96,6 +96,53 @@ export const FAQ: FaqEntry[] = [
     note: 'Au-delà de 8 équipes le nombre de parties devient vite important — préférez alors le système suisse.',
   },
   {
+    id: 'pre-inscriptions',
+    category: 'Démarrer',
+    question: 'Comment ouvrir les pré-inscriptions en ligne ?',
+    keywords: ['preinscription', 'pre inscription', 'inscription en ligne', 'formulaire', 'engagement', 'avant', 'valider'],
+    intro: 'Les équipes peuvent s\'inscrire elles-mêmes avant le jour J :',
+    steps: [
+      'Tant que le concours est en « Inscriptions », partagez le lien public (🔗 Partager) — QR code / lien.',
+      'Sur ce lien, les équipes remplissent « ✍️ Je m\'inscris » (noms, licences, club).',
+      'À la table de marque, onglet « Équipes » : le panneau « Pré-inscriptions en ligne » liste les demandes — « ✓ Valider » crée l\'équipe, « Refuser » l\'écarte.',
+    ],
+    note: 'Gain de temps à l\'accueil : les équipes arrivent déjà saisies, vous n\'avez qu\'à valider.',
+  },
+  {
+    id: 'journee-categories',
+    category: 'Démarrer',
+    question: 'Plusieurs concours le même jour / catégories',
+    keywords: ['journee', 'categorie', 'seniors', 'veterans', 'feminines', 'jeunes', 'plusieurs concours', 'meme jour', 'groupe'],
+    steps: [
+      'À la création (ou dans ⚙ Paramètres), renseignez la catégorie (Seniors, Vétérans, Féminines, Jeunes…).',
+      'Le tableau de bord regroupe automatiquement les concours par journée (date).',
+      'Les puces en haut filtrent par catégorie.',
+    ],
+  },
+  {
+    id: 'terrains',
+    category: 'Poules',
+    question: 'Comment gérer le plan des terrains ?',
+    keywords: ['terrain', 'plan', 'plateau', 'libre', 'occupe', 'affecter', 'affectation', 'auto', 'jeu'],
+    intro: 'L\'onglet « 🟦 Terrains » montre le plateau en direct :',
+    steps: [
+      'Chaque terrain apparaît libre ou occupé (avec la partie en cours).',
+      '« 🎯 Affecter automatiquement » place les parties en attente sur les terrains libres ; vous pouvez aussi cliquer « T3 » sur une partie pour l\'affecter à la main.',
+      'Un terrain se libère tout seul dès que le score de sa partie est saisi.',
+    ],
+  },
+  {
+    id: 'tetes-de-serie',
+    category: 'Poules',
+    question: 'Comment mettre des têtes de série ?',
+    keywords: ['tete de serie', 'seed', 'seeding', 'classement', 'meilleures equipes', 'separer', 'tirage'],
+    steps: [
+      'Au moment du tirage (poules ou tableau), cochez « Têtes de série ».',
+      'Désignez les meilleures équipes dans l\'ordre (1 = la meilleure), par n° ou nom.',
+      'Elles seront réparties dans des poules différentes (ou des moitiés opposées du tableau) pour se rencontrer le plus tard possible.',
+    ],
+  },
+  {
     id: 'inscrire-equipes',
     category: 'Démarrer',
     question: 'Comment inscrire les équipes ?',

@@ -12,8 +12,10 @@ import { TirRanking } from '../components/TirRanking';
 import {
   FORMAT_LABELS,
   MODE_LABELS,
+  PLAYERS_PER_TEAM,
   POULE_SLOT_LABELS,
   formatDateFr,
+  isIndividualMode,
   isRondesMode,
   isTirMode,
   statusLabel,
@@ -151,6 +153,10 @@ export function PublicPage() {
         </div>
       )}
 
+      {concours.status === 'inscriptions' && token && (
+        <RegisterCard concours={concours} token={token} />
+      )}
+
       {mode !== 'choose' && (
         <div className="public-modeswitch no-print">
           <button
@@ -204,6 +210,101 @@ export function PublicPage() {
 
       <footer className="public-footer">Résultats en direct — Pétanque Concours</footer>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Pré-inscription en ligne                                            */
+/* ------------------------------------------------------------------ */
+
+function RegisterCard({ concours, token }: { concours: Concours; token: string }) {
+  const individual = isIndividualMode(concours.mode);
+  const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
+  const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
+  const [licences, setLicences] = useState<string[]>(Array(nbPlayers).fill(''));
+  const [club, setClub] = useState('');
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const players = names
+      .map((n, i) => ({ name: n.trim(), licence: licences[i]?.trim() || undefined }))
+      .filter((p) => p.name.length > 0);
+    if (players.length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/public/${token}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ players, club: club.trim() || undefined }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? `Erreur ${res.status}`);
+      }
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Envoi impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <section className="result-section declare-card">
+        <h2>✅ Pré-inscription envoyée</h2>
+        <p className="hint">
+          Votre demande est en attente de validation par l'organisateur. Merci !
+        </p>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={() => {
+            setDone(false);
+            setNames(Array(nbPlayers).fill(''));
+            setLicences(Array(nbPlayers).fill(''));
+            setClub('');
+          }}
+        >
+          Inscrire une autre {individual ? 'personne' : 'équipe'}
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section className="result-section declare-card">
+      <h2>✍️ Je m'inscris au concours</h2>
+      <p className="hint">
+        {individual ? 'Inscrivez-vous' : `Formez votre ${FORMAT_LABELS[concours.format].toLowerCase()}`}{' '}
+        — l'organisateur validera votre demande.
+      </p>
+      <form className="declare-form" onSubmit={(e) => void submit(e)}>
+        {Array.from({ length: nbPlayers }, (_, i) => (
+          <div key={i} className="register-player">
+            <input
+              value={names[i] ?? ''}
+              onChange={(e) => setNames(names.map((n, j) => (j === i ? e.target.value : n)))}
+              placeholder={individual ? 'Votre nom' : `Joueur ${i + 1}`}
+              required={i === 0}
+            />
+            <input
+              value={licences[i] ?? ''}
+              onChange={(e) => setLicences(licences.map((l, j) => (j === i ? e.target.value : l)))}
+              placeholder="N° licence (facultatif)"
+            />
+          </div>
+        ))}
+        <input value={club} onChange={(e) => setClub(e.target.value)} placeholder="Club" />
+        {error && <p className="form-error">{error}</p>}
+        <button className="btn btn-primary" disabled={busy}>
+          Envoyer ma pré-inscription
+        </button>
+      </form>
+    </section>
   );
 }
 

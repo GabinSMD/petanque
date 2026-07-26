@@ -4,6 +4,7 @@ import type { Concours, Player, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
+import { RegistrationsPanel } from '../../components/RegistrationsPanel';
 import { FORMAT_LABELS, PLAYERS_PER_TEAM, isIndividualMode } from '../../lib/labels';
 
 interface Props {
@@ -55,6 +56,8 @@ export function TeamsTab({ concours, teams }: Props) {
 
   return (
     <div className="tab-content">
+      {!locked && <RegistrationsPanel concours={concours} />}
+
       {!locked && (
         <form className="team-add-form no-print" onSubmit={(e) => void submit(e)}>
           <div className="team-add-players">

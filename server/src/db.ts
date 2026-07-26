@@ -118,8 +118,28 @@ export function openDb(path: string): DatabaseSync {
       created_at TEXT NOT NULL,
       PRIMARY KEY (concours_id, match_id)
     );
+
+    CREATE TABLE IF NOT EXISTS registrations (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      concours_id TEXT NOT NULL,
+      players TEXT NOT NULL,
+      club TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_reg_concours ON registrations(org_id, concours_id);
   `);
   return db;
+}
+
+export interface RegistrationRow {
+  id: string;
+  org_id: string;
+  concours_id: string;
+  players: string;
+  club: string | null;
+  created_at: string;
 }
 
 export interface PushSubRow {

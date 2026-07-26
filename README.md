@@ -54,6 +54,20 @@ scores, tableaux) et se synchronise dès que le réseau revient.
 - **Impression** : feuilles de poules, tableaux et résultats via la mise en
   page d'impression du navigateur.
 
+### Organisation d'une journée
+- **Catégories & vue « journée »** : catégorie par concours (Seniors,
+  Vétérans, Féminines, Jeunes…), tableau de bord regroupé par date avec
+  filtre par catégorie — pratique quand un club enchaîne plusieurs concours
+  le même jour.
+- **Pré-inscriptions en ligne** : les équipes s'inscrivent elles-mêmes via
+  le lien public (« ✍️ Je m'inscris ») ; l'organisateur valide d'un clic à
+  la table de marque.
+- **Plan des terrains** : plateau libre/occupé en direct, affectation
+  automatique des parties en attente aux terrains libres, libération à la
+  saisie du score.
+- **Têtes de série** : au tirage, désigner les meilleures équipes pour les
+  répartir dans des poules / moitiés de tableau différentes.
+
 ### Prise en main
 - **Création guidée en 3 étapes** : des cartes de formules en langage
   courant (« le classique des concours officiels », « idéal club & amis —

@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { DatabaseSync } from 'node:sqlite';
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { AuthContext } from './index.js';
-import type { DeclarationRow, EntityRow, ShareRow } from './db.js';
+import type { DeclarationRow, EntityRow, RegistrationRow, ShareRow } from './db.js';
 
 /**
  * Limiteur de débit minimaliste en mémoire (par IP) — suffisant pour un
@@ -263,6 +263,80 @@ export function registerPublicRoutes(
     db.prepare(
       'UPDATE declarations SET applied = 1 WHERE org_id = ? AND match_id = ?',
     ).run(auth.orgId, matchId);
+    return { ok: true };
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Pré-inscriptions en ligne                                        */
+  /* ---------------------------------------------------------------- */
+
+  const registerLimit = rateLimiter(20, 60_000);
+  const insertRegistration = db.prepare(
+    'INSERT INTO registrations (id, org_id, concours_id, players, club, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  );
+  const selectRegistrations = db.prepare(
+    'SELECT * FROM registrations WHERE org_id = ? AND concours_id = ? ORDER BY created_at',
+  );
+  const deleteRegistration = db.prepare(
+    'DELETE FROM registrations WHERE id = ? AND org_id = ?',
+  );
+
+  /** Une équipe se pré-inscrit depuis le lien public (avant le concours). */
+  app.post('/api/public/:token/register', async (req, reply) => {
+    if (!registerLimit(req.ip)) return reply.code(429).send({ error: 'Trop de requêtes' });
+    const { token } = req.params as { token: string };
+    const share = selectByToken.get(token) as unknown as ShareRow | undefined;
+    if (!share) return reply.code(404).send({ error: 'Lien inconnu ou révoqué' });
+
+    const body = (req.body ?? {}) as { players?: unknown; club?: unknown };
+    const players = Array.isArray(body.players)
+      ? body.players
+          .map((p) => {
+            const o = (p ?? {}) as { name?: unknown; licence?: unknown };
+            const name = typeof o.name === 'string' ? o.name.trim().slice(0, 80) : '';
+            const licence = typeof o.licence === 'string' ? o.licence.trim().slice(0, 30) : '';
+            return name ? { name, licence: licence || undefined } : null;
+          })
+          .filter((p): p is NonNullable<typeof p> => p !== null)
+          .slice(0, 3)
+      : [];
+    if (players.length === 0) return reply.code(400).send({ error: 'Nom(s) requis' });
+    const club = typeof body.club === 'string' ? body.club.trim().slice(0, 80) : '';
+
+    insertRegistration.run(
+      randomUUID(),
+      share.org_id,
+      share.concours_id,
+      JSON.stringify(players),
+      club || null,
+      new Date().toISOString(),
+    );
+    return { ok: true };
+  });
+
+  /** Pré-inscriptions en attente (table de marque). */
+  app.get('/api/registrations', async (req, reply) => {
+    const auth = authenticate(req);
+    if (!auth) return reply.code(401).send({ error: 'Non authentifié' });
+    const { concoursId } = req.query as { concoursId?: string };
+    if (!concoursId) return reply.code(400).send({ error: 'concoursId requis' });
+    const rows = selectRegistrations.all(auth.orgId, concoursId) as unknown as RegistrationRow[];
+    return {
+      registrations: rows.map((r) => ({
+        id: r.id,
+        players: JSON.parse(r.players),
+        club: r.club ?? undefined,
+        createdAt: r.created_at,
+      })),
+    };
+  });
+
+  /** La table de marque valide ou refuse une pré-inscription. */
+  app.delete('/api/registrations/:id', async (req, reply) => {
+    const auth = authenticate(req);
+    if (!auth) return reply.code(401).send({ error: 'Non authentifié' });
+    const { id } = req.params as { id: string };
+    deleteRegistration.run(id, auth.orgId);
     return { ok: true };
   });
 }
