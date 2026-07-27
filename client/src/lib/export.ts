@@ -1,4 +1,5 @@
 import type { Concours, Match, Poule, Team } from '@shared';
+import { arbitrageReport } from '@shared';
 import { teamDisplayName } from '../components/TeamLabel';
 import { DISCIPLINE_LABELS, FORMAT_LABELS, MODE_LABELS } from './labels';
 import { finalRanking } from './results';
@@ -83,6 +84,60 @@ export function classementCSV(
     }
   }
   return toCSV(rows);
+}
+
+/**
+ * Résultats d'arbitrage au format du tableur fédéral (manuel §3.D.1.B.4.5) :
+ * une ligne par joueur, regroupée par place, avec les colonnes attendues par
+ * le comité pour la saisie dans Geslico.
+ *
+ * « N° Dép. » et « Points » restent vides : la première demande le fichier
+ * fédéral des licenciés, la seconde est remplie par le comité.
+ */
+export function arbitrageCSV(concours: Concours, teams: Team[], matches: Match[]): string {
+  const report = arbitrageReport(teams, matches);
+  const rows: (string | number | null)[][] = [
+    ['RÉSULTATS DU CONCOURS', concoursSummaryLine(concours)],
+    ['Lieu', concours.lieu ?? '', 'Nombre d\'équipes', report.stats.equipes],
+    [],
+    ['N° Licence', 'Nom, Prénom', 'Association ou Club', 'N° Dép.', 'N° d\'équipe', 'Points'],
+  ];
+
+  for (const section of report.sections) {
+    rows.push([section.label]);
+    for (const team of section.teams) {
+      team.players.forEach((p, i) => {
+        rows.push([
+          p.licence ?? '',
+          p.name.toLocaleUpperCase('fr-FR'),
+          team.club ?? '',
+          '',
+          // Le n° d'équipe n'est porté que par la première ligne, comme sur
+          // la feuille fédérale.
+          i === 0 ? team.number : '',
+          '',
+        ]);
+      });
+    }
+  }
+
+  rows.push([]);
+  rows.push(['Bilan des équipes engagées', report.stats.equipes]);
+  rows.push(['dont forfaits', report.stats.forfaits]);
+  rows.push(['Joueurs', report.stats.joueurs]);
+  rows.push(['Joueurs sans n° de licence', report.stats.joueursSansLicence]);
+  rows.push([]);
+  rows.push(['Arbitre principal', '']);
+  rows.push(['Fait à', '', 'le', '']);
+  return toCSV(rows);
+}
+
+export function exportArbitrageCSV(concours: Concours, teams: Team[], matches: Match[]): void {
+  downloadText(
+    `arbitrage-${safeFilename(concours.name)}.csv`,
+    arbitrageCSV(concours, teams, matches),
+    'text/csv',
+  );
 }
 
 /** Sauvegarde JSON complète et relisible d'un concours (données brutes). */

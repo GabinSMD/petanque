@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Match, Team } from '@shared';
-import { bracketSizeOf, isByeMatch, roundLabel, rondesTirees } from '@shared';
+import { arbitrageReport, bracketSizeOf, isByeMatch, roundLabel, rondesTirees } from '@shared';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { teamDisplayName } from '../components/TeamLabel';
 import { FORMAT_LABELS, POULE_SLOT_LABELS, formatDateFr } from '../lib/labels';
@@ -32,6 +32,7 @@ export function PrintPage() {
   const poules = usePoules(id) ?? [];
   const matches = useMatches(id) ?? [];
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const arbitrage = useMemo(() => arbitrageReport(teams, matches), [teams, matches]);
   const printed = useRef(false);
 
   useEffect(() => {
@@ -157,6 +158,67 @@ export function PrintPage() {
             );
           })}
           {poules.length === 0 && <p>Aucune poule tirée.</p>}
+        </div>
+      )}
+
+      {doc === 'arbitrage' && (
+        <div className="print-arbitrage">
+          <h2 className="print-arbitrage-title">Résultats d'arbitrage</h2>
+          <p className="hint print-arbitrage-intro">
+            Document à remettre au comité pour la saisie des résultats et l'attribution des
+            points fédéraux.
+          </p>
+          {arbitrage.sections.map((section) => (
+            <section key={section.label} className="print-arbitrage-section">
+              <h3>{section.label}</h3>
+              <table className="print-arbitrage-table">
+                <thead>
+                  <tr>
+                    <th>N° équipe</th>
+                    <th>N° licence</th>
+                    <th>Nom, prénom</th>
+                    <th>Association ou club</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {section.teams.map((team) =>
+                    team.players.map((p, i) => (
+                      <tr key={`${team.number}-${i}`}>
+                        <td>{i === 0 ? team.number : ''}</td>
+                        <td>{p.licence ?? ''}</td>
+                        <td>{p.name.toLocaleUpperCase('fr-FR')}</td>
+                        <td>{i === 0 ? (team.club ?? '') : ''}</td>
+                      </tr>
+                    )),
+                  )}
+                </tbody>
+              </table>
+            </section>
+          ))}
+          {arbitrage.sections.length === 0 && (
+            <p>Aucun résultat à reporter : le tableau n'est pas encore assez avancé.</p>
+          )}
+
+          <section className="print-arbitrage-bilan">
+            <h3>Bilan des équipes engagées</h3>
+            <ul>
+              <li>Équipes engagées : {arbitrage.stats.equipes}</li>
+              <li>dont forfaits : {arbitrage.stats.forfaits}</li>
+              <li>Joueurs : {arbitrage.stats.joueurs}</li>
+              <li>Joueurs sans n° de licence : {arbitrage.stats.joueursSansLicence}</li>
+            </ul>
+          </section>
+
+          <section className="print-arbitrage-sign">
+            <p>
+              Arbitre principal : <span className="print-rule" />
+            </p>
+            <p>
+              Fait à <span className="print-rule print-rule-sm" /> le{' '}
+              <span className="print-rule print-rule-sm" />
+            </p>
+            <p>Signature :</p>
+          </section>
         </div>
       )}
 
