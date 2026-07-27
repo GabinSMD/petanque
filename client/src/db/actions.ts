@@ -23,10 +23,14 @@ import {
   validateScore,
   validateTirScore,
   type Concours,
+  type CategorieAge,
   type ConcoursMode,
+  type CritereClassification,
+  type CritereSexe,
   type Discipline,
   type Formule,
   type Licencie,
+  type LicencieRow,
   type Match,
   type Player,
   type Poule,
@@ -62,6 +66,12 @@ export interface ConcoursInput {
   complementaire?: boolean;
   /** Formule fédérale du tableau (élimination directe). */
   formule?: Formule;
+  /** Critères de contrôle des licences. */
+  categorieAge?: CategorieAge;
+  strict?: boolean;
+  critereSexe?: CritereSexe;
+  critereClassification?: CritereClassification;
+  homogene?: boolean;
   scoreMax: number;
   nbTerrains: number;
   nbRondes?: number;
@@ -172,7 +182,7 @@ export async function listLicencies(): Promise<Licencie[]> {
 
 /** Import en masse : met à jour par n° de licence, sinon par nom+club. */
 export async function importLicencies(
-  incoming: { name: string; licence?: string; club?: string }[],
+  incoming: LicencieRow[],
 ): Promise<{ added: number; updated: number }> {
   const existing = await listLicencies();
   const byLicence = new Map(
@@ -190,20 +200,25 @@ export async function importLicencies(
       (row.licence && byLicence.get(row.licence)) ||
       byNameClub.get(`${row.name.toLowerCase()}|${(row.club ?? '').toLowerCase()}`);
     if (match) {
-      if (
-        match.name !== row.name ||
-        match.licence !== row.licence ||
-        match.club !== row.club
-      ) {
-        toPut.push({ ...match, ...row });
+      // Un import partiel ne doit pas effacer ce qu'on sait déjà : on ne
+      // remplace un champ que si le fichier en apporte une valeur.
+      const merged: Licencie = { ...match };
+      let changed = false;
+      for (const [k, v] of Object.entries(row) as [keyof LicencieRow, unknown][]) {
+        if (v === undefined || v === '') continue;
+        if (merged[k as keyof Licencie] !== v) {
+          (merged as unknown as Record<string, unknown>)[k] = v;
+          changed = true;
+        }
+      }
+      if (changed) {
+        toPut.push(merged);
         updated += 1;
       }
     } else {
       const licencie: Licencie = {
+        ...row,
         id: crypto.randomUUID(),
-        name: row.name,
-        licence: row.licence,
-        club: row.club,
         updatedAt: monotonicNow(),
       };
       toPut.push(licencie);

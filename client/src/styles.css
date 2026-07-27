@@ -3371,3 +3371,35 @@ form label select {
 .print-rule-sm {
   min-width: 6rem;
 }
+
+/* Contrôle des licences */
+.form-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem 0.9rem;
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.form-fieldset legend {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 0 0.35rem;
+}
+
+.cell-controle .tag {
+  white-space: normal;
+  text-align: left;
+}
+
+.banner-warn {
+  background: #f7e3e0;
+  color: var(--danger);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.9rem;
+}

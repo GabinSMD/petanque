@@ -3,10 +3,15 @@ import { Link } from 'react-router-dom';
 import { deleteAllLicencies, deleteLicencie, importLicencies } from '../db/actions';
 import { useLicencies } from '../db/hooks';
 import { parseLicenciesCsv } from '../lib/csv';
+import { formatDateFr } from '../lib/labels';
 
 const TEMPLATE =
   'data:text/csv;charset=utf-8,' +
-  encodeURIComponent('Nom;Prénom;Licence;Club\nDupont;Marie;012345678;La Boule Joyeuse\n');
+  encodeURIComponent(
+    'Nom;Prénom;N° Licence;Club;N° Club;Comité;Date de naissance;Sexe;Classification;' +
+      'Année de reprise;Certificat médical;Nationalité;Position\n' +
+      'Dupont;Marie;012345678;La Boule Joyeuse;0266013;026;04/05/1980;F;Promotion;2026;;FRA;\n',
+  );
 
 /**
  * Fichier des licenciés de l'organisation : import CSV, recherche,
@@ -67,8 +72,12 @@ export function LicenciesPage() {
       <div className="draw-panel licencies-import no-print">
         <h2>Importer un fichier CSV</h2>
         <p className="hint">
-          Colonnes reconnues : Nom, Prénom, Licence, Club (séparées par « ; », « , » ou
-          tabulation, avec ou sans en-tête).{' '}
+          Colonnes reconnues : Nom, Prénom, Licence, Club, N° Club, Comité, Date de naissance,
+          Sexe, Classification, Année de reprise, Certificat médical, Nationalité, Position
+          (séparées par « ; », « , » ou tabulation, avec ou sans en-tête). Les colonnes
+          absentes ne sont pas inventées ; un import partiel complète les fiches existantes
+          sans rien effacer. Plus le fichier est complet, plus le contrôle des licences est
+          fiable.{' '}
           <a href={TEMPLATE} download="licencies-modele.csv">
             Télécharger un modèle
           </a>
@@ -113,6 +122,10 @@ export function LicenciesPage() {
             <th>Nom</th>
             <th>Licence</th>
             <th>Club</th>
+            <th>Naissance</th>
+            <th>Sexe</th>
+            <th>Class.</th>
+            <th>Reprise</th>
             <th className="no-print"></th>
           </tr>
         </thead>
@@ -122,6 +135,10 @@ export function LicenciesPage() {
               <td>{l.name}</td>
               <td>{l.licence ?? ''}</td>
               <td>{l.club ?? ''}</td>
+              <td>{l.dateNaissance ? formatDateFr(l.dateNaissance) : ''}</td>
+              <td>{l.sexe ?? ''}</td>
+              <td>{l.classification ?? ''}</td>
+              <td>{l.anneeReprise ?? ''}</td>
               <td className="no-print cell-actions">
                 <button
                   className="btn-icon btn-icon-danger"
@@ -135,7 +152,7 @@ export function LicenciesPage() {
           ))}
           {shown.length === 0 && (
             <tr>
-              <td colSpan={4} className="empty-cell">
+              <td colSpan={8} className="empty-cell">
                 {licencies.length === 0
                   ? 'Aucun licencié — importez le fichier de votre club ou comité.'
                   : 'Aucun résultat pour cette recherche.'}

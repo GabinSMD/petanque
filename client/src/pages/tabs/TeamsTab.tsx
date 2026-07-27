@@ -4,6 +4,8 @@ import type { Concours, Player, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
+import { controlerEquipe, type ControleEquipe } from '@shared';
+import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../../lib/labels';
 import { RegistrationsPanel } from '../../components/RegistrationsPanel';
 import { FORMAT_LABELS, PLAYERS_PER_TEAM, isIndividualMode } from '../../lib/labels';
 
@@ -23,6 +25,36 @@ export function TeamsTab({ concours, teams }: Props) {
   const firstInput = useRef<HTMLInputElement>(null);
   const licencies = useLicencies() ?? [];
   const licencieByName = new Map(licencies.map((l) => [l.name.toLowerCase(), l]));
+
+  /* Contrôle des licences : seulement s'il y a de quoi contrôler — des
+     critères fédéraux, ou au moins un fichier de licenciés importé. */
+  const criteresFederaux = Boolean(
+    concours.categorieAge ||
+      concours.homogene ||
+      (concours.critereSexe && concours.critereSexe !== 'tous') ||
+      (concours.critereClassification && concours.critereClassification !== 'tous'),
+  );
+  const controlActif = criteresFederaux || licencies.length > 0;
+  const fiches = new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l]));
+  const controles = new Map<string, ControleEquipe>(
+    controlActif
+      ? teams.map((t) => [
+          t.id,
+          controlerEquipe(t.players, fiches, {
+            annee: Number(concours.date.slice(0, 4)),
+            dateConcours: concours.date,
+            categorieAge: concours.categorieAge,
+            strict: concours.strict,
+            sexe: concours.critereSexe,
+            classification: concours.critereClassification,
+            homogene: concours.homogene,
+            // Hors concours officiel, on ne reproche pas une licence non saisie.
+            ignorerLicencesManquantes: !criteresFederaux,
+          }),
+        ])
+      : [],
+  );
+  const nonConformes = [...controles.values()].filter((c) => !c.conforme).length;
 
   /** Autocomplétion : un nom du fichier des licenciés remplit licence et club. */
   const applyLicencie = (i: number, value: string) => {
@@ -131,6 +163,13 @@ export function TeamsTab({ concours, teams }: Props) {
         </p>
       )}
 
+      {controlActif && nonConformes > 0 && (
+        <p className="banner-warn no-print">
+          ⚠ {nonConformes} équipe{nonConformes > 1 ? 's' : ''} en anomalie de licence — survolez
+          le voyant de la colonne « Licences » pour le détail.
+        </p>
+      )}
+
       <div className="table-scroll">
       <table className="teams-table">
         <thead>
@@ -138,6 +177,7 @@ export function TeamsTab({ concours, teams }: Props) {
             <th>N°</th>
             <th>{individual ? 'Participant' : 'Joueurs'}</th>
             <th>Club</th>
+            {controlActif && <th title="Contrôle des licences">Licences</th>}
             {trackPaid && <th className="cell-paid">Réglé</th>}
             <th className="no-print">Actions</th>
           </tr>
@@ -165,6 +205,11 @@ export function TeamsTab({ concours, teams }: Props) {
                   {team.forfait && <span className="tag tag-danger">Forfait</span>}
                 </td>
                 <td>{team.club ?? ''}</td>
+                {controlActif && (
+                  <td className="cell-controle">
+                    <ControleBadge controle={controles.get(team.id)} />
+                  </td>
+                )}
                 {trackPaid && (
                   <td className="cell-paid">
                     <label className="paid-toggle" title="Engagement réglé">
@@ -248,6 +293,33 @@ export function TeamsTab({ concours, teams }: Props) {
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * Voyant de contrôle d'une équipe, à la manière du logiciel fédéral : vert si
+ * tout est conforme, sinon la liste des champs fautifs.
+ */
+function ControleBadge({ controle }: { controle?: ControleEquipe }) {
+  if (!controle) return null;
+  if (controle.conforme) {
+    return (
+      <span className="tag tag-ok" title="Licences conformes aux critères du concours">
+        ✓
+      </span>
+    );
+  }
+  const motifs = new Set<string>();
+  for (const a of controle.anomaliesEquipe) motifs.add(ANOMALIE_EQUIPE_LABELS[a]);
+  for (const j of controle.joueurs) {
+    if (j.inconnu) motifs.add('joueur absent du fichier des licenciés');
+    for (const a of j.anomalies) motifs.add(ANOMALIE_LABELS[a]);
+  }
+  const texte = [...motifs].join(', ');
+  return (
+    <span className="tag tag-danger" title={texte}>
+      ⚠ {texte}
+    </span>
   );
 }
 

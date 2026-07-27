@@ -1,4 +1,14 @@
-import type { ConcoursMode, ConcoursStatus, Discipline, Formule, TeamFormat } from '@shared';
+import type {
+  CategorieAge,
+  ConcoursMode,
+  ConcoursStatus,
+  CritereClassification,
+  CritereSexe,
+  Discipline,
+  Formule,
+  TeamFormat,
+} from '@shared';
+import type { AnomalieEquipe, ChampLicence } from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
   petanque: 'Pétanque',
@@ -199,3 +209,46 @@ export function suggestedName(mode: ConcoursMode, format: TeamFormat, date: stri
   const fPlural = format === 'tete_a_tete' ? f : `${f}s`;
   return `${prefix[mode]} ${fPlural} du ${formatDateFr(date)}`;
 }
+
+/* ------------------------------------------------------------------ */
+/* Contrôle des licences                                               */
+/* ------------------------------------------------------------------ */
+
+export const CATEGORIE_AGE_LABELS: Record<CategorieAge, string> = {
+  veterans: 'Vétérans (60 ans et plus)',
+  seniors: 'Séniors (18 ans et plus)',
+  juniors: 'Juniors (15 à 17 ans)',
+  cadets: 'Cadets (12 à 14 ans)',
+  minimes: 'Minimes (9 à 11 ans)',
+  benjamins: 'Benjamins (moins de 9 ans)',
+};
+
+export const CRITERE_SEXE_LABELS: Record<CritereSexe, string> = {
+  tous: 'Ouvert à tous',
+  masculin: 'Masculin',
+  feminin: 'Féminin',
+  mixte: 'Mixte (au moins 1 homme et 1 femme)',
+};
+
+export const CRITERE_CLASSIFICATION_LABELS: Record<CritereClassification, string> = {
+  tous: 'Toutes classifications',
+  elite: 'Élite',
+  honneur: 'Honneur',
+  promotion: 'Promotion',
+};
+
+/** Champ en anomalie → formulation lisible à la table de marque. */
+export const ANOMALIE_LABELS: Record<ChampLicence, string> = {
+  licence: 'n° de licence manquant',
+  anneeReprise: 'licence non renouvelée',
+  dateNaissance: "catégorie d'âge",
+  sexe: 'sexe',
+  classification: 'classification',
+  certificatMedical: 'certificat médical',
+  club: 'club',
+};
+
+export const ANOMALIE_EQUIPE_LABELS: Record<AnomalieEquipe, string> = {
+  mixte: 'équipe non mixte',
+  homogeneite: 'équipe non homogène',
+};
