@@ -110,14 +110,50 @@ curl -s https://monclub.duckdns.org/api/health   # {"ok":true,...}
 - Créez un **compte club**, un concours, testez la synchro sur un 2e appareil.
 - Activez les **notifications** depuis le lien public (mode « Je joue »).
 
-## 8. Mettre à jour l'application
+## 8. Mettre à jour l'application (manuel)
+
+Une commande fournie par le dépôt fait tout (pull + build + redémarrage) :
 
 ```bash
-cd /opt/petanque/app
-sudo -u petanque git pull
-sudo -u petanque npm install && sudo -u petanque npm run build
-sudo systemctl restart petanque
+sudo bash /opt/petanque/app/deploy/update.sh main
 ```
+
+## 8bis. Déploiement continu (automatique à chaque fusion) ⭐
+
+Le dépôt contient un workflow **GitHub Actions** (`.github/workflows/deploy.yml`)
+qui, à chaque fusion sur `main`, **vérifie** (typage + tests + build) puis
+**met à jour la VM par SSH**. Une fois configuré, tu ne touches plus à la VM :
+tu fusionnes une PR → le site se met à jour tout seul.
+
+Configuration (une seule fois) :
+
+1. **Clé de déploiement dédiée** — sur ton PC :
+   ```bash
+   ssh-keygen -t ed25519 -f deploy_key -N "" -C "github-actions-petanque"
+   ```
+2. **Autoriser cette clé sur la VM** (utilisateur `ubuntu`) :
+   ```bash
+   # copie le contenu de deploy_key.pub dans la VM :
+   cat deploy_key.pub | ssh -i ta-cle.key ubuntu@129.151.227.36 \
+     'cat >> ~/.ssh/authorized_keys'
+   ```
+3. **Ajouter les secrets GitHub** — dépôt → *Settings → Secrets and variables →
+   Actions → New repository secret* :
+   | Secret | Valeur |
+   |---|---|
+   | `DEPLOY_HOST` | `129.151.227.36` (ou `petanque.gabin-simond.fr`) |
+   | `DEPLOY_USER` | `ubuntu` |
+   | `DEPLOY_SSH_KEY` | **tout le contenu** du fichier `deploy_key` (clé privée) |
+
+C'est tout. La prochaine fusion sur `main` déclenche la mise en ligne
+automatique (onglet **Actions** du dépôt pour suivre). Tant que les secrets
+ne sont pas définis, le workflow s'exécute mais **saute** l'étape de
+déploiement (aucune erreur).
+
+> L'utilisateur `ubuntu` d'Oracle a le `sudo` sans mot de passe par défaut :
+> le script distant peut donc redémarrer le service sans intervention.
+> Tu peux aussi lancer un déploiement à la demande via *Actions → Deploy →
+> Run workflow*.
 
 ## 9. Sauvegarde de la base
 
