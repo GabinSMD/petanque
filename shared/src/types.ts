@@ -23,6 +23,19 @@ export type ConcoursMode =
   | 'championnat'
   | 'tir_precision';
 
+/**
+ * Formule fédérale : quels tableaux coexistent et où sont reversés les
+ * perdants (manuel « Gestion Concours » §3.D.8 à §3.D.12).
+ * - `a` : un seul tableau ;
+ * - `ab` : perdants de la 1re partie de A → concours B (§3.D.9) ;
+ * - `abc` : idem + perdants de la 1re partie de B → concours C (§3.D.10) ;
+ * - `abc_recup` : idem `abc` + perdants de la **2e** partie de A reversés au
+ *   cadrage du B (§3.D.8) ;
+ * - `abc_cd19` : les perdants de la 2e partie de A partent au 1er tour du C
+ *   au lieu du B (§3.D.12).
+ */
+export type Formule = 'a' | 'ab' | 'abc' | 'abc_recup' | 'abc_cd19';
+
 /** Cycle de vie d'un concours. */
 export type ConcoursStatus = 'inscriptions' | 'poules' | 'tableau' | 'rondes' | 'termine';
 
@@ -57,6 +70,11 @@ export interface Concours {
   complementaire?: boolean;
   /** Consolante : repêchage des éliminés (poules ou 1er tour). */
   consolante: boolean;
+  /**
+   * Formule fédérale du tableau (élimination directe). Absente : la formule
+   * est déduite de `consolante` / `complementaire`.
+   */
+  formule?: Formule;
   /** Score gagnant d'une mène complète (13 en pétanque). */
   scoreMax: number;
   nbTerrains: number;

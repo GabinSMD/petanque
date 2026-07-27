@@ -1,6 +1,7 @@
 import {
   buildChampionnat,
   buildConsolanteFromSources,
+  buildFormuleBrackets,
   creerSerieTir,
   defaultCtx,
   drawElimination,
@@ -9,6 +10,7 @@ import {
   drawPoules,
   drawSwissRonde,
   firstRoundSources,
+  formuleOf,
   isByeMatch,
   pouleOutcome,
   pouleSizes,
@@ -23,6 +25,7 @@ import {
   type Concours,
   type ConcoursMode,
   type Discipline,
+  type Formule,
   type Licencie,
   type Match,
   type Player,
@@ -57,6 +60,8 @@ export interface ConcoursInput {
   nbQualifies?: number;
   consolante: boolean;
   complementaire?: boolean;
+  /** Formule fédérale du tableau (élimination directe). */
+  formule?: Formule;
   scoreMax: number;
   nbTerrains: number;
   nbRondes?: number;
@@ -316,17 +321,10 @@ export async function generateTableauDirect(
   const teams = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
   const main = drawElimination(concours.id, 'principal', teams, ctx(), { avoidSameClub, seeds });
-  let conso: Match[] = [];
-  let comp: Match[] = [];
-  if (concours.consolante) {
-    const sources = firstRoundSources(main, 'principal');
-    conso = buildConsolanteFromSources(concours.id, sources, ctx());
-    if (concours.complementaire && conso.length > 0) {
-      const compSources = firstRoundSources(conso, 'consolante');
-      comp = buildConsolanteFromSources(concours.id, compSources, ctx(), 'complementaire');
-    }
-  }
-  await bulkPutEntities('match', [...main, ...conso, ...comp]);
+  // Tableaux B et C selon la formule fédérale (perdants reversés d'un
+  // tableau à l'autre) — voir `buildFormuleBrackets`.
+  const secondary = buildFormuleBrackets(concours.id, main, formuleOf(concours), ctx());
+  await bulkPutEntities('match', [...main, ...secondary]);
   await putEntity('concours', { ...concours, status: 'tableau' });
 }
 

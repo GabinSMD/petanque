@@ -15,6 +15,9 @@ server/data/
 .env
 .env.local
 
+# Documentation fédérale de référence, consultée en local (binaire volumineux)
+Manuel_GC_*.pdf
+
 # Divers
 .DS_Store
 *.log

@@ -15,6 +15,10 @@ scores, tableaux) et se synchronise dès que le réseau revient.
 - **Toutes les formules de jeu** :
   - **Poules puis élimination** (le classique FFPJP) ;
   - **Élimination directe** (avec consolante possible) ;
+  - **Formules fédérales A-B-C** (manuel FFPJP §3.D.8 à §3.D.12) : les
+    perdants sont reversés d'un tableau à l'autre — consolante, complémentaire,
+    et récupération des perdants du 2ᵉ tour du principal au cadrage de la
+    consolante (ou au complémentaire, variante CD19) ;
   - **Mêlée tournante** : inscriptions individuelles, équipes tirées au sort
     à chaque ronde — effectifs inégaux gérés comme sur le terrain (une
     triplette peut rencontrer une doublette, personne n'est exempt),
