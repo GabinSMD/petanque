@@ -7,7 +7,6 @@ import {
   generateTableauFromPoules,
   pouleSummary,
   setMatchTerrain,
-  setPouleTerrain,
 } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
@@ -202,6 +201,53 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
   );
 }
 
+/**
+ * Terrain d'une partie de poule : sélecteur compact avec l'option « Terrain
+ * libre » et les terrains disponibles. L'affectation fine (plan, affectation
+ * auto) reste dans l'onglet Terrains, mais on peut assigner ou libérer
+ * rapidement ici. Une fois le concours clôturé, on n'affiche que le terrain.
+ */
+function PouleMatchTerrain({
+  match,
+  locked,
+  nbTerrains,
+}: {
+  match: Match;
+  locked: boolean;
+  nbTerrains: number;
+}) {
+  // Clôturé : affichage seul (pas de modification).
+  if (locked) {
+    return match.terrain != null ? (
+      <span className="pmatch-terrain pmatch-terrain-set">🟦 Terrain {match.terrain}</span>
+    ) : null;
+  }
+
+  const options = Array.from({ length: Math.max(nbTerrains, match.terrain ?? 0) }, (_, i) => i + 1);
+  return (
+    <label
+      className={`pmatch-terrain pmatch-terrain-pick no-print${
+        match.terrain != null ? ' has-terrain' : ''
+      }`}
+    >
+      <select
+        value={match.terrain ?? ''}
+        aria-label="Terrain"
+        onChange={(e) =>
+          void setMatchTerrain(match, e.target.value ? Number(e.target.value) : null)
+        }
+      >
+        <option value="">Terrain libre</option>
+        {options.map((n) => (
+          <option key={n} value={n}>
+            Terrain {n}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function PouleCard({
   concours,
   poule,
@@ -249,20 +295,6 @@ function PouleCard({
         <h3 onClick={onToggle} className="poule-title">
           Poule {poule.index}
         </h3>
-        {!collapsed && (
-          <label className="terrain-label no-print">
-            Terrain
-            <input
-              type="number"
-              min={1}
-              value={poule.terrain ?? ''}
-              placeholder="–"
-              onChange={(e) =>
-                void setPouleTerrain(poule, e.target.value ? Number(e.target.value) : null)
-              }
-            />
-          </label>
-        )}
         {outcome.complete ? (
           <span className="tag tag-ok">Terminée</span>
         ) : (
@@ -304,39 +336,29 @@ function PouleCard({
         })}
       </ul>
 
-      <table className="poule-matches">
-        <tbody>
-          {ordered.map((m) => (
-            <tr key={m.id}>
-              <td className="match-label">{POULE_SLOT_LABELS[m.pouleSlot ?? ''] ?? ''}</td>
-              <td className="match-team">
+      <ul className="pmatches">
+        {ordered.map((m) => (
+          <li key={m.id} className={`pmatch${m.done ? ' pmatch-done' : ''}`}>
+            <div className="pmatch-head">
+              <span className="pmatch-slot">
+                {POULE_SLOT_LABELS[m.pouleSlot ?? ''] ?? ''}
+              </span>
+              <PouleMatchTerrain match={m} locked={locked} nbTerrains={concours.nbTerrains} />
+            </div>
+            <div className="pmatch-versus">
+              <span className="pmatch-side">
                 <TeamLabel team={m.teamAId ? teamsById.get(m.teamAId) : null} compact />
-              </td>
-              <td className="match-score">
+              </span>
+              <div className="pmatch-score">
                 <ScoreForm concours={concours} match={m} disabled={locked} />
-              </td>
-              <td className="match-team match-team-right">
+              </div>
+              <span className="pmatch-side pmatch-side-right">
                 <TeamLabel team={m.teamBId ? teamsById.get(m.teamBId) : null} compact />
-              </td>
-              <td className="match-terrain no-print">
-                <span className="terrain-field" title="Terrain de jeu">
-                  <span className="terrain-field-label">Terr.</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={m.terrain ?? ''}
-                    placeholder="–"
-                    aria-label="Terrain"
-                    onChange={(e) =>
-                      void setMatchTerrain(m, e.target.value ? Number(e.target.value) : null)
-                    }
-                  />
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
       </>
       )}
     </section>

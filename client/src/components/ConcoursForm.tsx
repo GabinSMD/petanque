@@ -34,6 +34,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [miseParEquipe, setMiseParEquipe] = useState<number | ''>(initial?.miseParEquipe ?? '');
   const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
   const [nbTerrains, setNbTerrains] = useState(initial?.nbTerrains ?? 8);
+  const [planTerrains, setPlanTerrains] = useState(initial?.planTerrains ?? true);
   const [nbRondes, setNbRondes] = useState(initial?.nbRondes ?? 4);
   const [tempsLimite, setTempsLimite] = useState<number | ''>(initial?.tempsLimite ?? '');
 
@@ -52,6 +53,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       complementaire: MODE_INFO[mode].consolante && consolante ? complementaire : false,
       scoreMax,
       nbTerrains,
+      planTerrains,
       nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
       tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
       miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
@@ -249,6 +251,16 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             </label>
           )}
         </>
+      )}
+      {!isTirMode(mode) && (
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={planTerrains}
+            onChange={(e) => setPlanTerrains(e.target.checked)}
+          />
+          Onglet « Plan des terrains » (décochez si vous gérez les terrains dans les poules)
+        </label>
       )}
       <div className="form-actions">
         <button type="button" className="btn btn-ghost" onClick={onCancel}>
