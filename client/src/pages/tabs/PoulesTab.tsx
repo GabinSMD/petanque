@@ -202,32 +202,50 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
 }
 
 /**
- * Terrain d'une partie de poule — en affichage seul (l'affectation se fait
- * dans l'onglet Terrains). Une action « Libérer » repasse le terrain à
- * l'état libre ; sinon on indique « Terrain libre ».
+ * Terrain d'une partie de poule : sélecteur compact avec l'option « Terrain
+ * libre » et les terrains disponibles. L'affectation fine (plan, affectation
+ * auto) reste dans l'onglet Terrains, mais on peut assigner ou libérer
+ * rapidement ici. Une fois le concours clôturé, on n'affiche que le terrain.
  */
-function PouleMatchTerrain({ match, locked }: { match: Match; locked: boolean }) {
-  if (match.terrain != null) {
-    return (
-      <span className="pmatch-terrain pmatch-terrain-set no-print">
-        🟦 Terrain {match.terrain}
-        {!locked && !match.done && (
-          <button
-            type="button"
-            className="pmatch-terrain-free"
-            title="Marquer ce terrain comme libre"
-            onClick={() => void setMatchTerrain(match, null)}
-          >
-            Libérer
-          </button>
-        )}
-      </span>
-    );
+function PouleMatchTerrain({
+  match,
+  locked,
+  nbTerrains,
+}: {
+  match: Match;
+  locked: boolean;
+  nbTerrains: number;
+}) {
+  // Clôturé : affichage seul (pas de modification).
+  if (locked) {
+    return match.terrain != null ? (
+      <span className="pmatch-terrain pmatch-terrain-set">🟦 Terrain {match.terrain}</span>
+    ) : null;
   }
-  // Partie jouable (les deux équipes connues) mais sans terrain : libre.
-  const playable = Boolean(match.teamAId && match.teamBId) && !match.done;
-  if (!playable) return null;
-  return <span className="pmatch-terrain pmatch-terrain-libre no-print">Terrain libre</span>;
+
+  const options = Array.from({ length: Math.max(nbTerrains, match.terrain ?? 0) }, (_, i) => i + 1);
+  return (
+    <label
+      className={`pmatch-terrain pmatch-terrain-pick no-print${
+        match.terrain != null ? ' has-terrain' : ''
+      }`}
+    >
+      <select
+        value={match.terrain ?? ''}
+        aria-label="Terrain"
+        onChange={(e) =>
+          void setMatchTerrain(match, e.target.value ? Number(e.target.value) : null)
+        }
+      >
+        <option value="">Terrain libre</option>
+        {options.map((n) => (
+          <option key={n} value={n}>
+            Terrain {n}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 function PouleCard({
@@ -325,7 +343,7 @@ function PouleCard({
               <span className="pmatch-slot">
                 {POULE_SLOT_LABELS[m.pouleSlot ?? ''] ?? ''}
               </span>
-              <PouleMatchTerrain match={m} locked={locked} />
+              <PouleMatchTerrain match={m} locked={locked} nbTerrains={concours.nbTerrains} />
             </div>
             <div className="pmatch-versus">
               <span className="pmatch-side">

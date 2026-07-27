@@ -1178,7 +1178,7 @@ form label select {
   font-size: 1.2rem;
 }
 
-/* Terrain : affichage seul (assignation dans l'onglet Terrains) */
+/* Terrain : sélecteur compact « Terrain libre / Terrain N » */
 .pmatch-terrain {
   font-size: 0.75rem;
   white-space: nowrap;
@@ -1190,22 +1190,20 @@ form label select {
   color: var(--accent-dark);
   font-weight: 600;
 }
-.pmatch-terrain-libre {
-  color: var(--muted);
-  font-style: italic;
-}
-.pmatch-terrain-free {
+.pmatch-terrain-pick select {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
   border: 1px solid var(--line);
-  background: #fff;
-  color: var(--muted);
   border-radius: 6px;
-  padding: 0.1rem 0.45rem;
-  font-size: 0.7rem;
+  background: #f1f4fa;
+  color: var(--muted);
   cursor: pointer;
 }
-.pmatch-terrain-free:hover {
-  color: var(--danger);
-  border-color: var(--danger);
+.pmatch-terrain-pick.has-terrain select {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 600;
+  border-color: #c3d0f0;
 }
 
 /* Libellés d'équipes */
