@@ -62,6 +62,7 @@ export interface ConcoursInput {
   nbRondes?: number;
   tempsLimite?: number;
   miseParEquipe?: number;
+  planTerrains?: boolean;
 }
 
 export async function createConcours(input: ConcoursInput): Promise<string> {

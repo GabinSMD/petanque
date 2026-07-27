@@ -74,7 +74,7 @@ export function ConcoursPage() {
       : rondesMode
         ? [{ key: 'rondes', label: '🔄 Rondes' }]
         : [{ key: 'tableau', label: '🏆 Tableau' }]),
-    ...(!tirMode && concours.status !== 'inscriptions'
+    ...(!tirMode && concours.status !== 'inscriptions' && concours.planTerrains !== false
       ? [{ key: 'terrains', label: '🟦 Terrains' }]
       : []),
     { key: 'resultats', label: '📋 Résultats' },

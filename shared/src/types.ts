@@ -64,6 +64,11 @@ export interface Concours {
   nbRondes?: number;
   /** Durée indicative des parties en minutes (parties au temps). */
   tempsLimite?: number;
+  /**
+   * Afficher l'onglet « Plan des terrains ». Absent/true = affiché ;
+   * false = masqué (les terrains restent gérables dans les poules).
+   */
+  planTerrains?: boolean;
   /** Indemnités : mise par équipe (€) et frais d'organisation (%). */
   miseParEquipe?: number;
   fraisPct?: number;
