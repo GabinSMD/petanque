@@ -3403,3 +3403,115 @@ form label select {
   margin: 0 0 0.7rem;
   font-size: 0.9rem;
 }
+
+/* Documents imprimés : listes, presse, graphique */
+.print-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.print-option-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.5rem;
+  color: var(--text);
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.print-table th,
+.print-table td {
+  border: 1px solid #999;
+  padding: 0.25rem 0.4rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.print-table th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.print-total,
+.print-bilan {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.print-liste h2,
+.print-presse h2,
+.print-graphique h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+
+.presse-section,
+.print-graphique-tour {
+  break-inside: avoid;
+  margin-bottom: 0.8rem;
+}
+
+.presse-section h3,
+.print-graphique-tour h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.3rem;
+  padding: 0.15rem 0.4rem;
+  background: #eee;
+  border: 1px solid #000;
+}
+
+.presse-partie {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  border: 1px solid #999;
+  padding: 0.3rem 0.4rem;
+  margin-bottom: 0.25rem;
+  break-inside: avoid;
+  font-size: 0.8rem;
+}
+
+.presse-score {
+  font-weight: 700;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.presse-dossard {
+  font-weight: 700;
+  margin-right: 0.3rem;
+}
+
+.presse-licence {
+  font-variant-numeric: tabular-nums;
+  color: #555;
+}
+
+.presse-elimine {
+  color: #777;
+  text-decoration: line-through;
+}
+
+.presse-gagnant {
+  font-weight: 700;
+}
+
+.print-score-cell {
+  white-space: nowrap;
+  font-weight: 700;
+  text-align: center;
+}
+
+.print-presse-legende {
+  margin-top: 0.6rem;
+}
