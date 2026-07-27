@@ -52,6 +52,30 @@ export interface Player {
   licence?: string;
 }
 
+/** Sexe porté par la licence fédérale. */
+export type Sexe = 'M' | 'F';
+
+/** Classification fédérale : Élite, Honneur, Promotion. */
+export type Classification = 'E' | 'H' | 'P';
+
+/**
+ * Catégorie d'âge fédérale (manuel §3.C) : bornes calculées sur l'année en
+ * cours, pas sur la date anniversaire.
+ */
+export type CategorieAge =
+  | 'veterans'
+  | 'seniors'
+  | 'juniors'
+  | 'cadets'
+  | 'minimes'
+  | 'benjamins';
+
+/** Critère de sexe d'un concours ; `mixte` exige au moins 1 M et 1 F par équipe. */
+export type CritereSexe = 'tous' | 'masculin' | 'feminin' | 'mixte';
+
+/** Critère de classification d'un concours. */
+export type CritereClassification = 'tous' | 'elite' | 'honneur' | 'promotion';
+
 export interface Concours {
   id: string;
   name: string;
@@ -64,6 +88,17 @@ export interface Concours {
   discipline?: Discipline;
   /** Catégorie (Seniors, Vétérans, Féminines, Jeunes…) — facultatif. */
   category?: string;
+  /**
+   * Critères de contrôle des licences (manuel §3.A zones 2 à 5 et 9).
+   * Tous facultatifs : un concours de club n'en a pas besoin.
+   */
+  categorieAge?: CategorieAge;
+  /** Case « strict » : interdit les catégories d'âge inférieures. */
+  strict?: boolean;
+  critereSexe?: CritereSexe;
+  critereClassification?: CritereClassification;
+  /** Équipes homogènes exigées (tous les joueurs du même club). */
+  homogene?: boolean;
   /** Nombre de qualifiés pour une phase suivante (championnat qualificatif). */
   nbQualifies?: number;
   /** Consolante à 2 niveaux : ajoute un complémentaire (perdants de la consolante). */
@@ -161,6 +196,25 @@ export interface Licencie {
   name: string;
   licence?: string;
   club?: string;
+  /** Numéro de club fédéral (ex. 0266013). */
+  clubNumero?: string;
+  /** Comité départemental d'appartenance (ex. 026). */
+  comite?: string;
+  /** Date de naissance au format YYYY-MM-DD : détermine la catégorie d'âge. */
+  dateNaissance?: string;
+  sexe?: Sexe;
+  classification?: Classification;
+  /**
+   * Année de validation de la licence. Une licence de l'année suivante est
+   * valide : un joueur peut la prendre dès novembre.
+   */
+  anneeReprise?: number;
+  /** Fin de validité du certificat médical (YYYY-MM-DD) — jeunes uniquement. */
+  certificatMedical?: string;
+  /** Code pays ; les joueurs hors UE sont contingentés en championnat. */
+  nationalite?: string;
+  /** Joueur muté (position fédérale) : contingenté en championnat des clubs. */
+  mutation?: boolean;
   updatedAt: string;
 }
 

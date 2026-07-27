@@ -1,9 +1,21 @@
 import { useState, type FormEvent } from 'react';
-import type { Concours, ConcoursMode, Discipline, Formule, TeamFormat } from '@shared';
+import type {
+  CategorieAge,
+  Concours,
+  ConcoursMode,
+  CritereClassification,
+  CritereSexe,
+  Discipline,
+  Formule,
+  TeamFormat,
+} from '@shared';
 import { formuleOf } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
+  CATEGORIE_AGE_LABELS,
   CATEGORY_SUGGESTIONS,
+  CRITERE_CLASSIFICATION_LABELS,
+  CRITERE_SEXE_LABELS,
   FORMULE_CHOICES,
   FORMULE_HINTS,
   FORMULE_LABELS,
@@ -35,6 +47,21 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
   const [complementaire, setComplementaire] = useState(initial?.complementaire ?? false);
   const [formule, setFormule] = useState<Formule>(initial ? formuleOf(initial) : 'ab');
+  const [categorieAge, setCategorieAge] = useState<CategorieAge | ''>(initial?.categorieAge ?? '');
+  const [strict, setStrict] = useState(initial?.strict ?? false);
+  const [critereSexe, setCritereSexe] = useState<CritereSexe>(initial?.critereSexe ?? 'tous');
+  const [critereClassification, setCritereClassification] = useState<CritereClassification>(
+    initial?.critereClassification ?? 'tous',
+  );
+  const [homogene, setHomogene] = useState(initial?.homogene ?? false);
+  const [officiel, setOfficiel] = useState(
+    Boolean(
+      initial?.categorieAge ||
+        initial?.homogene ||
+        (initial?.critereSexe && initial.critereSexe !== 'tous') ||
+        (initial?.critereClassification && initial.critereClassification !== 'tous'),
+    ),
+  );
   const [nbQualifies, setNbQualifies] = useState<number | ''>(initial?.nbQualifies ?? '');
   const [miseParEquipe, setMiseParEquipe] = useState<number | ''>(initial?.miseParEquipe ?? '');
   const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
@@ -70,6 +97,13 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
       tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
       miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
+      // Critères de contrôle : rien n'est enregistré si la section est repliée.
+      categorieAge: officiel && categorieAge !== '' ? categorieAge : undefined,
+      strict: officiel && categorieAge !== '' ? strict : undefined,
+      critereSexe: officiel && critereSexe !== 'tous' ? critereSexe : undefined,
+      critereClassification:
+        officiel && critereClassification !== 'tous' ? critereClassification : undefined,
+      homogene: officiel && homogene ? true : undefined,
     });
   };
 
@@ -291,6 +325,79 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           />
           Onglet « Plan des terrains » (décochez si vous gérez les terrains dans les poules)
         </label>
+      )}
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          checked={officiel}
+          onChange={(e) => setOfficiel(e.target.checked)}
+        />
+        Concours officiel : contrôler les licences
+      </label>
+      {officiel && (
+        <fieldset className="form-fieldset">
+          <legend>Critères fédéraux</legend>
+          <p className="hint">
+            Les équipes inscrites seront confrontées à ces critères, à partir du fichier des
+            licenciés importé. Laissez « ouvert à tous » pour ne rien contrôler.
+          </p>
+          <div className="form-row">
+            <label>
+              Catégorie d'âge
+              <select
+                value={categorieAge}
+                onChange={(e) => setCategorieAge(e.target.value as CategorieAge | '')}
+              >
+                <option value="">Toutes catégories</option>
+                {Object.entries(CATEGORIE_AGE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Sexe
+              <select
+                value={critereSexe}
+                onChange={(e) => setCritereSexe(e.target.value as CritereSexe)}
+              >
+                {Object.entries(CRITERE_SEXE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="form-row">
+            <label>
+              Classification
+              <select
+                value={critereClassification}
+                onChange={(e) =>
+                  setCritereClassification(e.target.value as CritereClassification)
+                }
+              >
+                {Object.entries(CRITERE_CLASSIFICATION_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {categorieAge !== '' && (
+            <label className="checkbox-label">
+              <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} />
+              Strict : refuser les catégories d'âge inférieures
+            </label>
+          )}
+          <label className="checkbox-label">
+            <input type="checkbox" checked={homogene} onChange={(e) => setHomogene(e.target.checked)} />
+            Équipes homogènes : tous les joueurs du même club
+          </label>
+        </fieldset>
       )}
       <div className="form-actions">
         <button type="button" className="btn btn-ghost" onClick={onCancel}>
