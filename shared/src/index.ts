@@ -5,6 +5,7 @@ export * from './engine/poules';
 export * from './engine/arbitrage';
 export * from './engine/bracket';
 export * from './engine/formules';
+export * from './engine/impressions';
 export * from './engine/licences';
 export * from './engine/licencesImport';
 export * from './engine/rondes';

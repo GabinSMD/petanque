@@ -1,7 +1,22 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Match, Team } from '@shared';
-import { arbitrageReport, bracketSizeOf, isByeMatch, roundLabel, rondesTirees } from '@shared';
+import {
+  arbitrageReport,
+  bracketSizeOf,
+  isByeMatch,
+  presseSections,
+  roundLabel,
+  rondesTirees,
+  type TriEquipes,
+} from '@shared';
+import {
+  BilanPaiements,
+  GraphiqueTableau,
+  ListeAbsents,
+  ListeEngages,
+  ResultatsPresse,
+} from '../components/PrintDocs';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { teamDisplayName } from '../components/TeamLabel';
 import { FORMAT_LABELS, POULE_SLOT_LABELS, formatDateFr } from '../lib/labels';
@@ -33,14 +48,22 @@ export function PrintPage() {
   const matches = useMatches(id) ?? [];
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const arbitrage = useMemo(() => arbitrageReport(teams, matches), [teams, matches]);
+  const presse = useMemo(() => presseSections(teams, matches, 'principal'), [teams, matches]);
+  const [tri, setTri] = useState<TriEquipes>('numero');
+  const [toursMasques, setToursMasques] = useState<Set<number>>(new Set());
   const printed = useRef(false);
 
+  /** Documents à options : on laisse l'organisateur régler avant d'imprimer. */
+  const avecTri = doc === 'inscrits' || doc === 'capitaines' || doc === 'paiements';
+  const avecTours = doc === 'presse';
+  const autoPrint = !avecTri && !avecTours;
+
   useEffect(() => {
-    if (!concours || printed.current) return;
+    if (!concours || printed.current || !autoPrint) return;
     printed.current = true;
     const t = setTimeout(() => window.print(), 500);
     return () => clearTimeout(t);
-  }, [concours]);
+  }, [concours, autoPrint]);
 
   if (!concours) {
     return (
@@ -101,6 +124,38 @@ export function PrintPage() {
         <Link className="btn btn-ghost" to={`/concours/${concours.id}`}>
           ← Retour au concours
         </Link>
+        {avecTri && (
+          <label className="print-option">
+            Trier par
+            <select value={tri} onChange={(e) => setTri(e.target.value as TriEquipes)}>
+              <option value="numero">N° de dossard</option>
+              <option value="nom">Nom</option>
+              <option value="club">Club</option>
+            </select>
+          </label>
+        )}
+        {avecTours && presse.length > 0 && (
+          <span className="print-option">
+            Tours :
+            {presse.map((s) => (
+              <label key={s.round} className="print-option-check">
+                <input
+                  type="checkbox"
+                  checked={!toursMasques.has(s.round)}
+                  onChange={(e) =>
+                    setToursMasques((prev) => {
+                      const next = new Set(prev);
+                      if (e.target.checked) next.delete(s.round);
+                      else next.add(s.round);
+                      return next;
+                    })
+                  }
+                />
+                {s.label}
+              </label>
+            ))}
+          </span>
+        )}
       </div>
 
       <header className="print-doc-head">
@@ -159,6 +214,39 @@ export function PrintPage() {
           })}
           {poules.length === 0 && <p>Aucune poule tirée.</p>}
         </div>
+      )}
+
+      {(doc === 'inscrits' || doc === 'capitaines') && (
+        <ListeEngages teams={teams} tri={tri} capitainesSeulement={doc === 'capitaines'} />
+      )}
+
+      {doc === 'paiements' && <BilanPaiements concours={concours} teams={teams} tri={tri} />}
+
+      {doc === 'absents' && <ListeAbsents teams={teams} />}
+
+      {doc === 'presse' && <ResultatsPresse sections={presse} toursMasques={toursMasques} />}
+
+      {doc === 'graphique' && (
+        <>
+          <GraphiqueTableau
+            teams={teams}
+            matches={matches}
+            stage="principal"
+            titre="Graphique — tableau principal"
+          />
+          <GraphiqueTableau
+            teams={teams}
+            matches={matches}
+            stage="consolante"
+            titre="Graphique — consolante"
+          />
+          <GraphiqueTableau
+            teams={teams}
+            matches={matches}
+            stage="complementaire"
+            titre="Graphique — complémentaire"
+          />
+        </>
       )}
 
       {doc === 'arbitrage' && (

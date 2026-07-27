@@ -163,6 +163,34 @@ export function TeamsTab({ concours, teams }: Props) {
         </p>
       )}
 
+      {teams.length > 0 && (
+        <div className="export-bar no-print">
+          <span className="export-bar-label">Imprimer :</span>
+          <Link className="btn btn-ghost btn-sm" to={`/concours/${concours.id}/imprimer/inscrits`}>
+            📋 Liste des inscrits
+          </Link>
+          <Link
+            className="btn btn-ghost btn-sm"
+            to={`/concours/${concours.id}/imprimer/capitaines`}
+          >
+            👤 Liste des capitaines
+          </Link>
+          {trackPaid && (
+            <Link
+              className="btn btn-ghost btn-sm"
+              to={`/concours/${concours.id}/imprimer/paiements`}
+            >
+              💶 Bilan des paiements
+            </Link>
+          )}
+          {teams.some((t) => t.forfait) && (
+            <Link className="btn btn-ghost btn-sm" to={`/concours/${concours.id}/imprimer/absents`}>
+              🚫 Équipes absentes
+            </Link>
+          )}
+        </div>
+      )}
+
       {controlActif && nonConformes > 0 && (
         <p className="banner-warn no-print">
           ⚠ {nonConformes} équipe{nonConformes > 1 ? 's' : ''} en anomalie de licence — survolez

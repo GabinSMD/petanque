@@ -288,6 +288,20 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
           >
             🧾 Arbitrage (CSV)
           </button>
+          <Link
+            className="btn btn-ghost btn-sm"
+            to={`/concours/${concours.id}/imprimer/presse`}
+            title="Résultats détaillés par tour, pour le journal"
+          >
+            📰 Presse
+          </Link>
+          <Link
+            className="btn btn-ghost btn-sm"
+            to={`/concours/${concours.id}/imprimer/graphique`}
+            title="Graphique papier, pour le suivi manuel"
+          >
+            🗂 Graphique
+          </Link>
         </>
       )}
       <button
