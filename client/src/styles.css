@@ -3307,3 +3307,67 @@ form label select {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Résultats d'arbitrage (document à remettre au comité) */
+.print-arbitrage-title {
+  font-size: 1.15rem;
+  margin: 0 0 0.2rem;
+}
+
+.print-arbitrage-intro {
+  margin: 0 0 1rem;
+}
+
+.print-arbitrage-section {
+  break-inside: avoid;
+  margin-bottom: 0.9rem;
+}
+
+.print-arbitrage-section h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.25rem;
+  padding: 0.15rem 0.4rem;
+  background: #eee;
+  border: 1px solid #000;
+  text-align: center;
+}
+
+.print-arbitrage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.print-arbitrage-table th,
+.print-arbitrage-table td {
+  border: 1px solid #999;
+  padding: 0.25rem 0.4rem;
+  text-align: left;
+}
+
+.print-arbitrage-table th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.print-arbitrage-bilan ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.print-arbitrage-sign {
+  margin-top: 1.2rem;
+  break-inside: avoid;
+}
+
+.print-rule {
+  display: inline-block;
+  border-bottom: 1px solid #000;
+  min-width: 12rem;
+  vertical-align: bottom;
+}
+
+.print-rule-sm {
+  min-width: 6rem;
+}

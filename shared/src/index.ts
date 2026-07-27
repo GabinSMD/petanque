@@ -2,6 +2,7 @@ export * from './types';
 export * from './engine/ctx';
 export * from './engine/match';
 export * from './engine/poules';
+export * from './engine/arbitrage';
 export * from './engine/bracket';
 export * from './engine/formules';
 export * from './engine/rondes';

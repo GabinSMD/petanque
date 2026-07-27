@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { bracketRanking, pouleOutcome, rondeStandings, type RankGroup } from '@shared';
 import { updateConcours } from '../../db/actions';
@@ -6,7 +7,12 @@ import { StandingsTable } from '../../components/StandingsTable';
 import { TeamLabel } from '../../components/TeamLabel';
 import { TirRanking } from '../../components/TirRanking';
 import { isIndividualMode, isRondesMode, isTirMode } from '../../lib/labels';
-import { exportBackupJSON, exportClassementCSV, exportEngagesCSV } from '../../lib/export';
+import {
+  exportArbitrageCSV,
+  exportBackupJSON,
+  exportClassementCSV,
+  exportEngagesCSV,
+} from '../../lib/export';
 
 interface Props {
   concours: Concours;
@@ -260,9 +266,30 @@ function IndemnitesSection({
 }
 
 function ExportBar({ concours, teams, poules, matches }: Props) {
+  // Le rapport d'arbitrage se lit dans le tableau principal : il n'a de sens
+  // que pour les formules à tableau.
+  const hasBracket = matches.some((m) => m.stage === 'principal');
   return (
     <div className="export-bar no-print">
       <span className="export-bar-label">Exporter :</span>
+      {hasBracket && (
+        <>
+          <Link
+            className="btn btn-ghost btn-sm"
+            to={`/concours/${concours.id}/imprimer/arbitrage`}
+            title="Feuille à remettre au comité (points fédéraux)"
+          >
+            🧾 Arbitrage (impression)
+          </Link>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => exportArbitrageCSV(concours, teams, matches)}
+            title="Colonnes du tableur fédéral, pour la saisie dans Geslico"
+          >
+            🧾 Arbitrage (CSV)
+          </button>
+        </>
+      )}
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => exportClassementCSV(concours, teams, poules, matches)}

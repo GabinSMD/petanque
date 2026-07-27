@@ -1,6 +1,7 @@
 import type { Match, Team } from '../../types';
 import { defaultCtx, type EngineCtx } from '../ctx';
 import { applyChanges, propagate } from '../bracket';
+import { isByeMatch } from '../match';
 import { recomputePoule } from '../poules';
 import type { Poule } from '../../types';
 
@@ -61,6 +62,16 @@ export function playBracketMatch(
     x.id === matchId ? { ...x, scoreA, scoreB, done: true } : x,
   );
   return applyChanges(updated, propagate(updated));
+}
+
+/** Joue toutes les parties réelles d'un tour d'un tableau (le côté A gagne). */
+export function playStageRound(all: Match[], stage: string, round: number): Match[] {
+  const ids = all
+    .filter((m) => m.stage === stage && m.round === round && !isByeMatch(m) && !m.done)
+    .map((m) => m.id);
+  let out = all;
+  for (const id of ids) out = playBracketMatch(out, id, 13, 7);
+  return out;
 }
 
 export function bySlot(matches: Match[], pouleId: string, slot: string): Match {
