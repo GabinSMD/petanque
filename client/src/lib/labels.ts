@@ -1,5 +1,6 @@
 import type {
   CategorieAge,
+  NiveauConcours,
   ConcoursMode,
   ConcoursStatus,
   CritereClassification,
@@ -251,4 +252,14 @@ export const ANOMALIE_LABELS: Record<ChampLicence, string> = {
 export const ANOMALIE_EQUIPE_LABELS: Record<AnomalieEquipe, string> = {
   mixte: 'équipe non mixte',
   homogeneite: 'équipe non homogène',
+};
+
+export const NIVEAU_LABELS: Record<NiveauConcours, string> = {
+  club: 'Concours de club',
+  departemental: 'Départemental',
+  regional: 'Régional',
+  national: 'National',
+  international: 'International',
+  championnat: 'Championnat',
+  coupe_de_france: 'Coupe de France',
 };

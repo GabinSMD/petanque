@@ -19,7 +19,7 @@ interface Props {
 export function TerrainsTab({ concours, teams, poules, matches }: Props) {
   const [busy, setBusy] = useState(false);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
-  const board = terrainBoard(matches, concours.nbTerrains);
+  const board = terrainBoard(matches, concours.nbTerrains, concours.decalageTerrain);
   const waiting = waitingMatches(matches);
   const occupied = board.filter((t) => t.match).length;
   const free = board.length - occupied;

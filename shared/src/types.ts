@@ -41,6 +41,19 @@ export type ConcoursStatus = 'inscriptions' | 'poules' | 'tableau' | 'rondes' | 
 
 export type MatchStage = 'poule' | 'principal' | 'consolante' | 'complementaire' | 'ronde';
 
+/**
+ * Niveau du concours (manuel §3.A) : il détermine le contrôle des licences
+ * et la remontée fédérale.
+ */
+export type NiveauConcours =
+  | 'club'
+  | 'departemental'
+  | 'regional'
+  | 'national'
+  | 'international'
+  | 'championnat'
+  | 'coupe_de_france';
+
 /** Discipline fédérale (le jeu diffère, la gestion est identique). */
 export type Discipline = 'petanque' | 'jeu_provencal';
 
@@ -88,6 +101,18 @@ export interface Concours {
   discipline?: Discipline;
   /** Catégorie (Seniors, Vétérans, Féminines, Jeunes…) — facultatif. */
   category?: string;
+  /** Niveau fédéral du concours. */
+  niveau?: NiveauConcours;
+  /** Comité départemental organisateur (ex. « CD 38 Isère »). */
+  comiteOrganisateur?: string;
+  /** Club organisateur. */
+  clubOrganisateur?: string;
+  /**
+   * Décalages de numérotation, quand un club enchaîne plusieurs concours le
+   * même jour : équipes 101.., terrains 51… (manuel §3.A zones 6 et 7).
+   */
+  decalageEquipe?: number;
+  decalageTerrain?: number;
   /**
    * Critères de contrôle des licences (manuel §3.A zones 2 à 5 et 9).
    * Tous facultatifs : un concours de club n'en a pas besoin.

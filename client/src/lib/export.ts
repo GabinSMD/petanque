@@ -1,7 +1,7 @@
 import type { Concours, Match, Poule, Team } from '@shared';
 import { arbitrageReport } from '@shared';
 import { teamDisplayName } from '../components/TeamLabel';
-import { DISCIPLINE_LABELS, FORMAT_LABELS, MODE_LABELS } from './labels';
+import { DISCIPLINE_LABELS, FORMAT_LABELS, MODE_LABELS, NIVEAU_LABELS } from './labels';
 import { finalRanking } from './results';
 
 /** Déclenche le téléchargement d'un fichier texte dans le navigateur. */
@@ -98,6 +98,8 @@ export function arbitrageCSV(concours: Concours, teams: Team[], matches: Match[]
   const report = arbitrageReport(teams, matches);
   const rows: (string | number | null)[][] = [
     ['RÉSULTATS DU CONCOURS', concoursSummaryLine(concours)],
+    ['Comité', concours.comiteOrganisateur ?? '', 'Club organisateur', concours.clubOrganisateur ?? ''],
+    ['Niveau', concours.niveau ? NIVEAU_LABELS[concours.niveau] : ''],
     ['Lieu', concours.lieu ?? '', 'Nombre d\'équipes', report.stats.equipes],
     [],
     ['N° Licence', 'Nom, Prénom', 'Association ou Club', 'N° Dép.', 'N° d\'équipe', 'Points'],

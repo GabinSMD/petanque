@@ -19,7 +19,7 @@ import {
 } from '../components/PrintDocs';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { teamDisplayName } from '../components/TeamLabel';
-import { FORMAT_LABELS, POULE_SLOT_LABELS, formatDateFr } from '../lib/labels';
+import { FORMAT_LABELS, NIVEAU_LABELS, POULE_SLOT_LABELS, formatDateFr } from '../lib/labels';
 
 function sideText(m: Match, side: 'A' | 'B', teamsById: Map<string, Team>): string {
   const players = side === 'A' ? m.playersA : m.playersB;
@@ -165,6 +165,17 @@ export function PrintPage() {
           {concours.lieu ? ` · ${concours.lieu}` : ''} · {FORMAT_LABELS[concours.format]} ·
           Parties en {concours.scoreMax} points
         </p>
+        {(concours.comiteOrganisateur || concours.clubOrganisateur || concours.niveau) && (
+          <p className="print-doc-organisateur">
+            {[
+              concours.niveau ? NIVEAU_LABELS[concours.niveau] : '',
+              concours.comiteOrganisateur ? `Comité : ${concours.comiteOrganisateur}` : '',
+              concours.clubOrganisateur ? `Club organisateur : ${concours.clubOrganisateur}` : '',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        )}
       </header>
 
       {doc === 'poules' && (
