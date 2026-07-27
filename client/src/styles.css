@@ -1104,6 +1104,108 @@ form label select {
   padding: 0.25rem 0.5rem;
 }
 
+/* Parties de poule — affichage lisible « équipe vs équipe » + score */
+.pmatches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.pmatch {
+  border-top: 1px dashed var(--line);
+  padding-top: 0.55rem;
+}
+.pmatch:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.pmatch-done {
+  background: linear-gradient(90deg, transparent, var(--accent-soft) 50%, transparent);
+  border-radius: 8px;
+}
+
+.pmatch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+.pmatch-slot {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+}
+
+.pmatch-versus {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+}
+.pmatch-side {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.pmatch-side .team-number {
+  font-size: 0.8rem;
+}
+.pmatch-side-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+.pmatch-side-right .team-label {
+  flex-direction: row-reverse;
+}
+.pmatch-score {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* Cases de saisie plus grandes = plus lisibles pour marquer le score. */
+.pmatch-score .score-form input {
+  width: 3.4rem;
+  height: 2.3rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.pmatch-score .score-done strong {
+  font-size: 1.2rem;
+}
+
+/* Terrain : sélecteur compact « Terrain libre / Terrain N » */
+.pmatch-terrain {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.pmatch-terrain-set {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+.pmatch-terrain-pick select {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f1f4fa;
+  color: var(--muted);
+  cursor: pointer;
+}
+.pmatch-terrain-pick.has-terrain select {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 600;
+  border-color: #c3d0f0;
+}
+
 /* Libellés d'équipes */
 
 .team-label {

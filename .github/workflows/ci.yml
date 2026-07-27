@@ -1,0 +1,26 @@
+name: CI
+
+# Contrôle qualité sur les pull requests : typage, tests moteur, build.
+# (Sur main, la vérification est refaite par le workflow Deploy avant la mise
+# en ligne, donc pas de doublon ici.)
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Installer les dépendances
+        run: npm ci
+      - name: Typage (typecheck)
+        run: npm run typecheck
+      - name: Tests moteur
+        run: npm test
+      - name: Build (shared + client + server)
+        run: npm run build

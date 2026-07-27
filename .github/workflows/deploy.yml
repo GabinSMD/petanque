@@ -1,0 +1,52 @@
+name: Deploy
+
+# Déploiement continu : à chaque fusion sur main, on vérifie (typage, tests,
+# build) puis on met à jour la VM en SSH (pull + build + redémarrage).
+# Déclenchable aussi à la main (workflow_dispatch).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Un seul déploiement à la fois ; on ne coupe pas un déploiement en cours.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mettre à jour la VM par SSH
+        env:
+          # Hôte et utilisateur : acceptés en variable de dépôt (vars, non
+          # sensibles) OU en secret. La clé privée doit rester un secret.
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST || secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER || secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ] || [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "::warning::Secrets DEPLOY_HOST / DEPLOY_SSH_KEY non configurés — déploiement ignoré. Ajoutez-les dans Settings → Secrets → Actions pour activer la mise en ligne automatique."
+            exit 0
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Mise à jour atomique côté VM (pull + build + redémarrage du service).
+          REMOTE='set -e; A=/opt/petanque/app; sudo -u petanque git -C $A fetch --depth 1 origin main; sudo -u petanque git -C $A reset --hard origin/main; sudo -u petanque npm --prefix $A install; sudo -u petanque npm --prefix $A run build; sudo systemctl restart petanque; echo "Déployé:" $(sudo -u petanque git -C $A rev-parse --short HEAD)'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER:-ubuntu}@${DEPLOY_HOST}" "$REMOTE"

@@ -49,6 +49,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const [category, setCategory] = useState('');
   const [discipline, setDiscipline] = useState<Discipline>('petanque');
   const [nbTerrains, setNbTerrains] = useState(8);
+  const [planTerrains, setPlanTerrains] = useState(true);
   const [scoreMax, setScoreMax] = useState(13);
   const [nbRondes, setNbRondes] = useState(4);
   const [tempsLimite, setTempsLimite] = useState<number | ''>('');
@@ -88,6 +89,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       consolante: MODE_INFO[mode].consolante ? consolante : false,
       scoreMax,
       nbTerrains,
+      planTerrains,
       nbRondes:
         (isRondesMode(mode) && mode !== 'championnat') || isTirMode(mode)
           ? nbRondes
@@ -301,6 +303,17 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 onChange={(e) => setConsolante(e.target.checked)}
               />
               Consolante (les éliminés rejouent dans un second tableau)
+            </label>
+          )}
+          {!isTirMode(mode) && (
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={planTerrains}
+                onChange={(e) => setPlanTerrains(e.target.checked)}
+              />
+              Onglet « Plan des terrains » (décochez si vous gérez les terrains dans les
+              poules)
             </label>
           )}
           {mode === 'championnat' && (
