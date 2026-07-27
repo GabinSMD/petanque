@@ -7,7 +7,6 @@ import {
   generateTableauFromPoules,
   pouleSummary,
   setMatchTerrain,
-  setPouleTerrain,
 } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
@@ -202,6 +201,35 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
   );
 }
 
+/**
+ * Terrain d'une partie de poule — en affichage seul (l'affectation se fait
+ * dans l'onglet Terrains). Une action « Libérer » repasse le terrain à
+ * l'état libre ; sinon on indique « Terrain libre ».
+ */
+function PouleMatchTerrain({ match, locked }: { match: Match; locked: boolean }) {
+  if (match.terrain != null) {
+    return (
+      <span className="pmatch-terrain pmatch-terrain-set no-print">
+        🟦 Terrain {match.terrain}
+        {!locked && !match.done && (
+          <button
+            type="button"
+            className="pmatch-terrain-free"
+            title="Marquer ce terrain comme libre"
+            onClick={() => void setMatchTerrain(match, null)}
+          >
+            Libérer
+          </button>
+        )}
+      </span>
+    );
+  }
+  // Partie jouable (les deux équipes connues) mais sans terrain : libre.
+  const playable = Boolean(match.teamAId && match.teamBId) && !match.done;
+  if (!playable) return null;
+  return <span className="pmatch-terrain pmatch-terrain-libre no-print">Terrain libre</span>;
+}
+
 function PouleCard({
   concours,
   poule,
@@ -249,20 +277,6 @@ function PouleCard({
         <h3 onClick={onToggle} className="poule-title">
           Poule {poule.index}
         </h3>
-        {!collapsed && (
-          <label className="terrain-label no-print">
-            Terrain
-            <input
-              type="number"
-              min={1}
-              value={poule.terrain ?? ''}
-              placeholder="–"
-              onChange={(e) =>
-                void setPouleTerrain(poule, e.target.value ? Number(e.target.value) : null)
-              }
-            />
-          </label>
-        )}
         {outcome.complete ? (
           <span className="tag tag-ok">Terminée</span>
         ) : (
@@ -304,39 +318,29 @@ function PouleCard({
         })}
       </ul>
 
-      <table className="poule-matches">
-        <tbody>
-          {ordered.map((m) => (
-            <tr key={m.id}>
-              <td className="match-label">{POULE_SLOT_LABELS[m.pouleSlot ?? ''] ?? ''}</td>
-              <td className="match-team">
+      <ul className="pmatches">
+        {ordered.map((m) => (
+          <li key={m.id} className={`pmatch${m.done ? ' pmatch-done' : ''}`}>
+            <div className="pmatch-head">
+              <span className="pmatch-slot">
+                {POULE_SLOT_LABELS[m.pouleSlot ?? ''] ?? ''}
+              </span>
+              <PouleMatchTerrain match={m} locked={locked} />
+            </div>
+            <div className="pmatch-versus">
+              <span className="pmatch-side">
                 <TeamLabel team={m.teamAId ? teamsById.get(m.teamAId) : null} compact />
-              </td>
-              <td className="match-score">
+              </span>
+              <div className="pmatch-score">
                 <ScoreForm concours={concours} match={m} disabled={locked} />
-              </td>
-              <td className="match-team match-team-right">
+              </div>
+              <span className="pmatch-side pmatch-side-right">
                 <TeamLabel team={m.teamBId ? teamsById.get(m.teamBId) : null} compact />
-              </td>
-              <td className="match-terrain no-print">
-                <span className="terrain-field" title="Terrain de jeu">
-                  <span className="terrain-field-label">Terr.</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={m.terrain ?? ''}
-                    placeholder="–"
-                    aria-label="Terrain"
-                    onChange={(e) =>
-                      void setMatchTerrain(m, e.target.value ? Number(e.target.value) : null)
-                    }
-                  />
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
       </>
       )}
     </section>
