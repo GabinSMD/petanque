@@ -283,6 +283,40 @@ export function pouleOutcome(poule: Poule, pouleMatches: Match[]): PouleOutcome 
   return { poule, complete, q1: winnerOf(g), q2: winnerOf(b), eliminated };
 }
 
+/**
+ * Bilan d'un groupe pour la formule « par groupes A-B-C » (manuel §3.D.5) :
+ * l'équipe à 2 victoires descend dans le A, les deux équipes à 1 victoire
+ * dans le B, celle à 2 défaites dans le C. Le barrage n'est pas joué, il ne
+ * sert donc pas au bilan.
+ */
+export interface PouleGroupOutcome {
+  poule: Poule;
+  complete: boolean;
+  /** 2 victoires → concours A. */
+  gg: string | null;
+  /** 1 victoire → concours B (les deux équipes qui auraient joué le barrage). */
+  gp: string[];
+  /** 2 défaites → concours C. */
+  pp: string | null;
+}
+
+export function pouleGroupOutcome(poule: Poule, pouleMatches: Match[]): PouleGroupOutcome {
+  if (poule.teamIds.length !== 4) {
+    throw new Error('Formule par groupes : poules de 4 requises (victoires non comparables à 3)');
+  }
+  const bySlot = new Map(pouleMatches.map((m) => [m.pouleSlot, m]));
+  const g = bySlot.get('GAGNANTS');
+  const p = bySlot.get('PERDANTS');
+  const gp = [loserOf(g), winnerOf(p)].filter((id): id is string => Boolean(id));
+  return {
+    poule,
+    complete: Boolean(g?.done && p?.done),
+    gg: winnerOf(g),
+    gp,
+    pp: loserOf(p),
+  };
+}
+
 /** Nombre de parties restantes dans une poule. */
 export function pouleRemaining(pouleMatches: Match[]): number {
   return pouleMatches.filter((m) => !m.done).length;

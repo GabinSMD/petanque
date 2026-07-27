@@ -422,11 +422,69 @@ function separateHalves(units: Unit[], pouleOfTeam: Map<string, number>, ctx: En
   }
 }
 
+/** Une place d'un tableau de repêchage, alimentée par le perdant d'une partie. */
+export interface RecoveryEntry {
+  /** Partie dont le perdant occupera cette place. */
+  loserFrom: string;
+  /**
+   * `true` : l'équipe n'entre qu'au tour suivant — le « cadrage » du manuel
+   * FFPJP (« reversée à la 2e partie du concours B »). Techniquement, elle
+   * occupe une unité exemptée du premier tour, qui se résout d'elle-même.
+   * Les exempts disponibles sont attribués à ces entrées en priorité ; s'il
+   * n'y en a pas assez, les entrées différées restantes rejoignent le
+   * premier tour.
+   */
+  deferred?: boolean;
+}
+
 /**
- * Tableau de repêchage « à venir » : son premier tour est alimenté par les
- * perdants des parties (réelles) du premier tour du tableau source. Sert à
- * la consolante (perdants du principal) comme au complémentaire (perdants de
- * la consolante), d'où le paramètre `stage`.
+ * Tableau de repêchage « à venir » : ses places sont alimentées par les
+ * perdants de parties d'un autre tableau. Sert à la consolante (perdants du
+ * principal) comme au complémentaire (perdants de la consolante), d'où le
+ * paramètre `stage`.
+ */
+export function buildRecoveryBracket(
+  concoursId: string,
+  stage: MatchStage,
+  entries: RecoveryEntry[],
+  ctx: EngineCtx,
+): Match[] {
+  if (entries.length < 2) return [];
+  const size = nextPow2(entries.length);
+  let remainingByes = size - entries.length;
+
+  const deferred = entries.filter((e) => e.deferred);
+  const direct = entries.filter((e) => !e.deferred);
+
+  const byeEntries: RecoveryEntry[] = [];
+  while (remainingByes > 0 && deferred.length > 0) {
+    byeEntries.push(deferred.shift()!);
+    remainingByes -= 1;
+  }
+  while (remainingByes > 0 && direct.length > 0) {
+    byeEntries.push(direct.shift()!);
+    remainingByes -= 1;
+  }
+  const playing = [...deferred, ...direct];
+
+  const byeUnits: Unit[] = byeEntries.map((e) => ({
+    a: { loserFrom: e.loserFrom },
+    b: { bye: true },
+  }));
+  const matchUnits: Unit[] = [];
+  while (playing.length >= 2) {
+    matchUnits.push({
+      a: { loserFrom: playing.shift()!.loserFrom },
+      b: { loserFrom: playing.shift()!.loserFrom },
+    });
+  }
+  const units = spreadEvenly(matchUnits, byeUnits);
+  return createBracketMatches(concoursId, stage, units, ctx);
+}
+
+/**
+ * Repêchage simple : le premier tour du tableau est alimenté par les perdants
+ * des parties (réelles) du premier tour du tableau source.
  */
 export function buildConsolanteFromSources(
   concoursId: string,
@@ -434,21 +492,12 @@ export function buildConsolanteFromSources(
   ctx: EngineCtx,
   stage: MatchStage = 'consolante',
 ): Match[] {
-  if (sourceMatchIds.length < 2) return [];
-  const size = nextPow2(sourceMatchIds.length);
-  const byes = size - sourceMatchIds.length;
-
-  const sources = sourceMatchIds.slice();
-  const byeUnits: Unit[] = [];
-  for (let i = 0; i < byes; i++) {
-    byeUnits.push({ a: { loserFrom: sources.shift()! }, b: { bye: true } });
-  }
-  const matchUnits: Unit[] = [];
-  while (sources.length >= 2) {
-    matchUnits.push({ a: { loserFrom: sources.shift()! }, b: { loserFrom: sources.shift()! } });
-  }
-  const units = spreadEvenly(matchUnits, byeUnits);
-  return createBracketMatches(concoursId, stage, units, ctx);
+  return buildRecoveryBracket(
+    concoursId,
+    stage,
+    sourceMatchIds.map((id) => ({ loserFrom: id })),
+    ctx,
+  );
 }
 
 /**

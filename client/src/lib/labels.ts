@@ -1,4 +1,4 @@
-import type { ConcoursMode, ConcoursStatus, Discipline, TeamFormat } from '@shared';
+import type { ConcoursMode, ConcoursStatus, Discipline, Formule, TeamFormat } from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
   petanque: 'Pétanque',
@@ -25,6 +25,32 @@ export const MODE_LABELS: Record<ConcoursMode, string> = {
   championnat: 'Championnat (toutes rondes)',
   tir_precision: 'Tir de précision',
 };
+
+/**
+ * Formules fédérales du tableau (manuel « Gestion Concours » §3.D.8 à
+ * §3.D.12). Libellés en langage courant : « A / B / C » ne parle qu'aux
+ * habitués, on nomme donc les tableaux comme dans l'application.
+ */
+export const FORMULE_LABELS: Record<Formule, string> = {
+  a: 'Un seul tableau',
+  ab: 'Tableau + consolante',
+  abc: 'Tableau + consolante + complémentaire',
+  abc_recup: 'Avec repêchage au cadrage (A-B-C récup.)',
+  abc_cd19: 'Avec repêchage vers le complémentaire (CD19)',
+};
+
+export const FORMULE_HINTS: Record<Formule, string> = {
+  a: 'Qui perd sort, définitivement.',
+  ab: 'Les perdants du 1er tour rejouent dans la consolante.',
+  abc: 'Les perdants du 1er tour de la consolante rejouent dans un 3e tableau.',
+  abc_recup:
+    'Comme ci-dessus, et les perdants du 2e tour du tableau principal entrent directement au 2e tour de la consolante (le « cadrage ») — la formule des concours officiels A-B-C.',
+  abc_cd19:
+    'Comme A-B-C, mais les perdants du 2e tour du tableau principal partent au complémentaire au lieu de la consolante (usage CD19).',
+};
+
+/** Formules proposées à la création (élimination directe). */
+export const FORMULE_CHOICES: Formule[] = ['a', 'ab', 'abc', 'abc_recup', 'abc_cd19'];
 
 export interface ModeInfo {
   emoji: string;

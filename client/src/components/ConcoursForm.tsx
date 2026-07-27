@@ -1,8 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import type { Concours, ConcoursMode, Discipline, TeamFormat } from '@shared';
+import type { Concours, ConcoursMode, Discipline, Formule, TeamFormat } from '@shared';
+import { formuleOf } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
   CATEGORY_SUGGESTIONS,
+  FORMULE_CHOICES,
+  FORMULE_HINTS,
+  FORMULE_LABELS,
   DISCIPLINE_LABELS,
   FORMAT_LABELS,
   MODE_INFO,
@@ -30,6 +34,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [discipline, setDiscipline] = useState<Discipline>(initial?.discipline ?? 'petanque');
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
   const [complementaire, setComplementaire] = useState(initial?.complementaire ?? false);
+  const [formule, setFormule] = useState<Formule>(initial ? formuleOf(initial) : 'ab');
   const [nbQualifies, setNbQualifies] = useState<number | ''>(initial?.nbQualifies ?? '');
   const [miseParEquipe, setMiseParEquipe] = useState<number | ''>(initial?.miseParEquipe ?? '');
   const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
@@ -48,8 +53,16 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       discipline,
       category: category.trim() || undefined,
       nbQualifies: nbQualifies === '' ? undefined : Number(nbQualifies),
-      consolante: MODE_INFO[mode].consolante ? consolante : false,
-      complementaire: MODE_INFO[mode].consolante && consolante ? complementaire : false,
+      ...(mode === 'elimination_directe'
+        ? {
+            formule,
+            consolante: formule !== 'a',
+            complementaire: formule === 'abc' || formule === 'abc_recup' || formule === 'abc_cd19',
+          }
+        : {
+            consolante: MODE_INFO[mode].consolante ? consolante : false,
+            complementaire: MODE_INFO[mode].consolante && consolante ? complementaire : false,
+          }),
       scoreMax,
       nbTerrains,
       nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
@@ -226,7 +239,24 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           </label>
         )}
       </div>
-      {MODE_INFO[mode].consolante && (
+      {mode === 'elimination_directe' && (
+        <label>
+          Tableaux et repêchages
+          <select
+            value={formule}
+            onChange={(e) => setFormule(e.target.value as Formule)}
+            disabled={lockStructure}
+          >
+            {FORMULE_CHOICES.map((f) => (
+              <option key={f} value={f}>
+                {FORMULE_LABELS[f]}
+              </option>
+            ))}
+          </select>
+          <span className="hint">{FORMULE_HINTS[formule]}</span>
+        </label>
+      )}
+      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && (
         <>
           <label className="checkbox-label">
             <input

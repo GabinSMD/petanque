@@ -256,7 +256,12 @@ export function BracketView({
   const sourceLabel = (ref: string | undefined): string => {
     if (!ref) return 'À déterminer';
     const src = byId.get(ref);
-    return src ? `Perdant ${src.stage === 'principal' ? 'P' : ''}${src.position + 1}` : '…';
+    if (!src) return '…';
+    const prefix = src.stage === 'principal' ? 'P' : '';
+    // Avec les formules à récupération, un repêché peut venir d'un tour plus
+    // avancé : sans le tour, « Perdant P3 » serait ambigu.
+    const tour = src.round > 0 ? ` (${src.round + 1}ᵉ tour)` : '';
+    return `Perdant ${prefix}${src.position + 1}${tour}`;
   };
 
   const rounds: Match[][] = [];
