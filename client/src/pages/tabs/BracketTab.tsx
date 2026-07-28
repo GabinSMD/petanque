@@ -339,7 +339,12 @@ export function BracketView({
               {roundLabel(size, r, hasByes)}
             </h4>
             <div className="bracket-column">
-              {roundMatches.map((m) => (
+              {/* Les exempts quittent la colonne pour un bloc unique en bas :
+                  éparpillés, ils rendent l'annonce au micro impossible. Le
+                  tirage n'est pas touché — seul l'affichage change. */}
+              {roundMatches
+                .filter((m) => !isByeMatch(m))
+                .map((m) => (
                 <div
                   key={m.id}
                   className={`match-box${isByeMatch(m) ? ' match-box-bye' : ''}${
@@ -402,6 +407,29 @@ export function BracketView({
                   )}
                 </div>
               ))}
+
+              {/* Un seul bloc d'exempts, à annoncer d'une phrase. */}
+              {(() => {
+                const exempts = roundMatches.filter((m) => isByeMatch(m));
+                if (exempts.length === 0) return null;
+                const noms = exempts
+                  .map((m) => {
+                    const id = m.byeA ? m.teamBId : m.teamAId;
+                    const equipe = id ? teamsById.get(id) : undefined;
+                    if (equipe) return `n°${equipe.number}`;
+                    const ref = m.qualifFromA ?? m.qualifFromB;
+                    return ref ? sourceLabel(ref) : '—';
+                  })
+                  .join(', ');
+                return (
+                  <div className="match-box match-box-bye bracket-exempts">
+                    <div className="bracket-exempts-titre">
+                      Exempts ({exempts.length})
+                    </div>
+                    <div className="bracket-exempts-liste">{noms}</div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
           );
