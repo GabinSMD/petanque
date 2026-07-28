@@ -9,29 +9,54 @@ import { clesProtection, enConflit, type Protections } from './protections';
  * quand l'effectif ne tombe pas juste.
  * Retourne null si l'effectif est incompatible (ex. 5 équipes).
  */
-export function pouleSizes(n: number): number[] | null {
-  if (n < 4) return null;
-  const q = Math.floor(n / 4);
-  const r = n % 4;
-  let fours: number;
-  let threes: number;
-  if (r === 0) {
-    fours = q;
-    threes = 0;
-  } else if (r === 3) {
-    fours = q;
-    threes = 1;
-  } else if (r === 2) {
-    if (q < 1) return null;
-    fours = q - 1;
-    threes = 2;
-  } else {
-    // r === 1 : il faut « casser » deux poules de 4 en trois poules de 3.
-    if (q < 2) return null;
-    fours = q - 2;
-    threes = 3;
+export function pouleSizes(n: number, nbTerrains?: number): number[] | null {
+  const melanges = melangesPossibles(n);
+  if (melanges.length === 0) return null;
+
+  // Sans contrainte : la répartition fédérale, le maximum de poules de 4.
+  if (nbTerrains === undefined || nbTerrains <= 0) return tailles(melanges[0]!);
+
+  /**
+   * Jeux occupés simultanément : une poule de 4 lance ses deux premières
+   * parties en même temps, une poule de 3 une seule (manuel §3.A zone 8, qui
+   * ajoute des poules de 3 quand les terrains manquent).
+   */
+  const simultanees = (m: Melange): number => m.fours * 2 + m.threes;
+
+  const tenables = melanges.filter((m) => simultanees(m) <= nbTerrains);
+  if (tenables.length > 0) return tailles(tenables[0]!);
+
+  // Aucun mélange ne tient : le moins gourmand, et l'organisateur fera avec.
+  const moinsGourmand = [...melanges].sort((a, b) => simultanees(a) - simultanees(b))[0]!;
+  return tailles(moinsGourmand);
+}
+
+interface Melange {
+  fours: number;
+  threes: number;
+}
+
+const tailles = (m: Melange): number[] => [
+  ...Array<number>(m.fours).fill(4),
+  ...Array<number>(m.threes).fill(3),
+];
+
+/**
+ * Tous les mélanges de poules de 4 et de 3 qui somment à l'effectif, du plus
+ * de poules de 4 au moins — l'ordre fédéral de préférence.
+ */
+function melangesPossibles(n: number): Melange[] {
+  if (n < 3) return [];
+  const out: Melange[] = [];
+  for (let fours = Math.floor(n / 4); fours >= 0; fours -= 1) {
+    const reste = n - fours * 4;
+    if (reste % 3 !== 0) continue;
+    const threes = reste / 3;
+    // Une poule unique de 3 est acceptée (7 = 4+3), mais pas un concours à 3.
+    if (fours === 0 && threes < 2) continue;
+    out.push({ fours, threes });
   }
-  return [...Array(fours).fill(4), ...Array(threes).fill(3)];
+  return out;
 }
 
 export interface PouleDraw {
@@ -48,6 +73,11 @@ export interface DrawPoulesOptions {
   protections?: Protections;
   /** Tirage intégralement aléatoire, sans aucune protection. */
   sansProtection?: boolean;
+  /**
+   * Terrains disponibles : moins il y en a, plus on découpe en poules de 3
+   * pour réduire les parties simultanées (manuel §3.A zone 8).
+   */
+  nbTerrains?: number;
   /** Têtes de série (ids ordonnés) : réparties dans des poules différentes. */
   seeds?: string[];
 }
@@ -64,7 +94,7 @@ export function drawPoules(
   ctx: EngineCtx,
   opts: DrawPoulesOptions = {},
 ): PouleDraw | null {
-  const sizes = pouleSizes(teams.length);
+  const sizes = pouleSizes(teams.length, opts.nbTerrains);
   if (!sizes) return null;
 
   const groups: Team[][] = sizes.map(() => []);

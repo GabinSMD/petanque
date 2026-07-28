@@ -24,6 +24,7 @@ import {
   rondesTirees,
   seriesTirees,
   terrainNumeros,
+  terrainsPoule,
   validateScore,
   validateTirScore,
   type Concours,
@@ -309,8 +310,8 @@ export async function deleteAllLicencies(): Promise<void> {
 /* Poules                                                              */
 /* ------------------------------------------------------------------ */
 
-export function pouleSummary(teamCount: number): string | null {
-  const sizes = pouleSizes(teamCount);
+export function pouleSummary(teamCount: number, nbTerrains?: number): string | null {
+  const sizes = pouleSizes(teamCount, nbTerrains);
   if (!sizes) return null;
   const fours = sizes.filter((s) => s === 4).length;
   const threes = sizes.filter((s) => s === 3).length;
@@ -327,6 +328,7 @@ export async function generatePoules(
 ): Promise<void> {
   const teams = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
   const draw = drawPoules(concours.id, teams, ctx(), {
+    nbTerrains: concours.nbTerrains,
     sansProtection,
     protections: concours.protections ?? [],
     seeds,
@@ -337,13 +339,29 @@ export async function generatePoules(
         'Ajoutez ou retirez une équipe.',
     );
   }
-  // Terrains par défaut : les premières parties de chaque poule, dans la
-  // plage du concours (qui peut être décalée).
+  /**
+   * Terrains des poules. Avec au moins deux jeux par poule, on applique la
+   * convention fédérale rappelée au §3.D.1.A : chaque poule occupe deux jeux
+   * voisins, les gagnants sur l'impair (« du haut »), les perdants et le
+   * barrage sur le pair. Sinon on distribue simplement les premières parties.
+   */
   const numeros = terrainNumeros(concours.nbTerrains, concours.decalageTerrain);
-  let i = 0;
-  for (const m of draw.matches) {
-    if ((m.pouleSlot === 'M1' || m.pouleSlot === 'M2') && i < numeros.length) {
-      m.terrain = numeros[i++]!;
+  const conventionPossible = concours.nbTerrains >= draw.poules.length * 2;
+  if (conventionPossible) {
+    const pouleIndexById = new Map(draw.poules.map((p) => [p.id, p.index]));
+    for (const m of draw.matches) {
+      const index = m.pouleId ? pouleIndexById.get(m.pouleId) : undefined;
+      if (!index) continue;
+      const { haut, bas } = terrainsPoule(index, concours.decalageTerrain);
+      if (m.pouleSlot === 'M1' || m.pouleSlot === 'GAGNANTS') m.terrain = haut;
+      else m.terrain = bas;
+    }
+  } else {
+    let i = 0;
+    for (const m of draw.matches) {
+      if ((m.pouleSlot === 'M1' || m.pouleSlot === 'M2') && i < numeros.length) {
+        m.terrain = numeros[i++]!;
+      }
     }
   }
   await bulkPutEntities('poule', draw.poules);
@@ -616,6 +634,32 @@ export async function setMatchTerrain(match: Match, terrain: number | null): Pro
 }
 
 /** Affecte automatiquement les parties en attente aux terrains libres. */
+/**
+ * Bloque ou libère un terrain pendant le concours (manuel §3.D.1.B.5.2).
+ * Bloquer ne déplace pas la partie en cours : le terrain cesse simplement
+ * d'être attribué ensuite.
+ */
+export async function setTerrainBloque(
+  concours: Concours,
+  terrain: number,
+  bloque: boolean,
+): Promise<void> {
+  const actuels = new Set(concours.terrainsBloques ?? []);
+  if (bloque) actuels.add(terrain);
+  else actuels.delete(terrain);
+  const liste = [...actuels].sort((a, b) => a - b);
+  await putEntity('concours', {
+    ...concours,
+    terrainsBloques: liste.length > 0 ? liste : undefined,
+  });
+}
+
+/** Ajoute ou retire des terrains en cours de concours. */
+export async function setNbTerrains(concours: Concours, nbTerrains: number): Promise<void> {
+  const n = Math.max(1, Math.min(200, Math.round(nbTerrains)));
+  await putEntity('concours', { ...concours, nbTerrains: n });
+}
+
 /** Enregistre (ou annule) le dépôt des licences d'une équipe (manuel §3.C). */
 export async function setLicencesDeposees(team: Team, depose: boolean): Promise<void> {
   await putEntity('team', {
@@ -653,7 +697,12 @@ export async function setMatchRetard(match: Match, retard: boolean): Promise<voi
 
 export async function autoAssignTerrainsAction(concours: Concours): Promise<number> {
   const matches = await listByConcours('match', concours.id);
-  const assignments = autoAssignTerrains(matches, concours.nbTerrains, concours.decalageTerrain);
+  const assignments = autoAssignTerrains(
+    matches,
+    concours.nbTerrains,
+    concours.decalageTerrain,
+    concours.terrainsBloques ?? [],
+  );
   if (assignments.length === 0) return 0;
   const byId = new Map(matches.map((m) => [m.id, m]));
   const updated: Match[] = [];
