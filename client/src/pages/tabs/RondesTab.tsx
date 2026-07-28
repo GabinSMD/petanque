@@ -4,6 +4,7 @@ import { championnatRondes, rondeComplete, rondeStandings, rondesTirees } from '
 import { annulerDerniereRonde, setMatchTerrain, tirerRonde, updateConcours } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
 import { StandingsTable } from '../../components/StandingsTable';
+import { PhasesFinalesPanel } from '../../components/PhasesFinalesPanel';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
 import {
   MODE_INFO,
@@ -56,6 +57,14 @@ export function RondesTab({ concours, teams, matches }: Props) {
     if (sansRole > 0) parts.push(`${sansRole} sans rôle`);
     return parts.join(', ');
   }, [active, concours.mode, concours.format]);
+
+  /**
+   * Les phases finales n'ont de sens que là où les inscrits sont des équipes.
+   * En mêlée, un tableau opposerait un joueur à un joueur : le classement
+   * individuel est le résultat du concours.
+   */
+  const peutFinales =
+    (concours.mode === 'suisse' || concours.mode === 'championnat') && !locked;
 
   const doTirer = async () => {
     setError(null);
@@ -170,6 +179,10 @@ export function RondesTab({ concours, teams, matches }: Props) {
           )}
         </span>
       </div>
+
+      {peutFinales && currentComplete && (
+        <PhasesFinalesPanel concours={concours} teams={teams} matches={matches} />
+      )}
 
       <div className="rondes-layout">
         <div className="rondes-matches">

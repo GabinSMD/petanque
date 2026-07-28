@@ -163,6 +163,13 @@ export interface Concours {
   certificatsValides?: string[];
   /** Nombre de qualifiés pour une phase suivante (championnat qualificatif). */
   nbQualifies?: number;
+  /**
+   * Ordre du classement des rondes imposé à la main (manuel §3.D.15,
+   * « CHANGEMENT DANS LE CLASSEMENT — suite à une égalité »). Il ne départage
+   * que les ex æquo : il ne peut pas faire passer une équipe devant une autre
+   * qui a plus de victoires.
+   */
+  ordreClassement?: string[];
   /** Consolante à 2 niveaux : ajoute un complémentaire (perdants de la consolante). */
   complementaire?: boolean;
   /** Consolante : repêchage des éliminés (poules ou 1er tour). */

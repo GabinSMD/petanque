@@ -30,6 +30,12 @@ scores, tableaux) et se synchronise dès que le réseau revient.
     (méthode du cercle), ronde de repos en effectif impair.
 - **Classements en rondes** : victoires, puis goal-average, puis points
   marqués — mis à jour en direct à chaque saisie.
+- **Phases finales après les rondes** (manuel §3.D.15) : le classement bascule
+  en élimination directe dans le même concours, sans export intermédiaire. Les
+  deux configurations fédérales sont proposées — 1/8 A + 1/8 B, ou 1/4 A + 1/4 B
+  + 1/4 C : chaque tranche du classement joue son propre concours. Égalités
+  départagées par confrontation directe, et interversion à la main de ce qu'elle
+  ne tranche pas.
 - **Inscriptions** : équipes numérotées, joueurs avec n° de licence optionnel,
   club, forfaits, verrouillage après tirage.
 - **Poules à la FFPJP** : poules de 4 complétées par des poules de 3

@@ -79,7 +79,14 @@ export function ConcoursPage() {
     ...(tirMode
       ? [{ key: 'series', label: '🏹 Séries' }]
       : rondesMode
-        ? [{ key: 'rondes', label: '🔄 Rondes' }]
+        ? [
+            { key: 'rondes', label: '🔄 Rondes' },
+            // Les phases finales d'un concours en rondes (manuel §3.D.15) :
+            // l'onglet n'apparaît que quand le tableau existe.
+            ...((matches ?? []).some((m) => m.stage !== 'ronde')
+              ? [{ key: 'tableau', label: '🏆 Phases finales' }]
+              : []),
+          ]
         : [{ key: 'tableau', label: '🏆 Tableau' }]),
     // Le dépôt des licences n'a de sens qu'avec des critères fédéraux : un
     // concours de club n'a rien à contrôler.

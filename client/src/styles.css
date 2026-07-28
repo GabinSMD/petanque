@@ -4015,3 +4015,12 @@ form label select {
   line-height: 1.35;
   vertical-align: 1px;
 }
+
+/* Panneau des phases finales : les non-qualifiés restent lisibles mais en retrait. */
+.finales-classement .row-non-qualifie {
+  opacity: 0.6;
+}
+
+.finales-classement .standing-rank .tag {
+  margin-left: 0.35rem;
+}

@@ -48,6 +48,9 @@ import {
   type Sauvegarde,
   type Team,
   type TeamFormat,
+  CONFIGS_FINALES,
+  buildFinales,
+  classementFinales,
 } from '@shared';
 import { db } from './local';
 import {
@@ -556,6 +559,66 @@ export async function annulerDerniereRonde(concours: Concours): Promise<void> {
   if (remaining === 0) {
     await putEntity('concours', { ...concours, status: 'inscriptions' });
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Phases finales après les rondes (manuel §3.D.15)                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Bascule un concours en rondes vers l'élimination directe. Le classement
+ * des rondes détermine entièrement le tableau : aucun tirage au sort.
+ */
+export async function lancerPhasesFinales(
+  concours: Concours,
+  configId: string,
+): Promise<void> {
+  const entrants = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
+  const matches = await listByConcours('match', concours.id);
+  if (matches.some((m) => m.stage !== 'ronde')) {
+    throw new Error('Les phases finales sont déjà lancées');
+  }
+  const config = CONFIGS_FINALES.find((c) => c.id === configId);
+  if (!config) throw new Error('Configuration de phases finales inconnue');
+
+  const lignes = classementFinales(entrants, matches, concours.ordreClassement ?? []);
+  const created = buildFinales(concours.id, lignes, config, entrants, ctx());
+
+  // Terrains par défaut, dans la limite du disponible.
+  const numeros = terrainNumeros(concours.nbTerrains, concours.decalageTerrain);
+  let i = 0;
+  for (const m of created) {
+    if (m.round === 0 && !m.byeA && !m.byeB && i < numeros.length) m.terrain = numeros[i++]!;
+  }
+  await bulkPutEntities('match', created);
+  await putEntity('concours', { ...concours, status: 'tableau' });
+}
+
+/** Revient aux rondes : les tableaux finaux et leurs scores sont supprimés. */
+export async function annulerPhasesFinales(concours: Concours): Promise<void> {
+  const finales = (await listByConcours('match', concours.id)).filter(
+    (m) => m.stage !== 'ronde',
+  );
+  await softDeleteMany(finales.map((m) => ({ type: 'match' as const, id: m.id })));
+  await putEntity('concours', { ...concours, status: 'rondes' });
+}
+
+/**
+ * Enregistre l'ordre du classement des rondes voulu par l'organisateur
+ * (manuel §3.D.15, « CHANGEMENT DANS LE CLASSEMENT »).
+ *
+ * C'est l'appelant qui fournit l'ordre, parce que c'est lui qui l'affiche :
+ * recalculer le classement ici reviendrait à intervertir deux lignes d'un
+ * classement qui n'est pas celui que l'organisateur a sous les yeux.
+ *
+ * Le moteur ne s'en sert que pour les ex æquo : une correction de score plus
+ * tard reclasse quand même tout le monde correctement.
+ */
+export async function enregistrerOrdreClassement(
+  concours: Concours,
+  ordre: string[],
+): Promise<void> {
+  await putEntity('concours', { ...concours, ordreClassement: ordre });
 }
 
 /* ------------------------------------------------------------------ */

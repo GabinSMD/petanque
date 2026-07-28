@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { bracketSizeOf, isByeMatch, pouleOutcome, roundLabel, winnerOf, estQualificatif } from '@shared';
 import {
+  annulerPhasesFinales,
   cancelTableau,
   generateTableauDirect,
   generateTableauFromPoules,
@@ -11,6 +12,7 @@ import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
 import { ProtectionsModal } from '../../components/ProtectionsModal';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
+import { isRondesMode } from '../../lib/labels';
 
 interface Props {
   concours: Concours;
@@ -149,6 +151,16 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
   const shownMatches =
     stage === 'principal' ? principal : stage === 'consolante' ? consolante : complementaire;
 
+  /**
+   * Après un concours en rondes, les trois tableaux ne sont pas un principal
+   * et ses repêchages mais les concours A, B et C du manuel §3.D.15 : chaque
+   * tranche du classement joue son propre tableau.
+   */
+  const finales = isRondesMode(concours.mode);
+  const libelleStage: Record<'principal' | 'consolante' | 'complementaire', string> = finales
+    ? { principal: 'Concours A', consolante: 'Concours B', complementaire: 'Concours C' }
+    : { principal: 'Concours principal', consolante: 'Consolante', complementaire: 'Complémentaire' };
+
   return (
     <div className="tab-content">
       <div className="toolbar no-print">
@@ -158,20 +170,20 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               className={stage === 'principal' ? 'tab active' : 'tab'}
               onClick={() => setStage('principal')}
             >
-              Concours principal
+              {libelleStage.principal}
             </button>
             <button
               className={stage === 'consolante' ? 'tab active' : 'tab'}
               onClick={() => setStage('consolante')}
             >
-              Consolante
+              {libelleStage.consolante}
             </button>
             {complementaire.length > 0 && (
               <button
                 className={stage === 'complementaire' ? 'tab active' : 'tab'}
                 onClick={() => setStage('complementaire')}
               >
-                Complémentaire
+                {libelleStage.complementaire}
               </button>
             )}
           </span>
@@ -189,16 +201,15 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => {
-                if (
-                  window.confirm(
-                    'Annuler le tableau ? Tous les scores du tableau seront supprimés.',
-                  )
-                ) {
-                  void cancelTableau(concours);
+                const msg = finales
+                  ? 'Annuler les phases finales ? Leurs scores seront supprimés et le concours revient aux rondes.'
+                  : 'Annuler le tableau ? Tous les scores du tableau seront supprimés.';
+                if (window.confirm(msg)) {
+                  void (finales ? annulerPhasesFinales(concours) : cancelTableau(concours));
                 }
               }}
             >
-              Annuler le tableau
+              {finales ? 'Annuler les phases finales' : 'Annuler le tableau'}
             </button>
           )}
           {championTeam && !locked && (
@@ -222,7 +233,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
 
       {championTeam && (
         <div className="champion-banner">
-          🏆 Vainqueur{stage !== 'principal' ? ' du principal' : ''} :{' '}
+          🏆 Vainqueur{stage !== 'principal' ? ` du ${libelleStage.principal.toLowerCase()}` : ''} :{' '}
           <strong>
             n°{championTeam.number} {teamDisplayName(championTeam)}
           </strong>

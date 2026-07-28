@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Concours, Match, Poule, Team } from '@shared';
+import type { Concours, Match, MatchStage, Poule, Team } from '@shared';
 import {
   bracketRanking,
+  nomDuBloc,
   estQualificatif,
   pouleOutcome,
   qualifiesTableau,
@@ -62,12 +63,30 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
         </div>
       );
     }
+    // Phases finales jouées (manuel §3.D.15) : ce sont elles qui désignent le
+    // vainqueur. Le classement des rondes reste affiché en dessous — c'est lui
+    // qui a distribué les équipes entre les concours A, B et C.
+    const finales: { stage: MatchStage; titre: string }[] = (
+      ['principal', 'consolante', 'complementaire'] as const
+    ).map((stage, i) => ({ stage, titre: nomDuBloc(i) }));
+
     return (
       <div className="tab-content results">
         <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
+        {finales.map(({ stage, titre }) => {
+          const groups = bracketRanking(matches, stage);
+          if (groups.length === 0) return null;
+          return (
+            <section className="result-section" key={stage}>
+              <h2>{titre}</h2>
+              <RankTable groups={groups} teamsById={teamsById} />
+            </section>
+          );
+        })}
         <section className="result-section">
           <h2>
-            Classement général{isIndividualMode(concours.mode) ? ' (individuel)' : ''}
+            Classement {matches.some((m) => m.stage !== 'ronde') ? 'des rondes' : 'général'}
+            {isIndividualMode(concours.mode) ? ' (individuel)' : ''}
           </h2>
           <StandingsTable
             standings={rondeStandings(teams, matches)}
