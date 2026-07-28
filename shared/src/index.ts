@@ -4,6 +4,7 @@ export * from './engine/match';
 export * from './engine/poules';
 export * from './engine/arbitrage';
 export * from './engine/bracket';
+export * from './engine/clubs';
 export * from './engine/depot';
 export * from './engine/federal';
 export * from './engine/formules';

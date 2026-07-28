@@ -5,7 +5,7 @@ import type { Concours, Player, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
-import { controlerEquipe, type ControleEquipe } from '@shared';
+import { controlerEquipe, libelleClubs, type ControleEquipe } from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../../lib/labels';
 import { RegistrationsPanel } from '../../components/RegistrationsPanel';
 import { FORMAT_LABELS, PLAYERS_PER_TEAM, isIndividualMode } from '../../lib/labels';
@@ -22,11 +22,15 @@ export function TeamsTab({ concours, teams }: Props) {
   const locked = concours.status !== 'inscriptions';
   const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
   const [licences, setLicences] = useState<string[]>(Array(nbPlayers).fill(''));
+  const [clubs, setClubs] = useState<string[]>(Array(nbPlayers).fill(''));
   const [club, setClub] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const firstInput = useRef<HTMLInputElement>(null);
   const licencies = useLicencies() ?? [];
   const licencieByName = new Map(licencies.map((l) => [l.name.toLowerCase(), l]));
+  const licencieByLicence = new Map(
+    licencies.filter((l) => l.licence).map((l) => [l.licence!, l]),
+  );
 
   /* Contrôle des licences : seulement s'il y a de quoi contrôler — des
      critères fédéraux, ou au moins un fichier de licenciés importé. */
@@ -59,30 +63,56 @@ export function TeamsTab({ concours, teams }: Props) {
   const nonConformes = [...controles.values()].filter((c) => !c.conforme).length;
 
   /** Autocomplétion : un nom du fichier des licenciés remplit licence et club. */
+  /** Remplit ce qu'on sait d'un licencié trouvé par son nom. */
   const applyLicencie = (i: number, value: string) => {
     const found = licencieByName.get(value.trim().toLowerCase());
     if (!found) return;
     if (found.licence) {
       setLicences((prev) => prev.map((l, j) => (j === i && !l ? found.licence! : l)));
     }
-    if (found.club && !club) setClub(found.club);
+    if (found.club) {
+      setClubs((prev) => prev.map((c, j) => (j === i && !c ? found.club! : c)));
+      if (!club) setClub(found.club);
+    }
+  };
+
+  /**
+   * Recherche par n° de licence, comme le prévoit le manuel §3.B.1 : le
+   * numéro suffit, le nom et le club se remplissent seuls.
+   */
+  const applyLicenceNumero = (i: number, numero: string) => {
+    const found = licencieByLicence.get(numero.trim());
+    if (!found) return;
+    setNames((prev) => prev.map((n, j) => (j === i && !n.trim() ? found.name : n)));
+    if (found.club) {
+      setClubs((prev) => prev.map((c, j) => (j === i && !c ? found.club! : c)));
+      if (!club) setClub(found.club);
+    }
   };
 
   // La formation peut changer tant qu'on est aux inscriptions.
   if (names.length !== nbPlayers) {
     setNames(Array(nbPlayers).fill(''));
     setLicences(Array(nbPlayers).fill(''));
+    setClubs(Array(nbPlayers).fill(''));
   }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const players: Player[] = names
-      .map((name, i) => ({ name: name.trim(), licence: licences[i]?.trim() || undefined }))
+      .map((name, i) => ({
+        name: name.trim(),
+        licence: licences[i]?.trim() || undefined,
+        // À défaut de club propre, celui de l'équipe : un concours de club
+        // n'a pas à saisir la même chose trois fois.
+        club: clubs[i]?.trim() || club.trim() || undefined,
+      }))
       .filter((p) => p.name.length > 0);
     if (players.length === 0) return;
     await addTeam(concours.id, players, club);
     setNames(Array(nbPlayers).fill(''));
     setLicences(Array(nbPlayers).fill(''));
+    setClubs(Array(nbPlayers).fill(''));
     firstInput.current?.focus();
   };
 
@@ -129,10 +159,18 @@ export function TeamsTab({ concours, teams }: Props) {
                 <input
                   className="licence-input"
                   value={licences[i] ?? ''}
-                  onChange={(e) =>
-                    setLicences(licences.map((l, j) => (j === i ? e.target.value : l)))
-                  }
+                  onChange={(e) => {
+                    setLicences(licences.map((l, j) => (j === i ? e.target.value : l)));
+                    applyLicenceNumero(i, e.target.value);
+                  }}
                   placeholder="N° licence"
+                />
+                <input
+                  className="club-input club-input-joueur"
+                  value={clubs[i] ?? ''}
+                  onChange={(e) => setClubs(clubs.map((c, j) => (j === i ? e.target.value : c)))}
+                  placeholder={i === 0 ? 'Club' : 'Club (si différent)'}
+                  list="clubs-connus"
                 />
               </div>
             ))}
@@ -141,12 +179,14 @@ export function TeamsTab({ concours, teams }: Props) {
             className="club-input"
             value={club}
             onChange={(e) => setClub(e.target.value)}
-            placeholder="Club"
+            placeholder="Club de l'équipe (facultatif)"
+            title="Utilisé pour les joueurs dont le club n'est pas précisé"
             list="clubs-connus"
           />
           <datalist id="clubs-connus">
             {[...new Set([
               ...teams.map((t) => t.club),
+              ...teams.flatMap((t) => t.players.map((p) => p.club)),
               ...licencies.map((l) => l.club),
             ].filter(Boolean))].map((c) => (
               <option key={c} value={c} />
@@ -248,7 +288,7 @@ export function TeamsTab({ concours, teams }: Props) {
                   ))}
                   {team.forfait && <span className="tag tag-danger">Forfait</span>}
                 </td>
-                <td>{team.club ?? ''}</td>
+                <td>{libelleClubs(team.players, team.club) || (team.club ?? '')}</td>
                 {controlActif && (
                   <td className="cell-controle">
                     <ControleBadge controle={controles.get(team.id)} />

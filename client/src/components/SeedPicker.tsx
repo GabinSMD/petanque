@@ -32,7 +32,8 @@ export function SeedPicker({
         (t) =>
           String(t.number).includes(q) ||
           teamDisplayName(t).toLowerCase().includes(q) ||
-          t.club?.toLowerCase().includes(q),
+          t.club?.toLowerCase().includes(q) ||
+          t.players.some((p) => p.club?.toLowerCase().includes(q)),
       )
     : active;
 
