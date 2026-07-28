@@ -524,6 +524,33 @@ export async function setMatchTerrain(match: Match, terrain: number | null): Pro
 }
 
 /** Affecte automatiquement les parties en attente aux terrains libres. */
+/** Enregistre (ou annule) le dépôt des licences d'une équipe (manuel §3.C). */
+export async function setLicencesDeposees(team: Team, depose: boolean): Promise<void> {
+  await putEntity('team', {
+    ...team,
+    licencesDeposees: depose ? monotonicNow() : undefined,
+  });
+}
+
+/**
+ * Certificat médical validé à la main, sur présentation du papier. La liste
+ * vit sur le concours : la validation ne vaut que pour cette compétition.
+ */
+export async function setCertificatValide(
+  concours: Concours,
+  licence: string,
+  valide: boolean,
+): Promise<void> {
+  const actuels = new Set(concours.certificatsValides ?? []);
+  if (valide) actuels.add(licence);
+  else actuels.delete(licence);
+  const liste = [...actuels].sort();
+  await putEntity('concours', {
+    ...concours,
+    certificatsValides: liste.length > 0 ? liste : undefined,
+  });
+}
+
 /**
  * Signale (ou lève) un retard sur une partie : l'équipe gagnante n'est pas
  * venue annoncer son résultat à la table de marque (manuel §3.D.1.D).

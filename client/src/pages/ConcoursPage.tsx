@@ -23,6 +23,7 @@ import {
   statusLabel,
 } from '../lib/labels';
 import { TeamsTab } from './tabs/TeamsTab';
+import { LicencesTab } from './tabs/LicencesTab';
 import { PoulesTab } from './tabs/PoulesTab';
 import { BracketTab } from './tabs/BracketTab';
 import { RondesTab } from './tabs/RondesTab';
@@ -61,6 +62,12 @@ export function ConcoursPage() {
 
   const rondesMode = isRondesMode(concours.mode);
   const tirMode = isTirMode(concours.mode);
+  const controleLicences = Boolean(
+    concours.categorieAge ||
+      concours.homogene ||
+      (concours.critereSexe && concours.critereSexe !== 'tous') ||
+      (concours.critereClassification && concours.critereClassification !== 'tous'),
+  );
   const tabs = [
     {
       key: 'equipes',
@@ -74,6 +81,9 @@ export function ConcoursPage() {
       : rondesMode
         ? [{ key: 'rondes', label: '🔄 Rondes' }]
         : [{ key: 'tableau', label: '🏆 Tableau' }]),
+    // Le dépôt des licences n'a de sens qu'avec des critères fédéraux : un
+    // concours de club n'a rien à contrôler.
+    ...(controleLicences ? [{ key: 'licences', label: '🪪 Licences' }] : []),
     ...(!tirMode && concours.status !== 'inscriptions' && concours.planTerrains !== false
       ? [{ key: 'terrains', label: '🟦 Terrains' }]
       : []),
@@ -185,6 +195,7 @@ export function ConcoursPage() {
       </div>
 
       {active === 'equipes' && <TeamsTab concours={concours} teams={teams ?? []} />}
+      {active === 'licences' && <LicencesTab concours={concours} teams={teams ?? []} />}
       {active === 'poules' && (
         <PoulesTab concours={concours} teams={teams ?? []} poules={poules ?? []} matches={matches ?? []} />
       )}

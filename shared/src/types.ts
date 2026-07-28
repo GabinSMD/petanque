@@ -124,6 +124,11 @@ export interface Concours {
   critereClassification?: CritereClassification;
   /** Équipes homogènes exigées (tous les joueurs du même club). */
   homogene?: boolean;
+  /**
+   * Licences dont le certificat médical a été validé à la main, sur
+   * présentation du papier au dépôt (manuel §3.C).
+   */
+  certificatsValides?: string[];
   /** Nombre de qualifiés pour une phase suivante (championnat qualificatif). */
   nbQualifies?: number;
   /** Consolante à 2 niveaux : ajoute un complémentaire (perdants de la consolante). */
@@ -166,6 +171,11 @@ export interface Team {
   forfait: boolean;
   /** Engagement réglé (suivi de caisse). */
   paid?: boolean;
+  /**
+   * Horodatage du dépôt des licences (manuel §3.C) : l'équipe a présenté ses
+   * licences à la table de marque. Absent = pas encore passée.
+   */
+  licencesDeposees?: string;
   updatedAt: string;
 }
 
