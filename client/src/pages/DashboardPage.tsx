@@ -158,7 +158,9 @@ export function DashboardPage() {
               </p>
               <p>
                 <button className="btn-lien" onClick={() => setVoirArchives(true)}>
-                  Voir les {archives.length} concours archivés
+                  {archives.length > 1
+                    ? `Voir les ${archives.length} concours archivés`
+                    : 'Voir le concours archivé'}
                 </button>
               </p>
             </>
