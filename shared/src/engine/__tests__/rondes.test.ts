@@ -9,12 +9,119 @@ import {
   rondeStandings,
   rondesTirees,
 } from '../rondes';
-import type { Match } from '../../types';
-import { makeTeams, testCtx } from './helpers';
+import type { Match, RolePetanque, Team } from '../../types';
+import { makeTeam, makeTeams, testCtx } from './helpers';
 
 function play(matches: Match[], id: string, scoreA: number, scoreB: number): Match[] {
   return matches.map((m) => (m.id === id ? { ...m, scoreA, scoreB, done: true } : m));
 }
+
+/** Participants avec un rôle de jeu déclaré, dans l'ordre donné. */
+function makeRoles(roles: (RolePetanque | undefined)[]): Team[] {
+  return roles.map((role, i) => {
+    const t = makeTeam(i + 1);
+    return { ...t, players: [{ ...t.players[0]!, role }] };
+  });
+}
+
+/** Rôle d'un camp, joueur par joueur. */
+function rolesDuCamp(players: Team[], ids: string[]): (RolePetanque | undefined)[] {
+  return ids.map((id) => players.find((p) => p.id === id)!.players[0]!.role);
+}
+
+describe('mêlée : rôles de jeu', () => {
+  /** Douze graines : une règle de tirage doit tenir quel que soit le hasard. */
+  const GRAINES = [1, 2, 3, 5, 8, 13, 21, 34, 42, 55, 89, 144];
+
+  it('deux pointeurs et deux tireurs : chaque doublette a un de chaque', () => {
+    const players = makeRoles(['pointeur', 'pointeur', 'tireur', 'tireur']);
+    for (const graine of GRAINES) {
+      const matches = drawMeleeRonde('c1', players, 0, 2, testCtx(graine));
+      expect(matches).toHaveLength(1);
+      for (const ids of [matches[0]!.playersA!, matches[0]!.playersB!]) {
+        expect(rolesDuCamp(players, ids).sort()).toEqual(['pointeur', 'tireur']);
+      }
+    }
+  });
+
+  it('triplettes : chaque camp reçoit un pointeur, un milieu et un tireur', () => {
+    const players = makeRoles([
+      'pointeur', 'pointeur', 'milieu', 'milieu', 'tireur', 'tireur',
+    ]);
+    for (const graine of GRAINES) {
+      const matches = drawMeleeRonde('c1', players, 0, 3, testCtx(graine));
+      expect(matches).toHaveLength(1);
+      for (const ids of [matches[0]!.playersA!, matches[0]!.playersB!]) {
+        expect(rolesDuCamp(players, ids).sort()).toEqual(['milieu', 'pointeur', 'tireur']);
+      }
+    }
+  });
+
+  it('quatre doublettes : les huit rôles se répartissent un par camp', () => {
+    const players = makeRoles([
+      'pointeur', 'pointeur', 'pointeur', 'pointeur',
+      'tireur', 'tireur', 'tireur', 'tireur',
+    ]);
+    for (const graine of GRAINES) {
+      const camps = drawMeleeRonde('c1', players, 0, 2, testCtx(graine)).flatMap((m) => [
+        m.playersA!,
+        m.playersB!,
+      ]);
+      expect(camps).toHaveLength(4);
+      for (const ids of camps) {
+        expect(rolesDuCamp(players, ids).sort()).toEqual(['pointeur', 'tireur']);
+      }
+    }
+  });
+
+  it('rôles déséquilibrés : on place quand même tout le monde', () => {
+    // Trois pointeurs pour un seul tireur : une doublette sera à deux pointeurs.
+    const players = makeRoles(['pointeur', 'pointeur', 'pointeur', 'tireur']);
+    for (const graine of GRAINES) {
+      const matches = drawMeleeRonde('c1', players, 0, 2, testCtx(graine));
+      const tous = matches.flatMap((m) => [...m.playersA!, ...m.playersB!]);
+      expect(new Set(tous).size).toBe(4);
+    }
+  });
+
+  it('rôles partiellement renseignés : jamais deux pointeurs dans le même camp', () => {
+    const players = makeRoles(['pointeur', 'tireur', 'pointeur', undefined]);
+    for (const graine of GRAINES) {
+      const camps = drawMeleeRonde('c1', players, 0, 2, testCtx(graine)).flatMap((m) => [
+        m.playersA!,
+        m.playersB!,
+      ]);
+      for (const ids of camps) {
+        const roles = rolesDuCamp(players, ids);
+        expect(roles.filter((r) => r === 'pointeur')).toHaveLength(1);
+      }
+      expect(new Set(camps.flat()).size).toBe(4);
+    }
+  });
+
+  it('reste aléatoire : les camps changent d\'une graine à l\'autre', () => {
+    const players = makeRoles([
+      'pointeur', 'pointeur', 'pointeur', 'pointeur',
+      'tireur', 'tireur', 'tireur', 'tireur',
+    ]);
+    const empreinte = (graine: number): string =>
+      drawMeleeRonde('c1', players, 0, 2, testCtx(graine))
+        .map((m) => [...m.playersA!].sort().join('+'))
+        .sort()
+        .join(' | ');
+    expect(new Set(GRAINES.map(empreinte)).size).toBeGreaterThan(1);
+  });
+
+  it('sans aucun rôle déclaré : le tirage reste purement aléatoire', () => {
+    const players = makeTeams(8);
+    const empreinte = (graine: number): string =>
+      drawMeleeRonde('c1', players, 0, 2, testCtx(graine))
+        .map((m) => [...m.playersA!].sort().join('+'))
+        .sort()
+        .join(' | ');
+    expect(new Set(GRAINES.map(empreinte)).size).toBeGreaterThan(1);
+  });
+});
 
 describe('mêlée tournante', () => {
   it('8 joueurs en doublettes : 2 parties de 2 contre 2', () => {

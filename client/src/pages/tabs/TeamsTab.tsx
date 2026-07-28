@@ -1,14 +1,20 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { LicenceScanModal } from '../../components/LicenceScanModal';
-import type { Concours, Player, Team } from '@shared';
+import type { Concours, Player, RolePetanque, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
 import { controlerEquipe, libelleClubs, type ControleEquipe } from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../../lib/labels';
 import { RegistrationsPanel } from '../../components/RegistrationsPanel';
-import { FORMAT_LABELS, PLAYERS_PER_TEAM, isIndividualMode } from '../../lib/labels';
+import {
+  FORMAT_LABELS,
+  PLAYERS_PER_TEAM,
+  ROLE_ABREGE,
+  ROLE_LABELS,
+  isIndividualMode,
+} from '../../lib/labels';
 
 interface Props {
   concours: Concours;
@@ -20,9 +26,17 @@ export function TeamsTab({ concours, teams }: Props) {
   const individual = isIndividualMode(concours.mode);
   const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
   const locked = concours.status !== 'inscriptions';
+  /**
+   * Le rôle de jeu ne sert qu'au tirage des mêlées : il n'a pas de sens quand
+   * les équipes sont déjà constituées, ni en tête-à-tête.
+   */
+  const avecRoles = concours.mode === 'melee' && concours.format !== 'tete_a_tete';
+  const rolesProposes: RolePetanque[] =
+    concours.format === 'triplette' ? ['pointeur', 'milieu', 'tireur'] : ['pointeur', 'tireur'];
   const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
   const [licences, setLicences] = useState<string[]>(Array(nbPlayers).fill(''));
   const [clubs, setClubs] = useState<string[]>(Array(nbPlayers).fill(''));
+  const [roles, setRoles] = useState<(RolePetanque | '')[]>(Array(nbPlayers).fill(''));
   const [club, setClub] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const firstInput = useRef<HTMLInputElement>(null);
@@ -95,6 +109,7 @@ export function TeamsTab({ concours, teams }: Props) {
     setNames(Array(nbPlayers).fill(''));
     setLicences(Array(nbPlayers).fill(''));
     setClubs(Array(nbPlayers).fill(''));
+    setRoles(Array(nbPlayers).fill(''));
   }
 
   const submit = async (e: FormEvent) => {
@@ -106,6 +121,7 @@ export function TeamsTab({ concours, teams }: Props) {
         // À défaut de club propre, celui de l'équipe : un concours de club
         // n'a pas à saisir la même chose trois fois.
         club: clubs[i]?.trim() || club.trim() || undefined,
+        role: roles[i] || undefined,
       }))
       .filter((p) => p.name.length > 0);
     if (players.length === 0) return;
@@ -113,6 +129,7 @@ export function TeamsTab({ concours, teams }: Props) {
     setNames(Array(nbPlayers).fill(''));
     setLicences(Array(nbPlayers).fill(''));
     setClubs(Array(nbPlayers).fill(''));
+    setRoles(Array(nbPlayers).fill(''));
     firstInput.current?.focus();
   };
 
@@ -173,6 +190,25 @@ export function TeamsTab({ concours, teams }: Props) {
                   placeholder={i === 0 ? 'Club' : 'Club (si différent)'}
                   list="clubs-connus"
                 />
+                {avecRoles && (
+                  <select
+                    className="role-select"
+                    value={roles[i] ?? ''}
+                    onChange={(e) =>
+                      setRoles(
+                        roles.map((r, j) => (j === i ? (e.target.value as RolePetanque | '') : r)),
+                      )
+                    }
+                    title="Rôle de prédilection : le tirage évite d'aligner trois pointeurs"
+                  >
+                    <option value="">Rôle indifférent</option>
+                    {rolesProposes.map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE_LABELS[r]}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             ))}
           </div>
@@ -275,6 +311,8 @@ export function TeamsTab({ concours, teams }: Props) {
                 team={team}
                 nbPlayers={nbPlayers}
                 trackPaid={trackPaid}
+                avecRoles={avecRoles}
+                rolesProposes={rolesProposes}
                 onDone={() => setEditingId(null)}
               />
             ) : (
@@ -285,6 +323,11 @@ export function TeamsTab({ concours, teams }: Props) {
                     <span key={i} className="player-chip">
                       {p.name}
                       {p.licence && <em className="licence"> {p.licence}</em>}
+                      {avecRoles && p.role && (
+                        <span className="role-tag" title={ROLE_LABELS[p.role]}>
+                          {ROLE_ABREGE[p.role]}
+                        </span>
+                      )}
                     </span>
                   ))}
                   {team.forfait && <span className="tag tag-danger">Forfait</span>}
@@ -412,11 +455,15 @@ function TeamEditRow({
   team,
   nbPlayers,
   trackPaid,
+  avecRoles,
+  rolesProposes,
   onDone,
 }: {
   team: Team;
   nbPlayers: number;
   trackPaid: boolean;
+  avecRoles: boolean;
+  rolesProposes: RolePetanque[];
   onDone: () => void;
 }) {
   const [names, setNames] = useState<string[]>(
@@ -425,11 +472,21 @@ function TeamEditRow({
   const [licences, setLicences] = useState<string[]>(
     Array.from({ length: nbPlayers }, (_, i) => team.players[i]?.licence ?? ''),
   );
+  const [roles, setRoles] = useState<(RolePetanque | '')[]>(
+    Array.from({ length: nbPlayers }, (_, i) => team.players[i]?.role ?? ''),
+  );
   const [club, setClub] = useState(team.club ?? '');
 
   const save = async () => {
     const players: Player[] = names
-      .map((name, i) => ({ name: name.trim(), licence: licences[i]?.trim() || undefined }))
+      // On repart de la fiche existante : le club du joueur et tout ce que la
+      // ligne de modification n'affiche pas doivent survivre à un « OK ».
+      .map((name, i) => ({
+        ...team.players[i],
+        name: name.trim(),
+        licence: licences[i]?.trim() || undefined,
+        role: roles[i] || undefined,
+      }))
       .filter((p) => p.name.length > 0);
     if (players.length === 0) return;
     await updateTeam({ ...team, players, club: club.trim() || undefined });
@@ -455,6 +512,24 @@ function TeamEditRow({
               }
               placeholder="N° licence"
             />
+            {avecRoles && (
+              <select
+                className="role-select"
+                value={roles[i] ?? ''}
+                onChange={(e) =>
+                  setRoles(
+                    roles.map((r, j) => (j === i ? (e.target.value as RolePetanque | '') : r)),
+                  )
+                }
+              >
+                <option value="">Rôle indifférent</option>
+                {rolesProposes.map((r) => (
+                  <option key={r} value={r}>
+                    {ROLE_LABELS[r]}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         ))}
       </td>

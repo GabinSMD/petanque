@@ -1,14 +1,4 @@
-import type {
-  CategorieAge,
-  NiveauConcours,
-  ConcoursMode,
-  ConcoursStatus,
-  CritereClassification,
-  CritereSexe,
-  Discipline,
-  Formule,
-  TeamFormat,
-} from '@shared';
+import type { CategorieAge, ConcoursMode, ConcoursStatus, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
 import type { AnomalieEquipe, ChampLicence } from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
@@ -26,6 +16,23 @@ export const PLAYERS_PER_TEAM: Record<TeamFormat, number> = {
   tete_a_tete: 1,
   doublette: 2,
   triplette: 3,
+};
+
+/**
+ * Rôles de jeu. Absents du manuel fédéral : ils ne servent qu'au tirage des
+ * mêlées, pour éviter une équipe de trois pointeurs.
+ */
+export const ROLE_LABELS: Record<RolePetanque, string> = {
+  pointeur: 'Pointeur',
+  milieu: 'Milieu',
+  tireur: 'Tireur',
+};
+
+/** Marque courte, pour les listes et l'annonce au micro. */
+export const ROLE_ABREGE: Record<RolePetanque, string> = {
+  pointeur: 'P',
+  milieu: 'M',
+  tireur: 'T',
 };
 
 export const MODE_LABELS: Record<ConcoursMode, string> = {

@@ -62,9 +62,21 @@ export type Discipline = 'petanque' | 'jeu_provencal';
 /** Rôle d'une partie au sein d'une poule. */
 export type PouleSlot = 'M1' | 'M2' | 'GAGNANTS' | 'PERDANTS' | 'BARRAGE';
 
+/**
+ * Rôle de jeu à la pétanque. Hors manuel fédéral — celui-ci ne parle ni de
+ * mêlée ni de rôles : c'est un confort d'organisateur, utilisé pour que le
+ * tirage d'une mêlée forme des équipes jouables.
+ */
+export type RolePetanque = 'pointeur' | 'milieu' | 'tireur';
+
 export interface Player {
   name: string;
   licence?: string;
+  /**
+   * Rôle de prédilection, déclaré à l'inscription. Facultatif : non renseigné,
+   * le joueur complète n'importe quel camp.
+   */
+  role?: RolePetanque;
   /**
    * Club du joueur. En national et en régional, une équipe peut réunir des
    * licenciés de clubs différents : le club appartient donc au joueur. Le
