@@ -3515,3 +3515,26 @@ form label select {
 .print-presse-legende {
   margin-top: 0.6rem;
 }
+
+/* Numérotation décalée : bloc replié */
+.form-details {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+}
+
+.form-details > summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.form-details[open] > summary {
+  margin-bottom: 0.5rem;
+}
+
+.print-doc-organisateur {
+  font-size: 0.85rem;
+  color: #333;
+  margin-top: 0.15rem;
+}

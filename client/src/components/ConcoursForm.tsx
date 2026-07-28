@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type {
   CategorieAge,
+  NiveauConcours,
   Concours,
   ConcoursMode,
   CritereClassification,
@@ -9,13 +10,15 @@ import type {
   Formule,
   TeamFormat,
 } from '@shared';
-import { formuleOf } from '@shared';
+import { formuleOf, nomConcoursFederal } from '@shared';
 import type { ConcoursInput } from '../db/actions';
+import { useLicencies } from '../db/hooks';
 import {
   CATEGORIE_AGE_LABELS,
   CATEGORY_SUGGESTIONS,
   CRITERE_CLASSIFICATION_LABELS,
   CRITERE_SEXE_LABELS,
+  NIVEAU_LABELS,
   FORMULE_CHOICES,
   FORMULE_HINTS,
   FORMULE_LABELS,
@@ -37,6 +40,10 @@ interface Props {
 
 export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Props) {
   const today = new Date().toISOString().slice(0, 10);
+  // Suggestions puisées dans le fichier des licenciés déjà importé.
+  const licencies = useLicencies() ?? [];
+  const comites = [...new Set(licencies.map((l) => l.comite).filter(Boolean))].sort() as string[];
+  const clubs = [...new Set(licencies.map((l) => l.club).filter(Boolean))].sort() as string[];
   const [name, setName] = useState(initial?.name ?? '');
   const [date, setDate] = useState(initial?.date ?? today);
   const [lieu, setLieu] = useState(initial?.lieu ?? '');
@@ -47,6 +54,13 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
   const [complementaire, setComplementaire] = useState(initial?.complementaire ?? false);
   const [formule, setFormule] = useState<Formule>(initial ? formuleOf(initial) : 'ab');
+  const [niveau, setNiveau] = useState<NiveauConcours | ''>(initial?.niveau ?? '');
+  const [comiteOrganisateur, setComiteOrganisateur] = useState(initial?.comiteOrganisateur ?? '');
+  const [clubOrganisateur, setClubOrganisateur] = useState(initial?.clubOrganisateur ?? '');
+  const [decalageEquipe, setDecalageEquipe] = useState<number | ''>(initial?.decalageEquipe ?? '');
+  const [decalageTerrain, setDecalageTerrain] = useState<number | ''>(
+    initial?.decalageTerrain ?? '',
+  );
   const [categorieAge, setCategorieAge] = useState<CategorieAge | ''>(initial?.categorieAge ?? '');
   const [strict, setStrict] = useState(initial?.strict ?? false);
   const [critereSexe, setCritereSexe] = useState<CritereSexe>(initial?.critereSexe ?? 'tous');
@@ -56,7 +70,10 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [homogene, setHomogene] = useState(initial?.homogene ?? false);
   const [officiel, setOfficiel] = useState(
     Boolean(
-      initial?.categorieAge ||
+      initial?.niveau ||
+        initial?.comiteOrganisateur ||
+        initial?.clubOrganisateur ||
+        initial?.categorieAge ||
         initial?.homogene ||
         (initial?.critereSexe && initial.critereSexe !== 'tous') ||
         (initial?.critereClassification && initial.critereClassification !== 'tous'),
@@ -97,6 +114,12 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
       tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
       miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
+      niveau: officiel && niveau !== '' ? niveau : undefined,
+      comiteOrganisateur: officiel ? comiteOrganisateur.trim() || undefined : undefined,
+      clubOrganisateur: officiel ? clubOrganisateur.trim() || undefined : undefined,
+      decalageEquipe: decalageEquipe === '' || decalageEquipe === 0 ? undefined : Number(decalageEquipe),
+      decalageTerrain:
+        decalageTerrain === '' || decalageTerrain === 0 ? undefined : Number(decalageTerrain),
       // Critères de contrôle : rien n'est enregistré si la section est repliée.
       categorieAge: officiel && categorieAge !== '' ? categorieAge : undefined,
       strict: officiel && categorieAge !== '' ? strict : undefined,
@@ -334,6 +357,122 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         />
         Concours officiel : contrôler les licences
       </label>
+      {officiel && (
+        <fieldset className="form-fieldset">
+          <legend>Organisateur et niveau</legend>
+          <p className="hint">
+            Ces informations figurent en tête des documents remis au comité (feuille
+            d'arbitrage, résultats presse).
+          </p>
+          <div className="form-row">
+            <label>
+              Niveau
+              <select
+                value={niveau}
+                onChange={(e) => setNiveau(e.target.value as NiveauConcours | '')}
+              >
+                <option value="">Non précisé</option>
+                {Object.entries(NIVEAU_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Comité organisateur
+              <input
+                value={comiteOrganisateur}
+                onChange={(e) => setComiteOrganisateur(e.target.value)}
+                placeholder="CD 38 Isère"
+                list="form-comites"
+              />
+              <datalist id="form-comites">
+                {comites.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </label>
+          </div>
+          <label>
+            Club organisateur
+            <input
+              value={clubOrganisateur}
+              onChange={(e) => setClubOrganisateur(e.target.value)}
+              placeholder="PC Pierre Sémard"
+              list="form-clubs-org"
+            />
+            <datalist id="form-clubs-org">
+              {clubs.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </label>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() =>
+              setName(
+                nomConcoursFederal({
+                  date,
+                  niveau: niveau === '' ? undefined : niveau,
+                  discipline,
+                  comite: comiteOrganisateur.trim() || undefined,
+                  format,
+                  club: clubOrganisateur.trim() || undefined,
+                }),
+              )
+            }
+            title="Nom construit comme dans le logiciel fédéral"
+          >
+            ⤒ Reprendre le nom fédéral
+          </button>
+        </fieldset>
+      )}
+      <details className="form-details">
+        <summary>Numérotation — plusieurs concours le même jour</summary>
+        <p className="hint">
+          Décale les numéros pour qu'il n'y ait jamais deux « équipe 1 » ni deux « terrain 1 »
+          à la table de marque. 0 = numérotation normale.
+        </p>
+        <div className="form-row">
+          <label>
+            Décalage n° d'équipe
+            <input
+              type="number"
+              min={0}
+              max={9000}
+              step={100}
+              value={decalageEquipe}
+              placeholder="0"
+              onChange={(e) =>
+                setDecalageEquipe(e.target.value === '' ? '' : Number(e.target.value))
+              }
+            />
+            <span className="hint">
+              1<sup>re</sup> équipe : n°{(decalageEquipe === '' ? 0 : Number(decalageEquipe)) + 1}
+            </span>
+          </label>
+          <label>
+            Décalage n° de terrain
+            <input
+              type="number"
+              min={0}
+              max={9000}
+              step={50}
+              value={decalageTerrain}
+              placeholder="0"
+              onChange={(e) =>
+                setDecalageTerrain(e.target.value === '' ? '' : Number(e.target.value))
+              }
+            />
+            <span className="hint">
+              Terrains {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + 1} à{' '}
+              {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + nbTerrains}
+            </span>
+          </label>
+        </div>
+      </details>
       {officiel && (
         <fieldset className="form-fieldset">
           <legend>Critères fédéraux</legend>

@@ -12,6 +12,7 @@ import {
   firstRoundSources,
   formuleOf,
   isByeMatch,
+  numeroPremiereEquipe,
   pouleOutcome,
   pouleSizes,
   propagate,
@@ -20,6 +21,7 @@ import {
   rondeComplete,
   rondesTirees,
   seriesTirees,
+  terrainNumeros,
   validateScore,
   validateTirScore,
   type Concours,
@@ -29,6 +31,7 @@ import {
   type CritereSexe,
   type Discipline,
   type Formule,
+  type NiveauConcours,
   type Licencie,
   type LicencieRow,
   type Match,
@@ -66,6 +69,12 @@ export interface ConcoursInput {
   complementaire?: boolean;
   /** Formule fédérale du tableau (élimination directe). */
   formule?: Formule;
+  /** Paramètres fédéraux. */
+  niveau?: NiveauConcours;
+  comiteOrganisateur?: string;
+  clubOrganisateur?: string;
+  decalageEquipe?: number;
+  decalageTerrain?: number;
   /** Critères de contrôle des licences. */
   categorieAge?: CategorieAge;
   strict?: boolean;
@@ -145,7 +154,11 @@ export async function addTeam(
   club?: string,
 ): Promise<void> {
   const teams = await listByConcours('team', concoursId);
-  const number = teams.reduce((max, t) => Math.max(max, t.number), 0) + 1;
+  const concours = await getEntity('concours', concoursId);
+  const number = numeroPremiereEquipe(
+    teams.map((t) => t.number),
+    concours?.decalageEquipe,
+  );
   const team: Team = {
     id: crypto.randomUUID(),
     concoursId,
@@ -271,11 +284,13 @@ export async function generatePoules(
         'Ajoutez ou retirez une équipe.',
     );
   }
-  // Terrains par défaut : les premières parties de chaque poule.
-  let terrain = 1;
+  // Terrains par défaut : les premières parties de chaque poule, dans la
+  // plage du concours (qui peut être décalée).
+  const numeros = terrainNumeros(concours.nbTerrains, concours.decalageTerrain);
+  let i = 0;
   for (const m of draw.matches) {
-    if ((m.pouleSlot === 'M1' || m.pouleSlot === 'M2') && terrain <= concours.nbTerrains) {
-      m.terrain = terrain++;
+    if ((m.pouleSlot === 'M1' || m.pouleSlot === 'M2') && i < numeros.length) {
+      m.terrain = numeros[i++]!;
     }
   }
   await bulkPutEntities('poule', draw.poules);
@@ -393,9 +408,10 @@ export async function tirerRonde(concours: Concours): Promise<void> {
   }
 
   // Terrains par défaut, dans la limite du disponible.
-  let terrain = 1;
+  const numeros = terrainNumeros(concours.nbTerrains, concours.decalageTerrain);
+  let i = 0;
   for (const m of created) {
-    if (!m.byeB && terrain <= concours.nbTerrains) m.terrain = terrain++;
+    if (!m.byeB && i < numeros.length) m.terrain = numeros[i++]!;
   }
   await bulkPutEntities('match', created);
   if (concours.status !== 'rondes') {
@@ -510,7 +526,7 @@ export async function setMatchTerrain(match: Match, terrain: number | null): Pro
 /** Affecte automatiquement les parties en attente aux terrains libres. */
 export async function autoAssignTerrainsAction(concours: Concours): Promise<number> {
   const matches = await listByConcours('match', concours.id);
-  const assignments = autoAssignTerrains(matches, concours.nbTerrains);
+  const assignments = autoAssignTerrains(matches, concours.nbTerrains, concours.decalageTerrain);
   if (assignments.length === 0) return 0;
   const byId = new Map(matches.map((m) => [m.id, m]));
   const updated: Match[] = [];

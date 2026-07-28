@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { pouleOutcome, pouleRemaining } from '@shared';
+import { pouleOutcome, pouleRemaining, terrainNumeros } from '@shared';
 import {
   cancelPoules,
   generatePoules,
@@ -211,10 +211,12 @@ function PouleMatchTerrain({
   match,
   locked,
   nbTerrains,
+  decalageTerrain,
 }: {
   match: Match;
   locked: boolean;
   nbTerrains: number;
+  decalageTerrain?: number;
 }) {
   // Clôturé : affichage seul (pas de modification).
   if (locked) {
@@ -223,7 +225,13 @@ function PouleMatchTerrain({
     ) : null;
   }
 
-  const options = Array.from({ length: Math.max(nbTerrains, match.terrain ?? 0) }, (_, i) => i + 1);
+  const plage = terrainNumeros(nbTerrains, decalageTerrain);
+  // Un terrain hors plage (saisi avant un changement de paramètre) reste
+  // proposé : on ne veut pas faire disparaître une affectation existante.
+  const options =
+    match.terrain != null && !plage.includes(match.terrain)
+      ? [...plage, match.terrain].sort((a, b) => a - b)
+      : plage;
   return (
     <label
       className={`pmatch-terrain pmatch-terrain-pick no-print${
@@ -343,7 +351,12 @@ function PouleCard({
               <span className="pmatch-slot">
                 {POULE_SLOT_LABELS[m.pouleSlot ?? ''] ?? ''}
               </span>
-              <PouleMatchTerrain match={m} locked={locked} nbTerrains={concours.nbTerrains} />
+              <PouleMatchTerrain
+                match={m}
+                locked={locked}
+                nbTerrains={concours.nbTerrains}
+                decalageTerrain={concours.decalageTerrain}
+              />
             </div>
             <div className="pmatch-versus">
               <span className="pmatch-side">
