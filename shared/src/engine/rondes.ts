@@ -1,4 +1,4 @@
-import type { Match, Team } from '../types';
+import type { Match, RolePetanque, Team } from '../types';
 import type { EngineCtx } from './ctx';
 import { shuffle } from './ctx';
 
@@ -55,11 +55,33 @@ function byeMatch(
 /* ------------------------------------------------------------------ */
 
 /**
+ * Ordre de distribution des rôles. Les rôles déclarés passent d'abord, chacun
+ * réparti au plus large ; les joueurs sans rôle comblent ensuite les places
+ * qui restent — c'est ce qui permet à une mêlée à moitié renseignée de donner
+ * quand même des équipes jouables.
+ */
+const ORDRE_ROLES: readonly (RolePetanque | undefined)[] = [
+  'pointeur',
+  'tireur',
+  'milieu',
+  undefined,
+];
+
+/**
  * Tire une ronde de mêlée : les participants (inscrits individuellement)
- * sont mélangés puis répartis en équipes éphémères aussi égales que
- * possible. Les effectifs inégaux suivent l'usage : une triplette peut
- * rencontrer une doublette (chacun joue alors plus ou moins de boules).
- * Personne n'est exempt : tout le monde joue à chaque ronde.
+ * sont répartis en équipes éphémères aussi égales que possible. Les
+ * effectifs inégaux suivent l'usage : une triplette peut rencontrer une
+ * doublette (chacun joue alors plus ou moins de boules). Personne n'est
+ * exempt : tout le monde joue à chaque ronde.
+ *
+ * Quand les rôles de jeu sont déclarés à l'inscription, le tirage s'arrange
+ * pour ne pas former une équipe de trois pointeurs : chaque rôle est étalé
+ * sur le plus de camps possible. Ce n'est pas une règle mais une préférence —
+ * s'il y a trois pointeurs pour un tireur, deux pointeurs joueront ensemble
+ * plutôt que de laisser un joueur sur le banc.
+ *
+ * Le hasard reste entier : à effectif et rôles identiques, deux tirages
+ * donnent deux compositions différentes.
  */
 export function drawMeleeRonde(
   concoursId: string,
@@ -69,17 +91,47 @@ export function drawMeleeRonde(
   ctx: EngineCtx,
 ): Match[] {
   if (players.length < 2) throw new Error('Il faut au moins 2 participants');
-  const pool = shuffle(players, ctx.rng);
-  const nbMatches = Math.max(1, Math.floor(pool.length / (2 * teamSize)));
-  const sides: string[][] = Array.from({ length: nbMatches * 2 }, () => []);
-  pool.forEach((p, i) => sides[i % sides.length]!.push(p.id));
+  const nbMatches = Math.max(1, Math.floor(players.length / (2 * teamSize)));
+  const nbCamps = nbMatches * 2;
+
+  // Effectif de chaque camp : les premiers absorbent les joueurs en trop.
+  const capacites = Array.from(
+    { length: nbCamps },
+    (_, i) =>
+      Math.floor(players.length / nbCamps) + (i < players.length % nbCamps ? 1 : 0),
+  );
+  const camps: Team[][] = Array.from({ length: nbCamps }, () => []);
+  const roleDe = (t: Team): RolePetanque | undefined => t.players[0]?.role;
+  const combienDe = (camp: Team[], role: RolePetanque | undefined): number =>
+    camp.filter((t) => roleDe(t) === role).length;
+
+  for (const role of ORDRE_ROLES) {
+    for (const joueur of shuffle(
+      players.filter((t) => roleDe(t) === role),
+      ctx.rng,
+    )) {
+      const libres = camps
+        .map((camp, i) => ({ camp, i }))
+        .filter(({ camp, i }) => camp.length < capacites[i]!);
+      if (libres.length === 0) break;
+      // Le camp qui a le moins de ce rôle, et à égalité le moins garni.
+      const cout = ({ camp }: { camp: Team[] }): number =>
+        combienDe(camp, role) * 100 + camp.length;
+      const meilleur = Math.min(...libres.map(cout));
+      const choisi = shuffle(
+        libres.filter((l) => cout(l) === meilleur),
+        ctx.rng,
+      )[0]!;
+      choisi.camp.push(joueur);
+    }
+  }
 
   const matches: Match[] = [];
-  for (let m = 0; m < nbMatches; m++) {
+  for (let m = 0; m < nbMatches; m += 1) {
     matches.push({
       ...baseMatch(concoursId, round, m, ctx),
-      playersA: sides[m * 2]!,
-      playersB: sides[m * 2 + 1]!,
+      playersA: camps[m * 2]!.map((t) => t.id),
+      playersB: camps[m * 2 + 1]!.map((t) => t.id),
     });
   }
   return matches;

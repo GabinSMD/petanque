@@ -1,11 +1,17 @@
 import { useMemo, useState } from 'react';
-import type { Concours, Match, Team } from '@shared';
+import type { Concours, Match, RolePetanque, Team } from '@shared';
 import { championnatRondes, rondeComplete, rondeStandings, rondesTirees } from '@shared';
 import { annulerDerniereRonde, setMatchTerrain, tirerRonde, updateConcours } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
 import { StandingsTable } from '../../components/StandingsTable';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
-import { MODE_INFO, entrantWord, isIndividualMode } from '../../lib/labels';
+import {
+  MODE_INFO,
+  ROLE_ABREGE,
+  ROLE_LABELS,
+  entrantWord,
+  isIndividualMode,
+} from '../../lib/labels';
 
 interface Props {
   concours: Concours;
@@ -31,6 +37,25 @@ export function RondesTab({ concours, teams, matches }: Props) {
   const allDone = tirees >= planned && currentComplete && rondeMatches.every((m) => m.done);
   const standings = rondeStandings(teams, rondeMatches);
   const locked = concours.status === 'termine';
+
+  /**
+   * Rôles déclarés chez les inscrits. Affiché avant le tirage : un organisateur
+   * qui voit « 9 pointeurs, 1 tireur » sait à quoi s'attendre.
+   */
+  const bilanRoles = useMemo(() => {
+    if (concours.mode !== 'melee' || concours.format === 'tete_a_tete') return null;
+    const compte = new Map<RolePetanque, number>();
+    let sansRole = 0;
+    for (const t of active) {
+      const role = t.players[0]?.role;
+      if (role) compte.set(role, (compte.get(role) ?? 0) + 1);
+      else sansRole += 1;
+    }
+    if (compte.size === 0) return null;
+    const parts = [...compte].map(([r, n]) => `${n} ${ROLE_LABELS[r].toLowerCase()}${n > 1 ? 's' : ''}`);
+    if (sansRole > 0) parts.push(`${sansRole} sans rôle`);
+    return parts.join(', ');
+  }, [active, concours.mode, concours.format]);
 
   const doTirer = async () => {
     setError(null);
@@ -58,6 +83,12 @@ export function RondesTab({ concours, teams, matches }: Props) {
           {concours.mode !== 'championnat' && (
             <p className="hint">
               {planned} rondes prévues — modifiable dans ⚙ Paramètres.
+            </p>
+          )}
+          {bilanRoles && (
+            <p className="hint">
+              Rôles déclarés : {bilanRoles}. Le tirage évite de réunir deux fois le même rôle dans
+              une équipe.
             </p>
           )}
           {error && <p className="form-error">{error}</p>}
@@ -228,6 +259,11 @@ export function SideLabel({
           return (
             <span key={id} className="melee-player">
               {t ? teamDisplayName(t) : '…'}
+              {t?.players[0]?.role && (
+                <span className="role-tag" title={ROLE_LABELS[t.players[0].role]}>
+                  {ROLE_ABREGE[t.players[0].role]}
+                </span>
+              )}
             </span>
           );
         })}

@@ -3996,3 +3996,22 @@ form label select {
 .championnat-page .print-table {
   margin-top: 0.4rem;
 }
+
+/* Rôle de jeu en mêlée (pointeur / milieu / tireur) — hors manuel fédéral. */
+.role-select {
+  min-width: 9rem;
+}
+
+.role-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.35;
+  vertical-align: 1px;
+}
