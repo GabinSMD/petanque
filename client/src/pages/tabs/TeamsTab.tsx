@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { LicenceScanModal } from '../../components/LicenceScanModal';
 import type { Concours, Player, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function TeamsTab({ concours, teams }: Props) {
+  const [scanning, setScanning] = useState(false);
   const individual = isIndividualMode(concours.mode);
   const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
   const locked = concours.status !== 'inscriptions';
@@ -93,6 +95,20 @@ export function TeamsTab({ concours, teams }: Props) {
   return (
     <div className="tab-content">
       {!locked && <RegistrationsPanel concours={concours} />}
+
+      {!locked && (
+        <div className="export-bar no-print">
+          <span className="export-bar-label">Inscrire :</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setScanning(true)}>
+            📷 Au lecteur de licences
+          </button>
+          <span className="hint">Caméra, douchette USB ou saisie du n° de licence.</span>
+        </div>
+      )}
+
+      {scanning && (
+        <LicenceScanModal concours={concours} teams={teams} onClose={() => setScanning(false)} />
+      )}
 
       {!locked && (
         <form className="team-add-form no-print" onSubmit={(e) => void submit(e)}>
