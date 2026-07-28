@@ -65,10 +65,14 @@ scores, tableaux) et se synchronise dès que le réseau revient.
   page d'impression du navigateur.
 
 ### Organisation d'une journée
-- **Catégories & vue « journée »** : catégorie par concours (Seniors,
-  Vétérans, Féminines, Jeunes…), tableau de bord regroupé par date avec
-  filtre par catégorie — pratique quand un club enchaîne plusieurs concours
-  le même jour.
+- **Catégories & vue « journée »** : catégorie par concours — dérivée des
+  critères fédéraux quand ils existent (« Féminin Vétérans Promotion »), texte
+  libre sinon —, tableau de bord regroupé par date avec filtre par catégorie —
+  pratique quand un club enchaîne plusieurs concours le même jour.
+- **Archivage** (manuel §3.F.3) : un concours rangé sort de la liste courante
+  et du palmarès sans rien perdre, et revient d'un clic. Le palmarès annonce
+  toujours combien de concours archivés il laisse de côté — un vainqueur ne
+  disparaît pas en silence.
 - **Pré-inscriptions en ligne** : les équipes s'inscrivent elles-mêmes via
   le lien public (« ✍️ Je m'inscris ») ; l'organisateur valide d'un clic à
   la table de marque.

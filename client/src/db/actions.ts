@@ -49,7 +49,9 @@ import {
   type Team,
   type TeamFormat,
   CONFIGS_FINALES,
+  archiver,
   buildFinales,
+  desarchiver,
   classementFinales,
 } from '@shared';
 import { db } from './local';
@@ -172,6 +174,20 @@ export async function deleteConcours(concoursId: string): Promise<void> {
       .filter((r) => r.deleted === 0)
       .map((r) => ({ type: r.type, id: r.id })),
   );
+}
+
+/**
+ * Range un concours (manuel §3.F.3) : il sort des listes courantes sans rien
+ * perdre — ni ses équipes, ni ses parties, ni ses résultats. C'est l'inverse
+ * de la suppression, pas une variante.
+ */
+export async function archiverConcours(concours: Concours): Promise<void> {
+  await putEntity('concours', archiver(concours, monotonicNow()));
+}
+
+/** Remet un concours dans les listes courantes. */
+export async function desarchiverConcours(concours: Concours): Promise<void> {
+  await putEntity('concours', desarchiver(concours));
 }
 
 /** Concours pré-rempli pour découvrir l'application sans risque. */

@@ -211,6 +211,11 @@ export interface Concours {
    */
   indemnitesJusquAuRang?: number;
   status: ConcoursStatus;
+  /**
+   * Date de rangement du concours (manuel §3.F.3) : il sort des listes
+   * courantes sans rien perdre. Absente = concours courant.
+   */
+  archiveLe?: string;
   note?: string;
   createdAt: string;
   updatedAt: string;

@@ -4031,3 +4031,20 @@ form label select {
 .finales-classement .standing-rank .tag {
   margin-left: 0.35rem;
 }
+
+/* Bouton qui se lit comme un lien : pour une bascule au fil du texte. */
+.btn-lien {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Actions d'une carte de concours : archiver, supprimer. */
+.concours-card-actions {
+  display: inline-flex;
+  gap: 0.15rem;
+}

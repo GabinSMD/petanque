@@ -6,6 +6,7 @@ export * from './engine/protections';
 export * from './engine/qualification';
 export * from './engine/poules';
 export * from './engine/arbitrage';
+export * from './engine/archives';
 export * from './engine/bracket';
 export * from './engine/championnat';
 export * from './engine/clubs';
