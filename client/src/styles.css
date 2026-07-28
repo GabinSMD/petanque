@@ -3860,3 +3860,11 @@ form label select {
   border-color: var(--danger);
   color: #fff;
 }
+
+/* Saisie au vainqueur seul */
+.score-vainqueur {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}

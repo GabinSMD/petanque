@@ -357,6 +357,8 @@ export function BracketView({
                   {!compact && !isByeMatch(m) && (!m.done || !locked) && (
                     <div className="match-box-form">
                       <ScoreForm
+                        labelA={m.teamAId ? `n°${teamsById.get(m.teamAId)?.number ?? '?'}` : undefined}
+                        labelB={m.teamBId ? `n°${teamsById.get(m.teamBId)?.number ?? '?'}` : undefined}
                         concours={concours}
                         match={m}
                         disabled={locked}

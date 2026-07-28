@@ -204,21 +204,37 @@ export function rondeStandings(entrants: Team[], matches: Match[]): Standing[] {
   const map = new Map<string, Standing>(
     entrants.map((t) => [t.id, { id: t.id, played: 0, wins: 0, diff: 0, pointsFor: 0 }]),
   );
+  /**
+   * `scored`/`conceded` à -1 signalent une partie sans score : la victoire
+   * compte, mais rien n'alimente le goal-average ni les points marqués.
+   */
   const credit = (id: string, scored: number, conceded: number): void => {
     const s = map.get(id);
     if (!s) return;
     s.played += 1;
     if (scored > conceded) s.wins += 1;
+    if (scored < 0 || conceded < 0) return;
     s.diff += scored - conceded;
     s.pointsFor += scored;
   };
 
   for (const m of matches) {
-    if (m.stage !== 'ronde' || !m.done || m.scoreA === null || m.scoreB === null) continue;
+    if (m.stage !== 'ronde' || !m.done) continue;
     const sideA = m.playersA ?? (m.teamAId ? [m.teamAId] : []);
     const sideB = m.playersB ?? (m.teamBId ? [m.teamBId] : []);
-    for (const id of sideA) credit(id, m.scoreA, m.scoreB);
-    for (const id of sideB) credit(id, m.scoreB, m.scoreA);
+    if (m.scoreA !== null && m.scoreB !== null) {
+      for (const id of sideA) credit(id, m.scoreA, m.scoreB);
+      for (const id of sideB) credit(id, m.scoreB, m.scoreA);
+      continue;
+    }
+    // Vainqueur désigné sans score : la victoire compte, le goal-average
+    // n'existe pas. On ne l'invente pas — un 13-0 fictif fausserait le
+    // départage de tout le monde.
+    if (!m.vainqueur) continue;
+    const gagnants = m.vainqueur === 'A' ? sideA : sideB;
+    const perdants = m.vainqueur === 'A' ? sideB : sideA;
+    for (const id of gagnants) credit(id, 0, -1);
+    for (const id of perdants) credit(id, -1, 0);
   }
 
   return [...map.values()].sort(

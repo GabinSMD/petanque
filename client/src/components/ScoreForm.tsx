@@ -1,10 +1,13 @@
 import { useRef, useState, type FocusEvent, type FormEvent } from 'react';
 import type { Concours, Match } from '@shared';
-import { clearScore, setScore } from '../db/actions';
+import { clearScore, setMatchVainqueur, setScore } from '../db/actions';
 
 interface Props {
   concours: Concours;
   match: Match;
+  /** Libellés des deux camps, pour nommer les boutons de victoire. */
+  labelA?: string;
+  labelB?: string;
   disabled?: boolean;
   /** Partie terminée : n'afficher que le bouton de correction (les scores sont déjà visibles ailleurs). */
   editOnly?: boolean;
@@ -17,11 +20,13 @@ interface Props {
  * Les deux scores se valident automatiquement (touche Entrée, ou dès qu'on
  * quitte les cases une fois les deux remplies) — aucun bouton à cliquer.
  */
-export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Props) {
+export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly, onSaved }: Props) {
   const [editing, setEditing] = useState(false);
   const [a, setA] = useState('');
   const [b, setB] = useState('');
   const [error, setError] = useState<string | null>(null);
+  /** Saisir le score alors que le concours se joue au vainqueur seul. */
+  const [scoreQuandMeme, setScoreQuandMeme] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   if (match.byeA || match.byeB) {
@@ -85,6 +90,26 @@ export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Prop
         </button>
       );
     }
+    if (match.scoreA === null || match.scoreB === null) {
+      // Vainqueur désigné sans score.
+      return (
+        <span className="score-view score-done">
+          <strong className="score-win">
+            {match.vainqueur === 'A' ? (labelA ?? 'A') : (labelB ?? 'B')} gagne
+          </strong>
+          {!disabled && (
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={startEdit}
+              title="Corriger : saisir le score ou changer le vainqueur"
+            >
+              ✎
+            </button>
+          )}
+        </span>
+      );
+    }
     return (
       <span className="score-view score-done">
         <strong className={match.scoreA! > match.scoreB! ? 'score-win' : ''}>
@@ -109,6 +134,46 @@ export function ScoreForm({ concours, match, disabled, editOnly, onSaved }: Prop
   }
 
   if (disabled) return <span className="score-view score-tbd">—</span>;
+
+  // Concours au vainqueur seul : deux boutons, et le score reste accessible
+  // pour qui veut le noter quand même.
+  if (concours.vainqueurSeul && !scoreQuandMeme) {
+    return (
+      <span className="score-vainqueur">
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => {
+            void setMatchVainqueur(concours, match, 'A').then(() => onSaved?.());
+          }}
+        >
+          {labelA ?? 'A'} gagne
+        </button>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => {
+            void setMatchVainqueur(concours, match, 'B').then(() => onSaved?.());
+          }}
+        >
+          {labelB ?? 'B'} gagne
+        </button>
+        <button
+          type="button"
+          className="btn-icon"
+          title="Saisir le score de cette partie"
+          onClick={() => setScoreQuandMeme(true)}
+        >
+          123
+        </button>
+        {match.done && (
+          <button type="button" className="btn-icon" title="Effacer" onClick={() => void erase()}>
+            🗑
+          </button>
+        )}
+      </span>
+    );
+  }
 
   return (
     <form ref={formRef} className="score-form" onSubmit={submit} onBlur={onBlur}>

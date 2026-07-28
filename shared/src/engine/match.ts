@@ -1,11 +1,21 @@
 import type { Match } from '../types';
 
-/** Vainqueur d'une partie terminée (null sinon). */
+/**
+ * Vainqueur d'une partie terminée (null sinon).
+ *
+ * Le score prime quand il existe : il est plus riche qu'un simple vainqueur,
+ * et une correction passe toujours par lui. À défaut, on lit le vainqueur
+ * désigné à la main — les concours « ouverts à tous » se jouent souvent sans
+ * noter les points.
+ */
 export function winnerOf(m: Match | undefined | null): string | null {
   if (!m || !m.done) return null;
   if (m.byeA) return m.teamBId;
   if (m.byeB) return m.teamAId;
-  if (m.scoreA === null || m.scoreB === null) return null;
+  if (m.scoreA === null || m.scoreB === null) {
+    if (m.vainqueur) return m.vainqueur === 'A' ? m.teamAId : m.teamBId;
+    return null;
+  }
   return m.scoreA > m.scoreB ? m.teamAId : m.teamBId;
 }
 
@@ -13,7 +23,10 @@ export function winnerOf(m: Match | undefined | null): string | null {
 export function loserOf(m: Match | undefined | null): string | null {
   if (!m || !m.done) return null;
   if (m.byeA || m.byeB) return null;
-  if (m.scoreA === null || m.scoreB === null) return null;
+  if (m.scoreA === null || m.scoreB === null) {
+    if (m.vainqueur) return m.vainqueur === 'A' ? m.teamBId : m.teamAId;
+    return null;
+  }
   return m.scoreA > m.scoreB ? m.teamBId : m.teamAId;
 }
 
