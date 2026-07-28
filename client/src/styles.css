@@ -3817,6 +3817,10 @@ form label select {
   font-size: 0.88rem;
 }
 
+.indemnite-non-payee {
+  color: var(--muted);
+}
+
 /* Import d'une sauvegarde */
 .import-sauvegarde {
   cursor: pointer;

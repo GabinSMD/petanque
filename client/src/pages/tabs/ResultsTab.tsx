@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { bracketRanking, pouleOutcome, rondeStandings, type RankGroup } from '@shared';
+import {
+  bracketRanking,
+  pouleOutcome,
+  repartitionIndemnites,
+  rondeStandings,
+  type RankGroup,
+} from '@shared';
 import { updateConcours } from '../../db/actions';
 import { StandingsTable } from '../../components/StandingsTable';
 import { TeamLabel } from '../../components/TeamLabel';
@@ -183,12 +189,9 @@ function IndemnitesSection({
   const mise = concours.miseParEquipe ?? 10;
   const frais = concours.fraisPct ?? 0;
   const pot = Math.max(0, mise * nb * (1 - frais / 100));
-
-  const weights = groups.map((_, i) => 2 ** Math.max(0, groups.length - 1 - i));
-  const totalWeight = groups.reduce((s, g, i) => s + weights[i]! * g.teamIds.length, 0);
-  const perTeam = (i: number) =>
-    totalWeight > 0 ? Math.round(((pot * weights[i]!) / totalWeight) * 10) / 10 : 0;
-  const distributed = groups.reduce((s, g, i) => s + perTeam(i) * g.teamIds.length, 0);
+  const dernierRang = groups.length > 0 ? Math.max(...groups.map((g) => g.rank)) : 0;
+  const seuil = concours.indemnitesJusquAuRang;
+  const repartition = repartitionIndemnites(groups, pot, seuil, nb);
 
   return (
     <section className="result-section indemnites">
@@ -225,9 +228,35 @@ function IndemnitesSection({
                 }
               />
             </label>
+            <label>
+              Payer jusqu'au rang
+              <select
+                value={seuil ?? ''}
+                onChange={(e) =>
+                  void updateConcours({
+                    ...concours,
+                    indemnitesJusquAuRang: e.target.value === '' ? undefined : Number(e.target.value),
+                  })
+                }
+              >
+                <option value="">Tous les rangs classés</option>
+                {groups.map((g) => (
+                  <option key={g.rank} value={g.rank + g.teamIds.length - 1}>
+                    Jusqu'au rang {g.rank + g.teamIds.length - 1} — {g.label.toLowerCase()}
+                  </option>
+                ))}
+              </select>
+            </label>
             <p className="hint">
               {nb} équipes × {mise.toFixed(2)} € − {frais}% ={' '}
               <strong>{pot.toFixed(2)} € à répartir</strong>
+              {seuil !== undefined && seuil < dernierRang && (
+                <>
+                  {' '}
+                  · au-delà du rang {seuil}, les équipes repartent avec des lots ou des tickets,
+                  et tout le pot va aux rangs payés.
+                </>
+              )}
             </p>
           </div>
           <table className="rank-table">
@@ -240,12 +269,12 @@ function IndemnitesSection({
               </tr>
             </thead>
             <tbody>
-              {groups.map((g, i) => (
-                <tr key={g.rank}>
-                  <td>{g.label}</td>
-                  <td>{g.teamIds.length}</td>
-                  <td>{perTeam(i).toFixed(2)} €</td>
-                  <td>{(perTeam(i) * g.teamIds.length).toFixed(2)} €</td>
+              {repartition.lignes.map((l) => (
+                <tr key={l.rank} className={l.paye ? undefined : 'indemnite-non-payee'}>
+                  <td>{l.label}</td>
+                  <td>{l.nbEquipes}</td>
+                  <td>{l.paye ? `${l.parEquipe.toFixed(2)} €` : '— lots / tickets'}</td>
+                  <td>{l.paye ? `${l.sousTotal.toFixed(2)} €` : ''}</td>
                 </tr>
               ))}
               <tr>
@@ -254,8 +283,14 @@ function IndemnitesSection({
                   <span className="hint">(arrondi à 0,10 €)</span>
                 </td>
                 <td>
-                  <strong>{distributed.toFixed(2)} €</strong>
+                  <strong>{repartition.totalDistribue.toFixed(2)} €</strong>
                 </td>
+              </tr>
+              <tr>
+                <td colSpan={3}>
+                  Total par équipe engagée <span className="hint">({nb} équipes)</span>
+                </td>
+                <td>{repartition.parEquipeEngagee.toFixed(2)} €</td>
               </tr>
             </tbody>
           </table>

@@ -8,6 +8,7 @@ export * from './engine/depot';
 export * from './engine/federal';
 export * from './engine/formules';
 export * from './engine/impressions';
+export * from './engine/indemnites';
 export * from './engine/licenceQr';
 export * from './engine/licences';
 export * from './engine/licencesImport';
