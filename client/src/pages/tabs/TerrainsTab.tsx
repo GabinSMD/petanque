@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { dureeMinutes, partiesEnRetard, terrainBoard, waitingMatches } from '@shared';
-import { autoAssignTerrainsAction, setMatchRetard, setMatchTerrain } from '../../db/actions';
+import {
+  autoAssignTerrainsAction,
+  setMatchRetard,
+  setMatchTerrain,
+  setNbTerrains,
+  setTerrainBloque,
+} from '../../db/actions';
 import { Link } from 'react-router-dom';
 import { matchLabel, sideName } from '../../lib/matchLabel';
 
@@ -48,10 +54,16 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
   const maintenant = useMaintenant();
   const retards = partiesEnRetard(matches);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
-  const board = terrainBoard(matches, concours.nbTerrains, concours.decalageTerrain);
+  const bloques = concours.terrainsBloques ?? [];
+  const board = terrainBoard(
+    matches,
+    concours.nbTerrains,
+    concours.decalageTerrain,
+    bloques,
+  );
   const waiting = waitingMatches(matches);
   const occupied = board.filter((t) => t.match).length;
-  const free = board.length - occupied;
+  const free = board.filter((t) => !t.match && !t.bloque).length;
 
   const label = (m: Match) => matchLabel(m, poules, matches);
 
@@ -78,6 +90,24 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
           >
             🎯 Affecter automatiquement
           </button>
+          <span className="terrain-nb no-print">
+            <button
+              className="btn btn-sm"
+              title="Retirer un terrain"
+              disabled={concours.nbTerrains <= 1}
+              onClick={() => void setNbTerrains(concours, concours.nbTerrains - 1)}
+            >
+              −
+            </button>
+            <span>{concours.nbTerrains} terrains</span>
+            <button
+              className="btn btn-sm"
+              title="Ajouter un terrain"
+              onClick={() => void setNbTerrains(concours, concours.nbTerrains + 1)}
+            >
+              +
+            </button>
+          </span>
           <Link
             className="btn btn-ghost btn-sm"
             to={`/concours/${concours.id}/imprimer/parties-lancees`}
@@ -120,9 +150,20 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
         {board.map((t) => (
           <div
             key={t.number}
-            className={`terrain-cell${t.match ? ' terrain-busy' : ' terrain-free'}`}
+            className={`terrain-cell${
+              t.bloque ? ' terrain-bloque' : t.match ? ' terrain-busy' : ' terrain-free'
+            }`}
           >
-            <div className="terrain-num">Terrain {t.number}</div>
+            <div className="terrain-num">
+              Terrain {t.number}
+              <button
+                className="btn-icon no-print"
+                title={t.bloque ? 'Remettre ce terrain en service' : 'Bloquer ce terrain'}
+                onClick={() => void setTerrainBloque(concours, t.number, !t.bloque)}
+              >
+                {t.bloque ? '🔓' : '🔒'}
+              </button>
+            </div>
             {t.match ? (
               <div className="terrain-match">
                 <span className="terrain-match-label">{label(t.match)}</span>
@@ -153,6 +194,8 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
                   </button>
                 </span>
               </div>
+            ) : t.bloque ? (
+              <div className="terrain-empty">Hors service</div>
             ) : (
               <div className="terrain-empty">Libre</div>
             )}
@@ -173,7 +216,7 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
                 {free > 0 && (
                   <span className="waiting-assign no-print">
                     {board
-                      .filter((t) => !t.match)
+                      .filter((t) => !t.match && !t.bloque)
                       .slice(0, 6)
                       .map((t) => (
                         <button

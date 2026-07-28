@@ -34,7 +34,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
   const activeTeams = teams.filter((t) => !t.forfait);
-  const summary = pouleSummary(activeTeams.length);
+  const summary = pouleSummary(activeTeams.length, concours.nbTerrains);
 
   const pouleMatches = (p: Poule) => matches.filter((m) => m.pouleId === p.id);
   const outcomes = poules.map((p) => pouleOutcome(p, pouleMatches(p)));

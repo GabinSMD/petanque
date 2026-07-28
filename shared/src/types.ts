@@ -122,6 +122,12 @@ export interface Concours {
   decalageEquipe?: number;
   decalageTerrain?: number;
   /**
+   * Terrains retirés du jeu pendant le concours (manuel §3.D.1.B.5.2) :
+   * flaque d'eau, jeu réservé… Ils restent affichés mais ne sont plus
+   * attribués.
+   */
+  terrainsBloques?: number[];
+  /**
    * Critères de contrôle des licences (manuel §3.A zones 2 à 5 et 9).
    * Tous facultatifs : un concours de club n'en a pas besoin.
    */

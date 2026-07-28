@@ -116,7 +116,8 @@ export function TeamsTab({ concours, teams }: Props) {
     firstInput.current?.focus();
   };
 
-  const summary = concours.mode === 'poules' ? pouleSummary(teams.length) : null;
+  const summary =
+    concours.mode === 'poules' ? pouleSummary(teams.length, concours.nbTerrains) : null;
   const mise = concours.miseParEquipe ?? 0;
   const trackPaid = mise > 0;
   const paidCount = teams.filter((t) => t.paid && !t.forfait).length;
