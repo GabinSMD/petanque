@@ -500,6 +500,148 @@ export function buildConsolanteFromSources(
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Tableaux à entrées échelonnées                                      */
+/* ------------------------------------------------------------------ */
+
+/** Un engagé, et le tour auquel il entre dans le tableau. */
+export interface StagedEntry {
+  /** Équipe réelle. */
+  teamId?: string;
+  /** Ou place alimentée par le perdant d'une autre partie. */
+  loserFrom?: string;
+  /** 0 = première partie, 1 = cadrage, etc. */
+  round: number;
+}
+
+/**
+ * Tableau dont les engagés n'entrent pas tous au même tour — le « cadrage »
+ * du manuel, où les perdants d'un tour du concours A rejoignent la 2e partie
+ * du concours B (§3.D.4 et §3.D.13).
+ *
+ * Deux idées suffisent, et aucune ne touche à `propagate` :
+ *
+ *  - une entrée au tour `r` occupe un bloc aligné de 2^r places du premier
+ *    tour : elle y affronte des exempts, qui se résolvent d'eux-mêmes et la
+ *    déposent au tour voulu ;
+ *  - les blocs sans engagé ne donnent aucune partie — le tableau est creux —
+ *    et la place d'en face, privée d'alimentation, est marquée exempte. Le
+ *    mécanisme d'exempt existant la résout donc à n'importe quel tour.
+ *
+ * Conséquence tenue par construction : toute partie créée finit par produire
+ * un vainqueur, donc aucune ne reste bloquée avec un seul camp connu.
+ */
+export function buildStagedBracket(
+  concoursId: string,
+  stage: MatchStage,
+  entries: StagedEntry[],
+  ctx: EngineCtx,
+): Match[] {
+  if (entries.length < 2) return [];
+
+  /**
+   * Placement par blocs alignés. Les engagés du premier tour vont par paires
+   * — une partie — et les entrées différées sont réparties **entre** ces
+   * paires plutôt que tassées à gauche : sans quoi les repêchés se
+   * rencontreraient entre eux au cadrage, offrant un chemin plus facile aux
+   * autres. Répartir entre des paires préserve l'alignement, donc ne gaspille
+   * aucune place.
+   */
+  const directes = entries.filter((e) => e.round === 0);
+  const differees = entries
+    .filter((e) => e.round > 0)
+    .sort((a, b) => b.round - a.round);
+
+  type Bloc = { entries: StagedEntry[]; span: number };
+  const paires: Bloc[] = [];
+  for (let i = 0; i < directes.length; i += 2) {
+    paires.push({ entries: directes.slice(i, i + 2), span: 2 });
+  }
+  const blocsDifferes: Bloc[] = differees.map((e) => ({ entries: [e], span: 1 << e.round }));
+  const blocs = spreadEvenly(paires, blocsDifferes);
+
+  const places: { entry: StagedEntry; start: number; span: number }[] = [];
+  let curseur = 0;
+  for (const bloc of blocs) {
+    if (curseur % bloc.span !== 0) curseur += bloc.span - (curseur % bloc.span);
+    bloc.entries.forEach((entry, i) => {
+      places.push({ entry, start: curseur + i, span: bloc.entries.length > 1 ? 1 : bloc.span });
+    });
+    curseur += bloc.span;
+  }
+
+  const size = nextPow2(Math.max(curseur, 2));
+  const rounds = Math.log2(size);
+  const now = ctx.now();
+
+  /** Place → engagé qui y entre (seule la première place du bloc le porte). */
+  const parPlace = new Map<number, StagedEntry>();
+  for (const p of places) parPlace.set(p.start, p.entry);
+
+  const matches: Match[] = [];
+  /** Parties existantes, pour savoir si une place est alimentée. */
+  const existe = new Set<string>();
+
+  // Premier tour : une partie dès qu'une des deux places porte un engagé.
+  for (let position = 0; position < size / 2; position += 1) {
+    const a = parPlace.get(position * 2);
+    const b = parPlace.get(position * 2 + 1);
+    // Ni bloc vide, ni intérieur d'un bloc dont l'engagé est ailleurs : sans
+    // engagé sur l'une des deux places, aucune partie — le tour suivant
+    // traitera l'absence d'alimentation.
+    if (!a && !b) continue;
+    matches.push({
+      id: ctx.newId(),
+      concoursId,
+      stage,
+      round: 0,
+      position,
+      teamAId: a?.teamId ?? null,
+      teamBId: b?.teamId ?? null,
+      byeA: a ? undefined : true,
+      byeB: b ? undefined : true,
+      loserFromA: a?.loserFrom,
+      loserFromB: b?.loserFrom,
+      scoreA: null,
+      scoreB: null,
+      done: false,
+      terrain: null,
+      updatedAt: now,
+    });
+    existe.add(`0:${position}`);
+  }
+
+  // Tours suivants : une partie dès qu'un de ses deux enfants existe ; la
+  // place sans enfant est exempte.
+  for (let round = 1; round < rounds; round += 1) {
+    const count = size >> (round + 1);
+    for (let position = 0; position < count; position += 1) {
+      const enfantA = existe.has(`${round - 1}:${position * 2}`);
+      const enfantB = existe.has(`${round - 1}:${position * 2 + 1}`);
+      if (!enfantA && !enfantB) continue;
+      matches.push({
+        id: ctx.newId(),
+        concoursId,
+        stage,
+        round,
+        position,
+        teamAId: null,
+        teamBId: null,
+        byeA: enfantA ? undefined : true,
+        byeB: enfantB ? undefined : true,
+        scoreA: null,
+        scoreB: null,
+        done: false,
+        terrain: null,
+        updatedAt: now,
+      });
+      existe.add(`${round}:${position}`);
+    }
+  }
+
+  return applyChanges(matches, propagate(matches));
+}
+
 /**
  * Identifiants des parties « réelles » du premier tour d'un tableau (hors
  * exempts), triés par position : ce sont les sources d'un repêchage.
@@ -532,9 +674,16 @@ const ROUND_NAMES: Record<number, string> = {
   128: '64èmes de finale',
 };
 
-/** Taille du tableau (nombre de places au premier tour). */
+/**
+ * Taille du tableau, déduite du nombre de tours plutôt que du nombre de
+ * parties du premier tour : un tableau à entrées échelonnées est creux — des
+ * places du premier tour n'existent pas — et compter les parties le
+ * sous-estimerait. Pour un tableau plein, le résultat est identique.
+ */
 export function bracketSizeOf(stageMatches: Match[]): number {
-  return stageMatches.filter((m) => m.round === 0).length * 2;
+  if (stageMatches.length === 0) return 0;
+  const maxRound = Math.max(...stageMatches.map((m) => m.round));
+  return 1 << (maxRound + 1);
 }
 
 export function roundLabel(bracketSize: number, round: number, firstRoundHasByes: boolean): string {

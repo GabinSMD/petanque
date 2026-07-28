@@ -7,7 +7,7 @@
  * Chaque formule se ramène donc à une table de récupération.
  */
 import type { Formule, Match, MatchStage } from '../types';
-import { buildRecoveryBracket, type RecoveryEntry } from './bracket';
+import { buildRecoveryBracket, buildStagedBracket, type RecoveryEntry, type StagedEntry } from './bracket';
 import type { EngineCtx } from './ctx';
 import { isByeMatch } from './match';
 
@@ -46,6 +46,12 @@ export const FORMULE_RULES: Record<Formule, RecoveryRule[]> = {
     { from: 'principal', fromRound: 1, to: 'complementaire', toRound: 0 },
     LOSER_1TB,
   ],
+  abc_cd53: [
+    LOSER_1TA,
+    { from: 'principal', fromRound: 1, to: 'consolante', toRound: 1 },
+    LOSER_1TB,
+    { from: 'consolante', fromRound: 1, to: 'complementaire', toRound: 1 },
+  ],
 };
 
 /**
@@ -83,17 +89,34 @@ export function buildFormuleBrackets(
   const created: Match[] = [];
 
   for (const stage of BUILD_ORDER) {
-    const entries: RecoveryEntry[] = [];
+    const entries: { loserFrom: string; round: number }[] = [];
     for (const rule of rules.filter((r) => r.to === stage)) {
       const sources = known
         .filter((m) => m.stage === rule.from && m.round === rule.fromRound && !isByeMatch(m))
         .sort((a, b) => a.position - b.position);
       for (const s of sources) {
-        entries.push({ loserFrom: s.id, deferred: rule.toRound > 0 });
+        entries.push({ loserFrom: s.id, round: rule.toRound });
       }
     }
     if (entries.length === 0) continue;
-    const bracket = buildRecoveryBracket(concoursId, stage, entries, ctx);
+    // Sans entrée différée, on garde le constructeur simple : il répartit les
+    // exempts régulièrement, ce qui est plus équitable qu'un remplissage à
+    // gauche. Dès qu'un engagé entre à un tour avancé, seul le constructeur
+    // échelonné sait le placer.
+    const differees = entries.some((e) => e.round > 0);
+    const bracket = differees
+      ? buildStagedBracket(
+          concoursId,
+          stage,
+          entries.map((e) => ({ loserFrom: e.loserFrom, round: e.round }) satisfies StagedEntry),
+          ctx,
+        )
+      : buildRecoveryBracket(
+          concoursId,
+          stage,
+          entries.map((e) => ({ loserFrom: e.loserFrom }) satisfies RecoveryEntry),
+          ctx,
+        );
     created.push(...bracket);
     known = [...known, ...bracket];
   }

@@ -260,3 +260,63 @@ describe('poules par groupes A-B-C (§3.D.5)', () => {
     );
   });
 });
+
+describe('formule ABC CD53 (§3.D.13) : double repêchage au cadrage', () => {
+  /** Joue tout ce qui est jouable, dans tous les tableaux, jusqu'à épuisement. */
+  function jouerTout(all: Match[]): Match[] {
+    let out = all;
+    for (let garde = 0; garde < 200; garde += 1) {
+      const jouable = out.find((m) => !m.done && !isByeMatch(m) && m.teamAId && m.teamBId);
+      if (!jouable) break;
+      out = playBracketMatch(out, jouable.id, 13, 7);
+    }
+    return out;
+  }
+
+  it('le B reçoit les perdants du 2e tour de A, le C ceux du 2e tour de B', () => {
+    const ctx = testCtx();
+    const main = drawElimination('c1', 'principal', makeTeams(16), ctx);
+    const secondary = buildFormuleBrackets('c1', main, 'abc_cd53', ctx);
+    let all = jouerTout([...main, ...secondary]);
+
+    const vainqueurDe = (stage: string) => {
+      const ms = all.filter((m) => m.stage === stage);
+      const maxRound = Math.max(...ms.map((m) => m.round));
+      return loserOf(ms.find((m) => m.round === maxRound)!) === null
+        ? null
+        : ms.find((m) => m.round === maxRound)!;
+    };
+
+    // Les trois tableaux vont au bout : personne ne reste bloqué.
+    for (const stage of ['principal', 'consolante', 'complementaire']) {
+      const ms = all.filter((m) => m.stage === stage);
+      expect(ms.length, `${stage} vide`).toBeGreaterThan(0);
+      const bloquees = ms.filter(
+        (m) => !m.done && !isByeMatch(m) && ((m.teamAId && !m.teamBId) || (!m.teamAId && m.teamBId)),
+      );
+      expect(bloquees.map((m) => `${stage} ${m.round}:${m.position}`)).toEqual([]);
+      expect(vainqueurDe(stage), `${stage} sans finale jouée`).toBeTruthy();
+    }
+  });
+
+  it('un perdant du 2e tour du B entre au 2e tour du C, sans jouer le 1er', () => {
+    const ctx = testCtx();
+    const main = drawElimination('c1', 'principal', makeTeams(16), ctx);
+    const secondary = buildFormuleBrackets('c1', main, 'abc_cd53', ctx);
+    let all = [...main, ...secondary];
+
+    // Dérouler jusqu'à ce que le 2e tour du B soit jouable, puis le jouer.
+    all = jouerTout(all);
+    const bRound1 = all.filter((m) => m.stage === 'consolante' && m.round === 1 && m.done && !isByeMatch(m));
+    expect(bRound1.length).toBeGreaterThan(0);
+    const reverse = loserOf(bRound1[0]!);
+    expect(reverse).toBeTruthy();
+
+    const dansLeC = all.filter(
+      (m) => m.stage === 'complementaire' && (m.teamAId === reverse || m.teamBId === reverse),
+    );
+    expect(dansLeC.length, 'le reversé doit apparaître dans le C').toBeGreaterThan(0);
+    const premiereVraie = dansLeC.filter((m) => !isByeMatch(m)).sort((a, b) => a.round - b.round)[0];
+    if (premiereVraie) expect(premiereVraie.round).toBeGreaterThanOrEqual(1);
+  });
+});

@@ -2,6 +2,7 @@ import {
   buildChampionnat,
   buildConsolanteFromSources,
   buildFormuleBrackets,
+  buildStagedBracket,
   creerSerieTir,
   defaultCtx,
   drawElimination,
@@ -69,6 +70,8 @@ export interface ConcoursInput {
   complementaire?: boolean;
   /** Formule fédérale du tableau (élimination directe). */
   formule?: Formule;
+  /** Poules : perdants du 1er tour du tableau reversés au cadrage de la consolante. */
+  recupCadrage?: boolean;
   /** Paramètres fédéraux. */
   niveau?: NiveauConcours;
   comiteOrganisateur?: string;
@@ -332,7 +335,21 @@ export async function generateTableauFromPoules(concours: Concours): Promise<voi
     const teams = await listByConcours('team', concours.id);
     const eliminated = teams.filter((t) => eliminatedIds.includes(t.id));
     if (eliminated.length >= 2) {
-      conso = drawElimination(concours.id, 'consolante', eliminated, ctx());
+      if (concours.recupCadrage) {
+        // §3.D.4 : les éliminés de poules ouvrent la consolante, les perdants
+        // du 1er tour du tableau principal les rejoignent au cadrage.
+        conso = buildStagedBracket(
+          concours.id,
+          'consolante',
+          [
+            ...eliminated.map((t) => ({ teamId: t.id, round: 0 })),
+            ...firstRoundSources(main, 'principal').map((id) => ({ loserFrom: id, round: 1 })),
+          ],
+          ctx(),
+        );
+      } else {
+        conso = drawElimination(concours.id, 'consolante', eliminated, ctx());
+      }
       if (concours.complementaire) {
         const sources = firstRoundSources(conso, 'consolante');
         comp = buildConsolanteFromSources(concours.id, sources, ctx(), 'complementaire');
