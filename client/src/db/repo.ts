@@ -1,4 +1,5 @@
-import type { EntityType } from '@shared';
+import type { EntityType, Match } from '@shared';
+import { stampLancees } from '@shared';
 import { db, type EntityDataMap, type EntityRecord } from './local';
 import { scheduleSync } from '../sync/engine';
 
@@ -16,6 +17,22 @@ export function monotonicNow(): string {
   return new Date(t).toISOString();
 }
 
+/**
+ * Invariant fédéral : toute partie écrite porte son heure d'annonce dès que
+ * ses deux camps sont connus (manuel §3.D.1.B.3). C'est posé ici, au seul
+ * point de passage des écritures, plutôt que dans chaque action — un oubli
+ * priverait l'arbitre de son justificatif de retard. `stampLancees` n'agit que
+ * sur les parties jouables non encore horodatées : l'opération est idempotente
+ * et n'écrase jamais une heure existante.
+ */
+function horodater<T extends EntityType>(type: T, items: EntityDataMap[T][]): EntityDataMap[T][] {
+  if (type !== 'match') return items;
+  const matches = items as Match[];
+  const stamped = new Map(stampLancees(matches, new Date().toISOString()).map((m) => [m.id, m]));
+  if (stamped.size === 0) return items;
+  return matches.map((m) => stamped.get(m.id) ?? m) as EntityDataMap[T][];
+}
+
 function concoursIdOf<T extends EntityType>(type: T, data: EntityDataMap[T]): string {
   if (type === 'concours') return data.id;
   // Les licenciés sont rattachés à l'organisation, pas à un concours.
@@ -27,8 +44,9 @@ export async function putEntity<T extends EntityType>(
   type: T,
   data: EntityDataMap[T],
 ): Promise<void> {
+  const horodate = horodater(type, [data])[0]!;
   const updatedAt = monotonicNow();
-  const stamped = { ...data, updatedAt };
+  const stamped = { ...horodate, updatedAt };
   const record: EntityRecord = {
     type,
     id: data.id,
@@ -47,7 +65,7 @@ export async function bulkPutEntities<T extends EntityType>(
   items: EntityDataMap[T][],
 ): Promise<void> {
   if (items.length === 0) return;
-  const records: EntityRecord[] = items.map((data) => {
+  const records: EntityRecord[] = horodater(type, items).map((data) => {
     const updatedAt = monotonicNow();
     return {
       type,

@@ -6,6 +6,7 @@ import {
   generatePoules,
   generateTableauFromPoules,
   pouleSummary,
+  setMatchRetard,
   setMatchTerrain,
 } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
@@ -207,6 +208,40 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
  * auto) reste dans l'onglet Terrains, mais on peut assigner ou libérer
  * rapidement ici. Une fois le concours clôturé, on n'affiche que le terrain.
  */
+/**
+ * Heure d'annonce et signalement de retard, à même la partie — c'est là que
+ * regarde la table de marque (manuel §3.D.1.D, l'outil « montre »). Le
+ * panneau récapitulatif vit dans l'onglet Terrains, qui peut être masqué :
+ * cette bascule doit donc rester ici.
+ */
+function MatchRetard({ match, locked }: { match: Match; locked: boolean }) {
+  if (!match.lanceeA) return null;
+  const heure = new Date(match.lanceeA).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return (
+    <span className="pmatch-annonce">
+      <span className="terrain-heure" title="Heure d'annonce de la partie">
+        ⏱ {heure}
+      </span>
+      {!locked && !match.done && (
+        <button
+          className={match.retard ? 'btn-icon btn-icon-danger' : 'btn-icon'}
+          title={
+            match.retard
+              ? 'Lever le retard'
+              : 'Signaler un retard : le résultat n\'a pas été annoncé'
+          }
+          onClick={() => void setMatchRetard(match, !match.retard)}
+        >
+          ⏰
+        </button>
+      )}
+    </span>
+  );
+}
+
 function PouleMatchTerrain({
   match,
   locked,
@@ -357,6 +392,7 @@ function PouleCard({
                 nbTerrains={concours.nbTerrains}
                 decalageTerrain={concours.decalageTerrain}
               />
+              <MatchRetard match={m} locked={locked} />
             </div>
             <div className="pmatch-versus">
               <span className="pmatch-side">

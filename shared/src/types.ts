@@ -209,6 +209,13 @@ export interface Match {
   scoreB: number | null;
   done: boolean;
   terrain: number | null;
+  /**
+   * Heure d'annonce de la partie (ISO), posée dès que les deux camps sont
+   * connus. Justificatif des pénalités de retard : elle ne bouge plus.
+   */
+  lanceeA?: string;
+  /** Signalée à la table de marque : le résultat n'a pas été annoncé. */
+  retard?: boolean;
   updatedAt: string;
 }
 

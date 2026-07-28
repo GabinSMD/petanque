@@ -7,8 +7,16 @@
  * `PrintPage` porte l'enveloppe (en-tête, barre d'outils, lancement de
  * l'impression) ; ici on ne fait que la mise en page de chaque document.
  */
-import type { Concours, Match, Team } from '@shared';
-import { presseSections, trierEquipes, type PresseSection, type TriEquipes } from '@shared';
+import type { Concours, Match, Poule, Team } from '@shared';
+import {
+  dureeMinutes,
+  partiesLancees,
+  presseSections,
+  trierEquipes,
+  type PresseSection,
+  type TriEquipes,
+} from '@shared';
+import { matchLabel, sideName } from '../lib/matchLabel';
 
 const maj = (s: string): string => s.toLocaleUpperCase('fr-FR');
 
@@ -296,6 +304,83 @@ export function GraphiqueTableau({
           </section>
         );
       })}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Parties lancées et retards                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Relevé des heures d'annonce (manuel §3.D.1.B.3) : l'arbitre s'en sert pour
+ * les pénalités de retard. Les parties signalées en retard sont mises en
+ * évidence, et la durée est comptée jusqu'à maintenant pour celles qui
+ * tournent encore.
+ */
+export function PartiesLancees({
+  teams,
+  poules,
+  matches,
+  maintenant,
+}: {
+  teams: Team[];
+  poules: Poule[];
+  matches: Match[];
+  maintenant: string;
+}) {
+  const teamsById = new Map(teams.map((t) => [t.id, t]));
+  const lancees = partiesLancees(matches);
+  const heure = (iso: string) =>
+    new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <div className="print-liste">
+      <h2>Parties lancées</h2>
+      <p className="hint">
+        Heure d'annonce de chaque partie, justificatif des pénalités de retard.
+      </p>
+      {lancees.length === 0 ? (
+        <p>Aucune partie annoncée pour le moment.</p>
+      ) : (
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>Heure</th>
+              <th>Partie</th>
+              <th>Équipes</th>
+              <th>Terrain</th>
+              <th>Durée</th>
+              <th>État</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lancees.map((m) => (
+              <tr key={m.id} className={m.retard && !m.done ? 'print-retard' : ''}>
+                <td>{heure(m.lanceeA!)}</td>
+                <td>{matchLabel(m, poules, matches)}</td>
+                <td>
+                  {sideName(m, 'A', teamsById)} – {sideName(m, 'B', teamsById)}
+                </td>
+                <td>{m.terrain ?? ''}</td>
+                <td>{dureeMinutes(m.lanceeA!, maintenant)} min</td>
+                <td>
+                  {m.done
+                    ? `terminée ${m.scoreA}-${m.scoreB}`
+                    : m.retard
+                      ? 'RETARD SIGNALÉ'
+                      : 'en cours'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <p className="print-total">
+        {lancees.length} partie{lancees.length > 1 ? 's' : ''} annoncée
+        {lancees.length > 1 ? 's' : ''} ·{' '}
+        {lancees.filter((m) => m.retard && !m.done).length} en retard
+      </p>
     </div>
   );
 }

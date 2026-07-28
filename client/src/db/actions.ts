@@ -524,6 +524,14 @@ export async function setMatchTerrain(match: Match, terrain: number | null): Pro
 }
 
 /** Affecte automatiquement les parties en attente aux terrains libres. */
+/**
+ * Signale (ou lève) un retard sur une partie : l'équipe gagnante n'est pas
+ * venue annoncer son résultat à la table de marque (manuel §3.D.1.D).
+ */
+export async function setMatchRetard(match: Match, retard: boolean): Promise<void> {
+  await putEntity('match', { ...match, retard: retard || undefined });
+}
+
 export async function autoAssignTerrainsAction(concours: Concours): Promise<number> {
   const matches = await listByConcours('match', concours.id);
   const assignments = autoAssignTerrains(matches, concours.nbTerrains, concours.decalageTerrain);

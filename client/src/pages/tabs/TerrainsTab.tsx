@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { terrainBoard, waitingMatches } from '@shared';
-import { autoAssignTerrainsAction, setMatchTerrain } from '../../db/actions';
+import { dureeMinutes, partiesEnRetard, terrainBoard, waitingMatches } from '@shared';
+import { autoAssignTerrainsAction, setMatchRetard, setMatchTerrain } from '../../db/actions';
+import { Link } from 'react-router-dom';
 import { matchLabel, sideName } from '../../lib/matchLabel';
 
 interface Props {
@@ -16,8 +17,36 @@ interface Props {
  * attente, et affectation automatique aux terrains libres. Les terrains se
  * libèrent tout seuls dès qu'un score est saisi (la partie n'est plus live).
  */
+/** Horloge rafraîchie : les durées affichées doivent vieillir toutes seules. */
+function useMaintenant(intervalleMs = 30000): string {
+  const [now, setNow] = useState(() => new Date().toISOString());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date().toISOString()), intervalleMs);
+    return () => clearInterval(t);
+  }, [intervalleMs]);
+  return now;
+}
+
+/** « 14:32 · 12 min » — heure d'annonce et durée écoulée. */
+function HeureAnnonce({ match, maintenant }: { match: Match; maintenant: string }) {
+  if (!match.lanceeA) return null;
+  const heure = new Date(match.lanceeA).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const minutes = dureeMinutes(match.lanceeA, maintenant);
+  return (
+    <span className="terrain-heure" title="Heure d'annonce de la partie">
+      ⏱ {heure}
+      {minutes > 0 && <em> · {minutes} min</em>}
+    </span>
+  );
+}
+
 export function TerrainsTab({ concours, teams, poules, matches }: Props) {
   const [busy, setBusy] = useState(false);
+  const maintenant = useMaintenant();
+  const retards = partiesEnRetard(matches);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const board = terrainBoard(matches, concours.nbTerrains, concours.decalageTerrain);
   const waiting = waitingMatches(matches);
@@ -49,8 +78,43 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
           >
             🎯 Affecter automatiquement
           </button>
+          <Link
+            className="btn btn-ghost btn-sm"
+            to={`/concours/${concours.id}/imprimer/parties-lancees`}
+            title="Relevé des heures d'annonce, pour l'arbitre"
+          >
+            ⏱ Parties lancées
+          </Link>
         </span>
       </div>
+
+      {retards.length > 0 && (
+        <section className="retards-panel no-print">
+          <h3>⏰ Retards signalés ({retards.length})</h3>
+          <ul>
+            {retards.map((m) => (
+              <li key={m.id}>
+                <span className="waiting-label">{label(m)}</span>
+                <span className="waiting-teams">
+                  {sideName(m, 'A', teamsById)} <em>–</em> {sideName(m, 'B', teamsById)}
+                </span>
+                <HeureAnnonce match={m} maintenant={maintenant} />
+                <button
+                  className="btn btn-sm"
+                  title="Le résultat a été annoncé : lever le retard"
+                  onClick={() => void setMatchRetard(m, false)}
+                >
+                  ↩ lever
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="hint">
+            L'heure d'annonce sert de justificatif à l'arbitre. Le retard se lève de lui-même dès
+            que le score est saisi.
+          </p>
+        </section>
+      )}
 
       <div className="terrain-board">
         {board.map((t) => (
@@ -67,13 +131,27 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
                   <em> contre </em>
                   {sideName(t.match, 'B', teamsById)}
                 </span>
-                <button
-                  className="btn-icon no-print"
-                  title="Libérer ce terrain"
-                  onClick={() => void setMatchTerrain(t.match!, null)}
-                >
-                  ✕ libérer
-                </button>
+                <HeureAnnonce match={t.match} maintenant={maintenant} />
+                <span className="terrain-actions no-print">
+                  <button
+                    className={t.match.retard ? 'btn-icon btn-icon-danger' : 'btn-icon'}
+                    title={
+                      t.match.retard
+                        ? 'Lever le retard'
+                        : 'Signaler un retard : le résultat n\'a pas été annoncé'
+                    }
+                    onClick={() => void setMatchRetard(t.match!, !t.match!.retard)}
+                  >
+                    ⏰
+                  </button>
+                  <button
+                    className="btn-icon"
+                    title="Libérer ce terrain"
+                    onClick={() => void setMatchTerrain(t.match!, null)}
+                  >
+                    ✕
+                  </button>
+                </span>
               </div>
             ) : (
               <div className="terrain-empty">Libre</div>
