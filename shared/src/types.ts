@@ -251,6 +251,15 @@ export interface Match {
   /** Alimenté par le perdant de la partie référencée (consolante). */
   loserFromA?: string;
   loserFromB?: string;
+  /**
+   * Alimenté par un qualifié de poule, sous la forme `pouleId:rang` (rang 1 ou
+   * 2). La place mémorise **d'où vient** l'équipe, pas l'équipe : corriger un
+   * résultat de poule met donc le tableau à jour tout seul, comme pour les
+   * repêchages. C'est ce qui permet d'entrer au tableau au fil des poules
+   * (manuel §3.D.1.A) sans attendre la dernière.
+   */
+  qualifFromA?: string;
+  qualifFromB?: string;
   scoreA: number | null;
   scoreB: number | null;
   done: boolean;

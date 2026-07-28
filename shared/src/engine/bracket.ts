@@ -100,6 +100,18 @@ export function propagate(all: Match[]): Match[] {
     return next;
   };
 
+  /**
+   * Qualifié d'une poule : le 1er est le vainqueur de la partie des gagnants,
+   * le 2e celui du barrage. On le relit à chaque propagation plutôt que de le
+   * figer, pour qu'une correction en poule se répercute sans intervention.
+   */
+  const qualifieDe = (ref: string): string | null => {
+    const [pouleId, rang] = ref.split(':');
+    const slot = rang === '2' ? 'BARRAGE' : 'GAGNANTS';
+    const source = all.find((m) => m.pouleId === pouleId && m.pouleSlot === slot);
+    return winnerOf(source ? (cur.get(source.id) ?? source) : undefined);
+  };
+
   for (const stage of ['principal', 'consolante', 'complementaire'] as const) {
     const stageMatches = all.filter((m) => m.stage === stage);
     if (stageMatches.length === 0) continue;
@@ -115,7 +127,21 @@ export function propagate(all: Match[]): Match[] {
       for (const id of roundIds) {
         let m = cur.get(id)!;
 
-        // 1. Remplissage des places alimentées par un perdant.
+        // 1. Remplissage des places alimentées par un qualifié de poule…
+        if (m.qualifFromA) {
+          const expected = qualifieDe(m.qualifFromA);
+          if (m.teamAId !== expected) {
+            m = update(m, { teamAId: expected, scoreA: null, scoreB: null, done: false });
+          }
+        }
+        if (m.qualifFromB) {
+          const expected = qualifieDe(m.qualifFromB);
+          if (m.teamBId !== expected) {
+            m = update(m, { teamBId: expected, scoreA: null, scoreB: null, done: false });
+          }
+        }
+
+        // … ou par un perdant.
         if (m.loserFromA) {
           const src = cur.get(m.loserFromA);
           const expected = src && src.done ? loserOf(src) : null;
