@@ -78,7 +78,7 @@ describe('drawElimination', () => {
   it('évite deux équipes du même club au premier tour quand possible', () => {
     const teams = makeTeams(16).map((t, i) => ({ ...t, club: `Club ${i % 8}` }));
     const matches = drawElimination('c1', 'principal', teams, testCtx(3), {
-      avoidSameClub: true,
+      protections: [],
     });
     for (const m of matches.filter((x) => x.round === 0)) {
       const a = teams.find((t) => t.id === m.teamAId)!;

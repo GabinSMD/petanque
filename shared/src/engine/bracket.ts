@@ -2,6 +2,7 @@ import type { Match, MatchStage, Team } from '../types';
 import type { EngineCtx } from './ctx';
 import { shuffle, spreadEvenly } from './ctx';
 import { isByeMatch, loserOf, winnerOf } from './match';
+import { enConflit, type Protections } from './protections';
 import type { PouleOutcome } from './poules';
 
 /** Puissance de 2 immédiatement supérieure ou égale. */
@@ -164,7 +165,10 @@ export function propagate(all: Match[]): Match[] {
 /* ------------------------------------------------------------------ */
 
 export interface EliminationDrawOptions {
-  avoidSameClub?: boolean;
+  /** Groupes de clubs protégés ensemble (manuel §3.B.5, niveau 2). */
+  protections?: Protections;
+  /** Tirage intégralement aléatoire, sans aucune protection. */
+  sansProtection?: boolean;
   teamsById?: Map<string, Team>;
   /** Têtes de série (ids ordonnés) : placées aux positions standard du tableau. */
   seeds?: string[];
@@ -244,7 +248,8 @@ export function drawElimination(
     for (let i = 0; i < playing.length; i += 2) {
       pairs.push([playing[i]!, playing[i + 1]!]);
     }
-    if (opts.avoidSameClub) repairSameClubPairs(pairs, ctx);
+    // Protection club par défaut, comme dans le logiciel fédéral.
+    if (!opts.sansProtection) repairSameClubPairs(pairs, ctx, opts.protections ?? []);
 
     const byeUnits: Unit[] = byeTeams.map((t) => ({ a: teamSlot(t.id), b: { bye: true } }));
     const matchUnits: Unit[] = pairs.map(([a, b]) => ({ a: teamSlot(a.id), b: teamSlot(b.id) }));
@@ -255,13 +260,17 @@ export function drawElimination(
   return applyChanges(matches, propagate(matches));
 }
 
-/** Sépare (au mieux) deux équipes du même club au premier tour. */
-function repairSameClubPairs(pairs: [Team, Team][], ctx: EngineCtx): void {
+/** Sépare (au mieux) deux équipes protégées au premier tour. */
+function repairSameClubPairs(
+  pairs: [Team, Team][],
+  ctx: EngineCtx,
+  protections: Protections,
+): void {
   for (let pass = 0; pass < 3; pass++) {
     let moved = false;
     for (let i = 0; i < pairs.length; i++) {
       const [a, b] = pairs[i]!;
-      if (!a.club || a.club !== b.club) continue;
+      if (!enConflit(a, b, protections)) continue;
       const order = shuffle(
         pairs.flatMap((_, j) => (j === i ? [] : [j])),
         ctx.rng,
@@ -269,7 +278,7 @@ function repairSameClubPairs(pairs: [Team, Team][], ctx: EngineCtx): void {
       for (const j of order) {
         const [c, d] = pairs[j]!;
         // Échange b <-> d si aucune des deux paires ne reste en conflit.
-        if (a.club !== d.club && c.club !== b.club) {
+        if (!enConflit(a, d, protections) && !enConflit(c, b, protections)) {
           pairs[i] = [a, d];
           pairs[j] = [c, b];
           moved = true;

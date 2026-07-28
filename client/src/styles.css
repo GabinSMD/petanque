@@ -3877,3 +3877,51 @@ form label select {
 .player-inputs {
   flex-wrap: wrap;
 }
+
+/* Groupes de protection */
+.protections-modal {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.protections-colonnes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+}
+
+.protections-colonnes h3 {
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+
+.protections-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 15rem;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.protections-groupe > ul {
+  list-style: none;
+  margin: 0.2rem 0 0.5rem;
+  padding-left: 0.6rem;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.protections-groupe li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.protections-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}

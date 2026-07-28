@@ -133,6 +133,12 @@ export interface Concours {
   /** Équipes homogènes exigées (tous les joueurs du même club). */
   homogene?: boolean;
   /**
+   * Groupes de clubs protégés ensemble au tirage (manuel §3.B.5, niveau 2) :
+   * deux clubs d'un même village, une entente… La protection club — niveau 1 —
+   * s'applique de toute façon.
+   */
+  protections?: string[][];
+  /**
    * Licences dont le certificat médical a été validé à la main, sur
    * présentation du papier au dépôt (manuel §3.C).
    */

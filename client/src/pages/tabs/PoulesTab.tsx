@@ -11,6 +11,7 @@ import {
 } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
+import { ProtectionsModal } from '../../components/ProtectionsModal';
 import { TeamLabel } from '../../components/TeamLabel';
 import { POULE_SLOT_LABELS } from '../../lib/labels';
 
@@ -22,7 +23,9 @@ interface Props {
 }
 
 export function PoulesTab({ concours, teams, poules, matches }: Props) {
-  const [avoidSameClub, setAvoidSameClub] = useState(true);
+  // Protection club appliquée par défaut, comme dans le logiciel fédéral.
+  const [protection, setProtection] = useState(true);
+  const [groupesOuverts, setGroupesOuverts] = useState(false);
   const [seeds, setSeeds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -43,7 +46,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
     setError(null);
     setBusy(true);
     try {
-      await generatePoules(concours, avoidSameClub, seeds);
+      await generatePoules(concours, !protection, seeds);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Tirage impossible');
     } finally {
@@ -92,11 +95,27 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
           <label className="checkbox-label">
             <input
               type="checkbox"
-              checked={avoidSameClub}
-              onChange={(e) => setAvoidSameClub(e.target.checked)}
+              checked={protection}
+              onChange={(e) => setProtection(e.target.checked)}
             />
-            Éviter deux équipes du même club dans une poule
+            Protection : séparer les équipes d'un même club dans une poule
           </label>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setGroupesOuverts(true)}
+            title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
+          >
+            🛡 Groupes de protection
+            {concours.protections?.length ? ` (${concours.protections.length})` : ''}
+          </button>
+          {groupesOuverts && (
+            <ProtectionsModal
+              concours={concours}
+              teams={teams}
+              onClose={() => setGroupesOuverts(false)}
+            />
+          )}
           <SeedPicker teams={teams} seeds={seeds} onChange={setSeeds} />
           {error && <p className="form-error">{error}</p>}
           <button

@@ -42,7 +42,7 @@ describe('drawPoules', () => {
 
   it('sépare les clubs quand c\'est possible', () => {
     const teams = makeTeams(16).map((t, i) => ({ ...t, club: `Club ${i % 4}` }));
-    const draw = drawPoules('c1', teams, testCtx(7), { avoidSameClub: true })!;
+    const draw = drawPoules('c1', teams, testCtx(7), { protections: [] })!;
     for (const poule of draw.poules) {
       const clubs = poule.teamIds.map(
         (id) => teams.find((t) => t.id === id)!.club,
