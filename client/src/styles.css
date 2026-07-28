@@ -3770,6 +3770,9 @@ form label select {
 }
 
 .depot-voyant {
+  /* inline-block : sans cela, la pastille n'a pas de dimensions dans une
+     cellule de tableau (elle n'y est pas un élément flex). */
+  display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -3970,4 +3973,26 @@ form label select {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
+}
+
+/* Championnat des clubs */
+.championnat-verdict {
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin: 0.6rem 0;
+  font-weight: 600;
+}
+
+.championnat-verdict.ok {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.championnat-verdict.ko {
+  background: #f7e3e0;
+  color: var(--danger);
+}
+
+.championnat-page .print-table {
+  margin-top: 0.4rem;
 }

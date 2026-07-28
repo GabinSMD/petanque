@@ -91,6 +91,9 @@ export function DashboardPage() {
           <Link className="btn btn-sm" to="/palmares">
             🏆 Palmarès
           </Link>
+          <Link className="btn btn-sm" to="/championnat-clubs" title="Contrôle des compositions et feuille de rencontre">
+            🏅 Championnat des clubs
+          </Link>
           <ImportSauvegarde />
           <button
             className="btn btn-primary"

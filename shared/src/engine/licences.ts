@@ -14,6 +14,7 @@
  * pas certifier ce qu'on ne sait pas.
  */
 import type { CategorieAge, Licencie, Player } from '../types';
+import { estHorsUE } from './championnat';
 
 /** Champs susceptibles d'être en anomalie, tels que le manuel les surligne. */
 export type ChampLicence =
@@ -25,7 +26,7 @@ export type ChampLicence =
   | 'certificatMedical'
   | 'club';
 
-export type AnomalieEquipe = 'mixte' | 'homogeneite';
+export type AnomalieEquipe = 'mixte' | 'homogeneite' | 'mutes' | 'horsUE';
 
 export interface CriteresLicence {
   /** Année de référence du concours (bornes d'âge et validité de licence). */
@@ -49,6 +50,13 @@ export interface CriteresLicence {
    * licence saisi.
    */
   ignorerLicencesManquantes?: boolean;
+  /**
+   * Compétitions de clubs (manuel §3.E) : nombre de joueurs mutés autorisés,
+   * fixé par l'organisateur, et nombre de joueurs hors Union européenne —
+   * un seul par équipe.
+   */
+  maxMutes?: number;
+  maxHorsUE?: number;
 }
 
 export interface ControleJoueur {
@@ -211,6 +219,19 @@ export function controlerEquipe(
       anomaliesEquipe.push('mixte');
       for (const j of joueurs) if (!j.anomalies.includes('sexe')) j.anomalies.push('sexe');
     }
+  }
+
+  // Contingent de mutés (manuel §3.E) : compté sur les fiches connues.
+  if (criteres.maxMutes !== undefined) {
+    const mutes = fichesEquipe.filter((f) => f.mutation).length;
+    if (mutes > criteres.maxMutes) anomaliesEquipe.push('mutes');
+  }
+
+  // Contingent de joueurs hors UE : un seul par équipe. Une nationalité
+  // illisible ne compte pas — voir `estHorsUE`.
+  if (criteres.maxHorsUE !== undefined) {
+    const horsUE = fichesEquipe.filter((f) => estHorsUE(f.nationalite) === true).length;
+    if (horsUE > criteres.maxHorsUE) anomaliesEquipe.push('horsUE');
   }
 
   // Homogénéité : tous les joueurs du même club. Le club vient de la fiche
