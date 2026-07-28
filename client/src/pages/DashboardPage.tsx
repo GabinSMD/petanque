@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { createConcours, deleteConcours } from '../db/actions';
+import {
+  archiverConcours,
+  createConcours,
+  deleteConcours,
+  desarchiverConcours,
+} from '../db/actions';
 import { db } from '../db/local';
 import { useConcoursList } from '../db/hooks';
 import { ClubModal } from '../components/ClubModal';
@@ -20,7 +25,8 @@ import {
   isTirMode,
   statusLabel,
 } from '../lib/labels';
-import { designationCategorie } from '@shared';
+import type { Concours } from '@shared';
+import { designationCategorie, partitionArchives } from '@shared';
 
 function useTeamCounts(): Map<string, number> {
   return (
@@ -54,17 +60,20 @@ export function DashboardPage() {
   }, [searchParams, setSearchParams]);
   const [welcome, setWelcome] = useState(() => !isWelcomeDone());
   const [categoryFilter, setCategoryFilter] = useState<string>('');
+  /** Vue « archivés » (manuel §3.F.3) : les concours rangés, hors de la liste courante. */
+  const [voirArchives, setVoirArchives] = useState(false);
   const session = useSession();
+
+  const { courants, archives } = partitionArchives(concoursList ?? []);
+  const visibles = voirArchives ? archives : courants;
 
   const categories = [
     ...new Set(
-      (concoursList ?? [])
-        .map((c) => designationCategorie(c))
-        .filter((c): c is string => Boolean(c)),
+      visibles.map((c) => designationCategorie(c)).filter((c): c is string => Boolean(c)),
     ),
   ].sort((a, b) => a.localeCompare(b, 'fr'));
 
-  const filtered = (concoursList ?? []).filter(
+  const filtered = visibles.filter(
     (c) => !categoryFilter || designationCategorie(c) === categoryFilter,
   );
 
@@ -78,6 +87,23 @@ export function DashboardPage() {
     if (window.confirm(`Supprimer le concours « ${name} » et toutes ses données ?`)) {
       await deleteConcours(id);
     }
+  };
+
+  /**
+   * Ranger un concours ne perd rien, donc pas de confirmation — sauf s'il est
+   * encore en cours : le faire disparaître de la liste pendant qu'on y joue
+   * mérite une question.
+   */
+  const ranger = async (c: Concours) => {
+    if (
+      c.status !== 'termine' &&
+      !window.confirm(
+        `« ${c.name} » n'est pas terminé. L'archiver le sort de la liste courante — rien n'est perdu, il reste dans les archives. Continuer ?`,
+      )
+    ) {
+      return;
+    }
+    await archiverConcours(c);
   };
 
   return (
@@ -117,6 +143,49 @@ export function DashboardPage() {
             Créez votre premier concours : inscriptions, tirage des poules, tableaux et
             résultats — le tout utilisable même sans connexion.
           </p>
+        </div>
+      )}
+
+      {/* Liste non vide mais rien à montrer : il faut dire pourquoi, et où aller. */}
+      {filtered.length === 0 && (concoursList?.length ?? 0) > 0 && (
+        <div className="empty-state">
+          {voirArchives ? (
+            <p>Aucun concours archivé.</p>
+          ) : (
+            <>
+              <p>
+                Tous vos concours sont archivés — rien n'est perdu, ils sont rangés.
+              </p>
+              <p>
+                <button className="btn-lien" onClick={() => setVoirArchives(true)}>
+                  Voir les {archives.length} concours archivés
+                </button>
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
+      {(archives.length > 0 || voirArchives) && (
+        <div className="category-filter no-print">
+          <button
+            className={`chip-filter${voirArchives ? '' : ' active'}`}
+            onClick={() => {
+              setVoirArchives(false);
+              setCategoryFilter('');
+            }}
+          >
+            Courants ({courants.length})
+          </button>
+          <button
+            className={`chip-filter${voirArchives ? ' active' : ''}`}
+            onClick={() => {
+              setVoirArchives(true);
+              setCategoryFilter('');
+            }}
+          >
+            🗄 Archivés ({archives.length})
+          </button>
         </div>
       )}
 
@@ -162,16 +231,41 @@ export function DashboardPage() {
                   <span className={`status-chip status-${c.status}`}>
                     {statusLabel(c.mode, c.status)}
                   </span>
-                  <button
-                    className="btn-icon btn-icon-danger no-print"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void remove(c.id, c.name);
-                    }}
-                    title="Supprimer"
-                  >
-                    🗑
-                  </button>
+                  <span className="concours-card-actions no-print">
+                    {voirArchives ? (
+                      <button
+                        className="btn-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void desarchiverConcours(c);
+                        }}
+                        title="Remettre dans les concours courants"
+                      >
+                        ↩
+                      </button>
+                    ) : (
+                      <button
+                        className="btn-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void ranger(c);
+                        }}
+                        title="Archiver : sortir de la liste courante sans rien supprimer"
+                      >
+                        🗄
+                      </button>
+                    )}
+                    <button
+                      className="btn-icon btn-icon-danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void remove(c.id, c.name);
+                      }}
+                      title="Supprimer"
+                    >
+                      🗑
+                    </button>
+                  </span>
                 </div>
                 <h2>{c.name}</h2>
                 <p className="concours-card-meta">

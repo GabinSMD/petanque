@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { designationCategorie } from '@shared';
+import { designationCategorie, estArchive } from '@shared';
 import { db } from '../db/local';
 import { finalRanking } from '../lib/results';
 import { teamDisplayName } from '../components/TeamLabel';
@@ -45,6 +45,7 @@ interface Podium {
 
 export function PalmaresPage() {
   const data = usePalmaresData();
+  const [voirArchives, setVoirArchives] = useState(false);
 
   const podiums = useMemo<Podium[]>(() => {
     if (!data) return [];
@@ -71,6 +72,15 @@ export function PalmaresPage() {
     return out;
   }, [data]);
 
+  // Les concours rangés (manuel §3.F.3) sortent du palmarès courant, mais on
+  // dit toujours combien : un vainqueur ne disparaît pas en silence de
+  // l'histoire du club.
+  const nbArchives = podiums.filter((p) => estArchive(p.concours)).length;
+  const affiches = useMemo(
+    () => (voirArchives ? podiums : podiums.filter((p) => !estArchive(p.concours))),
+    [podiums, voirArchives],
+  );
+
   // Tableau d'honneur par club : victoires puis finales.
   const clubBoard = useMemo(() => {
     const map = new Map<string, { club: string; wins: number; finals: number }>();
@@ -80,12 +90,12 @@ export function PalmaresPage() {
       e[key] += 1;
       map.set(name, e);
     };
-    for (const p of podiums) {
+    for (const p of affiches) {
       for (const w of p.winners) bump(w.club, 'wins');
       for (const r of p.runnersUp) bump(r.club, 'finals');
     }
     return [...map.values()].sort((a, b) => b.wins - a.wins || b.finals - a.finals);
-  }, [podiums]);
+  }, [affiches]);
 
   if (!data) {
     return (
@@ -109,10 +119,31 @@ export function PalmaresPage() {
         </span>
       </div>
 
-      {podiums.length === 0 ? (
+      {nbArchives > 0 && (
+        <p className="hint no-print">
+          🗄 {nbArchives} concours archivé{nbArchives > 1 ? 's' : ''}{' '}
+          {voirArchives
+            ? 'compris dans ce palmarès'
+            : `exclu${nbArchives > 1 ? 's' : ''} de ce palmarès`}
+          .{' '}
+          <button className="btn-lien" onClick={() => setVoirArchives(!voirArchives)}>
+            {voirArchives ? 'Les exclure' : 'Les inclure'}
+          </button>
+        </p>
+      )}
+
+      {affiches.length === 0 ? (
         <div className="empty-state">
-          <p>Aucun concours terminé pour l'instant.</p>
-          <p>Le palmarès se remplit dès qu'un concours est clôturé.</p>
+          <p>
+            {podiums.length === 0
+              ? 'Aucun concours terminé pour l\'instant.'
+              : 'Tous les concours terminés sont archivés.'}
+          </p>
+          <p>
+            {podiums.length === 0
+              ? 'Le palmarès se remplit dès qu\'un concours est clôturé.'
+              : 'Incluez-les ci-dessus pour les revoir.'}
+          </p>
         </div>
       ) : (
         <>
@@ -129,7 +160,7 @@ export function PalmaresPage() {
                 </tr>
               </thead>
               <tbody>
-                {podiums.map((p) => (
+                {affiches.map((p) => (
                   <tr key={p.concours.id}>
                     <td>
                       <Link to={`/concours/${p.concours.id}/resultats`}>
