@@ -32,9 +32,11 @@ export type ConcoursMode =
  * - `abc_recup` : idem `abc` + perdants de la **2e** partie de A reversés au
  *   cadrage du B (§3.D.8) ;
  * - `abc_cd19` : les perdants de la 2e partie de A partent au 1er tour du C
- *   au lieu du B (§3.D.12).
+ *   au lieu du B (§3.D.12) ;
+ * - `abc_cd53` : comme `abc_recup`, plus les perdants de la 2e partie de B
+ *   reversés à la 2e partie du C (§3.D.13).
  */
-export type Formule = 'a' | 'ab' | 'abc' | 'abc_recup' | 'abc_cd19';
+export type Formule = 'a' | 'ab' | 'abc' | 'abc_recup' | 'abc_cd19' | 'abc_cd53';
 
 /** Cycle de vie d'un concours. */
 export type ConcoursStatus = 'inscriptions' | 'poules' | 'tableau' | 'rondes' | 'termine';
@@ -140,6 +142,11 @@ export interface Concours {
    * est déduite de `consolante` / `complementaire`.
    */
   formule?: Formule;
+  /**
+   * Concours par poules : les perdants du 1er tour du tableau principal
+   * rejoignent le cadrage de la consolante (manuel §3.D.4).
+   */
+  recupCadrage?: boolean;
   /** Score gagnant d'une mène complète (13 en pétanque). */
   scoreMax: number;
   nbTerrains: number;

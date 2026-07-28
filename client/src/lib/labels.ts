@@ -48,6 +48,7 @@ export const FORMULE_LABELS: Record<Formule, string> = {
   abc: 'Tableau + consolante + complémentaire',
   abc_recup: 'Avec repêchage au cadrage (A-B-C récup.)',
   abc_cd19: 'Avec repêchage vers le complémentaire (CD19)',
+  abc_cd53: 'Double repêchage au cadrage (CD53)',
 };
 
 export const FORMULE_HINTS: Record<Formule, string> = {
@@ -58,10 +59,19 @@ export const FORMULE_HINTS: Record<Formule, string> = {
     'Comme ci-dessus, et les perdants du 2e tour du tableau principal entrent directement au 2e tour de la consolante (le « cadrage ») — la formule des concours officiels A-B-C.',
   abc_cd19:
     'Comme A-B-C, mais les perdants du 2e tour du tableau principal partent au complémentaire au lieu de la consolante (usage CD19).',
+  abc_cd53:
+    'Comme le repêchage au cadrage, et en plus les perdants du 2e tour de la consolante entrent au 2e tour du complémentaire (usage CD53).',
 };
 
 /** Formules proposées à la création (élimination directe). */
-export const FORMULE_CHOICES: Formule[] = ['a', 'ab', 'abc', 'abc_recup', 'abc_cd19'];
+export const FORMULE_CHOICES: Formule[] = [
+  'a',
+  'ab',
+  'abc',
+  'abc_recup',
+  'abc_cd19',
+  'abc_cd53',
+];
 
 export interface ModeInfo {
   emoji: string;

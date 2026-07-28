@@ -53,6 +53,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [discipline, setDiscipline] = useState<Discipline>(initial?.discipline ?? 'petanque');
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
   const [complementaire, setComplementaire] = useState(initial?.complementaire ?? false);
+  const [recupCadrage, setRecupCadrage] = useState(initial?.recupCadrage ?? false);
   const [formule, setFormule] = useState<Formule>(initial ? formuleOf(initial) : 'ab');
   const [niveau, setNiveau] = useState<NiveauConcours | ''>(initial?.niveau ?? '');
   const [comiteOrganisateur, setComiteOrganisateur] = useState(initial?.comiteOrganisateur ?? '');
@@ -107,6 +108,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         : {
             consolante: MODE_INFO[mode].consolante ? consolante : false,
             complementaire: MODE_INFO[mode].consolante && consolante ? complementaire : false,
+            recupCadrage: mode === 'poules' && consolante && recupCadrage ? true : undefined,
           }),
       scoreMax,
       nbTerrains,
@@ -335,6 +337,18 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                 disabled={lockStructure}
               />
               Complémentaire (2ᵉ repêchage : perdants de la consolante)
+            </label>
+          )}
+          {consolante && mode === 'poules' && (
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={recupCadrage}
+                onChange={(e) => setRecupCadrage(e.target.checked)}
+                disabled={lockStructure}
+              />
+              Repêchage au cadrage : les perdants du 1<sup>er</sup> tour du tableau rejoignent la
+              2ᵉ partie de la consolante
             </label>
           )}
         </>
