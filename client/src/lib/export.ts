@@ -1,5 +1,5 @@
 import type { Concours, Match, Poule, Team } from '@shared';
-import { arbitrageReport, libelleClubs } from '@shared';
+import { arbitrageReport, designationCategorie, libelleClubs } from '@shared';
 import { teamDisplayName } from '../components/TeamLabel';
 import { DISCIPLINE_LABELS, FORMAT_LABELS, MODE_LABELS, NIVEAU_LABELS } from './labels';
 import { finalRanking } from './results';
@@ -173,7 +173,8 @@ export function concoursSummaryLine(concours: Concours): string {
     FORMAT_LABELS[concours.format],
     MODE_LABELS[concours.mode],
   ];
-  if (concours.category) parts.push(concours.category);
+  const categorie = designationCategorie(concours);
+  if (categorie) parts.push(categorie);
   return parts.join(' · ');
 }
 

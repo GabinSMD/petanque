@@ -5,7 +5,7 @@ import {
   terrainBoard,
   terrainNumeros,
 } from '../terrains';
-import { nomConcoursFederal, numeroPremiereEquipe } from '../federal';
+import { designationCategorie, nomConcoursFederal, numeroPremiereEquipe } from '../federal';
 import type { Match } from '../../types';
 
 function live(id: string, terrain: number | null): Match {
@@ -98,5 +98,47 @@ describe('nom fédéral du concours', () => {
         format: 'triplette',
       }),
     ).toBe('2026-05-01_COUPE-DE-FRANCE_JEU-PROVENCAL_TRIPLETTE');
+  });
+});
+
+describe('désignation de la catégorie', () => {
+  it('âge seul : rend le libellé court', () => {
+    expect(designationCategorie({ categorieAge: 'seniors' })).toBe('Séniors');
+    expect(designationCategorie({ categorieAge: 'veterans' })).toBe('Vétérans');
+  });
+
+  it('sexe + âge + classification : composé dans l ordre [Sexe] [Âge] [Classification]', () => {
+    expect(
+      designationCategorie({
+        critereSexe: 'feminin',
+        categorieAge: 'veterans',
+        critereClassification: 'promotion',
+      }),
+    ).toBe('Féminin Vétérans Promotion');
+    expect(designationCategorie({ critereSexe: 'mixte', critereClassification: 'elite' })).toBe(
+      'Mixte Élite',
+    );
+  });
+
+  it('les critères neutres (tous) sont omis', () => {
+    expect(
+      designationCategorie({
+        critereSexe: 'tous',
+        categorieAge: 'juniors',
+        critereClassification: 'tous',
+      }),
+    ).toBe('Juniors');
+  });
+
+  it('aucun critère fédéral : rend le texte libre', () => {
+    expect(designationCategorie({ category: 'Open' })).toBe('Open');
+    // Un critère fédéral prime toujours sur un texte libre concurrent.
+    expect(designationCategorie({ category: 'Vétérans', categorieAge: 'seniors' })).toBe('Séniors');
+  });
+
+  it('rien de renseigné : undefined', () => {
+    expect(designationCategorie({})).toBeUndefined();
+    expect(designationCategorie({ category: '   ' })).toBeUndefined();
+    expect(designationCategorie({ critereSexe: 'tous', critereClassification: 'tous' })).toBeUndefined();
   });
 });

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Concours, Match, Poule, Team } from '@shared';
+import { designationCategorie } from '@shared';
 import { db } from '../db/local';
 import { finalRanking } from '../lib/results';
 import { teamDisplayName } from '../components/TeamLabel';
@@ -134,8 +135,8 @@ export function PalmaresPage() {
                       <Link to={`/concours/${p.concours.id}/resultats`}>
                         {MODE_INFO[p.concours.mode].emoji} {p.concours.name}
                       </Link>
-                      {p.concours.category && (
-                        <span className="tag tag-cat">{p.concours.category}</span>
+                      {designationCategorie(p.concours) && (
+                        <span className="tag tag-cat">{designationCategorie(p.concours)}</span>
                       )}
                     </td>
                     <td className="palmares-date">{formatDateFr(p.concours.date)}</td>

@@ -20,6 +20,7 @@ import {
   isTirMode,
   statusLabel,
 } from '../lib/labels';
+import { designationCategorie } from '@shared';
 
 function useTeamCounts(): Map<string, number> {
   return (
@@ -56,11 +57,15 @@ export function DashboardPage() {
   const session = useSession();
 
   const categories = [
-    ...new Set((concoursList ?? []).map((c) => c.category).filter((c): c is string => Boolean(c))),
+    ...new Set(
+      (concoursList ?? [])
+        .map((c) => designationCategorie(c))
+        .filter((c): c is string => Boolean(c)),
+    ),
   ].sort((a, b) => a.localeCompare(b, 'fr'));
 
   const filtered = (concoursList ?? []).filter(
-    (c) => !categoryFilter || c.category === categoryFilter,
+    (c) => !categoryFilter || designationCategorie(c) === categoryFilter,
   );
 
   // Regroupement par journée (date), déjà triées du plus récent au plus ancien.
@@ -174,7 +179,9 @@ export function DashboardPage() {
                   {c.lieu ? ` · ${c.lieu}` : ''}
                 </p>
                 <p className="concours-card-tags">
-                  {c.category && <span className="tag tag-cat">{c.category}</span>}
+                  {designationCategorie(c) && (
+                    <span className="tag tag-cat">{designationCategorie(c)}</span>
+                  )}
                   {!isTirMode(c.mode) && <span className="tag">{FORMAT_LABELS[c.format]}</span>}
                   <span className="tag">
                     {MODE_INFO[c.mode].emoji} {MODE_LABELS[c.mode]}

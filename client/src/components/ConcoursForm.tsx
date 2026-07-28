@@ -10,7 +10,7 @@ import type {
   Formule,
   TeamFormat,
 } from '@shared';
-import { formuleOf, nomConcoursFederal } from '@shared';
+import { designationCategorie, formuleOf, nomConcoursFederal } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import { useLicencies } from '../db/hooks';
 import {
@@ -89,6 +89,17 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [nbRondes, setNbRondes] = useState(initial?.nbRondes ?? 4);
   const [tempsLimite, setTempsLimite] = useState<number | ''>(initial?.tempsLimite ?? '');
 
+  // Sur un concours fédéral, la catégorie découle des critères normalisés
+  // (sexe, âge, classification) — le texte libre ne s'y substitue plus (#33).
+  const critereFederalPose =
+    officiel &&
+    (categorieAge !== '' || critereSexe !== 'tous' || critereClassification !== 'tous');
+  const libelleFederal = designationCategorie({
+    categorieAge: categorieAge || undefined,
+    critereSexe,
+    critereClassification,
+  });
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void onSubmit({
@@ -98,7 +109,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       format,
       mode,
       discipline,
-      category: category.trim() || undefined,
+      // Un critère fédéral posé ⇒ pas de texte libre concurrent en base (#33).
+      category: critereFederalPose ? undefined : category.trim() || undefined,
       nbQualifies: nbQualifies === '' ? undefined : Number(nbQualifies),
       ...(mode === 'elimination_directe'
         ? {
@@ -178,17 +190,26 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         </label>
         <label>
           Catégorie
-          <input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Seniors, Vétérans, Féminines…"
-            list="form-categories"
-          />
-          <datalist id="form-categories">
-            {CATEGORY_SUGGESTIONS.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
+          {critereFederalPose ? (
+            <>
+              <input value={libelleFederal ?? ''} readOnly disabled />
+              <span className="hint">Dérivée des critères fédéraux.</span>
+            </>
+          ) : (
+            <>
+              <input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Seniors, Vétérans, Féminines…"
+                list="form-categories"
+              />
+              <datalist id="form-categories">
+                {CATEGORY_SUGGESTIONS.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </>
+          )}
         </label>
       </div>
       <div className="form-row">

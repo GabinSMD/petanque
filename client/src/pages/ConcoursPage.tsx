@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Concours, ConcoursStatus, Match, Poule, Team } from '@shared';
-import { pouleOutcome, pouleSizes, rondesTirees, seriesTirees, winnerOf } from '@shared';
+import {
+  designationCategorie,
+  pouleOutcome,
+  pouleSizes,
+  rondesTirees,
+  seriesTirees,
+  winnerOf,
+} from '@shared';
 import { updateConcours } from '../db/actions';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
@@ -111,7 +118,7 @@ export function ConcoursPage() {
             {concours.discipline === 'jeu_provencal'
               ? ` · ${DISCIPLINE_LABELS.jeu_provencal}`
               : ''}
-            {concours.category ? ` · ${concours.category}` : ''}
+            {designationCategorie(concours) ? ` · ${designationCategorie(concours)}` : ''}
             {!tirMode && ` · ${FORMAT_LABELS[concours.format]}`} · {MODE_LABELS[concours.mode]}
             {concours.consolante ? ' · Consolante' : ''}
             {!tirMode && ` · Parties en ${concours.scoreMax} pts`}

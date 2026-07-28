@@ -22,3 +22,4 @@ Manuel_GC_*.pdf
 .DS_Store
 *.log
 coverage/
+.gstack/
