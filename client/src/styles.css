@@ -4048,3 +4048,29 @@ form label select {
   display: inline-flex;
   gap: 0.15rem;
 }
+
+/* Fractionnement multisite : la saisie des sites et leurs effectifs annoncés. */
+.multisite-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.multisite-table th,
+.multisite-table td {
+  padding: 0.3rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.multisite-table input[type='number'] {
+  width: 5.5rem;
+}
+
+.multisite-effectif {
+  font-weight: 700;
+}
+
+.multisite-lien {
+  margin-top: 0.35rem;
+}

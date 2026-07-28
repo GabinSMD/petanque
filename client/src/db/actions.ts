@@ -52,8 +52,10 @@ import {
   archiver,
   buildFinales,
   desarchiver,
+  repartirEntreSites,
   classementFinales,
 } from '@shared';
+import type { Site } from '@shared';
 import { db } from './local';
 import {
   bulkPutEntities,
@@ -188,6 +190,65 @@ export async function archiverConcours(concours: Concours): Promise<void> {
 /** Remet un concours dans les listes courantes. */
 export async function desarchiverConcours(concours: Concours): Promise<void> {
   await putEntity('concours', desarchiver(concours));
+}
+
+/**
+ * Fractionne un concours en un concours par site (manuel §3.B.10.D).
+ *
+ * Les équipes sont réparties proportionnellement aux terrains de chaque site,
+ * clubs gardés ensemble. Chaque site devient un concours autonome, avec son
+ * lieu et ses terrains ; le concours d'origine est archivé — il garde la trace
+ * du fractionnement sans encombrer la liste courante.
+ *
+ * Les dossards sont conservés : les listes d'inscrits déjà imprimées restent
+ * valables. Un site peut donc avoir des numéros non contigus.
+ */
+export async function fractionnerMultisite(
+  concours: Concours,
+  sites: Site[],
+): Promise<string[]> {
+  if (concours.status !== 'inscriptions') {
+    throw new Error(
+      'Fractionnez avant le tirage : le concours doit encore être aux inscriptions',
+    );
+  }
+  // Les forfaits ne prennent pas la place de quelqu'un sur un site ; ils
+  // restent dans le concours d'origine, archivé.
+  const teams = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
+  const repartition = repartirEntreSites(teams, sites, ctx());
+  const parId = new Map(teams.map((t) => [t.id, t]));
+  const now = monotonicNow();
+
+  const crees: string[] = [];
+  for (const { site, teamIds } of repartition) {
+    const id = crypto.randomUUID();
+    const enfant: Concours = {
+      ...concours,
+      id,
+      name: `${concours.name} — ${site.nom}`,
+      lieu: site.nom,
+      nbTerrains: site.nbTerrains,
+      issuDeConcours: concours.id,
+      archiveLe: undefined,
+      status: 'inscriptions',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await putEntity('concours', enfant);
+    await bulkPutEntities(
+      'team',
+      teamIds.map((teamId) => ({
+        ...parId.get(teamId)!,
+        id: crypto.randomUUID(),
+        concoursId: id,
+        updatedAt: now,
+      })),
+    );
+    crees.push(id);
+  }
+
+  await putEntity('concours', archiver(concours, now));
+  return crees;
 }
 
 /** Concours pré-rempli pour découvrir l'application sans risque. */

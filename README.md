@@ -69,6 +69,11 @@ scores, tableaux) et se synchronise dès que le réseau revient.
   critères fédéraux quand ils existent (« Féminin Vétérans Promotion »), texte
   libre sinon —, tableau de bord regroupé par date avec filtre par catégorie —
   pratique quand un club enchaîne plusieurs concours le même jour.
+- **Fractionnement multisite** (manuel §3.B.10.D) : un concours qu'un seul
+  boulodrome ne peut accueillir se coupe en un concours par site. Les effectifs
+  suivent les terrains de chaque site, les équipes d'un même club restent
+  ensemble, les dossards sont conservés et le concours d'origine est archivé
+  comme trace.
 - **Archivage** (manuel §3.F.3) : un concours rangé sort de la liste courante
   et du palmarès sans rien perdre, et revient d'un clic. Le palmarès annonce
   toujours combien de concours archivés il laisse de côté — un vainqueur ne

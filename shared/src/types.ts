@@ -216,6 +216,11 @@ export interface Concours {
    * courantes sans rien perdre. Absente = concours courant.
    */
   archiveLe?: string;
+  /**
+   * Concours d'origine, quand celui-ci est né du fractionnement multisite
+   * (manuel §3.B.10.D). Absent = concours créé directement.
+   */
+  issuDeConcours?: string;
   note?: string;
   createdAt: string;
   updatedAt: string;
