@@ -2,7 +2,14 @@
  * Paramètres fédéraux d'un concours (manuel « Gestion Concours » §3.A) :
  * numérotation décalée et nom construit automatiquement.
  */
-import type { Discipline, NiveauConcours, TeamFormat } from '../types';
+import type {
+  CategorieAge,
+  CritereClassification,
+  CritereSexe,
+  Discipline,
+  NiveauConcours,
+  TeamFormat,
+} from '../types';
 
 /**
  * Numéro de la prochaine équipe. Le décalage sert quand un club enchaîne
@@ -70,4 +77,56 @@ export function nomConcoursFederal(p: ParamsNomFederal): string {
     p.club ? motFederal(p.club) : '',
   ];
   return parties.filter(Boolean).join('_');
+}
+
+/** Libellés courts de la catégorie d'âge, pour composer la désignation d'un concours. */
+const AGE_COURT: Record<CategorieAge, string> = {
+  veterans: 'Vétérans',
+  seniors: 'Séniors',
+  juniors: 'Juniors',
+  cadets: 'Cadets',
+  minimes: 'Minimes',
+  benjamins: 'Benjamins',
+};
+
+const SEXE_COURT: Record<Exclude<CritereSexe, 'tous'>, string> = {
+  masculin: 'Masculin',
+  feminin: 'Féminin',
+  mixte: 'Mixte',
+};
+
+const CLASSIFICATION_COURT: Record<Exclude<CritereClassification, 'tous'>, string> = {
+  elite: 'Élite',
+  honneur: 'Honneur',
+  promotion: 'Promotion',
+};
+
+export interface ParamsCategorie {
+  categorieAge?: CategorieAge;
+  critereSexe?: CritereSexe;
+  critereClassification?: CritereClassification;
+  /** Catégorie en texte libre (non fédéral, hors nomenclature : Open, Mixte…). */
+  category?: string;
+}
+
+/**
+ * Désignation de la catégorie d'un concours — source unique du libellé affiché,
+ * du regroupement et du palmarès (issue #33).
+ *
+ * Sur un concours fédéral, elle est composée des critères normalisés dans
+ * l'ordre [Sexe] [Âge] [Classification] (ex. « Féminin Vétérans Promotion ») —
+ * jamais du texte libre, qui ne peut donc plus les contredire. Sur un concours
+ * non fédéral, le texte libre est renvoyé tel quel. `undefined` si rien n'est
+ * renseigné.
+ */
+export function designationCategorie(c: ParamsCategorie): string | undefined {
+  const parties = [
+    c.critereSexe && c.critereSexe !== 'tous' ? SEXE_COURT[c.critereSexe] : '',
+    c.categorieAge ? AGE_COURT[c.categorieAge] : '',
+    c.critereClassification && c.critereClassification !== 'tous'
+      ? CLASSIFICATION_COURT[c.critereClassification]
+      : '',
+  ].filter(Boolean);
+  if (parties.length > 0) return parties.join(' ');
+  return c.category?.trim() || undefined;
 }

@@ -38,10 +38,20 @@ le texte libre reste maître pour le non-fédéral.
 
 ## Conception
 
-### 1. Helper de dérivation — `categoryLabel(concours)`
+### 1. Helper de dérivation — `designationCategorie(concours)`
 
-Nouveau helper (client, `client/src/lib/labels.ts`), source unique du libellé
-affiché / de regroupement / de palmarès :
+Nouveau helper, source unique du libellé affiché / de regroupement / de
+palmarès.
+
+**Écart assumé par rapport au premier jet de cette spec** : il est implémenté
+dans `shared/src/engine/federal.ts` et non dans `client/src/lib/labels.ts`.
+Raison : `npm test` ne couvre que le workspace `shared` — il n'existe pas de
+runner côté client. Une règle de nomenclature fédérale doit être testée, donc
+elle vit dans le moteur, à côté de `nomConcoursFederal` qui compose déjà les
+désignations fédérales. Les tables de libellés courts y sont privées ; le client
+n'appelle que le helper.
+
+Logique :
 
 ```
 categoryLabel(c):
@@ -109,7 +119,7 @@ inchangé, il produit toujours du non-fédéral cohérent.
 
 ## Tests
 
-Unitaires sur le helper (`labels.test.ts` ou nouveau fichier) :
+Unitaires sur le helper (`shared/src/engine/__tests__/federal.test.ts`) :
 
 - âge seul → libellé court (« Séniors »).
 - sexe + âge + classification → composé ordonné (« Féminin Vétérans Promotion »).

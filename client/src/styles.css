@@ -77,6 +77,13 @@ input:focus, select:focus, button:focus-visible {
   outline-offset: 1px;
 }
 
+/* Un champ verrouillé doit se voir : sinon on croit pouvoir y saisir. */
+input:disabled, select:disabled, input[readonly] {
+  background: var(--bg);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 /* ------------------------------ Layout ------------------------------ */
 
 .app {
