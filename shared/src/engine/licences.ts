@@ -213,11 +213,18 @@ export function controlerEquipe(
     }
   }
 
-  // Homogénéité : tous les joueurs connus du même club.
+  // Homogénéité : tous les joueurs du même club. Le club vient de la fiche
+  // fédérale quand elle existe, sinon de ce qui a été saisi à l'inscription —
+  // un joueur hors fichier n'échappe pas au contrôle. On compare des noms
+  // normalisés : le numéro de club ne se compare pas à un nom.
   if (criteres.homogene) {
-    const clubs = new Set(
-      fichesEquipe.map((f) => f.clubNumero ?? f.club).filter((c): c is string => Boolean(c)),
-    );
+    const clubDe = (p: Player): string | undefined => {
+      const fiche = p.licence ? fiches.get(p.licence) : undefined;
+      const nom = fiche?.club ?? p.club;
+      if (nom) return nom.trim().toLowerCase();
+      return fiche?.clubNumero?.trim().toLowerCase();
+    };
+    const clubs = new Set(players.map(clubDe).filter((c): c is string => Boolean(c)));
     if (clubs.size > 1) {
       anomaliesEquipe.push('homogeneite');
       for (const j of joueurs) if (!j.anomalies.includes('club')) j.anomalies.push('club');

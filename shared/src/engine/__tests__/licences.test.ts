@@ -233,3 +233,35 @@ describe('contrôle : sans critère ni fichier', () => {
     expect(r.joueurs.every((j) => j.anomalies.length === 0)).toBe(true);
   });
 });
+
+describe('homogénéité avec des clubs saisis à la main', () => {
+  it('un joueur hors fichier compte avec le club saisi', () => {
+    const b = base(fiche({ licence: '1', club: 'Boule Joyeuse' }));
+    const r = controlerEquipe(
+      [joueur('1'), { name: 'Sans fiche', licence: '9', club: 'Pétanque du Port' }],
+      b,
+      { ...BASE, homogene: true, ignorerLicencesManquantes: true },
+    );
+    expect(r.anomaliesEquipe).toContain('homogeneite');
+  });
+
+  it('même club saisi et fiché : homogène', () => {
+    const b = base(fiche({ licence: '1', club: 'Boule Joyeuse' }));
+    const r = controlerEquipe(
+      [joueur('1'), { name: 'Sans fiche', licence: '9', club: 'Boule Joyeuse' }],
+      b,
+      { ...BASE, homogene: true, ignorerLicencesManquantes: true },
+    );
+    expect(r.anomaliesEquipe).not.toContain('homogeneite');
+  });
+
+  it('la casse et les espaces ne créent pas de fausse anomalie', () => {
+    const b = base(fiche({ licence: '1', club: 'Boule Joyeuse' }));
+    const r = controlerEquipe(
+      [joueur('1'), { name: 'X', licence: '9', club: ' boule joyeuse ' }],
+      b,
+      { ...BASE, homogene: true, ignorerLicencesManquantes: true },
+    );
+    expect(r.anomaliesEquipe).not.toContain('homogeneite');
+  });
+});

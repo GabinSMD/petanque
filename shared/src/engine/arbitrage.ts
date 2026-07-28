@@ -15,11 +15,14 @@ import { bracketRanking } from './bracket';
 export interface ArbitragePlayerRow {
   licence?: string;
   name: string;
+  /** Club du joueur : une équipe de national peut en réunir plusieurs. */
+  club?: string;
 }
 
 export interface ArbitrageTeamRow {
   /** Numéro de dossard. */
   number: number;
+  /** Club de l'équipe : renseigné pour un concours de club, absent sinon. */
   club?: string;
   players: ArbitragePlayerRow[];
 }
@@ -69,7 +72,11 @@ export function arbitrageReport(teams: Team[], matches: Match[]): ArbitrageRepor
       .map((t) => ({
         number: t.number,
         club: t.club,
-        players: t.players.map((p) => ({ licence: p.licence, name: p.name })),
+        players: t.players.map((p) => ({
+          licence: p.licence,
+          name: p.name,
+          club: p.club ?? t.club,
+        })),
       }));
     if (rows.length > 0) sections.push({ label, teams: rows });
   }

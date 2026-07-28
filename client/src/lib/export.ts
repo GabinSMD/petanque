@@ -1,5 +1,5 @@
 import type { Concours, Match, Poule, Team } from '@shared';
-import { arbitrageReport } from '@shared';
+import { arbitrageReport, libelleClubs } from '@shared';
 import { teamDisplayName } from '../components/TeamLabel';
 import { DISCIPLINE_LABELS, FORMAT_LABELS, MODE_LABELS, NIVEAU_LABELS } from './labels';
 import { finalRanking } from './results';
@@ -50,7 +50,7 @@ export function engagesCSV(concours: Concours, teams: Team[]): string {
       t.number,
       t.players.map((p) => p.name).join(' / '),
       t.players.map((p) => p.licence ?? '').join(' / '),
-      t.club ?? '',
+      libelleClubs(t.players, t.club),
       t.forfait ? 'oui' : '',
       t.paid ? 'oui' : '',
     ]);
@@ -79,7 +79,7 @@ export function classementCSV(
         t.number,
         t.players.map((p) => p.name).join(' / '),
         t.players.map((p) => p.licence ?? '').join(' / '),
-        t.club ?? '',
+        libelleClubs(t.players, t.club),
       ]);
     }
   }
@@ -112,7 +112,7 @@ export function arbitrageCSV(concours: Concours, teams: Team[], matches: Match[]
         rows.push([
           p.licence ?? '',
           p.name.toLocaleUpperCase('fr-FR'),
-          team.club ?? '',
+          p.club ?? team.club ?? '',
           '',
           // Le n° d'équipe n'est porté que par la première ligne, comme sur
           // la feuille fédérale.

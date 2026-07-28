@@ -3868,3 +3868,12 @@ form label select {
   gap: 0.3rem;
   flex-wrap: wrap;
 }
+
+/* Un club par joueur (équipes non homogènes en national / régional) */
+.club-input-joueur {
+  min-width: 7rem;
+}
+
+.player-inputs {
+  flex-wrap: wrap;
+}

@@ -1,4 +1,5 @@
 import type { Team } from '@shared';
+import { libelleClubs } from '@shared';
 
 interface Props {
   team: Team | undefined | null;
@@ -21,7 +22,9 @@ export function TeamLabel({ team, bye, compact }: Props) {
         {teamDisplayName(team)}
         {team.forfait && ' (FF)'}
       </span>
-      {!compact && team.club && <span className="team-club">{team.club}</span>}
+      {!compact && libelleClubs(team.players, team.club) && (
+        <span className="team-club">{libelleClubs(team.players, team.club)}</span>
+      )}
     </span>
   );
 }

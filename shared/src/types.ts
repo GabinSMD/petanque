@@ -65,6 +65,12 @@ export type PouleSlot = 'M1' | 'M2' | 'GAGNANTS' | 'PERDANTS' | 'BARRAGE';
 export interface Player {
   name: string;
   licence?: string;
+  /**
+   * Club du joueur. En national et en régional, une équipe peut réunir des
+   * licenciés de clubs différents : le club appartient donc au joueur. Le
+   * champ `club` de l'équipe reste la valeur par défaut des concours de club.
+   */
+  club?: string;
 }
 
 /** Sexe porté par la licence fédérale. */

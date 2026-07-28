@@ -10,6 +10,7 @@
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
   dureeMinutes,
+  libelleClubs,
   partiesLancees,
   presseSections,
   trierEquipes,
@@ -28,7 +29,7 @@ function LigneJoueur({ team, index }: { team: Team; index: number }) {
     <div className="presse-joueur">
       {p.licence && <span className="presse-licence">{p.licence}</span>}{' '}
       <span className="presse-nom">{maj(p.name)}</span>
-      {team.club && <span className="presse-club"> ({team.club})</span>}
+      {(p.club ?? team.club) && <span className="presse-club"> ({p.club ?? team.club})</span>}
     </div>
   );
 }
@@ -81,7 +82,7 @@ export function ListeEngages({
                 <td className="cell-number">{t.number}</td>
                 <td>{joueurs.map((p) => maj(p.name)).join(' / ')}</td>
                 <td>{joueurs.map((p) => p.licence ?? '—').join(' / ')}</td>
-                <td>{t.club ?? ''}</td>
+                <td>{libelleClubs(t.players, t.club)}</td>
                 <td>{t.forfait ? 'oui' : ''}</td>
               </tr>
             );
@@ -137,7 +138,7 @@ export function BilanPaiements({
             <tr key={t.id}>
               <td className="cell-number">{t.number}</td>
               <td>{t.players.map((p) => maj(p.name)).join(' / ')}</td>
-              <td>{t.club ?? ''}</td>
+              <td>{libelleClubs(t.players, t.club)}</td>
               <td>{t.paid ? 'oui' : 'non'}</td>
               <td>{t.paid && mise > 0 ? euros(mise) : ''}</td>
             </tr>
@@ -198,7 +199,7 @@ export function ListeAbsents({ teams }: { teams: Team[] }) {
                   <td className="cell-number">{t.number}</td>
                   <td>{t.players.map((p) => maj(p.name)).join(' / ')}</td>
                   <td>{t.players.map((p) => p.licence ?? '—').join(' / ')}</td>
-                  <td>{t.club ?? ''}</td>
+                  <td>{libelleClubs(t.players, t.club)}</td>
                 </tr>
               ))}
             </tbody>

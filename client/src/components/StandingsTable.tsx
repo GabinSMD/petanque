@@ -1,4 +1,5 @@
 import type { Standing, Team } from '@shared';
+import { libelleClubs } from '@shared';
 import { teamDisplayName } from './TeamLabel';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -38,7 +39,9 @@ export function StandingsTable({ standings, teamsById, limit, compact }: Props) 
                     <span className="team-number">{team.number}</span>{' '}
                     {teamDisplayName(team)}
                     {team.forfait && ' (FF)'}
-                    {!compact && team.club && <span className="team-club"> {team.club}</span>}
+                    {!compact && libelleClubs(team.players, team.club) && (
+                      <span className="team-club"> {libelleClubs(team.players, team.club)}</span>
+                    )}
                   </>
                 ) : (
                   '…'

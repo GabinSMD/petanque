@@ -296,7 +296,7 @@ export function PrintPage() {
                         <td>{i === 0 ? team.number : ''}</td>
                         <td>{p.licence ?? ''}</td>
                         <td>{p.name.toLocaleUpperCase('fr-FR')}</td>
-                        <td>{i === 0 ? (team.club ?? '') : ''}</td>
+                        <td>{p.club ?? (i === 0 ? (team.club ?? '') : '')}</td>
                       </tr>
                     )),
                   )}
