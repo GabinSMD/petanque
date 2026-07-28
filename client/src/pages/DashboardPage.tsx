@@ -6,6 +6,7 @@ import { db } from '../db/local';
 import { useConcoursList } from '../db/hooks';
 import { ClubModal } from '../components/ClubModal';
 import { CreateConcoursWizard } from '../components/CreateConcoursWizard';
+import { ImportSauvegarde } from '../components/ImportSauvegarde';
 import { Modal } from '../components/Modal';
 import { WelcomeModal, isWelcomeDone } from '../components/WelcomeModal';
 import { useSession } from '../db/hooks';
@@ -90,6 +91,7 @@ export function DashboardPage() {
           <Link className="btn btn-sm" to="/palmares">
             🏆 Palmarès
           </Link>
+          <ImportSauvegarde />
           <button
             className="btn btn-primary"
             data-tour="new-concours"
