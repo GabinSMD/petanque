@@ -12,6 +12,7 @@ import {
 import { updateConcours } from '../db/actions';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
+import { LienMultisite } from '../components/LienMultisite';
 import { DeclarationsWatch } from '../components/DeclarationsWatch';
 import { Modal } from '../components/Modal';
 import { QuickScore } from '../components/QuickScore';
@@ -124,6 +125,7 @@ export function ConcoursPage() {
             {!tirMode && ` · Parties en ${concours.scoreMax} pts`}
             {concours.tempsLimite ? ` · Temps limité ${concours.tempsLimite} min` : ''}
           </p>
+          <LienMultisite concours={concours} />
         </div>
         <div className="concours-actions">
           <span className={`status-chip status-${concours.status}`}>

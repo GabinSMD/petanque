@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { LicenceScanModal } from '../../components/LicenceScanModal';
+import { MultisiteModal } from '../../components/MultisiteModal';
 import type { Concours, Player, RolePetanque, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
@@ -23,6 +24,7 @@ interface Props {
 
 export function TeamsTab({ concours, teams }: Props) {
   const [scanning, setScanning] = useState(false);
+  const [multisite, setMultisite] = useState(false);
   const individual = isIndividualMode(concours.mode);
   const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
   const locked = concours.status !== 'inscriptions';
@@ -152,6 +154,24 @@ export function TeamsTab({ concours, teams }: Props) {
           </button>
           <span className="hint">Caméra, douchette USB ou saisie du n° de licence.</span>
         </div>
+      )}
+
+      {/* Fractionnement multisite (manuel §3.B.10.D) : avant le tirage, et
+          seulement si l'effectif permet de donner 2 équipes à chaque site. */}
+      {!locked && teams.filter((t) => !t.forfait).length >= 4 && (
+        <div className="export-bar no-print">
+          <span className="export-bar-label">Plusieurs sites :</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setMultisite(true)}>
+            🏟 Fractionner en plusieurs sites
+          </button>
+          <span className="hint">
+            Un concours par site, quand un seul boulodrome n'a pas assez de terrains.
+          </span>
+        </div>
+      )}
+
+      {multisite && (
+        <MultisiteModal concours={concours} teams={teams} onClose={() => setMultisite(false)} />
       )}
 
       {scanning && (

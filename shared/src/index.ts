@@ -4,6 +4,7 @@ export * from './engine/match';
 export * from './engine/progressif';
 export * from './engine/protections';
 export * from './engine/qualification';
+export * from './engine/multisite';
 export * from './engine/poules';
 export * from './engine/arbitrage';
 export * from './engine/archives';
