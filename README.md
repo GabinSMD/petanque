@@ -101,6 +101,23 @@ fonction dont il se sert.
 - **Têtes de série** : au tirage, désigner les meilleures équipes pour les
   répartir dans des poules / moitiés de tableau différentes.
 
+### Championnat des clubs (mode fédéral)
+- **Contrôle des compositions** (manuel §3.E) : les cinq compétitions de clubs
+  ont leur filtre prédéfini — Coupe de France, CNC/CRC/CDC Open, Féminin,
+  Jeunes, Vétérans — avec les contingents de mutés et de joueurs hors Union
+  européenne. Une nationalité illisible n'exclut personne.
+- **Feuille de match** : la feuille remplie à la main aujourd'hui — composition
+  des deux équipes, ordre des rencontres, scores et signatures. Les points ne
+  se saisissent pas : ils découlent du vainqueur et du type de partie
+  (tête-à-tête, doublette, triplette), et l'application vérifie l'invariant que
+  la feuille rappelle en en-tête — **la somme des deux totaux est connue
+  d'avance** (36 points sur la feuille du CD26). Une feuille fausse se voit
+  avant d'être signée. Le barème est une donnée : il varie d'un comité à
+  l'autre.
+- **Retour au comité** : impression, signature des deux capitaines, puis
+  courriel préparé (objet, résultat, remarques) auquel joindre la feuille
+  signée — c'est la signature qui fait foi.
+
 ### Prise en main
 - **Création guidée en 3 étapes** : des cartes de formules en langage
   courant (« le classique des concours officiels », « idéal club & amis —
