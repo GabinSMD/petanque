@@ -18,6 +18,7 @@ import {
   pouleSizes,
   propagate,
   recomputePoule,
+  renommerIdentifiants,
   autoAssignTerrains,
   rondeComplete,
   rondesTirees,
@@ -38,6 +39,7 @@ import {
   type Match,
   type Player,
   type Poule,
+  type Sauvegarde,
   type Team,
   type TeamFormat,
 } from '@shared';
@@ -103,6 +105,48 @@ export async function createConcours(input: ConcoursInput): Promise<string> {
   };
   await putEntity('concours', concours);
   return concours.id;
+}
+
+/**
+ * Réimporte une sauvegarde (manuel §3.F.2).
+ *
+ * `nouveau` réécrit tous les identifiants : la sauvegarde arrive à côté de
+ * l'existant, sans rien écraser. `remplacer` restaure à l'identique, ce qui
+ * détruit l'état actuel du concours — y compris les entités absentes du
+ * fichier, sans quoi on obtiendrait un mélange des deux.
+ */
+export async function importSauvegarde(
+  sauvegarde: Sauvegarde,
+  mode: 'nouveau' | 'remplacer',
+): Promise<string> {
+  const s =
+    mode === 'nouveau' ? renommerIdentifiants(sauvegarde, () => crypto.randomUUID()) : sauvegarde;
+
+  if (mode === 'remplacer') {
+    // Ce que le concours contient aujourd'hui et que la sauvegarde ignore doit
+    // disparaître : une restauration n'est pas une fusion.
+    const gardes = new Set([
+      ...s.teams.map((t) => t.id),
+      ...s.poules.map((p) => p.id),
+      ...s.matches.map((m) => m.id),
+    ]);
+    const existants = await db.entities.where('concoursId').equals(s.concours.id).toArray();
+    const aSupprimer = existants
+      .filter((r) => r.deleted === 0 && r.type !== 'concours' && !gardes.has(r.id))
+      .map((r) => ({ type: r.type, id: r.id }));
+    if (aSupprimer.length > 0) await softDeleteMany(aSupprimer);
+  }
+
+  await putEntity('concours', s.concours);
+  await bulkPutEntities('team', s.teams);
+  await bulkPutEntities('poule', s.poules);
+  await bulkPutEntities('match', s.matches);
+  return s.concours.id;
+}
+
+/** Un concours de cet identifiant existe-t-il déjà sur cet appareil ? */
+export async function concoursExiste(id: string): Promise<boolean> {
+  return Boolean(await getEntity('concours', id));
 }
 
 export async function updateConcours(concours: Concours): Promise<void> {
