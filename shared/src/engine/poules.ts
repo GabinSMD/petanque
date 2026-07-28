@@ -2,6 +2,7 @@ import type { Match, Poule, Team } from '../types';
 import type { EngineCtx } from './ctx';
 import { shuffle } from './ctx';
 import { loserOf, winnerOf } from './match';
+import { clesProtection, enConflit, type Protections } from './protections';
 
 /**
  * Répartition FFPJP : poules de 4, complétées par des poules de 3
@@ -39,7 +40,14 @@ export interface PouleDraw {
 }
 
 export interface DrawPoulesOptions {
-  avoidSameClub?: boolean;
+  /**
+   * Groupes de clubs protégés ensemble (manuel §3.B.5, niveau 2). La
+   * protection club — niveau 1 — s'applique de toute façon, sauf
+   * `sansProtection`.
+   */
+  protections?: Protections;
+  /** Tirage intégralement aléatoire, sans aucune protection. */
+  sansProtection?: boolean;
   /** Têtes de série (ids ordonnés) : réparties dans des poules différentes. */
   seeds?: string[];
 }
@@ -63,8 +71,11 @@ export function drawPoules(
   const seedIds = opts.seeds ?? [];
   const byId = new Map(teams.map((t) => [t.id, t]));
 
+  const protections = opts.protections ?? [];
+
+  // Têtes de série : une par poule, en tournant. Ce n'est pas une notion
+  // fédérale — le manuel n'en parle pas — mais un confort d'organisateur.
   if (seedIds.length > 0) {
-    // Placement des têtes de série, une par poule (en tournant si besoin).
     const seeded = seedIds.map((id) => byId.get(id)).filter((t): t is Team => Boolean(t));
     let gi = 0;
     for (const team of seeded) {
@@ -76,29 +87,60 @@ export function drawPoules(
       groups[gi]!.push(team);
       gi = (gi + 1) % groups.length;
     }
-    // Répartition aléatoire du reste dans les places libres.
-    const seedSet = new Set(seedIds);
-    const rest = shuffle(
-      teams.filter((t) => !seedSet.has(t.id)),
-      ctx.rng,
-    );
+  }
+
+  const dejaPlaces = new Set(groups.flat().map((t) => t.id));
+  const reste = shuffle(
+    teams.filter((t) => !dejaPlaces.has(t.id)),
+    ctx.rng,
+  );
+
+  if (opts.sansProtection) {
+    // Tirage intégralement aléatoire : on remplit dans l'ordre du mélange.
     let ri = 0;
     for (let g = 0; g < groups.length; g++) {
-      while (groups[g]!.length < sizes[g]! && ri < rest.length) {
-        groups[g]!.push(rest[ri++]!);
+      while (groups[g]!.length < sizes[g]! && ri < reste.length) {
+        groups[g]!.push(reste[ri++]!);
       }
     }
   } else {
-    const pool = shuffle(teams, ctx.rng);
-    let offset = 0;
-    for (let g = 0; g < sizes.length; g++) {
-      groups[g] = pool.slice(offset, offset + sizes[g]!);
-      offset += sizes[g]!;
+    // Protection (manuel §3.B.5) : on distribue club par club, du club le
+    // plus représenté au moins représenté, en plaçant chaque équipe dans la
+    // poule libre où elle croise le moins de protégés. Deux équipes d'un même
+    // club ne tombent ensemble que s'il y en a plus que de poules — ce qu'une
+    // réparation par échanges ne garantissait pas.
+    const cleDe = (t: Team): string =>
+      [...clesProtection(t, protections)].sort().join('|') || `seule:${t.id}`;
+    const parCle = new Map<string, Team[]>();
+    for (const t of reste) {
+      const cle = cleDe(t);
+      const liste = parCle.get(cle) ?? [];
+      liste.push(t);
+      parCle.set(cle, liste);
     }
-  }
+    const cles = [...parCle.keys()].sort(
+      (a, b) => parCle.get(b)!.length - parCle.get(a)!.length,
+    );
 
-  if (opts.avoidSameClub) {
-    repairSameClub(groups, ctx);
+    for (const cle of cles) {
+      for (const team of parCle.get(cle)!) {
+        let meilleure = -1;
+        let meilleurCout = Number.POSITIVE_INFINITY;
+        for (let g = 0; g < groups.length; g++) {
+          if (groups[g]!.length >= sizes[g]!) continue;
+          const cout = groups[g]!.filter((t) => enConflit(t, team, protections)).length;
+          // À coût égal, la poule la moins remplie : on garde l'équilibre.
+          if (
+            cout < meilleurCout ||
+            (cout === meilleurCout && groups[g]!.length < groups[meilleure]!.length)
+          ) {
+            meilleure = g;
+            meilleurCout = cout;
+          }
+        }
+        if (meilleure >= 0) groups[meilleure]!.push(team);
+      }
+    }
   }
 
   const now = ctx.now();
@@ -119,43 +161,6 @@ export function drawPoules(
   });
 
   return { poules, matches };
-}
-
-/** Échanges bornés entre poules pour séparer les équipes d'un même club. */
-function repairSameClub(groups: Team[][], ctx: EngineCtx): void {
-  const conflict = (group: Team[], team: Team, ignoreIdx: number): boolean =>
-    group.some((t, idx) => idx !== ignoreIdx && t.club && team.club && t.club === team.club);
-
-  for (let pass = 0; pass < 4; pass++) {
-    let fixedSomething = false;
-    for (let gi = 0; gi < groups.length; gi++) {
-      const group = groups[gi]!;
-      for (let ti = 0; ti < group.length; ti++) {
-        const team = group[ti]!;
-        if (!conflict(group, team, ti)) continue;
-        // Cherche un échange qui ne crée de conflit ni ici ni là-bas.
-        const order = shuffle(
-          groups.flatMap((g, ogi) => (ogi === gi ? [] : g.map((_, oti) => [ogi, oti] as const))),
-          ctx.rng,
-        );
-        for (const [ogi, oti] of order) {
-          const other = groups[ogi]![oti]!;
-          const groupWithout = group.map((t, idx) => (idx === ti ? other : t));
-          const otherWithout = groups[ogi]!.map((t, idx) => (idx === oti ? team : t));
-          if (
-            !conflict(groupWithout, other, ti) &&
-            !conflict(otherWithout, team, oti)
-          ) {
-            group[ti] = other;
-            groups[ogi]![oti] = team;
-            fixedSomething = true;
-            break;
-          }
-        }
-      }
-    }
-    if (!fixedSomething) return;
-  }
 }
 
 const POULE_SLOT_POSITION = { M1: 0, M2: 1, GAGNANTS: 2, PERDANTS: 3, BARRAGE: 4 } as const;

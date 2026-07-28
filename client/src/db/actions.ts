@@ -322,11 +322,15 @@ export function pouleSummary(teamCount: number): string | null {
 
 export async function generatePoules(
   concours: Concours,
-  avoidSameClub: boolean,
+  sansProtection: boolean,
   seeds: string[] = [],
 ): Promise<void> {
   const teams = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
-  const draw = drawPoules(concours.id, teams, ctx(), { avoidSameClub, seeds });
+  const draw = drawPoules(concours.id, teams, ctx(), {
+    sansProtection,
+    protections: concours.protections ?? [],
+    seeds,
+  });
   if (!draw) {
     throw new Error(
       `Effectif incompatible avec des poules (${teams.length} équipes). ` +
@@ -408,12 +412,16 @@ export async function generateTableauFromPoules(concours: Concours): Promise<voi
 
 export async function generateTableauDirect(
   concours: Concours,
-  avoidSameClub: boolean,
+  sansProtection: boolean,
   seeds: string[] = [],
 ): Promise<void> {
   const teams = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
-  const main = drawElimination(concours.id, 'principal', teams, ctx(), { avoidSameClub, seeds });
+  const main = drawElimination(concours.id, 'principal', teams, ctx(), {
+    sansProtection,
+    protections: concours.protections ?? [],
+    seeds,
+  });
   // Tableaux B et C selon la formule fédérale (perdants reversés d'un
   // tableau à l'autre) — voir `buildFormuleBrackets`.
   const secondary = buildFormuleBrackets(concours.id, main, formuleOf(concours), ctx());
