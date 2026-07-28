@@ -262,6 +262,8 @@ export const ANOMALIE_LABELS: Record<ChampLicence, string> = {
 export const ANOMALIE_EQUIPE_LABELS: Record<AnomalieEquipe, string> = {
   mixte: 'équipe non mixte',
   homogeneite: 'équipe non homogène',
+  mutes: 'trop de joueurs mutés',
+  horsUE: 'plus d\'un joueur hors Union européenne',
 };
 
 export const NIVEAU_LABELS: Record<NiveauConcours, string> = {
