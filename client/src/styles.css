@@ -3925,3 +3925,29 @@ form label select {
   flex-wrap: wrap;
   margin-top: 0.5rem;
 }
+
+/* Terrains bloqués et réglage du nombre de jeux */
+.terrain-bloque {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--border),
+    var(--border) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  color: var(--muted);
+}
+
+.terrain-nb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.terrain-num {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
