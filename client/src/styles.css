@@ -4074,3 +4074,8 @@ form label select {
 .multisite-lien {
   margin-top: 0.35rem;
 }
+
+/* Réglages de l'appareil. */
+.reglages-modal .hint {
+  margin: 0.5rem 0;
+}

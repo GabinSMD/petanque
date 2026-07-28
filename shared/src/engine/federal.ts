@@ -130,3 +130,63 @@ export function designationCategorie(c: ParamsCategorie): string | undefined {
   if (parties.length > 0) return parties.join(' ');
   return c.category?.trim() || undefined;
 }
+
+/* ------------------------------------------------------------------ */
+/* Reconnaître un concours fédéral                                     */
+/* ------------------------------------------------------------------ */
+
+/** Critères de contrôle des licences (manuel §3.A zones 2 à 5 et 9). */
+export interface CriteresLicenceConcours {
+  categorieAge?: CategorieAge;
+  critereSexe?: CritereSexe;
+  critereClassification?: CritereClassification;
+  homogene?: boolean;
+}
+
+/**
+ * Le concours pose-t-il des critères de licence ? C'est ce qui déclenche le
+ * contrôle et l'écran « Dépôt des licences » : sans critère, il n'y a rien à
+ * vérifier.
+ */
+export function aDesCriteresLicence(c: CriteresLicenceConcours): boolean {
+  return Boolean(
+    c.categorieAge ||
+      c.homogene ||
+      (c.critereSexe && c.critereSexe !== 'tous') ||
+      (c.critereClassification && c.critereClassification !== 'tous'),
+  );
+}
+
+/** Ce qui n'est saisi que sous la case « concours officiel ». */
+export interface ParamsOfficiel extends CriteresLicenceConcours {
+  niveau?: NiveauConcours;
+  comiteOrganisateur?: string;
+  clubOrganisateur?: string;
+}
+
+/**
+ * Le concours a-t-il été déclaré officiel ? Plus large que les critères de
+ * licence : un concours peut porter un niveau, un comité ou un club
+ * organisateur sans imposer de critère aux licences.
+ */
+export function estConcoursOfficiel(c: ParamsOfficiel): boolean {
+  return (
+    aDesCriteresLicence(c) ||
+    Boolean(c.niveau || c.comiteOrganisateur?.trim() || c.clubOrganisateur?.trim())
+  );
+}
+
+/**
+ * Ce club a-t-il besoin du mode fédéral ? Sert à le proposer de lui-même
+ * plutôt qu'à laisser un organisateur chercher où sont passées ses fonctions :
+ * un concours officiel déjà créé, ou un fichier de licenciés importé — on ne
+ * l'importe pas pour rien — et le mode a sa raison d'être.
+ *
+ * Ce n'est qu'un défaut : un choix explicite de l'utilisateur le remplace.
+ */
+export function besoinModeFederal(p: {
+  concours: ParamsOfficiel[];
+  licencies: number;
+}): boolean {
+  return p.licencies > 0 || p.concours.some(estConcoursOfficiel);
+}

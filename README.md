@@ -6,6 +6,20 @@ Application web de gestion de concours de pétanque inspirée du logiciel
 fonctionne intégralement sans connexion au boulodrome (tirages, saisie des
 scores, tableaux) et se synchronise dès que le réseau revient.
 
+## Deux usages, une application
+
+Un club qui organise des concours amicaux n'a que faire du fichier des
+licenciés, du championnat des clubs ou des documents remis au comité. Le
+**mode fédéral** (⚙ Réglages) masque tout cela ; décoché, l'application s'en
+tient aux inscriptions, au tirage, aux poules, aux tableaux, aux scores et aux
+indemnités.
+
+Ce réglage ne change **que l'affichage**, jamais le comportement : un concours
+déjà déclaré officiel continue de contrôler ses licences, et ses écrans restent
+visibles sur lui. Il s'active de lui-même si un concours officiel existe ou si
+un fichier de licenciés a été importé — on ne cache pas à un organisateur une
+fonction dont il se sert.
+
 ## Fonctionnalités
 
 ### Gestion sportive

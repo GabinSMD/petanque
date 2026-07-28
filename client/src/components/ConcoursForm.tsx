@@ -10,9 +10,9 @@ import type {
   Formule,
   TeamFormat,
 } from '@shared';
-import { designationCategorie, formuleOf, nomConcoursFederal } from '@shared';
+import { designationCategorie, estConcoursOfficiel, formuleOf, nomConcoursFederal } from '@shared';
 import type { ConcoursInput } from '../db/actions';
-import { useLicencies } from '../db/hooks';
+import { useLicencies, useModeFederalActif } from '../db/hooks';
 import {
   CATEGORIE_AGE_LABELS,
   CATEGORY_SUGGESTIONS,
@@ -71,15 +71,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   );
   const [homogene, setHomogene] = useState(initial?.homogene ?? false);
   const [officiel, setOfficiel] = useState(
-    Boolean(
-      initial?.niveau ||
-        initial?.comiteOrganisateur ||
-        initial?.clubOrganisateur ||
-        initial?.categorieAge ||
-        initial?.homogene ||
-        (initial?.critereSexe && initial.critereSexe !== 'tous') ||
-        (initial?.critereClassification && initial.critereClassification !== 'tous'),
-    ),
+    initial ? estConcoursOfficiel(initial) : false,
   );
   const [nbQualifies, setNbQualifies] = useState<number | ''>(initial?.nbQualifies ?? '');
   const [miseParEquipe, setMiseParEquipe] = useState<number | ''>(initial?.miseParEquipe ?? '');
@@ -91,6 +83,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
 
   // Sur un concours fédéral, la catégorie découle des critères normalisés
   // (sexe, âge, classification) — le texte libre ne s'y substitue plus (#33).
+  const modeFederal = useModeFederalActif();
   const critereFederalPose =
     officiel &&
     (categorieAge !== '' || critereSexe !== 'tous' || critereClassification !== 'tous');
@@ -395,14 +388,18 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           Onglet « Plan des terrains » (décochez si vous gérez les terrains dans les poules)
         </label>
       )}
-      <label className="checkbox-label">
-        <input
-          type="checkbox"
-          checked={officiel}
-          onChange={(e) => setOfficiel(e.target.checked)}
-        />
-        Concours officiel : contrôler les licences
-      </label>
+      {/* Hors mode fédéral, la partie officielle est masquée — sauf si ce
+          concours est déjà officiel : on ne cache pas une règle en vigueur. */}
+      {(modeFederal || officiel) && (
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={officiel}
+            onChange={(e) => setOfficiel(e.target.checked)}
+          />
+          Concours officiel : contrôler les licences
+        </label>
+      )}
       {officiel && (
         <fieldset className="form-fieldset">
           <legend>Organisateur et niveau</legend>
