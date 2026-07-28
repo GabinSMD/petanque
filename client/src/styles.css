@@ -4159,6 +4159,18 @@ form label select {
   min-width: 0;
 }
 
+.feuille-menu {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.feuille-menu select {
+  width: 100%;
+}
+
 .feuille-totaux td {
   font-weight: 700;
 }

@@ -114,6 +114,38 @@ export function FeuilleMatchVerso({
 
   const joueursDe = (cote: 'a' | 'b'): JoueurFeuille[] => (cote === 'a' ? joueursA : joueursB);
 
+  /** Noms déclarés dans la composition d'un camp. */
+  const composition = (cote: 'a' | 'b'): string[] =>
+    joueursDe(cote)
+      .map((j) => j.nom.trim())
+      .filter(Boolean);
+
+  /**
+   * Qui joue effectivement dans ce bloc, pour ce camp : on ne remplace que
+   * quelqu'un qui est sur le terrain.
+   */
+  const surLeTerrain = (cote: 'a' | 'b', debut: number, nb: number): string[] => [
+    ...new Set(
+      places
+        .slice(debut, debut + nb)
+        .flatMap((p) => p[cote])
+        .map((n) => n.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  /**
+   * Liste d'un menu de remplacement. Une valeur déjà enregistrée qui n'y figure
+   * plus — composition modifiée depuis, ou feuille saisie avant les menus — est
+   * conservée et signalée : on ne perd pas une donnée en silence.
+   */
+  const optionsAvecValeur = (choix: string[], valeur: string): { nom: string; hors: boolean }[] => {
+    const liste = choix.map((nom) => ({ nom, hors: false }));
+    const v = valeur.trim();
+    if (v && !choix.includes(v)) liste.unshift({ nom: v, hors: true });
+    return liste;
+  };
+
   return (
     <section className="feuille-verso">
       <h2>Ordre des rencontres &amp; feuille de résultat</h2>
@@ -234,22 +266,45 @@ export function FeuilleMatchVerso({
                         remplace: '',
                         remplacant: '',
                       };
+                      const menus = [
+                        {
+                          cle: 'remplace' as const,
+                          etiquette: `Remplacé n°${idx + 1}`,
+                          choix: surLeTerrain(cote, bloc.debut, bloc.nb),
+                          valeur: r.remplace,
+                        },
+                        {
+                          cle: 'remplacant' as const,
+                          etiquette: `Remplaçant n°${idx + 1}`,
+                          // Toute la composition : un remplaçant n'est pas encore
+                          // sur le terrain, mais il doit être déclaré au recto.
+                          choix: composition(cote),
+                          valeur: r.remplacant,
+                        },
+                      ];
                       return (
                         <div key={idx} className="feuille-remplacement">
-                          <input
-                            value={r.remplace}
-                            placeholder={`Joueur remplacé n°${idx + 1}`}
-                            onChange={(e) =>
-                              majRemplacement(cote, bloc.type, idx, { remplace: e.target.value })
-                            }
-                          />
-                          <input
-                            value={r.remplacant}
-                            placeholder={`Joueur remplaçant n°${idx + 1}`}
-                            onChange={(e) =>
-                              majRemplacement(cote, bloc.type, idx, { remplacant: e.target.value })
-                            }
-                          />
+                          {menus.map((m) => (
+                            <label key={m.cle} className="feuille-menu">
+                              <span className="hint">{m.etiquette}</span>
+                              <select
+                                value={m.valeur}
+                                onChange={(e) =>
+                                  majRemplacement(cote, bloc.type, idx, {
+                                    [m.cle]: e.target.value,
+                                  })
+                                }
+                              >
+                                <option value="">—</option>
+                                {optionsAvecValeur(m.choix, m.valeur).map((o) => (
+                                  <option key={o.nom} value={o.nom}>
+                                    {o.nom}
+                                    {o.hors ? ' (hors composition)' : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ))}
                         </div>
                       );
                     })}
