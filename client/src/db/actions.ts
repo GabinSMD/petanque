@@ -3,6 +3,7 @@ import {
   buildConsolanteFromSources,
   buildFormuleBrackets,
   buildStagedBracket,
+  buildTableauVide,
   creerSerieTir,
   defaultCtx,
   drawElimination,
@@ -15,8 +16,10 @@ import {
   isByeMatch,
   numeroPremiereEquipe,
   pouleOutcome,
+  placerQualifie,
   pouleSizes,
   propagate,
+  qualifiesManquants,
   recomputePoule,
   renommerIdentifiants,
   autoAssignTerrains,
@@ -346,8 +349,12 @@ export async function generatePoules(
       m.terrain = numeros[i++]!;
     }
   }
+  // Tableau créé vide dès maintenant : les qualifiés y entreront au fil des
+  // poules, sans attendre la dernière (manuel §3.D.1.A).
+  const tableau = buildTableauVide(concours.id, draw.poules.length * 2, ctx());
+
   await bulkPutEntities('poule', draw.poules);
-  await bulkPutEntities('match', draw.matches);
+  await bulkPutEntities('match', [...draw.matches, ...tableau]);
   await putEntity('concours', { ...concours, status: 'poules' });
 }
 
@@ -377,7 +384,12 @@ export async function generateTableauFromPoules(concours: Concours): Promise<voi
     throw new Error('Toutes les poules doivent être terminées');
   }
 
-  const main = drawMainFromPoules(concours.id, outcomes, ctx());
+  // Le tableau principal existe déjà et s'est rempli au fil des poules. On ne
+  // le retire pas : les parties déjà jouées le seraient avec. Il n'est tiré
+  // ici que pour un concours commencé avant cette façon de faire.
+  const existants = await listByConcours('match', concours.id);
+  const dejaLa = existants.some((m) => m.stage === 'principal');
+  const main = dejaLa ? [] : drawMainFromPoules(concours.id, outcomes, ctx());
   let conso: Match[] = [];
   let comp: Match[] = [];
   if (concours.consolante) {
@@ -393,7 +405,10 @@ export async function generateTableauFromPoules(concours: Concours): Promise<voi
           'consolante',
           [
             ...eliminated.map((t) => ({ teamId: t.id, round: 0 })),
-            ...firstRoundSources(main, 'principal').map((id) => ({ loserFrom: id, round: 1 })),
+            ...firstRoundSources(dejaLa ? existants : main, 'principal').map((id) => ({
+              loserFrom: id,
+              round: 1,
+            })),
           ],
           ctx(),
         );
@@ -602,10 +617,14 @@ async function recomputeAfter(concours: Concours, match: Match): Promise<void> {
     );
     const changed = recomputePoule(poule, pouleMatches);
     await bulkPutEntities('match', changed);
+    // Une poule qui livre un qualifié le fait entrer au tableau sans attendre
+    // les autres.
+    await placerQualifiesAction(concours);
   } else {
-    const all = (await listByConcours('match', concours.id)).filter(
-      (m) => m.stage !== 'poule',
-    );
+    // Toutes les parties, poules comprises : la propagation en a besoin pour
+    // résoudre les places réservées à un qualifié de poule. Les écarter les
+    // remettrait à vide.
+    const all = await listByConcours('match', concours.id);
     const changed = propagate(all);
     await bulkPutEntities('match', changed);
   }
@@ -616,6 +635,45 @@ export async function setMatchTerrain(match: Match, terrain: number | null): Pro
 }
 
 /** Affecte automatiquement les parties en attente aux terrains libres. */
+/**
+ * Fait entrer au tableau les qualifiés désormais connus, puis propage.
+ * Appelée après chaque saisie en poule : le concours n'attend pas la poule la
+ * plus lente (manuel §3.D.1.A).
+ */
+export async function placerQualifiesAction(concours: Concours): Promise<number> {
+  if (concours.mode !== 'poules') return 0;
+  const poules = await listByConcours('poule', concours.id);
+  if (poules.length === 0) return 0;
+  let matches = await listByConcours('match', concours.id);
+  if (!matches.some((m) => m.stage === 'principal')) return 0;
+
+  const manquants = qualifiesManquants(poules, matches);
+  for (const q of manquants) matches = placerQualifie(matches, q, ctx());
+  // On propage même sans nouveau qualifié : une correction en poule change qui
+  // est 1er ou 2e, et le tableau doit suivre. Sortir tôt laisserait les cases
+  // sur l'ancienne équipe.
+
+
+  // La propagation voit tout, poules comprises : c'est dans les parties de
+  // poule qu'elle lit qui est qualifié.
+  const changed = propagate(matches);
+  const parId = new Map(changed.map((m) => [m.id, m]));
+  const refsPlacees = new Set(manquants.map((q) => q.ref));
+  // On écrit les places nouvellement réservées et tout ce que la propagation a
+  // touché, sans repasser sur le reste du tableau.
+  const aEcrire = matches
+    .filter((m) => m.stage !== 'poule')
+    .map((m) => parId.get(m.id) ?? m)
+    .filter(
+      (m) =>
+        parId.has(m.id) ||
+        (m.qualifFromA && refsPlacees.has(m.qualifFromA)) ||
+        (m.qualifFromB && refsPlacees.has(m.qualifFromB)),
+    );
+  if (aEcrire.length > 0) await bulkPutEntities('match', aEcrire);
+  return manquants.length;
+}
+
 /** Enregistre (ou annule) le dépôt des licences d'une équipe (manuel §3.C). */
 export async function setLicencesDeposees(team: Team, depose: boolean): Promise<void> {
   await putEntity('team', {

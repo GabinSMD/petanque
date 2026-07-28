@@ -230,6 +230,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
       )}
 
       <BracketView
+        poules={poules}
         concours={concours}
         stageMatches={shownMatches}
         allMatches={matches}
@@ -245,6 +246,7 @@ export function BracketView({
   stageMatches,
   allMatches,
   teamsById,
+  poules = [],
   locked,
   compact,
 }: {
@@ -252,6 +254,8 @@ export function BracketView({
   stageMatches: Match[];
   allMatches: Match[];
   teamsById: Map<string, Team>;
+  /** Pour nommer les places réservées à un qualifié (« 1ᵉʳ de poule 3 »). */
+  poules?: Poule[];
   locked: boolean;
   compact?: boolean;
 }) {
@@ -274,6 +278,13 @@ export function BracketView({
 
   const sourceLabel = (ref: string | undefined): string => {
     if (!ref) return 'À déterminer';
+    // Place réservée à un qualifié de poule : on dit laquelle, c'est plus
+    // parlant à la table de marque qu'un « à déterminer ».
+    if (ref.includes(':')) {
+      const [pouleId, rang] = ref.split(':');
+      const poule = poules.find((p) => p.id === pouleId);
+      return `${rang === '2' ? '2ᵉ' : '1ᵉʳ'} de poule ${poule?.index ?? '?'}`;
+    }
     const src = byId.get(ref);
     if (!src) return '…';
     const prefix = src.stage === 'principal' ? 'P' : '';
@@ -346,7 +357,9 @@ export function BracketView({
                       ) : m.byeA ? (
                         <span className="team-label team-bye">Exempt</span>
                       ) : m.loserFromA ? (
-                        <span className="team-label team-tbd">{sourceLabel(m.loserFromA)}</span>
+                        <span className="team-label team-tbd">
+                          {sourceLabel(m.qualifFromA ?? m.loserFromA)}
+                        </span>
                       ) : (
                         <span className="team-label team-tbd">À déterminer</span>
                       )}
@@ -364,7 +377,9 @@ export function BracketView({
                       ) : m.byeB ? (
                         <span className="team-label team-bye">Exempt</span>
                       ) : m.loserFromB ? (
-                        <span className="team-label team-tbd">{sourceLabel(m.loserFromB)}</span>
+                        <span className="team-label team-tbd">
+                          {sourceLabel(m.qualifFromB ?? m.loserFromB)}
+                        </span>
                       ) : (
                         <span className="team-label team-tbd">À déterminer</span>
                       )}

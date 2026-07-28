@@ -181,16 +181,26 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
               <button
                 className="btn btn-primary"
                 disabled={!allComplete || busy}
-                title={allComplete ? '' : 'Toutes les poules doivent être terminées'}
+                title={
+                  allComplete
+                    ? 'Clôture les poules et lance la consolante'
+                    : 'Toutes les poules doivent être terminées'
+                }
                 onClick={() => void doTableau()}
               >
-                Générer le tableau →
+                Clôturer les poules →
               </button>
             </>
           )}
+          {concours.status === 'poules' && (
+            <span className="hint">
+              Les qualifiés entrent au tableau au fil des poules : l'onglet Tableau se remplit
+              sans attendre la dernière.
+            </span>
+          )}
           {scoresLocked && (
             <span className="hint">
-              Tableau généré : annulez-le (onglet Tableau) pour corriger les poules.
+              Poules clôturées : annulez le tableau pour les corriger.
             </span>
           )}
         </span>
