@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { bracketSizeOf, isByeMatch, pouleOutcome, roundLabel, winnerOf } from '@shared';
+import { bracketSizeOf, isByeMatch, pouleOutcome, roundLabel, winnerOf, estQualificatif } from '@shared';
 import {
   cancelTableau,
   generateTableauDirect,
@@ -274,6 +274,18 @@ export function BracketView({
   const size = bracketSizeOf(stageMatches);
   const maxRound = Math.max(...stageMatches.map((m) => m.round));
   const hasByes = stageMatches.some((m) => m.round === 0 && isByeMatch(m));
+  /**
+   * Un qualificatif s'arrête avant la finale : parler de « demi-finales »
+   * serait faux. On numérote les tours, et le dernier s'appelle par ce qu'il
+   * décide — la qualification.
+   */
+  const qualificatif = estQualificatif(stageMatches, stageMatches[0]!.stage);
+  const libelleTour = (r: number): string =>
+    qualificatif
+      ? r === maxRound
+        ? 'Qualification'
+        : `Tour ${r + 1}`
+      : roundLabel(size, r, hasByes);
   const byId = new Map(allMatches.map((m) => [m.id, m]));
 
   const sourceLabel = (ref: string | undefined): string => {
@@ -314,9 +326,7 @@ export function BracketView({
                 onClick={() => toggleRound(r)}
                 title="Déplier ce tour"
               >
-                <span className="bracket-round-collapsed-title">
-                  {roundLabel(size, r, hasByes)}
-                </span>
+                <span className="bracket-round-collapsed-title">{libelleTour(r)}</span>
                 <span className="bracket-round-collapsed-meta">
                   ▸ {roundMatches.length} partie{roundMatches.length > 1 ? 's' : ''}
                   {remaining > 0 ? ` · ${remaining} à jouer` : ' · terminé'}
@@ -336,7 +346,7 @@ export function BracketView({
                   ▾
                 </button>
               )}
-              {roundLabel(size, r, hasByes)}
+              {libelleTour(r)}
             </h4>
             <div className="bracket-column">
               {/* Les exempts quittent la colonne pour un bloc unique en bas :

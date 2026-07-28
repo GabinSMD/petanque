@@ -289,17 +289,25 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         </label>
         {!isRondesMode(mode) && !isTirMode(mode) && (
           <label>
-            Qualifiés pour la suite (facultatif)
-            <input
-              type="number"
-              min={0}
-              max={512}
+            Concours qualificatif : nombre de qualifiés
+            <select
               value={nbQualifies}
-              placeholder="—"
               onChange={(e) =>
                 setNbQualifies(e.target.value === '' ? '' : Number(e.target.value))
               }
-            />
+            >
+              <option value="">Non — jouer jusqu'au vainqueur</option>
+              {[2, 4, 8, 16, 32, 64].map((n) => (
+                <option key={n} value={n}>
+                  {n} équipes qualifiées
+                </option>
+              ))}
+            </select>
+            <span className="hint">
+              Le tableau s'arrête dès que ce nombre est atteint, et la liste des qualifiés
+              s'exporte pour la phase finale. Puissances de deux uniquement : un autre nombre
+              demanderait un tour partiel que l'application ne construit pas encore.
+            </span>
           </label>
         )}
       </div>
