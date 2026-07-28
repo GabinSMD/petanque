@@ -6,7 +6,7 @@ import type { Concours, Player, RolePetanque, Team } from '@shared';
 import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
-import { controlerEquipe, libelleClubs, type ControleEquipe } from '@shared';
+import { aDesCriteresLicence, controlerEquipe, libelleClubs, type ControleEquipe } from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../../lib/labels';
 import { RegistrationsPanel } from '../../components/RegistrationsPanel';
 import {
@@ -50,12 +50,7 @@ export function TeamsTab({ concours, teams }: Props) {
 
   /* Contrôle des licences : seulement s'il y a de quoi contrôler — des
      critères fédéraux, ou au moins un fichier de licenciés importé. */
-  const criteresFederaux = Boolean(
-    concours.categorieAge ||
-      concours.homogene ||
-      (concours.critereSexe && concours.critereSexe !== 'tous') ||
-      (concours.critereClassification && concours.critereClassification !== 'tous'),
-  );
+  const criteresFederaux = aDesCriteresLicence(concours);
   const controlActif = criteresFederaux || licencies.length > 0;
   const fiches = new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l]));
   const controles = new Map<string, ControleEquipe>(

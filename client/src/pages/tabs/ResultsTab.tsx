@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { Concours, Match, MatchStage, Poule, Team } from '@shared';
 import {
   bracketRanking,
+  estConcoursOfficiel,
   nomDuBloc,
   estQualificatif,
   pouleOutcome,
@@ -12,6 +13,7 @@ import {
   type RankGroup,
 } from '@shared';
 import { updateConcours } from '../../db/actions';
+import { useModeFederalActif } from '../../db/hooks';
 import { StandingsTable } from '../../components/StandingsTable';
 import { TeamLabel } from '../../components/TeamLabel';
 import { TirRanking } from '../../components/TirRanking';
@@ -340,6 +342,9 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
   // Le rapport d'arbitrage se lit dans le tableau principal : il n'a de sens
   // que pour les formules à tableau.
   const hasBracket = matches.some((m) => m.stage === 'principal');
+  // Les documents du comité restent visibles sur un concours officiel, même si
+  // le club a masqué le mode fédéral.
+  const federal = useModeFederalActif() || estConcoursOfficiel(concours);
   // Concours qualificatif : la liste des qualifiés s'exporte pour servir
   // d'inscriptions à la phase finale.
   const idsQualifies = estQualificatif(matches, 'principal')
@@ -349,7 +354,8 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
   return (
     <div className="export-bar no-print">
       <span className="export-bar-label">Exporter :</span>
-      {hasBracket && (
+      {/* Documents remis au comité : sans objet pour un concours de club. */}
+      {hasBracket && federal && (
         <>
           <Link
             className="btn btn-ghost btn-sm"
@@ -372,14 +378,18 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
           >
             📰 Presse
           </Link>
-          <Link
-            className="btn btn-ghost btn-sm"
-            to={`/concours/${concours.id}/imprimer/graphique`}
-            title="Graphique papier, pour le suivi manuel"
-          >
-            🗂 Graphique
-          </Link>
         </>
+      )}
+      {/* Le graphique papier n'a rien de fédéral : tout club imprime son
+          tableau pour l'afficher au boulodrome. */}
+      {hasBracket && (
+        <Link
+          className="btn btn-ghost btn-sm"
+          to={`/concours/${concours.id}/imprimer/graphique`}
+          title="Graphique papier, pour le suivi manuel"
+        >
+          🗂 Graphique
+        </Link>
       )}
       <button
         className="btn btn-ghost btn-sm"

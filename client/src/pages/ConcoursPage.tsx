@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Concours, ConcoursStatus, Match, Poule, Team } from '@shared';
 import {
+  aDesCriteresLicence,
   designationCategorie,
   pouleOutcome,
   pouleSizes,
@@ -70,12 +71,7 @@ export function ConcoursPage() {
 
   const rondesMode = isRondesMode(concours.mode);
   const tirMode = isTirMode(concours.mode);
-  const controleLicences = Boolean(
-    concours.categorieAge ||
-      concours.homogene ||
-      (concours.critereSexe && concours.critereSexe !== 'tous') ||
-      (concours.critereClassification && concours.critereClassification !== 'tous'),
-  );
+  const controleLicences = aDesCriteresLicence(concours);
   const tabs = [
     {
       key: 'equipes',

@@ -8,8 +8,9 @@ import {
   desarchiverConcours,
 } from '../db/actions';
 import { db } from '../db/local';
-import { useConcoursList } from '../db/hooks';
+import { useConcoursList, useModeFederalActif } from '../db/hooks';
 import { ClubModal } from '../components/ClubModal';
+import { ReglagesModal } from '../components/ReglagesModal';
 import { CreateConcoursWizard } from '../components/CreateConcoursWizard';
 import { ImportSauvegarde } from '../components/ImportSauvegarde';
 import { Modal } from '../components/Modal';
@@ -49,6 +50,9 @@ export function DashboardPage() {
   const [creating, setCreating] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [club, setClub] = useState(false);
+  const [reglages, setReglages] = useState(false);
+  // Mode fédéral : masque ce dont un concours de club n'a que faire.
+  const federal = useModeFederalActif();
 
   // Raccourci PWA « Nouveau concours » (?nouveau=1) : ouvre l'assistant.
   useEffect(() => {
@@ -116,16 +120,27 @@ export function DashboardPage() {
               👥 Mon club
             </button>
           )}
-          <Link className="btn btn-sm" to="/licencies">
-            📇 Licenciés
-          </Link>
+          {federal && (
+            <Link className="btn btn-sm" to="/licencies">
+              📇 Licenciés
+            </Link>
+          )}
           <Link className="btn btn-sm" to="/palmares">
             🏆 Palmarès
           </Link>
-          <Link className="btn btn-sm" to="/championnat-clubs" title="Contrôle des compositions et feuille de rencontre">
-            🏅 Championnat des clubs
-          </Link>
+          {federal && (
+            <Link
+              className="btn btn-sm"
+              to="/championnat-clubs"
+              title="Contrôle des compositions et feuille de rencontre"
+            >
+              🏅 Championnat des clubs
+            </Link>
+          )}
           <ImportSauvegarde />
+          <button className="btn btn-sm" title="Réglages" onClick={() => setReglages(true)}>
+            ⚙
+          </button>
           <button
             className="btn btn-primary"
             data-tour="new-concours"
@@ -308,6 +323,7 @@ export function DashboardPage() {
       )}
 
       {club && <ClubModal onClose={() => setClub(false)} />}
+      {reglages && <ReglagesModal onClose={() => setReglages(false)} />}
       {welcome && <WelcomeModal onClose={() => setWelcome(false)} />}
     </div>
   );

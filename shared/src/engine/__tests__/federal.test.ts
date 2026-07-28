@@ -5,7 +5,15 @@ import {
   terrainBoard,
   terrainNumeros,
 } from '../terrains';
-import { designationCategorie, nomConcoursFederal, numeroPremiereEquipe } from '../federal';
+import {
+  aDesCriteresLicence,
+  besoinModeFederal,
+  designationCategorie,
+  estConcoursOfficiel,
+  nomConcoursFederal,
+  numeroPremiereEquipe,
+  type ParamsOfficiel,
+} from '../federal';
 import type { Match } from '../../types';
 
 function live(id: string, terrain: number | null): Match {
@@ -140,5 +148,57 @@ describe('désignation de la catégorie', () => {
     expect(designationCategorie({})).toBeUndefined();
     expect(designationCategorie({ category: '   ' })).toBeUndefined();
     expect(designationCategorie({ critereSexe: 'tous', critereClassification: 'tous' })).toBeUndefined();
+  });
+});
+
+describe('reconnaître un concours fédéral', () => {
+  it('sans critère, il n\'y a rien à contrôler', () => {
+    expect(aDesCriteresLicence({})).toBe(false);
+    expect(aDesCriteresLicence({ critereSexe: 'tous', critereClassification: 'tous' })).toBe(false);
+  });
+
+  it('chacun des quatre critères suffit', () => {
+    expect(aDesCriteresLicence({ categorieAge: 'veterans' })).toBe(true);
+    expect(aDesCriteresLicence({ critereSexe: 'feminin' })).toBe(true);
+    expect(aDesCriteresLicence({ critereClassification: 'elite' })).toBe(true);
+    expect(aDesCriteresLicence({ homogene: true })).toBe(true);
+  });
+
+  it('un concours officiel peut n\'avoir aucun critère de licence', () => {
+    // Un niveau, un comité ou un club organisateur ne sont saisis que sous la
+    // case « concours officiel » : leur présence suffit à le reconnaître.
+    const nationalSansCritere: ParamsOfficiel = { niveau: 'national' };
+    expect(estConcoursOfficiel(nationalSansCritere)).toBe(true);
+    expect(estConcoursOfficiel({ comiteOrganisateur: 'CD 26' })).toBe(true);
+    expect(estConcoursOfficiel({ clubOrganisateur: 'Boule de l\'Avenir' })).toBe(true);
+    // Mais il n'impose rien aux licences : rien à contrôler au dépôt.
+    expect(aDesCriteresLicence(nationalSansCritere)).toBe(false);
+  });
+
+  it('un critère de licence rend le concours officiel', () => {
+    expect(estConcoursOfficiel({ categorieAge: 'juniors' })).toBe(true);
+  });
+
+  it('un concours de club n\'est ni l\'un ni l\'autre', () => {
+    expect(estConcoursOfficiel({})).toBe(false);
+    expect(estConcoursOfficiel({ comiteOrganisateur: '   ' })).toBe(false);
+  });
+});
+
+describe('faut-il montrer le mode fédéral ?', () => {
+  it('un club qui n\'a que des concours amicaux n\'en a pas besoin', () => {
+    expect(besoinModeFederal({ concours: [{}, {}], licencies: 0 })).toBe(false);
+    expect(besoinModeFederal({ concours: [], licencies: 0 })).toBe(false);
+  });
+
+  it('un seul concours officiel suffit', () => {
+    expect(besoinModeFederal({ concours: [{}, { niveau: 'departemental' }], licencies: 0 })).toBe(
+      true,
+    );
+  });
+
+  it('un fichier de licenciés importé suffit', () => {
+    // On ne l'importe pas pour rien : c'est le signe d'un club qui joue fédéral.
+    expect(besoinModeFederal({ concours: [{}], licencies: 1200 })).toBe(true);
   });
 });

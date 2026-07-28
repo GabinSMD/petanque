@@ -2,6 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useSyncExternalStore } from 'react';
 import type { Concours, Licencie, Match, Poule, Team } from '@shared';
 import { db } from './local';
+import { besoinModeFederal } from '@shared';
+import { useModeFederal } from '../lib/modeFederal';
 import {
   getLastSyncAt,
   getSyncStatus,
@@ -65,6 +67,31 @@ export function useLicencies(): Licencie[] | undefined {
       .map((r) => r.data as Licencie)
       .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   }, []);
+}
+
+/**
+ * Nombre de licenciés importés, sans charger le fichier — il peut compter
+ * plusieurs milliers de fiches, et on n'a besoin ici que de savoir s'il existe.
+ */
+export function useLicenciesCount(): number {
+  return (
+    useLiveQuery(
+      () => db.entities.where('[type+concoursId]').equals(['licencie', '']).count(),
+      [],
+      0,
+    ) ?? 0
+  );
+}
+
+/**
+ * Le mode fédéral est-il actif ? Préférence explicite de l'utilisateur si elle
+ * existe, sinon ce que le contenu du club suggère (manuel : rien — c'est un
+ * confort d'affichage, pas une règle fédérale).
+ */
+export function useModeFederalActif(): boolean {
+  const concours = useConcoursList() ?? [];
+  const licencies = useLicenciesCount();
+  return useModeFederal(besoinModeFederal({ concours, licencies })).actif;
 }
 
 export function usePendingCount(): number {

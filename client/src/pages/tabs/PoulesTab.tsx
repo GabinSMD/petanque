@@ -12,6 +12,7 @@ import {
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
 import { ProtectionsModal } from '../../components/ProtectionsModal';
+import { useModeFederalActif } from '../../db/hooks';
 import { TeamLabel } from '../../components/TeamLabel';
 import { POULE_SLOT_LABELS } from '../../lib/labels';
 
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function PoulesTab({ concours, teams, poules, matches }: Props) {
+  const modeFederal = useModeFederalActif();
   // Protection club appliquée par défaut, comme dans le logiciel fédéral.
   const [protection, setProtection] = useState(true);
   const [groupesOuverts, setGroupesOuverts] = useState(false);
@@ -100,15 +102,19 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             />
             Protection : séparer les équipes d'un même club dans une poule
           </label>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => setGroupesOuverts(true)}
-            title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
-          >
-            🛡 Groupes de protection
-            {concours.protections?.length ? ` (${concours.protections.length})` : ''}
-          </button>
+          {/* La protection club s'applique toujours ; les groupes de clubs
+              sont un raffinement fédéral (manuel §3.B.5 niveau 2). */}
+          {(modeFederal || concours.protections?.length) && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setGroupesOuverts(true)}
+              title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
+            >
+              🛡 Groupes de protection
+              {concours.protections?.length ? ` (${concours.protections.length})` : ''}
+            </button>
+          )}
           {groupesOuverts && (
             <ProtectionsModal
               concours={concours}
