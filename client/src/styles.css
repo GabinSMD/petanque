@@ -3816,3 +3816,7 @@ form label select {
 .depot-champ-valeur {
   font-size: 0.88rem;
 }
+
+.indemnite-non-payee {
+  color: var(--muted);
+}

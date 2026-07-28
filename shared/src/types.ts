@@ -162,6 +162,11 @@ export interface Concours {
   /** Indemnités : mise par équipe (€) et frais d'organisation (%). */
   miseParEquipe?: number;
   fraisPct?: number;
+  /**
+   * Indemnités versées jusqu'à ce rang inclus ; au-delà, les équipes
+   * repartent avec des lots ou des tickets. Absent = tous les rangs classés.
+   */
+  indemnitesJusquAuRang?: number;
   status: ConcoursStatus;
   note?: string;
   createdAt: string;
