@@ -3668,3 +3668,151 @@ form label select {
   gap: 0.25rem;
   margin-left: auto;
 }
+
+/* Dépôt des licences */
+.depot-stats {
+  margin-bottom: 0.8rem;
+}
+
+.depot-stats p {
+  margin: 0.3rem 0 0;
+  font-size: 0.92rem;
+}
+
+.depot-jauge {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.depot-jauge-remplie {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.depot-alerte {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.depot-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.depot-equipe {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.depot-equipe-ouverte {
+  border-color: var(--accent);
+}
+
+.depot-entete {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  flex-wrap: wrap;
+}
+
+.depot-num {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.depot-joueurs {
+  flex: 1;
+  min-width: 8rem;
+}
+
+.depot-detail {
+  padding: 0.6rem 0.75rem 0.8rem;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 0.7rem;
+}
+
+.depot-joueur {
+  display: grid;
+  gap: 0.4rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px dashed var(--border);
+}
+
+.depot-joueur:last-of-type {
+  border-bottom: 0;
+}
+
+.depot-joueur-tete {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.depot-joueur-tete input {
+  flex: 1;
+  min-width: 7rem;
+}
+
+.depot-voyant {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.depot-voyant-ok {
+  background: #2e9e5b;
+}
+
+.depot-voyant-ko {
+  background: #d0342c;
+}
+
+.depot-champs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.3rem 0.6rem;
+}
+
+.depot-champ {
+  display: grid;
+  border-radius: 6px;
+  padding: 0.15rem 0.35rem;
+}
+
+.depot-champ-faute {
+  background: #f7e3e0;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.depot-champ-libelle {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.depot-champ-faute .depot-champ-libelle {
+  color: var(--danger);
+}
+
+.depot-champ-valeur {
+  font-size: 0.88rem;
+}
