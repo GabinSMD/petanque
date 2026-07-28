@@ -399,7 +399,13 @@ function PouleCard({
                 <TeamLabel team={m.teamAId ? teamsById.get(m.teamAId) : null} compact />
               </span>
               <div className="pmatch-score">
-                <ScoreForm concours={concours} match={m} disabled={locked} />
+                <ScoreForm
+                  concours={concours}
+                  match={m}
+                  labelA={m.teamAId ? `n°${teamsById.get(m.teamAId)?.number ?? '?'}` : undefined}
+                  labelB={m.teamBId ? `n°${teamsById.get(m.teamBId)?.number ?? '?'}` : undefined}
+                  disabled={locked}
+                />
               </div>
               <span className="pmatch-side pmatch-side-right">
                 <TeamLabel team={m.teamBId ? teamsById.get(m.teamBId) : null} compact />

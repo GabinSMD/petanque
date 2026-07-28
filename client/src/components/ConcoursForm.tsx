@@ -54,6 +54,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
   const [complementaire, setComplementaire] = useState(initial?.complementaire ?? false);
   const [recupCadrage, setRecupCadrage] = useState(initial?.recupCadrage ?? false);
+  const [vainqueurSeul, setVainqueurSeul] = useState(initial?.vainqueurSeul ?? false);
   const [formule, setFormule] = useState<Formule>(initial ? formuleOf(initial) : 'ab');
   const [niveau, setNiveau] = useState<NiveauConcours | ''>(initial?.niveau ?? '');
   const [comiteOrganisateur, setComiteOrganisateur] = useState(initial?.comiteOrganisateur ?? '');
@@ -115,6 +116,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       planTerrains,
       nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
       tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
+      // En rondes, le classement se fait au goal-average : le score est requis.
+      vainqueurSeul: !isRondesMode(mode) && !isTirMode(mode) && vainqueurSeul ? true : undefined,
       miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
       niveau: officiel && niveau !== '' ? niveau : undefined,
       comiteOrganisateur: officiel ? comiteOrganisateur.trim() || undefined : undefined,
@@ -442,6 +445,20 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             ⤒ Reprendre le nom fédéral
           </button>
         </fieldset>
+      )}
+      {!isRondesMode(mode) && !isTirMode(mode) && (
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={vainqueurSeul}
+            onChange={(e) => setVainqueurSeul(e.target.checked)}
+          />
+          Saisie rapide : désigner le vainqueur sans noter le score
+          <span className="hint">
+            Pour un concours ouvert à tous, où le score n'a pas d'enjeu. Le score reste saisissable
+            partie par partie.
+          </span>
+        </label>
       )}
       <details className="form-details">
         <summary>Numérotation — plusieurs concours le même jour</summary>

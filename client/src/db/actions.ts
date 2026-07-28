@@ -74,6 +74,8 @@ export interface ConcoursInput {
   formule?: Formule;
   /** Poules : perdants du 1er tour du tableau reversés au cadrage de la consolante. */
   recupCadrage?: boolean;
+  /** Désigner le vainqueur sans saisir le score. */
+  vainqueurSeul?: boolean;
   /** Paramètres fédéraux. */
   niveau?: NiveauConcours;
   comiteOrganisateur?: string;
@@ -543,6 +545,20 @@ export async function clearTirScore(match: Match): Promise<void> {
 /* Scores                                                              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Désigne le vainqueur d'une partie sans saisir le score (concours « ouvert à
+ * tous »). On efface les scores éventuels : garder les deux serait ambigu, et
+ * le score primerait silencieusement sur le clic.
+ */
+export async function setMatchVainqueur(
+  concours: Concours,
+  match: Match,
+  cote: 'A' | 'B',
+): Promise<void> {
+  await putEntity('match', { ...match, vainqueur: cote, scoreA: null, scoreB: null, done: true });
+  await recomputeAfter(concours, match);
+}
+
 export async function setScore(
   concours: Concours,
   match: Match,
@@ -551,12 +567,19 @@ export async function setScore(
 ): Promise<void> {
   const check = validateScore(scoreA, scoreB, concours.scoreMax);
   if (!check.ok) throw new Error(check.error);
-  await putEntity('match', { ...match, scoreA, scoreB, done: true });
+  // Le score prime : on retire le vainqueur désigné pour n'avoir qu'une vérité.
+  await putEntity('match', { ...match, scoreA, scoreB, vainqueur: undefined, done: true });
   await recomputeAfter(concours, match);
 }
 
 export async function clearScore(concours: Concours, match: Match): Promise<void> {
-  await putEntity('match', { ...match, scoreA: null, scoreB: null, done: false });
+  await putEntity('match', {
+    ...match,
+    scoreA: null,
+    scoreB: null,
+    vainqueur: undefined,
+    done: false,
+  });
   await recomputeAfter(concours, match);
 }
 

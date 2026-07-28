@@ -147,6 +147,12 @@ export interface Concours {
    * rejoignent le cadrage de la consolante (manuel §3.D.4).
    */
   recupCadrage?: boolean;
+  /**
+   * Autorise à désigner le vainqueur d'une partie sans saisir le score, pour
+   * aller plus vite. Réservé aux formules où le score ne sert pas au
+   * classement : en rondes, il faut les points.
+   */
+  vainqueurSeul?: boolean;
   /** Score gagnant d'une mène complète (13 en pétanque). */
   scoreMax: number;
   nbTerrains: number;
@@ -231,6 +237,12 @@ export interface Match {
   scoreB: number | null;
   done: boolean;
   terrain: number | null;
+  /**
+   * Vainqueur désigné sans saisir le score, quand le concours l'autorise
+   * (« ouvert à tous » : le score n'a pas d'enjeu). Le score, s'il existe,
+   * reste la source de vérité.
+   */
+  vainqueur?: 'A' | 'B';
   /**
    * Heure d'annonce de la partie (ISO), posée dès que les deux camps sont
    * connus. Justificatif des pénalités de retard : elle ne bouge plus.

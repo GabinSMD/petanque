@@ -113,7 +113,13 @@ function QuickScoreRow({
       </span>
       <span className="quick-score-teams">
         <TeamLabel team={match.teamAId ? teamsById.get(match.teamAId) : null} compact />
-        <ScoreForm concours={concours} match={match} onSaved={onSaved} />
+        <ScoreForm
+          concours={concours}
+          match={match}
+          labelA={match.teamAId ? `n°${teamsById.get(match.teamAId)?.number ?? '?'}` : undefined}
+          labelB={match.teamBId ? `n°${teamsById.get(match.teamBId)?.number ?? '?'}` : undefined}
+          onSaved={onSaved}
+        />
         <TeamLabel team={match.teamBId ? teamsById.get(match.teamBId) : null} compact />
       </span>
     </div>
