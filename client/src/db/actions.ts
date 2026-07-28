@@ -14,6 +14,7 @@ import {
   firstRoundSources,
   formuleOf,
   isByeMatch,
+  nbToursQualification,
   numeroPremiereEquipe,
   pouleOutcome,
   placerQualifie,
@@ -27,6 +28,7 @@ import {
   rondesTirees,
   seriesTirees,
   terrainNumeros,
+  tronquerTableau,
   terrainsPoule,
   validateScore,
   validateTirScore,
@@ -369,7 +371,15 @@ export async function generatePoules(
   }
   // Tableau créé vide dès maintenant : les qualifiés y entreront au fil des
   // poules, sans attendre la dernière (manuel §3.D.1.A).
-  const tableau = buildTableauVide(concours.id, draw.poules.length * 2, ctx());
+  const nbAttendus = draw.poules.length * 2;
+  const complet = buildTableauVide(concours.id, nbAttendus, ctx());
+  // Qualificatif par poules (manuel §3.D.2) : le tableau s'arrête au nombre
+  // de qualifiés demandé.
+  const toursQualif = concours.nbQualifies
+    ? nbToursQualification(nbAttendus, concours.nbQualifies)
+    : null;
+  const tableau =
+    toursQualif !== null && toursQualif > 0 ? tronquerTableau(complet, toursQualif) : complet;
 
   await bulkPutEntities('poule', draw.poules);
   await bulkPutEntities('match', [...draw.matches, ...tableau]);
@@ -450,11 +460,17 @@ export async function generateTableauDirect(
 ): Promise<void> {
   const teams = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
-  const main = drawElimination(concours.id, 'principal', teams, ctx(), {
+  const complet = drawElimination(concours.id, 'principal', teams, ctx(), {
     sansProtection,
     protections: concours.protections ?? [],
     seeds,
   });
+  // Concours qualificatif : on ne crée pas les tours au-delà du nombre de
+  // qualifiés voulu (manuel §3.D.7). Le tableau s'arrête là.
+  const tours = concours.nbQualifies
+    ? nbToursQualification(teams.length, concours.nbQualifies)
+    : null;
+  const main = tours !== null && tours > 0 ? tronquerTableau(complet, tours) : complet;
   // Tableaux B et C selon la formule fédérale (perdants reversés d'un
   // tableau à l'autre) — voir `buildFormuleBrackets`.
   const secondary = buildFormuleBrackets(concours.id, main, formuleOf(concours), ctx());

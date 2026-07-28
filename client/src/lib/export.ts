@@ -177,6 +177,32 @@ export function concoursSummaryLine(concours: Concours): string {
   return parts.join(' · ');
 }
 
+/**
+ * Liste des qualifiés d'un concours qualificatif. Les colonnes sont celles que
+ * l'import des licenciés reconnaît : le fichier se réimporte donc tel quel pour
+ * la phase finale (manuel §3.D.2, « extraire la liste spécifique »).
+ */
+export function qualifiesCSV(teams: Team[]): string {
+  // Colonne « Joueur » : l'import des licenciés la reconnaît comme un nom
+  // complet. On évite ainsi de deviner où s'arrête le prénom — « Jean-Paul
+  // Martin Le Goff » ne se découpe pas de façon fiable.
+  const rows: (string | number | null)[][] = [['N° équipe', 'Joueur', 'Licence', 'Club']];
+  for (const t of [...teams].sort((a, b) => a.number - b.number)) {
+    for (const p of t.players) {
+      rows.push([t.number, p.name, p.licence ?? '', p.club ?? t.club ?? '']);
+    }
+  }
+  return toCSV(rows);
+}
+
+export function exportQualifiesCSV(concours: Concours, teams: Team[]): void {
+  downloadText(
+    `qualifies-${safeFilename(concours.name)}.csv`,
+    qualifiesCSV(teams),
+    'text/csv',
+  );
+}
+
 export function exportEngagesCSV(concours: Concours, teams: Team[]): void {
   downloadText(`engages-${safeFilename(concours.name)}.csv`, engagesCSV(concours, teams), 'text/csv');
 }

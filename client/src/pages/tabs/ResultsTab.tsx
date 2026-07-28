@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
   bracketRanking,
+  estQualificatif,
   pouleOutcome,
+  qualifiesTableau,
   repartitionIndemnites,
   rondeStandings,
   type RankGroup,
@@ -15,6 +17,7 @@ import { TirRanking } from '../../components/TirRanking';
 import { isIndividualMode, isRondesMode, isTirMode } from '../../lib/labels';
 import {
   exportArbitrageCSV,
+  exportQualifiesCSV,
   exportBackupJSON,
   exportClassementCSV,
   exportEngagesCSV,
@@ -82,8 +85,19 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
     pouleOutcome(p, matches.filter((m) => m.pouleId === p.id)),
   );
 
-  // Qualifiés pour une phase suivante : les meilleurs du tableau principal.
+  /**
+   * Concours qualificatif : les qualifiés sont les vainqueurs du dernier tour
+   * du tableau, qui s'arrête là (manuel §3.D.2 et §3.D.7). Sinon on retombe
+   * sur les mieux classés, pour un concours joué jusqu'au bout où l'on veut
+   * quand même désigner N équipes.
+   */
+  const qualificatif = estQualificatif(matches, 'principal');
+  const qualifiesDuTableau = useMemo(
+    () => (qualificatif ? qualifiesTableau(matches, 'principal') : []),
+    [qualificatif, matches],
+  );
   const qualifiedIds = useMemo(() => {
+    if (qualificatif) return new Set(qualifiesDuTableau);
     const n = concours.nbQualifies ?? 0;
     const ids = new Set<string>();
     if (n <= 0) return ids;
@@ -92,7 +106,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
       g.teamIds.forEach((id) => ids.add(id));
     }
     return ids;
-  }, [principalGroups, concours.nbQualifies]);
+  }, [qualificatif, qualifiesDuTableau, principalGroups, concours.nbQualifies]);
 
   const hasAnything =
     principalGroups.length > 0 || consolanteGroups.length > 0 || outcomes.length > 0;
@@ -114,7 +128,10 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
           {qualifiedIds.size > 0 && (
             <p className="qualifies-banner">
               🎫 {qualifiedIds.size} qualifié{qualifiedIds.size > 1 ? 's' : ''} pour la phase
-              suivante (les mieux classés).
+              suivante{' '}
+              {qualificatif
+                ? '(vainqueurs du dernier tour — le tableau s\'arrête là).'
+                : '(les mieux classés).'}
             </p>
           )}
           <RankTable
@@ -304,6 +321,12 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
   // Le rapport d'arbitrage se lit dans le tableau principal : il n'a de sens
   // que pour les formules à tableau.
   const hasBracket = matches.some((m) => m.stage === 'principal');
+  // Concours qualificatif : la liste des qualifiés s'exporte pour servir
+  // d'inscriptions à la phase finale.
+  const idsQualifies = estQualificatif(matches, 'principal')
+    ? new Set(qualifiesTableau(matches, 'principal'))
+    : new Set<string>();
+  const qualifies = teams.filter((t) => idsQualifies.has(t.id));
   return (
     <div className="export-bar no-print">
       <span className="export-bar-label">Exporter :</span>
@@ -351,6 +374,15 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
       >
         📋 Engagés (CSV)
       </button>
+      {qualifies.length > 0 && (
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={() => exportQualifiesCSV(concours, qualifies)}
+          title="Liste à réutiliser comme inscriptions de la phase finale"
+        >
+          🎫 Qualifiés (CSV)
+        </button>
+      )}
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => exportBackupJSON(concours, teams, poules, matches)}
