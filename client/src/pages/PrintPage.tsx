@@ -12,6 +12,7 @@ import {
 } from '@shared';
 import {
   BilanPaiements,
+  PartiesLancees,
   GraphiqueTableau,
   ListeAbsents,
   ListeEngages,
@@ -234,6 +235,15 @@ export function PrintPage() {
       {doc === 'paiements' && <BilanPaiements concours={concours} teams={teams} tri={tri} />}
 
       {doc === 'absents' && <ListeAbsents teams={teams} />}
+
+      {doc === 'parties-lancees' && (
+        <PartiesLancees
+          teams={teams}
+          poules={poules}
+          matches={matches}
+          maintenant={new Date().toISOString()}
+        />
+      )}
 
       {doc === 'presse' && <ResultatsPresse sections={presse} toursMasques={toursMasques} />}
 
