@@ -328,6 +328,48 @@ export function championnatRondes(n: number): number {
 /* Classement                                                          */
 /* ------------------------------------------------------------------ */
 
+/** Les deux camps d'une partie, que ce soit des équipes ou une mêlée. */
+function camps(m: Match): [string[], string[]] {
+  return [
+    m.playersA ?? (m.teamAId ? [m.teamAId] : []),
+    m.playersB ?? (m.teamBId ? [m.teamBId] : []),
+  ];
+}
+
+/** Camp vainqueur d'une partie jouée, au score ou par désignation. */
+function coteGagnante(m: Match): 'A' | 'B' | null {
+  if (m.scoreA !== null && m.scoreB !== null) {
+    if (m.scoreA > m.scoreB) return 'A';
+    if (m.scoreB > m.scoreA) return 'B';
+    return null;
+  }
+  return m.vainqueur ?? null;
+}
+
+/**
+ * Confrontation directe entre deux inscrits : `1` si le premier a gagné leurs
+ * rencontres, `-1` si c'est le second, `0` s'ils ne se sont jamais rencontrés
+ * ou s'ils se sont partagés les victoires.
+ */
+export function confrontationDirecte(aId: string, bId: string, matches: Match[]): number {
+  let bilan = 0;
+  for (const m of matches) {
+    if (m.stage !== 'ronde' || !m.done) continue;
+    const [cA, cB] = camps(m);
+    const aEnA = cA.includes(aId);
+    const aEnB = cB.includes(aId);
+    const bEnA = cA.includes(bId);
+    const bEnB = cB.includes(bId);
+    // Il faut qu'ils se soient affrontés, pas qu'ils aient joué ensemble.
+    if (!((aEnA && bEnB) || (aEnB && bEnA))) continue;
+    const gagnante = coteGagnante(m);
+    if (!gagnante) continue;
+    const aGagne = (gagnante === 'A' && aEnA) || (gagnante === 'B' && aEnB);
+    bilan += aGagne ? 1 : -1;
+  }
+  return Math.sign(bilan);
+}
+
 export interface Standing {
   id: string;
   played: number;
@@ -338,8 +380,17 @@ export interface Standing {
 }
 
 /**
- * Classement des rondes : victoires, puis goal-average, puis points
- * marqués. En mêlée chaque joueur d'un camp est crédité individuellement.
+ * Classement des rondes : victoires, goal-average, points marqués — puis, entre
+ * équipes que cela laisse à égalité, leur **confrontation directe** (manuel
+ * §3.D.15 : « si confrontation directe, l'équipe victorieuse passe devant »).
+ *
+ * Ce dernier critère existait déjà, mais seulement dans `classementFinales`,
+ * celui qui amorce les phases finales. L'écran des rondes, l'affichage public et
+ * les résultats s'arrêtaient aux trois premiers : l'organisateur lisait un rang
+ * et le panneau des phases finales en produisait un autre. Le critère est donc
+ * remonté ici, au classement dont tout le monde part.
+ *
+ * En mêlée chaque joueur d'un camp est crédité individuellement.
  */
 export function rondeStandings(entrants: Team[], matches: Match[]): Standing[] {
   const map = new Map<string, Standing>(
@@ -378,10 +429,40 @@ export function rondeStandings(entrants: Team[], matches: Match[]): Standing[] {
     for (const id of perdants) credit(id, -1, 0);
   }
 
-  return [...map.values()].sort(
-    (a, b) => b.wins - a.wins || b.diff - a.diff || b.pointsFor - a.pointsFor,
+  const classement = [...map.values()].sort(
+    (a, b) =>
+      b.wins - a.wins ||
+      b.diff - a.diff ||
+      b.pointsFor - a.pointsFor ||
+      // Dernier recours : l'identifiant. Sans lui, deux équipes strictement à
+      // égalité se classent dans l'ordre où la base les a rendues — le même
+      // concours affichait un classement différent d'un appareil à l'autre.
+      a.id.localeCompare(b.id),
   );
+
+  // Réordonnancement des tranches d'ex æquo par leur confrontation directe.
+  // Fait par tranches et non dans le comparateur principal : la confrontation
+  // n'est pas transitive (A bat B bat C bat A existe), et un comparateur non
+  // transitif rend un ordre imprévisible. La tranche arrive déjà rangée par
+  // identifiant et le tri est stable : le résultat reste le même quel que soit
+  // l'ordre d'arrivée des équipes, y compris sur un cycle.
+  for (let debut = 0; debut < classement.length; ) {
+    let fin = debut + 1;
+    while (fin < classement.length && memeNiveau(classement[debut]!, classement[fin]!)) fin += 1;
+    if (fin - debut >= 2) {
+      const tranche = classement
+        .slice(debut, fin)
+        .sort((a, b) => -confrontationDirecte(a.id, b.id, matches));
+      for (const [i, s] of tranche.entries()) classement[debut + i] = s;
+    }
+    debut = fin;
+  }
+  return classement;
 }
+
+/** Égalité sur tous les critères chiffrés : c'est là que la confrontation parle. */
+export const memeNiveau = (a: Standing, b: Standing): boolean =>
+  a.wins === b.wins && a.diff === b.diff && a.pointsFor === b.pointsFor;
 
 /** Nombre de rondes déjà tirées. */
 export function rondesTirees(matches: Match[]): number {
