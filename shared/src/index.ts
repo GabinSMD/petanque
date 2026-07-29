@@ -13,6 +13,7 @@ export * from './engine/championnat';
 export * from './engine/clubs';
 export * from './engine/depot';
 export * from './engine/federal';
+export * from './engine/feuilleMatch';
 export * from './engine/finales';
 export * from './engine/formules';
 export * from './engine/impressions';

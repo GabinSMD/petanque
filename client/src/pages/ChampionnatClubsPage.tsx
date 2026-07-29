@@ -2,16 +2,26 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Licencie, Player } from '@shared';
 import {
+  BAREME_CDC,
   COMPETITIONS_CLUB,
   categorieAgeDe,
   controlerEquipe,
   criteresCompetition,
   estHorsUE,
   parseLicenceQr,
+  bilanRencontre,
+  partiesVides,
+  pointsEnJeu,
   type ChampLicence,
   type CompetitionClubId,
+  type PartieRencontre,
 } from '@shared';
 import { useLicencies } from '../db/hooks';
+import {
+  FeuilleMatchVerso,
+  type JoueurFeuille,
+  type Remplacements,
+} from '../components/FeuilleMatchVerso';
 import {
   ANOMALIE_EQUIPE_LABELS,
   ANOMALIE_LABELS,
@@ -29,6 +39,33 @@ interface Etat {
   club: string;
   adversaire: string;
   licences: string[];
+  /* Champs de la feuille de match (recto). */
+  division: string;
+  poule: string;
+  numeroClub: string;
+  numeroClubAdverse: string;
+  /** Capitaine ou coach qui ne joue pas : la feuille lui réserve deux cases. */
+  capitaineNom: string;
+  capitaineLicence: string;
+  /** Composition adverse : saisie à la main, ses licences ne sont pas dans notre fichier. */
+  adversaireJoueurs: JoueurFeuille[];
+  /* Verso : ordre des rencontres et résultats. */
+  heureDebut: string;
+  heureFin: string;
+  parties: PartieRencontre[];
+  places: { a: string[]; b: string[] }[];
+  remplacements: Remplacements;
+  remarques: string;
+  courrielComite: string;
+}
+
+/** Places vides pour chaque partie, selon la formation. */
+function placesVides(): { a: string[]; b: string[] }[] {
+  const taille: Record<string, number> = { tete_a_tete: 1, doublette: 2, triplette: 3 };
+  return partiesVides(BAREME_CDC).map((p) => ({
+    a: Array<string>(taille[p.type] ?? 1).fill(''),
+    b: Array<string>(taille[p.type] ?? 1).fill(''),
+  }));
 }
 
 function lireMemoire(): Etat {
@@ -39,10 +76,33 @@ function lireMemoire(): Etat {
     club: '',
     adversaire: '',
     licences: [],
+    division: '',
+    poule: '',
+    numeroClub: '',
+    numeroClubAdverse: '',
+    capitaineNom: '',
+    capitaineLicence: '',
+    adversaireJoueurs: Array.from({ length: 8 }, () => ({ nom: '', licence: '' })),
+    heureDebut: '',
+    heureFin: '',
+    parties: partiesVides(BAREME_CDC),
+    places: placesVides(),
+    remplacements: { a: {}, b: {} },
+    remarques: '',
+    courrielComite: '',
   };
   try {
     const brut = localStorage.getItem(CLE_MEMOIRE);
-    return brut ? { ...parDefaut, ...(JSON.parse(brut) as Partial<Etat>) } : parDefaut;
+    const lu = brut ? { ...parDefaut, ...(JSON.parse(brut) as Partial<Etat>) } : parDefaut;
+    // Le barème a pu changer depuis la dernière feuille : on repart de zéro
+    // plutôt que d'afficher des parties qui ne correspondent plus.
+    if (lu.parties.length !== parDefaut.parties.length) {
+      return { ...lu, parties: parDefaut.parties, places: parDefaut.places };
+    }
+    if (lu.places.length !== parDefaut.places.length) {
+      return { ...lu, places: parDefaut.places };
+    }
+    return lu;
   } catch {
     return parDefaut;
   }
@@ -94,6 +154,35 @@ export function ChampionnatClubsPage() {
   );
   const controle = controlerEquipe(joueurs, parLicence, criteres);
   const competition = COMPETITIONS_CLUB.find((c) => c.id === etat.competition)!;
+
+  /**
+   * Courriel préparé pour le comité : objet et corps remplis, la feuille signée
+   * restant à joindre. On ne peut pas joindre un fichier depuis un lien
+   * `mailto:` — et de toute façon c'est la signature qui fait foi, donc le
+   * message part de la messagerie de l'organisateur, sous ses yeux.
+   */
+  const bilanFeuille = bilanRencontre(BAREME_CDC, etat.parties);
+  const objetCourriel = [
+    `Feuille de match ${competition.label}`,
+    etat.division && `division ${etat.division}`,
+    etat.poule && `poule ${etat.poule}`,
+    formatDateFr(etat.date),
+  ]
+    .filter(Boolean)
+    .join(' — ');
+  const corpsCourriel = [
+    `${etat.club || 'Notre club'} contre ${etat.adversaire || 'l\'adversaire'}`,
+    `${formatDateFr(etat.date)}${etat.heureDebut ? ` — début ${etat.heureDebut}` : ''}`,
+    '',
+    `Résultat : ${bilanFeuille.totalA} - ${bilanFeuille.totalB}` +
+      (bilanFeuille.complete
+        ? ` (${pointsEnJeu(BAREME_CDC)} points en jeu)`
+        : ' — feuille incomplète'),
+    ...(etat.remarques.trim() ? ['', `Remarques : ${etat.remarques.trim()}`] : []),
+    '',
+    'Feuille signée en pièce jointe.',
+  ].join('\n');
+  const lienCourriel = `mailto:${encodeURIComponent(etat.courrielComite.trim())}?subject=${encodeURIComponent(objetCourriel)}&body=${encodeURIComponent(corpsCourriel)}`;
 
   /** Ajoute un joueur par son numéro de licence (scan, douchette ou saisie). */
   const ajouter = (contenu: string): void => {
@@ -159,6 +248,77 @@ export function ChampionnatClubsPage() {
             />
           </label>
         </div>
+        <div className="form-row">
+          <label>
+            Division
+            <input
+              value={etat.division}
+              onChange={(e) => maj({ division: e.target.value })}
+              placeholder="ex. D1"
+            />
+          </label>
+          <label>
+            Poule
+            <input
+              value={etat.poule}
+              onChange={(e) => maj({ poule: e.target.value })}
+              placeholder="ex. A"
+            />
+          </label>
+          <label>
+            N° de club
+            <input
+              value={etat.numeroClub}
+              onChange={(e) => maj({ numeroClub: e.target.value })}
+              placeholder="ex. 6032"
+            />
+          </label>
+          <label>
+            N° du club adverse
+            <input
+              value={etat.numeroClubAdverse}
+              onChange={(e) => maj({ numeroClubAdverse: e.target.value })}
+            />
+          </label>
+        </div>
+        <div className="form-row">
+          <label>
+            Capitaine ou coach qui ne joue pas
+            <input
+              value={etat.capitaineNom}
+              onChange={(e) => maj({ capitaineNom: e.target.value })}
+              placeholder="Nom et prénom"
+            />
+          </label>
+          <label>
+            Sa licence
+            <input
+              value={etat.capitaineLicence}
+              onChange={(e) => maj({ capitaineLicence: e.target.value })}
+              placeholder="N° licence"
+            />
+          </label>
+          <label>
+            Heure de début
+            <input
+              type="time"
+              value={etat.heureDebut}
+              onChange={(e) => maj({ heureDebut: e.target.value })}
+            />
+          </label>
+          <label>
+            Heure de fin
+            <input
+              type="time"
+              value={etat.heureFin}
+              onChange={(e) => maj({ heureFin: e.target.value })}
+            />
+          </label>
+        </div>
+        <p className="hint">
+          Le capitaine joueur se met en <strong>première ligne</strong> de la composition ; ces deux
+          cases ne servent qu'au capitaine ou coach qui ne joue pas.
+        </p>
         <div className="form-row">
           <label>
             Date de la rencontre
@@ -335,6 +495,84 @@ export function ChampionnatClubsPage() {
             </li>
           </ul>
 
+          {/* Composition adverse : saisie à la main — ses licences ne sont pas
+              dans notre fichier, donc rien à contrôler de ce côté. */}
+          <section className="feuille-adverse">
+            <h2>Composition {etat.adversaire.trim() || 'de l\'équipe adverse'}</h2>
+            <p className="hint no-print">
+              Recopiée depuis sa feuille : ses licences ne sont pas dans votre fichier, l'application
+              ne les contrôle donc pas.
+            </p>
+            <div className="table-scroll">
+              <table className="print-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Nom, prénom</th>
+                    <th>N° licence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {etat.adversaireJoueurs.map((j, i) => (
+                    <tr key={i}>
+                      <td className="feuille-num">{i + 1}</td>
+                      <td>
+                        <input
+                          value={j.nom}
+                          onChange={(e) =>
+                            maj({
+                              adversaireJoueurs: etat.adversaireJoueurs.map((x, k) =>
+                                k === i ? { ...x, nom: e.target.value } : x,
+                              ),
+                            })
+                          }
+                          placeholder={i === 0 ? 'Capitaine' : ''}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="licence-input"
+                          value={j.licence}
+                          onChange={(e) =>
+                            maj({
+                              adversaireJoueurs: etat.adversaireJoueurs.map((x, k) =>
+                                k === i ? { ...x, licence: e.target.value } : x,
+                              ),
+                            })
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <FeuilleMatchVerso
+            bareme={BAREME_CDC}
+            parties={etat.parties}
+            onParties={(parties) => maj({ parties })}
+            joueursA={joueurs.map((p) => ({ nom: p.name, licence: p.licence ?? '' }))}
+            joueursB={etat.adversaireJoueurs}
+            places={etat.places}
+            onPlaces={(places) => maj({ places })}
+            remplacements={etat.remplacements}
+            onRemplacements={(remplacements) => maj({ remplacements })}
+            clubA={etat.club}
+            clubB={etat.adversaire}
+          />
+
+          <label className="feuille-remarques">
+            Remarques
+            <textarea
+              value={etat.remarques}
+              onChange={(e) => maj({ remarques: e.target.value })}
+              rows={2}
+              placeholder="En cas d'incident, joindre un rapport."
+            />
+          </label>
+
           <section className="print-arbitrage-sign">
             <p>
               Capitaine {etat.club || '…'} : <span className="print-rule" />
@@ -346,6 +584,30 @@ export function ChampionnatClubsPage() {
               Arbitre : <span className="print-rule" />
             </p>
           </section>
+
+          <div className="export-bar no-print">
+            <span className="export-bar-label">Retour au comité :</span>
+            <input
+              className="courriel-comite"
+              value={etat.courrielComite}
+              onChange={(e) => maj({ courrielComite: e.target.value })}
+              placeholder="courriel du comité (ex. cd26-cdc@francepetanque.com)"
+            />
+            <a
+              className="btn btn-ghost btn-sm"
+              href={lienCourriel}
+              onClick={(e) => {
+                if (!etat.courrielComite.trim()) e.preventDefault();
+              }}
+              title="Prépare le message ; joignez-y la feuille signée"
+            >
+              ✉ Préparer le courriel
+            </a>
+            <span className="hint">
+              Imprimez, faites signer les deux capitaines, puis joignez la feuille au message : une
+              feuille signée vaut acceptation.
+            </span>
+          </div>
         </>
       )}
     </div>

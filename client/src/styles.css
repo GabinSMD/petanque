@@ -4079,3 +4079,132 @@ form label select {
 .reglages-modal .hint {
   margin: 0.5rem 0;
 }
+
+/* Feuille de match d'une rencontre de championnat des clubs. */
+.feuille-verso h2,
+.feuille-adverse h2 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.05rem;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0.2rem;
+}
+
+.feuille-bloc h3 {
+  margin: 0.9rem 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.feuille-table th,
+.feuille-table td {
+  vertical-align: middle;
+}
+
+.feuille-num {
+  width: 1.6rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.feuille-noms select {
+  min-width: 8rem;
+  margin-right: 0.2rem;
+}
+
+.feuille-score input {
+  width: 3.4rem;
+}
+
+.feuille-jeu {
+  width: 3.2rem;
+  background: #fffbe6;
+}
+
+.feuille-jeu input {
+  width: 2.6rem;
+  text-align: center;
+}
+
+.feuille-pts {
+  width: 2.6rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.feuille-soustotal td {
+  border-top: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.feuille-remplacements {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  margin: 0.4rem 0 0.8rem;
+}
+
+.feuille-remplacements h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.feuille-remplacement {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+
+.feuille-remplacement input {
+  flex: 1;
+  min-width: 0;
+}
+
+.feuille-menu {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.feuille-menu select {
+  width: 100%;
+}
+
+.feuille-totaux td {
+  font-weight: 700;
+}
+
+.feuille-verdict {
+  margin: 0.6rem 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.feuille-verdict.ok {
+  background: #e8f6ec;
+}
+
+.feuille-verdict.ko {
+  background: #fdeceb;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.feuille-remarques {
+  display: block;
+  margin: 0.8rem 0;
+}
+
+.feuille-remarques textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.courriel-comite {
+  min-width: 18rem;
+}
