@@ -1,6 +1,7 @@
 import type { Match, MatchStage, Team } from '../types';
 import type { EngineCtx } from './ctx';
 import { shuffle, spreadEvenly } from './ctx';
+import { formeCadrage } from './cadrage';
 import { isByeMatch, loserOf, winnerOf } from './match';
 import { enConflit, type Protections } from './protections';
 import type { PouleOutcome } from './poules';
@@ -198,6 +199,13 @@ export interface EliminationDrawOptions {
   teamsById?: Map<string, Team>;
   /** Têtes de série (ids ordonnés) : placées aux positions standard du tableau. */
   seeds?: string[];
+  /**
+   * Tour où placer le cadrage (manuel §3.D.2 et §3.D.11). Absent ou 0 : au
+   * premier tour, comme le défaut fédéral — une partie des équipes est exempte
+   * d'entrée. 1 : tout le monde joue une partie, le cadrage tombe au second
+   * tour. `toursCadragePossibles` dit ce que l'effectif permet.
+   */
+  tourCadrage?: number;
 }
 
 /**
@@ -233,6 +241,9 @@ export function drawElimination(
   opts: EliminationDrawOptions = {},
 ): Match[] {
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
+  if (opts.tourCadrage) {
+    return drawEliminationCadrageDiffere(concoursId, stage, teams, ctx, opts);
+  }
   const bracketSize = nextPow2(teams.length);
   const byes = bracketSize - teams.length;
   const seedIds = opts.seeds ?? [];
@@ -283,6 +294,134 @@ export function drawElimination(
   }
 
   const matches = createBracketMatches(concoursId, stage, units, ctx);
+  return applyChanges(matches, propagate(matches));
+}
+
+/**
+ * Tirage d'un tableau dont le cadrage est différé (manuel §3.D.2 et §3.D.11).
+ *
+ * Le cadrage par défaut met les exempts au premier tour : à 48 équipes, seize
+ * passent un tour sans jouer. Le différer d'un tour fait jouer tout le monde, et
+ * ce sont les vainqueurs qui se partagent les exempts au tour suivant.
+ *
+ * Le squelette reste l'arbre binaire positionnel de `propagate` — rien n'y est
+ * touché. Le seul changement est **où** on laisse des trous : chaque place du
+ * tour de cadrage possède un bloc de 2^k parties du premier tour ; une place qui
+ * jouera son tour occupe tout son bloc, une place exempte n'en occupe que la
+ * moitié et laisse l'autre creuse. La place d'en face, privée d'alimentation,
+ * est marquée exempte — c'est le mécanisme du tableau creux, déjà éprouvé par
+ * `buildStagedBracket`.
+ */
+function drawEliminationCadrageDiffere(
+  concoursId: string,
+  stage: MatchStage,
+  teams: Team[],
+  ctx: EngineCtx,
+  opts: EliminationDrawOptions,
+): Match[] {
+  const k = opts.tourCadrage ?? 0;
+  const forme = formeCadrage(teams.length, k);
+  const tourDuCadrage = forme[k];
+  if (!tourDuCadrage) throw new Error('Cadrage impossible : tour hors du tableau.');
+  const { reelles, exempts } = tourDuCadrage;
+
+  // Places du tour de cadrage : celles qui jouent, celles qui sont exemptes,
+  // réparties régulièrement — un paquet d'exempts d'un côté du tableau
+  // offrirait un chemin plus facile à cette moitié.
+  const placesCadrage = spreadEvenly(
+    Array.from({ length: reelles }, () => true),
+    Array.from({ length: exempts }, () => false),
+  );
+
+  const parBloc = 1 << k; // parties du premier tour sous une place du cadrage
+  const pool = shuffle(teams, ctx.rng);
+  const pairs: [Team, Team][] = [];
+  for (let i = 0; i < pool.length; i += 2) {
+    pairs.push([pool[i]!, pool[i + 1]!]);
+  }
+  if (!opts.sansProtection) repairSameClubPairs(pairs, ctx, opts.protections ?? []);
+
+  // Distribution des parties dans les blocs, en laissant les trous voulus.
+  const units: (Unit | null)[] = [];
+  let prochaine = 0;
+  for (const joue of placesCadrage) {
+    const aRemplir = joue ? parBloc : parBloc / 2;
+    for (let i = 0; i < parBloc; i += 1) {
+      const paire = i < aRemplir ? pairs[prochaine] : undefined;
+      if (i < aRemplir) prochaine += 1;
+      units.push(paire ? { a: teamSlot(paire[0].id), b: teamSlot(paire[1].id) } : null);
+    }
+  }
+  return createHollowBracketMatches(concoursId, stage, units, ctx);
+}
+
+/**
+ * Squelette d'un tableau creux : les places `null` du premier tour n'existent
+ * pas, et une partie des tours suivants dont un seul enfant existe voit sa place
+ * d'en face marquée exempte. C'est ce qui permet à un engagé de rejoindre le
+ * tableau à un tour avancé sans que rien ne reste bloqué avec un seul camp.
+ */
+function createHollowBracketMatches(
+  concoursId: string,
+  stage: MatchStage,
+  units: (Unit | null)[],
+  ctx: EngineCtx,
+): Match[] {
+  const size = units.length * 2;
+  const rounds = Math.log2(size);
+  const now = ctx.now();
+  const matches: Match[] = [];
+  const existe = new Set<string>();
+
+  units.forEach((u, position) => {
+    if (!u) return;
+    matches.push({
+      id: ctx.newId(),
+      concoursId,
+      stage,
+      round: 0,
+      position,
+      teamAId: u.a.teamId ?? null,
+      teamBId: u.b.teamId ?? null,
+      byeA: u.a.bye || undefined,
+      byeB: u.b.bye || undefined,
+      loserFromA: u.a.loserFrom,
+      loserFromB: u.b.loserFrom,
+      scoreA: null,
+      scoreB: null,
+      done: false,
+      terrain: null,
+      updatedAt: now,
+    });
+    existe.add(`0:${position}`);
+  });
+
+  for (let round = 1; round < rounds; round += 1) {
+    const count = size >> (round + 1);
+    for (let position = 0; position < count; position += 1) {
+      const enfantA = existe.has(`${round - 1}:${position * 2}`);
+      const enfantB = existe.has(`${round - 1}:${position * 2 + 1}`);
+      if (!enfantA && !enfantB) continue;
+      matches.push({
+        id: ctx.newId(),
+        concoursId,
+        stage,
+        round,
+        position,
+        teamAId: null,
+        teamBId: null,
+        byeA: enfantA ? undefined : true,
+        byeB: enfantB ? undefined : true,
+        scoreA: null,
+        scoreB: null,
+        done: false,
+        terrain: null,
+        updatedAt: now,
+      });
+      existe.add(`${round}:${position}`);
+    }
+  }
+
   return applyChanges(matches, propagate(matches));
 }
 
