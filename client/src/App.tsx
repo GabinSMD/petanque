@@ -13,6 +13,7 @@ import { BouleLogo } from './components/BouleLogo';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
 import { AppFooter } from './components/AppFooter';
+import { FrontiereErreur } from './components/FrontiereErreur';
 import { NouveautesHost } from './components/NouveautesModal';
 import { SyncBadge } from './components/SyncBadge';
 import { ChatBot } from './components/ChatBot';
@@ -32,6 +33,7 @@ import { PublicPage } from './pages/PublicPage';
 
 function Layout() {
   const session = useSession();
+  const { pathname } = useLocation();
   const guest = session?.guest === true;
 
   const logout = async () => {
@@ -74,7 +76,15 @@ function Layout() {
         </div>
       </header>
       <main className="app-main">
-        <Outlet />
+        {/* La clé remet la frontière à zéro à chaque changement d'écran :
+            naviguer suffit à sortir d'une page en échec. */}
+        <FrontiereErreur
+          key={pathname}
+          portee="page"
+          retour={{ to: '/', label: '← Mes concours' }}
+        >
+          <Outlet />
+        </FrontiereErreur>
       </main>
       <AppFooter />
       <ChatBot />
