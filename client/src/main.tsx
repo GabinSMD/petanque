@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
+import { FrontiereErreur } from './components/FrontiereErreur';
 import { startSyncLoop } from './sync/engine';
 import { ensurePersistentStorage } from './lib/storage';
 import '@fontsource-variable/inter';
@@ -13,6 +14,8 @@ void ensurePersistentStorage();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <FrontiereErreur portee="application">
+      <App />
+    </FrontiereErreur>
   </React.StrictMode>,
 );
