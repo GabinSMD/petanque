@@ -380,7 +380,16 @@ export async function importerInscrits(
     updatedAt: now,
   }));
 
-  await bulkPutEntities('team', nouvelles);
+  try {
+    await bulkPutEntities('team', nouvelles);
+  } catch (err) {
+    // Le fichier a produit une équipe que la base refuse : l'import rend son
+    // motif comme les autres refus, plutôt que de remonter une exception nue.
+    return {
+      ok: false,
+      erreur: `Import refusé : ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
   return {
     ok: true,
     ajoutees: nouvelles.length,

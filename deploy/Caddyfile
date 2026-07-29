@@ -1,12 +1,28 @@
 # Caddy — reverse proxy + HTTPS automatique (Let's Encrypt).
-# Remplacez le nom de domaine par le vôtre (ex. monclub.duckdns.org).
+# Remplacez les noms de domaine par les vôtres.
 # Copier dans /etc/caddy/Caddyfile puis : sudo systemctl reload caddy
 #
 # Caddy obtient et renouvelle seul le certificat TLS : il faut que les
 # ports 80 et 443 soient ouverts (pare-feu cloud Oracle + iptables) et que
-# le domaine pointe vers l'IP publique de la VM.
+# les domaines pointent vers l'IP publique de la VM.
+#
+# ---------------------------------------------------------------------------
+# Un seul nom de domaine (le plus simple) : tout est l'application.
+# ---------------------------------------------------------------------------
 
 monclub.duckdns.org {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8787
 }
+
+# ---------------------------------------------------------------------------
+# Deux noms de domaine : la vitrine sur le domaine principal, l'application
+# sur `app.`. Les deux arrivent sur le même serveur — c'est lui qui choisit
+# le document d'après l'en-tête Host (VITRINE_HOST / APP_ORIGIN, voir
+# deploy/petanque.service et docs/DEPLOIEMENT.md). Caddy n'a rien à trier :
+# une seule entrée pour les deux noms suffit.
+#
+# petanque.exemple.fr, app.petanque.exemple.fr {
+# 	encode zstd gzip
+# 	reverse_proxy 127.0.0.1:8787
+# }

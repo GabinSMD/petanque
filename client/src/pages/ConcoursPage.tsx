@@ -31,6 +31,7 @@ import {
   isTirMode,
   statusLabel,
 } from '../lib/labels';
+import { FrontiereErreur } from '../components/FrontiereErreur';
 import { TeamsTab } from './tabs/TeamsTab';
 import { LicencesTab } from './tabs/LicencesTab';
 import { PoulesTab } from './tabs/PoulesTab';
@@ -211,31 +212,36 @@ export function ConcoursPage() {
         </p>
       </div>
 
-      {active === 'equipes' && <TeamsTab concours={concours} teams={teams ?? []} />}
-      {active === 'licences' && <LicencesTab concours={concours} teams={teams ?? []} />}
-      {active === 'poules' && (
-        <PoulesTab concours={concours} teams={teams ?? []} poules={poules ?? []} matches={matches ?? []} />
-      )}
-      {active === 'rondes' && (
-        <RondesTab concours={concours} teams={teams ?? []} matches={matches ?? []} />
-      )}
-      {active === 'series' && (
-        <TirTab concours={concours} teams={teams ?? []} matches={matches ?? []} />
-      )}
-      {active === 'terrains' && (
-        <TerrainsTab
-          concours={concours}
-          teams={teams ?? []}
-          poules={poules ?? []}
-          matches={matches ?? []}
-        />
-      )}
-      {active === 'tableau' && (
-        <BracketTab concours={concours} teams={teams ?? []} matches={matches ?? []} poules={poules ?? []} />
-      )}
-      {active === 'resultats' && (
-        <ResultsTab concours={concours} teams={teams ?? []} poules={poules ?? []} matches={matches ?? []} />
-      )}
+      {/* Un onglet en échec ne doit pas emporter la barre d'onglets : la clé
+          remet la frontière à zéro quand on change d'onglet, donc en changer
+          suffit à continuer le concours. */}
+      <FrontiereErreur key={active} portee="onglet">
+        {active === 'equipes' && <TeamsTab concours={concours} teams={teams ?? []} />}
+        {active === 'licences' && <LicencesTab concours={concours} teams={teams ?? []} />}
+        {active === 'poules' && (
+          <PoulesTab concours={concours} teams={teams ?? []} poules={poules ?? []} matches={matches ?? []} />
+        )}
+        {active === 'rondes' && (
+          <RondesTab concours={concours} teams={teams ?? []} matches={matches ?? []} />
+        )}
+        {active === 'series' && (
+          <TirTab concours={concours} teams={teams ?? []} matches={matches ?? []} />
+        )}
+        {active === 'terrains' && (
+          <TerrainsTab
+            concours={concours}
+            teams={teams ?? []}
+            poules={poules ?? []}
+            matches={matches ?? []}
+          />
+        )}
+        {active === 'tableau' && (
+          <BracketTab concours={concours} teams={teams ?? []} matches={matches ?? []} poules={poules ?? []} />
+        )}
+        {active === 'resultats' && (
+          <ResultsTab concours={concours} teams={teams ?? []} poules={poules ?? []} matches={matches ?? []} />
+        )}
+      </FrontiereErreur>
 
       {sharing && <ShareModal concours={concours} onClose={() => setSharing(false)} />}
 

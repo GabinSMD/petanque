@@ -20,6 +20,18 @@ const DATA_DIR = resolve(process.env.DATA_DIR ?? join(__dirname, '..', 'data'));
 const DB_PATH = process.env.DB_PATH ?? join(DATA_DIR, 'petanque.sqlite');
 const CLIENT_DIST = resolve(__dirname, '..', '..', 'client', 'dist');
 
+/**
+ * Déploiement à deux noms de domaine : la vitrine sur un nom, l'application
+ * sur un autre (`VITRINE_HOST=petanque.exemple.fr`,
+ * `APP_ORIGIN=https://app.petanque.exemple.fr`).
+ *
+ * Les deux noms arrivent sur ce même serveur ; c'est l'en-tête Host qui décide
+ * du document servi. Laisser `VITRINE_HOST` vide garde le comportement d'un
+ * déploiement à un seul nom : tout est l'application.
+ */
+const VITRINE_HOST = (process.env.VITRINE_HOST ?? '').trim().toLowerCase();
+const APP_ORIGIN = (process.env.APP_ORIGIN ?? '').trim().replace(/\/+$/, '');
+
 const db = openDb(DB_PATH);
 
 /** Secret JWT : variable d'environnement, sinon généré et conservé sur disque. */
@@ -221,6 +233,43 @@ if (existsSync(CLIENT_DIST)) {
   // wildcard:true résout les fichiers à la requête : un nouveau build du
   // client est servi sans redémarrage du serveur.
   await app.register(fastifyStatic, { root: CLIENT_DIST, wildcard: true });
+
+  if (VITRINE_HOST) {
+    if (!APP_ORIGIN) {
+      app.log.warn(
+        'VITRINE_HOST est défini sans APP_ORIGIN : les chemins de l\'application ' +
+          'ne peuvent pas être redirigés depuis la vitrine.',
+      );
+    }
+
+    /** Ce que la page vitrine a besoin de servir elle-même. */
+    const VITRINE_ASSETS = /^\/(assets|vitrine)\//;
+    const VITRINE_FILES = new Set(['/favicon.svg', '/apple-touch-icon.png', '/robots.txt']);
+
+    app.addHook('onRequest', async (req, reply) => {
+      const host = (req.hostname ?? '').toLowerCase().split(':')[0];
+      if (host !== VITRINE_HOST) return;
+
+      const path = req.url.split('?')[0] ?? '/';
+
+      // L'API reste servie sous les deux noms. Un appareil installé depuis
+      // l'ancienne adresse garde ainsi une synchronisation qui fonctionne ; le
+      // rediriger casserait ses requêtes POST, qu'une redirection dégrade.
+      if (path.startsWith('/api/')) return;
+
+      if (path === '/' || path === '/vitrine.html') {
+        return reply.sendFile('vitrine.html');
+      }
+      if (VITRINE_ASSETS.test(path) || VITRINE_FILES.has(path)) return;
+
+      // Tout le reste appartient à l'application : liens publics distribués aux
+      // équipes, QR codes affichés au boulodrome, favoris.
+      if (APP_ORIGIN) {
+        return reply.redirect(`${APP_ORIGIN}${req.url}`, 301);
+      }
+    });
+  }
+
   app.setNotFoundHandler((req, reply) => {
     if (req.url.startsWith('/api/') || req.method !== 'GET') {
       return reply.code(404).send({ error: 'Introuvable' });

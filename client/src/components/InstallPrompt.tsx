@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useSession } from '../db/hooks';
 
 /** Événement d'installation PWA (non typé par la lib DOM standard). */
 interface BeforeInstallPromptEvent extends Event {
@@ -29,10 +30,15 @@ function isIOS(): boolean {
  * Invite à installer l'application : bouton natif (Android / Chrome via
  * `beforeinstallprompt`) ou astuce « Partager → Sur l'écran d'accueil »
  * sur iOS. Masquée si déjà installée ou refusée précédemment.
+ *
+ * Masquée aussi tant qu'aucune session n'existe : on ne demande pas à un
+ * visiteur d'installer une application qu'il n'a pas encore essayée.
  */
 export function InstallPrompt() {
   const { pathname } = useLocation();
-  const hiddenRoute = pathname.includes('/affichage') || pathname.includes('/imprimer');
+  const session = useSession();
+  const hiddenRoute =
+    !session || pathname.includes('/affichage') || pathname.includes('/imprimer');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [iosHint, setIosHint] = useState(false);
   const [dismissed, setDismissed] = useState(() => {

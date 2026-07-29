@@ -1,14 +1,25 @@
 import type { ReactNode } from 'react';
-import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
 import { useSession } from './db/hooks';
+import { BouleLogo } from './components/BouleLogo';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
 import { AppFooter } from './components/AppFooter';
+import { FrontiereErreur } from './components/FrontiereErreur';
 import { NouveautesHost } from './components/NouveautesModal';
 import { SyncBadge } from './components/SyncBadge';
 import { ChatBot } from './components/ChatBot';
 import { InstallPrompt } from './components/InstallPrompt';
 import { ParcoursHost } from './components/Parcours';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PalmaresPage } from './pages/PalmaresPage';
@@ -22,6 +33,7 @@ import { PublicPage } from './pages/PublicPage';
 
 function Layout() {
   const session = useSession();
+  const { pathname } = useLocation();
   const guest = session?.guest === true;
 
   const logout = async () => {
@@ -64,7 +76,15 @@ function Layout() {
         </div>
       </header>
       <main className="app-main">
-        <Outlet />
+        {/* La clé remet la frontière à zéro à chaque changement d'écran :
+            naviguer suffit à sortir d'une page en échec. */}
+        <FrontiereErreur
+          key={pathname}
+          portee="page"
+          retour={{ to: '/', label: '← Mes concours' }}
+        >
+          <Outlet />
+        </FrontiereErreur>
       </main>
       <AppFooter />
       <ChatBot />
@@ -74,20 +94,14 @@ function Layout() {
   );
 }
 
-export function BouleLogo() {
-  return (
-    <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden>
-      <circle cx="16" cy="16" r="14" fill="#d8dde2" stroke="#4a545e" strokeWidth="2" />
-      <path d="M4 12 A 14 14 0 0 1 28 12" fill="none" stroke="#4a545e" strokeWidth="1.5" />
-      <path d="M4 20 A 14 14 0 0 0 28 20" fill="none" stroke="#4a545e" strokeWidth="1.5" />
-      <circle cx="24" cy="25" r="4.5" fill="#d21c34" stroke="#7c1220" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 function RequireAuth({ children }: { children: ReactNode }) {
   const session = useSession();
-  if (!session) return <Navigate to="/login" replace />;
+  const { pathname } = useLocation();
+  if (!session) {
+    // Un visiteur qui arrive sur la racine mérite une présentation, pas un
+    // formulaire de connexion. Partout ailleurs, la redirection ne change pas.
+    return pathname === '/' ? <LandingPage /> : <Navigate to="/login" replace />;
+  }
   return <>{children}</>;
 }
 

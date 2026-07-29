@@ -21,6 +21,9 @@ if [[ ! -d "$APP_DIR/.git" ]]; then
 fi
 
 log "Récupération de la dernière version ($BRANCH)"
+# `reset --hard` ne touche pas aux fichiers non suivis : client/.env.production
+# (adresses des noms de domaine, voir docs/DEPLOIEMENT.md) survit à la mise à
+# jour, et le build qui suit le reprend.
 sudo -u "$APP_USER" git -C "$APP_DIR" fetch --depth 1 origin "$BRANCH"
 sudo -u "$APP_USER" git -C "$APP_DIR" reset --hard "origin/$BRANCH"
 

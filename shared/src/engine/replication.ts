@@ -1,16 +1,18 @@
 /**
- * Décisions de la réplication : ce qui remplace quoi, et ce qui est acquitté.
+ * Décisions de la réplication : ce qui remplace quoi, ce qui est exploitable, et
+ * ce qui est acquitté.
  *
- * Ces deux règles vivaient dans le moteur de synchronisation du client, mêlées
- * aux accès à la base et au réseau, donc invérifiables. Elles sont ici pour
- * pouvoir être éprouvées : ce sont elles qui décident si une donnée du club
- * survit ou disparaît.
+ * Ces règles vivaient dans le moteur de synchronisation du client, mêlées aux
+ * accès à la base et au réseau, donc invérifiables. Elles sont ici pour pouvoir
+ * être éprouvées : ce sont elles qui décident si une donnée du club survit ou
+ * disparaît.
  *
  * La règle générale reste le dernier écrivain qui gagne, l'horodatage local
  * étant strictement croissant. Le serveur départage les horodatages identiques
  * par identifiant d'appareil ; **il est donc l'arbitre**, et c'est ce qui dicte
- * les deux décisions ci-dessous.
+ * les décisions ci-dessous.
  */
+import { validerEquipe } from './validationEquipe';
 
 /** Clé d'une entité dans les échanges : `type:id`. */
 export function cleEntite(type: string, id: string): string {
@@ -61,4 +63,30 @@ export function envoisAcquittes(
     if (acceptes.has(cle)) out.add(cle);
   }
   return out;
+}
+
+/**
+ * Un changement reçu du serveur est-il exploitable ?
+ *
+ * Le dernier écrivain gagne, mais gagner avec une donnée cassée ne sert
+ * personne : une équipe malformée poussée par un appareil d'une autre version
+ * blanchirait l'écran des inscriptions, ici comme là-bas, et le rechargement
+ * n'y changerait rien puisque la donnée serait en base. On ne l'applique pas.
+ *
+ * Refuser localement ne perd rien : la ligne reste sur le serveur, et une
+ * équipe malformée ne porte de toute façon aucune information exploitable.
+ *
+ * Les suppressions passent toujours — une pierre tombale ne porte pas de
+ * données, et la refuser ferait réapparaître une équipe supprimée ailleurs. Les
+ * autres types ne sont pas jugés ici : leurs invariants ne sont pas ceux de la
+ * réplication.
+ */
+export function changementApplicable(changement: {
+  type: string;
+  data: unknown;
+  deleted?: boolean | 0 | 1;
+}): boolean {
+  if (changement.deleted) return true;
+  if (changement.type !== 'team') return true;
+  return validerEquipe(changement.data).ok;
 }

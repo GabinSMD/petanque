@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createDemoConcours } from '../db/actions';
 import { demarrerParcours } from '../help/parcoursState';
 import { parcoursDecouverte } from '@shared';
-import { BouleLogo } from '../App';
+import { BouleLogo } from './BouleLogo';
 
 const WELCOME_KEY = 'petanque.welcomeDone';
 

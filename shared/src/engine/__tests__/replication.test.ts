@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { changementGagne, envoisAcquittes, cleEntite } from '../replication';
+import { changementApplicable, changementGagne, envoisAcquittes, cleEntite } from '../replication';
 
 describe('un changement du serveur remplace-t-il l\'état local ?', () => {
   it('rien en local : on prend', () => {
@@ -91,5 +91,41 @@ describe('quels envois le serveur a-t-il acceptés ?', () => {
     const acquittes = envoisAcquittes(memeId, ['team:x']);
     expect(acquittes.has(cleEntite('team', 'x'))).toBe(true);
     expect(acquittes.has(cleEntite('match', 'x'))).toBe(false);
+  });
+});
+
+describe('un changement reçu est-il exploitable ?', () => {
+  const equipe = {
+    id: 't1',
+    concoursId: 'c1',
+    number: 1,
+    players: [{ name: 'DUPOND Jean' }],
+    forfait: false,
+    updatedAt: '2026-07-29T10:00:00.000Z',
+  };
+
+  it('une équipe correcte est appliquée', () => {
+    expect(changementApplicable({ type: 'team', data: equipe })).toBe(true);
+  });
+
+  it('une équipe malformée n\'est pas appliquée', () => {
+    // Un appareil d'une autre version peut pousser n'importe quoi. L'appliquer
+    // blanchirait l'écran ici aussi, et le rechargement ne sauverait rien.
+    expect(changementApplicable({ type: 'team', data: { ...equipe, players: null } })).toBe(false);
+    expect(changementApplicable({ type: 'team', data: { ...equipe, players: [] } })).toBe(false);
+    expect(changementApplicable({ type: 'team', data: null })).toBe(false);
+  });
+
+  it('une suppression est toujours appliquée', () => {
+    // Une pierre tombale ne porte pas de données : la refuser ferait réapparaître
+    // une équipe supprimée sur un autre appareil.
+    expect(changementApplicable({ type: 'team', data: null, deleted: true })).toBe(true);
+  });
+
+  it('les autres types ne sont pas jugés ici', () => {
+    // Parties, poules et feuilles ont leurs propres invariants ; la réplication
+    // n'est pas l'endroit pour les inventer.
+    expect(changementApplicable({ type: 'match', data: { nimporte: 'quoi' } })).toBe(true);
+    expect(changementApplicable({ type: 'concours', data: {} })).toBe(true);
   });
 });

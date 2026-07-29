@@ -1,5 +1,5 @@
 import type { EntityType, Match } from '@shared';
-import { stampLancees } from '@shared';
+import { stampLancees, validerEquipe } from '@shared';
 import { db, type EntityDataMap, type EntityRecord } from './local';
 import { scheduleSync } from '../sync/engine';
 
@@ -33,6 +33,28 @@ function horodater<T extends EntityType>(type: T, items: EntityDataMap[T][]): En
   return matches.map((m) => stamped.get(m.id) ?? m) as EntityDataMap[T][];
 }
 
+/**
+ * Refuse d'écrire une équipe inexploitable, au seul point de passage des
+ * écritures locales.
+ *
+ * Une équipe malformée ne se voit pas comme une faute de saisie : elle fait
+ * planter l'écran des inscriptions, et le rechargement avec, puisqu'elle est en
+ * base. C'est arrivé, avec un appel qui passait un objet là où un tableau de
+ * joueurs était attendu. Échouer bruyamment à l'écriture rend le défaut visible
+ * là où il est, au lieu de le déplacer dans un écran blanc.
+ *
+ * Une équipe arrive de six chemins — saisie, import CSV, lecteur de licences,
+ * QR, restauration de sauvegarde, synchronisation. La règle est donc ici plutôt
+ * que dans chacun d'eux.
+ */
+function verifierEquipes<T extends EntityType>(type: T, items: EntityDataMap[T][]): void {
+  if (type !== 'team') return;
+  for (const item of items) {
+    const verdict = validerEquipe(item);
+    if (!verdict.ok) throw new Error(verdict.raison);
+  }
+}
+
 function concoursIdOf<T extends EntityType>(type: T, data: EntityDataMap[T]): string {
   if (type === 'concours') return data.id;
   // Les licenciés sont rattachés à l'organisation, pas à un concours.
@@ -44,6 +66,7 @@ export async function putEntity<T extends EntityType>(
   type: T,
   data: EntityDataMap[T],
 ): Promise<void> {
+  verifierEquipes(type, [data]);
   const horodate = horodater(type, [data])[0]!;
   const updatedAt = monotonicNow();
   const stamped = { ...horodate, updatedAt };
@@ -65,6 +88,7 @@ export async function bulkPutEntities<T extends EntityType>(
   items: EntityDataMap[T][],
 ): Promise<void> {
   if (items.length === 0) return;
+  verifierEquipes(type, items);
   const records: EntityRecord[] = horodater(type, items).map((data) => {
     const updatedAt = monotonicNow();
     return {

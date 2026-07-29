@@ -99,6 +99,25 @@ describe('lecture d une sauvegarde', () => {
   });
 });
 
+describe('une équipe malformée dans un fichier', () => {
+  it('est écartée, les autres sont restaurées', () => {
+    // Un fichier d'une version bancale, ou retouché à la main. L'écarter à la
+    // lecture vaut mieux que faire échouer toute la restauration — ou, pire,
+    // écrire en base une équipe qui blanchit l'écran des inscriptions.
+    const base = exemple();
+    const teams: unknown[] = [
+      ...base.teams,
+      { id: 't5', concoursId: 'c1', number: 5, players: { players: [{ name: 'J5' }] }, forfait: false, updatedAt: T },
+      { id: 't6', concoursId: 'c1', number: 6, players: [], forfait: false, updatedAt: T },
+      { id: 't7', concoursId: 'c1', number: 0, players: [{ name: 'J7' }], forfait: false, updatedAt: T },
+    ];
+    const res = lireSauvegarde(fichier({ teams }));
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.sauvegarde.teams.map((t) => t.id)).toEqual(['t1', 't2', 't3', 't4']);
+  });
+});
+
 describe('réécriture des identifiants', () => {
   it('renomme tout et ne laisse aucune référence à l ancien', () => {
     const s = exemple();

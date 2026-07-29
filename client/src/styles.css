@@ -820,6 +820,41 @@ form label select {
   margin-top: 0.6rem;
 }
 
+/* --------------------------- Écran en échec --------------------------- */
+
+.incident-panel {
+  margin: 1.2rem auto;
+}
+
+.incident-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.9rem 0 0.4rem;
+}
+
+.incident-details {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+}
+
+.incident-details summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.incident-details pre {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  margin: 0.6rem 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+
 /* ------------------------------- Équipes ------------------------------ */
 
 .team-add-form {
