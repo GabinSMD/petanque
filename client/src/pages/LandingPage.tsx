@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BouleLogo } from '../components/BouleLogo';
 import { appIsElsewhere, appUrl } from '../lib/appUrl';
 import '../landing.css';
@@ -15,6 +16,23 @@ function aUneAncienneInstallation(): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Vrai si un service worker contrôle encore cette origine — donc si
+ * l'application y est toujours ouvrable depuis son cache.
+ *
+ * C'est ce qui rend l'échappatoire `?ancienne=1` proposable : sans elle, un
+ * utilisateur en mode invité n'aurait plus aucun moyen d'atteindre ses concours
+ * pour les exporter, alors qu'ils sont encore dans ce navigateur.
+ */
+function useAncienneVersionDisponible(): boolean {
+  const [dispo, setDispo] = useState(false);
+  useEffect(() => {
+    if (!appIsElsewhere()) return;
+    setDispo(navigator.serviceWorker?.controller != null);
+  }, []);
+  return dispo;
 }
 
 /** Une fonctionnalité de la grille : un pictogramme, un titre, une phrase. */
@@ -176,6 +194,7 @@ const FAQ: { q: string; a: string }[] = [
  */
 export function LandingPage() {
   const demenage = aUneAncienneInstallation();
+  const ancienneVersion = useAncienneVersionDisponible();
 
   return (
     <div className="lp">
@@ -215,6 +234,12 @@ export function LandingPage() {
               envoyés au serveur, sont à exporter depuis l’ancienne installation avant
               de la quitter.{' '}
               <a href={appUrl('/login')}>Aller à l’application →</a>
+              {ancienneVersion && (
+                <>
+                  {' · '}
+                  <a href="?ancienne=1">Rouvrir l’ancienne version pour exporter</a>
+                </>
+              )}
             </div>
           </div>
         )}

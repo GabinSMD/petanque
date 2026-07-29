@@ -124,6 +124,9 @@ sudo REPO_URL=… DOMAIN=petanque.exemple.fr APP_DOMAIN=app.petanque.exemple.fr 
 | `/` | La page vitrine (document `vitrine.html`, sans service worker ni base locale). |
 | `/assets/…`, `/vitrine/…`, `/favicon.svg` | Servis : la vitrine en a besoin. |
 | `/api/…` | **Servi normalement.** Les appareils déjà installés depuis l'ancienne adresse continuent de se synchroniser ; une redirection casserait leurs requêtes POST. |
+| `/sw.js` | Le **service worker de transition** (`client/public/vitrine-sw.js`), servi 200 sans redirection. Voir ci-dessous : c'est le seul canal qui reste vers les appareils restés là. |
+| `/push-sw.js`, `/pwa-192.png` | Servis : le service worker de transition les importe pour continuer d'afficher les notifications de convocation de ces appareils. |
+| `/?ancienne=1` | Rouvre volontairement l'ancienne version depuis le cache, pour exporter des concours restés sur cette origine. |
 | tout le reste | Redirection 301 vers `APP_ORIGIN`, chemin conservé — les liens publics `/p/:token` distribués aux équipes et les QR codes affichés au boulodrome continuent de fonctionner. |
 
 ### ⚠ Si l'application vivait déjà sur le domaine principal
@@ -153,6 +156,36 @@ atteindrait qu'une :
 
 Le bandeau de l'application **ne se referme pas** : un avertissement qu'on
 renvoie définitivement d'un clic ne déménage personne.
+
+### Rouvrir le canal : le service worker de transition
+
+Ces deux avertissements ne servent à rien si le code neuf n'atteint jamais
+l'appareil — et c'est exactement ce qui se passe si on n'y prend pas garde.
+
+Un service worker vérifie ses mises à jour en rechargeant son propre script, et
+**la spécification interdit que cette requête soit redirigée.** Rediriger
+`/sw.js` vers la nouvelle adresse fait donc échouer la mise à jour : l'ancien
+service worker reste en place indéfiniment, continue de servir l'ancien lot
+depuis son précache, et aucune version nouvelle ne peut plus arriver. L'appareil
+est figé, sans que rien ne le signale.
+
+D'où `client/public/vitrine-sw.js`, servi à la place sur le nom de la vitrine.
+Il ne se désenregistre pas — un club sans réseau au boulodrome se retrouverait
+sans rien. Il change l'ordre des priorités :
+
+| Situation | Ce qui se passe |
+| --------- | --------------- |
+| Avec réseau | La navigation aboutit sur la page vitrine, dont le bandeau explique le déménagement. |
+| Sans réseau | Repli sur le cache : l'application s'ouvre encore, telle qu'elle était. |
+| `?ancienne=1` | Rouvre l'ancienne version même avec du réseau, pour exporter des concours du mode invité. Le bandeau de la vitrine propose ce lien quand un service worker contrôle encore l'origine. |
+
+Les fichiers de `/assets/` sont servis **cache d'abord** : leur nom est haché,
+donc leur contenu ne change jamais, et surtout le serveur les a effacés au
+rebuild suivant — la coquille servie hors ligne réclame ceux de *son* build.
+
+Le précache de l'ancienne application n'est jamais purgé : c'est lui, le filet
+hors ligne. Il disparaîtra avec la désinstallation ou le nettoyage du
+navigateur.
 
 La redirection est **permanente (301)** : les navigateurs la gardent en cache.
 Un retour en arrière demande de vider ce cache côté visiteur.

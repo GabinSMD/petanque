@@ -121,8 +121,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // La vitrine est une page publique en ligne : la précacher dans
-        // l'application n'aurait aucun usage hors connexion.
-        globIgnores: ['**/vitrine.html'],
+        // l'application n'aurait aucun usage hors connexion. Le service worker
+        // de transition, lui, n'a rien à faire dans le précache de celui qu'il
+        // est censé remplacer.
+        globIgnores: ['**/vitrine.html', '**/vitrine-sw.js'],
         importScripts: ['push-sw.js'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
