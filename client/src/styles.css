@@ -4208,3 +4208,68 @@ form label select {
 .courriel-comite {
   min-width: 18rem;
 }
+
+/* Verrou de la feuille signée : un fieldset ne doit rien changer à la mise en page. */
+.feuille-verrou {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.feuille-verrou[disabled] {
+  opacity: 0.85;
+}
+
+/* Signatures des capitaines. */
+.feuille-signatures h2 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.05rem;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0.2rem;
+}
+
+.feuille-signatures-paves {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+
+.signature-canvas {
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: #fff;
+  touch-action: none;
+  display: block;
+}
+
+.signature-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.signature-trace {
+  display: block;
+  max-width: 320px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.signature-qui {
+  margin: 0.2rem 0 0;
+  font-weight: 700;
+}
+
+.signature-empeche {
+  margin: 0;
+}
+
+.feuille-empreinte {
+  margin: 0.8rem 0 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.feuille-arbitre {
+  margin: 0.6rem 0 0;
+}

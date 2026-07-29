@@ -149,3 +149,88 @@ export const LIBELLE_TYPE_PARTIE: Record<TypePartie, string> = {
   doublette: 'Doublettes',
   triplette: 'Triplettes',
 };
+
+/* ------------------------------------------------------------------ */
+/* Empreinte du contenu signé                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Ce que la signature atteste : tout ce qui est écrit sur la feuille. Les
+ * signatures elles-mêmes n'en font pas partie — on ne signe pas sa signature.
+ */
+export interface ContenuFeuille {
+  entete: Record<string, string>;
+  compositionA: string[];
+  compositionB: string[];
+  parties: {
+    type: TypePartie;
+    scoreA: number | null;
+    scoreB: number | null;
+    jeu?: string;
+    placesA: string[];
+    placesB: string[];
+  }[];
+  remplacements: { bloc: string; cote: string; remplace: string; remplacant: string }[];
+  remarques: string;
+  totalA: number;
+  totalB: number;
+}
+
+const propre = (v: string | undefined): string => (v ?? '').trim();
+
+/**
+ * Représentation canonique de la feuille : le texte exact sur lequel porte
+ * l'empreinte. Les espaces superflus sont retirés — sinon une frappe invisible
+ * ferait croire à une feuille modifiée.
+ *
+ * L'ordre est fixé ici une fois pour toutes : deux feuilles identiques donnent
+ * le même texte, quel que soit l'ordre dans lequel elles ont été remplies.
+ */
+export function contenuSigne(c: ContenuFeuille): string {
+  const lignes: string[] = [];
+  for (const cle of Object.keys(c.entete).sort()) {
+    lignes.push(`${cle}=${propre(c.entete[cle])}`);
+  }
+  lignes.push(`A:${c.compositionA.map(propre).join('|')}`);
+  lignes.push(`B:${c.compositionB.map(propre).join('|')}`);
+  for (const [i, p] of c.parties.entries()) {
+    const score = p.scoreA === null || p.scoreB === null ? '-' : `${p.scoreA}-${p.scoreB}`;
+    lignes.push(
+      [
+        `p${i}`,
+        p.type,
+        score,
+        `jeu=${propre(p.jeu)}`,
+        p.placesA.map(propre).join('+'),
+        p.placesB.map(propre).join('+'),
+      ].join(';'),
+    );
+  }
+  for (const r of c.remplacements) {
+    lignes.push(`r;${r.bloc};${r.cote};${propre(r.remplace)};${propre(r.remplacant)}`);
+  }
+  lignes.push(`remarques=${propre(c.remarques)}`);
+  lignes.push(`total=${c.totalA}-${c.totalB}`);
+  return lignes.join('\n');
+}
+
+/**
+ * Empreinte de contrôle de la feuille : huit caractères hexadécimaux, à imprimer
+ * à côté des signatures.
+ *
+ * Ce n'est pas un sceau cryptographique et ça ne prétend pas l'être : c'est un
+ * témoin. Si la feuille est modifiée après signature, l'empreinte réimprimée ne
+ * correspond plus à celle qui figure sur l'exemplaire signé, et cela se voit à
+ * l'œil nu. Hachage FNV-1a 32 bits : déterministe, sans dépendance, calculable
+ * hors connexion.
+ */
+export function empreinteFeuille(c: ContenuFeuille): string {
+  const texte = contenuSigne(c);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < texte.length; i += 1) {
+    h ^= texte.charCodeAt(i);
+    // Multiplication par le nombre premier FNV, en restant sur 32 bits.
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).toUpperCase().padStart(8, '0');
+}

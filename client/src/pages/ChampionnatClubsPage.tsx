@@ -10,6 +10,7 @@ import {
   estHorsUE,
   parseLicenceQr,
   bilanRencontre,
+  empreinteFeuille,
   partiesVides,
   pointsEnJeu,
   type ChampLicence,
@@ -17,6 +18,7 @@ import {
   type PartieRencontre,
 } from '@shared';
 import { useLicencies } from '../db/hooks';
+import { SignaturePad } from '../components/SignaturePad';
 import {
   FeuilleMatchVerso,
   type JoueurFeuille,
@@ -57,6 +59,15 @@ interface Etat {
   remplacements: Remplacements;
   remarques: string;
   courrielComite: string;
+  /** Signatures recueillies : image encodée et horodatage, par capitaine. */
+  signatures: { a: Signature | null; b: Signature | null };
+}
+
+interface Signature {
+  image: string;
+  quand: string;
+  /** Empreinte du contenu au moment de la signature : c'est ce qui a été signé. */
+  empreinte: string;
 }
 
 /** Places vides pour chaque partie, selon la formation. */
@@ -90,6 +101,7 @@ function lireMemoire(): Etat {
     remplacements: { a: {}, b: {} },
     remarques: '',
     courrielComite: '',
+    signatures: { a: null, b: null },
   };
   try {
     const brut = localStorage.getItem(CLE_MEMOIRE);
@@ -154,6 +166,82 @@ export function ChampionnatClubsPage() {
   );
   const controle = controlerEquipe(joueurs, parLicence, criteres);
   const competition = COMPETITIONS_CLUB.find((c) => c.id === etat.competition)!;
+
+  /* ------------------------------------------------------------------ */
+  /* Signature : ce qu'elle atteste, et ce qu'elle verrouille             */
+  /* ------------------------------------------------------------------ */
+
+  const bilanPourSignature = bilanRencontre(BAREME_CDC, etat.parties);
+  const contenu = {
+    entete: {
+      competition: competition.label,
+      date: etat.date,
+      division: etat.division,
+      poule: etat.poule,
+      clubA: etat.club,
+      numeroClubA: etat.numeroClub,
+      clubB: etat.adversaire,
+      numeroClubB: etat.numeroClubAdverse,
+      heureDebut: etat.heureDebut,
+      heureFin: etat.heureFin,
+      capitaine: `${etat.capitaineNom} ${etat.capitaineLicence}`,
+    },
+    compositionA: joueurs.map((p) => p.name),
+    compositionB: etat.adversaireJoueurs.map((j) => `${j.nom} ${j.licence}`),
+    parties: etat.parties.map((p, i) => ({
+      type: p.type,
+      scoreA: p.scoreA,
+      scoreB: p.scoreB,
+      jeu: p.jeu,
+      placesA: etat.places[i]?.a ?? [],
+      placesB: etat.places[i]?.b ?? [],
+    })),
+    remplacements: (['a', 'b'] as const).flatMap((cote) =>
+      Object.entries(etat.remplacements[cote] ?? {}).flatMap(([bloc, liste]) =>
+        (liste ?? []).map((r) => ({ bloc, cote, remplace: r.remplace, remplacant: r.remplacant })),
+      ),
+    ),
+    remarques: etat.remarques,
+    totalA: bilanPourSignature.totalA,
+    totalB: bilanPourSignature.totalB,
+  };
+  const empreinte = empreinteFeuille(contenu);
+
+  const signee = Boolean(etat.signatures.a || etat.signatures.b);
+  /**
+   * Une anomalie interdit de signer : on n'atteste pas un résultat impossible.
+   * Une feuille simplement incomplète reste signable — une rencontre peut être
+   * interrompue — mais on le dit.
+   */
+  const empecheSignature =
+    bilanPourSignature.anomalies.length > 0
+      ? 'Corrigez la feuille avant de signer : une partie est à égalité ou n\'a qu\'un seul score.'
+      : undefined;
+  /** L'empreinte figurant sur un exemplaire signé ne correspond plus au contenu. */
+  const empreinteSignee = etat.signatures.a?.empreinte ?? etat.signatures.b?.empreinte;
+  const empreinteDivergente = Boolean(empreinteSignee && empreinteSignee !== empreinte);
+
+  const signer = (cote: 'a' | 'b', image: string): void =>
+    maj({
+      signatures: {
+        ...etat.signatures,
+        [cote]: {
+          image,
+          quand: new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }),
+          empreinte,
+        },
+      },
+    });
+
+  const effacerSignatures = (): void => {
+    if (
+      window.confirm(
+        'Effacer les signatures pour corriger la feuille ? Les deux capitaines devront signer de nouveau.',
+      )
+    ) {
+      maj({ signatures: { a: null, b: null } });
+    }
+  };
 
   /**
    * Courriel préparé pour le comité : objet et corps remplis, la feuille signée
@@ -222,6 +310,27 @@ export function ChampionnatClubsPage() {
         pas.
       </p>
 
+      {signee && (
+        <p className="banner-warn no-print">
+          🔒 Feuille signée — elle n'est plus modifiable. Empreinte{' '}
+          <strong>{empreinteSignee}</strong>.{' '}
+          <button className="btn-lien" onClick={effacerSignatures}>
+            Effacer les signatures pour corriger
+          </button>
+        </p>
+      )}
+
+      {empreinteDivergente && (
+        <p className="banner-warn no-print">
+          ⚠ Le contenu a changé depuis la signature : l'empreinte est maintenant{' '}
+          <strong>{empreinte}</strong> au lieu de <strong>{empreinteSignee}</strong>. L'exemplaire
+          signé ne correspond plus — faites signer de nouveau.
+        </p>
+      )}
+
+      {/* Signer verrouille tout ce que la signature atteste : un `fieldset`
+          désactivé neutralise d'un coup tous les champs qu'il contient. */}
+      <fieldset className="feuille-verrou" disabled={signee}>
       <div className="draw-panel no-print">
         <div className="form-row">
           <label>
@@ -380,6 +489,7 @@ export function ChampionnatClubsPage() {
           </button>
         </span>
       </form>
+      </fieldset>
 
       {message && <p className="hint no-print">{message}</p>}
 
@@ -396,6 +506,7 @@ export function ChampionnatClubsPage() {
         <p className="no-print">Scannez les licences de l'équipe pour la contrôler.</p>
       ) : (
         <>
+          <fieldset className="feuille-verrou" disabled={signee}>
           <p
             className={
               controle.conforme ? 'championnat-verdict ok' : 'championnat-verdict ko no-print'
@@ -572,15 +683,40 @@ export function ChampionnatClubsPage() {
               placeholder="En cas d'incident, joindre un rapport."
             />
           </label>
+          </fieldset>
 
-          <section className="print-arbitrage-sign">
-            <p>
-              Capitaine {etat.club || '…'} : <span className="print-rule" />
+          <section className="feuille-signatures">
+            <h2>Signatures des capitaines</h2>
+            <p className="hint no-print">
+              Une feuille signée vaut acceptation du résultat : plus de réclamation possible.
+              {!bilanPourSignature.complete &&
+                ' Cette feuille est encore incomplète — vérifiez avant de faire signer.'}
             </p>
-            <p>
-              Capitaine {etat.adversaire || '…'} : <span className="print-rule" />
+            <div className="feuille-signatures-paves">
+              {(['a', 'b'] as const).map((cote) => (
+                <SignaturePad
+                  key={cote}
+                  valeur={etat.signatures[cote]?.image ?? ''}
+                  quand={etat.signatures[cote]?.quand}
+                  qui={
+                    cote === 'a'
+                      ? etat.club.trim() || 'Capitaine A'
+                      : etat.adversaire.trim() || 'Capitaine B'
+                  }
+                  empeche={empecheSignature}
+                  onSigner={(image) => signer(cote, image)}
+                />
+              ))}
+            </div>
+            <p className="feuille-empreinte">
+              Empreinte de la feuille : <strong>{empreinte}</strong>
+              <span className="hint">
+                {' '}
+                — à comparer avec celle de l'exemplaire signé : si elle diffère, la feuille a été
+                modifiée depuis.
+              </span>
             </p>
-            <p>
+            <p className="feuille-arbitre">
               Arbitre : <span className="print-rule" />
             </p>
           </section>
