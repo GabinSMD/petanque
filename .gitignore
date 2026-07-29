@@ -14,6 +14,9 @@ server/data/
 # Environnement
 .env
 .env.local
+# Adresses des noms de domaine, figées dans le build du client sur le serveur.
+.env.production
+.env.*.local
 
 # Documentation fédérale de référence, consultée en local (binaire volumineux)
 Manuel_GC_*.pdf

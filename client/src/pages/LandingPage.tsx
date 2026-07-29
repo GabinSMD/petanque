@@ -1,6 +1,21 @@
-import { Link } from 'react-router-dom';
-import { BouleLogo } from '../App';
+import { BouleLogo } from '../components/BouleLogo';
+import { appIsElsewhere, appUrl } from '../lib/appUrl';
 import '../landing.css';
+
+/**
+ * Données locales laissées par l'application à l'époque où elle vivait sur ce
+ * nom de domaine. Elles appartiennent à cette origine : le navigateur ne les
+ * donnera jamais à l'application déménagée, et le dire vaut mieux que de
+ * laisser quelqu'un croire ses concours perdus.
+ */
+function aUneAncienneInstallation(): boolean {
+  if (!appIsElsewhere()) return false;
+  try {
+    return window.localStorage.getItem('petanque.session') !== null;
+  } catch {
+    return false;
+  }
+}
 
 /** Une fonctionnalité de la grille : un pictogramme, un titre, une phrase. */
 interface Feature {
@@ -160,6 +175,8 @@ const FAQ: { q: string; a: string }[] = [
  * d’assistant) et porte sa propre en-tête.
  */
 export function LandingPage() {
+  const demenage = aUneAncienneInstallation();
+
   return (
     <div className="lp">
       <header className="lp-header">
@@ -177,17 +194,30 @@ export function LandingPage() {
             <a href="#questions">Questions</a>
           </nav>
           <div className="lp-header-cta">
-            <Link className="btn btn-sm" to="/login">
+            <a className="btn btn-sm" href={appUrl('/login')}>
               Se connecter
-            </Link>
-            <Link className="btn btn-primary btn-sm" to="/login?mode=inscription">
+            </a>
+            <a className="btn btn-primary btn-sm" href={appUrl('/login?mode=inscription')}>
               Créer un compte
-            </Link>
+            </a>
           </div>
         </div>
       </header>
 
       <main>
+        {demenage && (
+          <div className="lp-moved" role="status">
+            <div className="lp-container">
+              <strong>L’application a déménagé.</strong> Cet appareil garde des données
+              de l’époque où elle était à cette adresse ; elles restent attachées à
+              celle-ci. Vos concours <strong>synchronisés</strong> vous attendent à la
+              nouvelle adresse dès votre connexion — ceux créés en mode invité, jamais
+              envoyés au serveur, sont à exporter depuis l’ancienne installation avant
+              de la quitter.{' '}
+              <a href={appUrl('/login')}>Aller à l’application →</a>
+            </div>
+          </div>
+        )}
         <section className="lp-hero">
           <div className="lp-container lp-hero-inner">
             <p className="lp-eyebrow">Gestion de concours de pétanque</p>
@@ -202,12 +232,12 @@ export function LandingPage() {
               place, et se synchronise quand le réseau revient.
             </p>
             <div className="lp-cta">
-              <Link className="btn btn-primary lp-btn-lg" to="/login?mode=inscription">
+              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
                 Créer un compte club
-              </Link>
-              <Link className="btn lp-btn-lg" to="/login">
+              </a>
+              <a className="btn lp-btn-lg" href={appUrl('/login')}>
                 🚀 Essayer sans compte
-              </Link>
+              </a>
             </div>
             <p className="lp-cta-note">
               Rien à installer : l’application s’ouvre dans le navigateur, sur
@@ -401,12 +431,12 @@ export function LandingPage() {
               risque.
             </p>
             <div className="lp-cta lp-cta-center">
-              <Link className="btn btn-primary lp-btn-lg" to="/login?mode=inscription">
+              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
                 Créer un compte club
-              </Link>
-              <Link className="btn lp-btn-lg lp-btn-invert" to="/login">
+              </a>
+              <a className="btn lp-btn-lg lp-btn-invert" href={appUrl('/login')}>
                 🚀 Essayer sans compte
-              </Link>
+              </a>
             </div>
           </div>
         </section>
@@ -427,8 +457,8 @@ export function LandingPage() {
             appartiennent à leurs titulaires.
           </p>
           <nav className="lp-footer-links" aria-label="Liens">
-            <Link to="/login">Se connecter</Link>
-            <Link to="/login?mode=inscription">Créer un compte club</Link>
+            <a href={appUrl('/login')}>Se connecter</a>
+            <a href={appUrl('/login?mode=inscription')}>Créer un compte club</a>
           </nav>
         </div>
       </footer>

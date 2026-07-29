@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BouleLogo } from '../App';
+import { BouleLogo } from '../components/BouleLogo';
 import {
   adoptLocalDataForNewOrg,
   getMeta,
