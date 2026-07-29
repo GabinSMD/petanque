@@ -12,6 +12,7 @@ import { useSession } from './db/hooks';
 import { BouleLogo } from './components/BouleLogo';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
+import { AncienneAdresse } from './components/AncienneAdresse';
 import { AppFooter } from './components/AppFooter';
 import { FrontiereErreur } from './components/FrontiereErreur';
 import { NouveautesHost } from './components/NouveautesModal';
@@ -75,6 +76,7 @@ function Layout() {
           )}
         </div>
       </header>
+      <AncienneAdresse />
       <main className="app-main">
         {/* La clé remet la frontière à zéro à chaque changement d'écran :
             naviguer suffit à sortir d'une page en échec. */}

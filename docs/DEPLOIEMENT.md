@@ -64,6 +64,51 @@ petanque.exemple.fr, app.petanque.exemple.fr {
 }
 ```
 
+### ⚠ Derrière Cloudflare : le joker TLS ne descend que d'un cran
+
+Si le domaine principal est déjà un sous-domaine (`petanque.exemple.fr` dans une
+zone `exemple.fr`), alors le nom de l'application en compte **deux**
+(`app.petanque.exemple.fr`) — et le certificat Universal SSL gratuit de
+Cloudflare ne le couvre pas. Il ne porte que :
+
+```
+DNS:exemple.fr, DNS:*.exemple.fr
+```
+
+`*.exemple.fr` s'arrête au premier cran. La poignée de main TLS sur
+`app.petanque.exemple.fr` échoue alors avant même d'atteindre Caddy — un
+symptôme trompeur, puisque le domaine principal fonctionne. Pour le vérifier :
+
+```bash
+echo | openssl s_client -connect <ip-cloudflare>:443 \
+  -servername app.petanque.exemple.fr 2>/dev/null \
+  | openssl x509 -noout -ext subjectAltName
+```
+
+Trois issues, et attendre n'en est pas une :
+
+| Choix | Ce qu'il coûte |
+| ----- | -------------- |
+| Un nom à **un seul cran** (`concours.exemple.fr`) | Le nom est moins parlant. Gratuit, proxy conservé. |
+| **Advanced Certificate Manager** (Cloudflare, payant) | Un abonnement mensuel. Couvre `*.petanque.exemple.fr`, nom et proxy conservés. |
+| **Proxy désactivé** sur ce sous-domaine (nuage gris) | Caddy prend un certificat Let's Encrypt, qui gère les deux crans. Mais l'IP d'origine devient publique pour ce nom, et le trafic de l'application ne passe plus par le filtrage de Cloudflare : la limitation de débit du serveur devient la seule barrière devant `/api/auth`. |
+
+Avec le proxy désactivé, préférez **deux blocs Caddy séparés** : les deux noms
+n'ont plus le même cycle de vie TLS — l'un dépend de Cloudflare, l'autre de
+Let's Encrypt — et un échec sur l'un ne trouble pas l'autre.
+
+```
+petanque.exemple.fr {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8787
+}
+
+app.petanque.exemple.fr {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8787
+}
+```
+
 Puis `npm run build`, `systemctl restart petanque`, `systemctl reload caddy`.
 Une installation neuve fait tout cela d'un coup :
 
@@ -93,11 +138,21 @@ l'ancien nom :
   créés en **mode invité** — à exporter (« Sauvegarde ») depuis l'ancienne
   adresse avant de la quitter.
 
-La page vitrine détecte ce cas : si elle trouve une session locale laissée par
-l'ancienne installation, elle affiche un bandeau qui l'explique et renvoie vers
-la nouvelle adresse. Les applications déjà **installées** (écran d'accueil)
-pointent sur l'ancien `start_url` : elles ouvriront la vitrine, où ce bandeau
-les attend.
+Deux avertissements couvrent les deux populations, parce qu'un seul n'en
+atteindrait qu'une :
+
+- **La page vitrine** prévient le visiteur **sans session** dont l'appareil
+  garde des données de l'ancienne installation.
+- **L'application elle-même** prévient l'utilisateur **connecté** qui continue
+  de l'ouvrir sur l'ancienne origine. C'est le cas le plus tenace : son service
+  worker sert l'application depuis son cache et l'API répond sous les deux noms,
+  donc rien ne l'alerte — il pourrait rester là des mois. Il voit un bandeau
+  permanent, plus une fenêtre d'explication à la première rencontre, adaptée
+  selon qu'il a un compte (ses concours synchronisés l'attendent) ou qu'il est
+  en mode invité (il doit exporter ses concours avant de partir).
+
+Le bandeau de l'application **ne se referme pas** : un avertissement qu'on
+renvoie définitivement d'un clic ne déménage personne.
 
 La redirection est **permanente (301)** : les navigateurs la gardent en cache.
 Un retour en arrière demande de vider ce cache côté visiteur.
