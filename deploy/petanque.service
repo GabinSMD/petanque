@@ -20,6 +20,14 @@ Environment=DATA_DIR=/opt/petanque/data
 # Environment=JWT_SECRET=collez_ici_le_resultat_de_openssl_rand_hex_32
 # Adresse de contact incluse dans les notifications push (recommandé).
 Environment=VAPID_SUBJECT=mailto:contact@exemple.fr
+# Déploiement à deux noms de domaine : la vitrine sur l'un, l'application sur
+# l'autre. Décommentez les deux ensemble. Les liens publics déjà distribués aux
+# équipes (/p/:token, QR codes) sont redirigés vers APP_ORIGIN, et l'API reste
+# servie sous les deux noms pour ne pas casser les appareils déjà installés.
+# Le client doit être construit avec les mêmes adresses : voir
+# client/.env.production dans docs/DEPLOIEMENT.md.
+# Environment=VITRINE_HOST=petanque.exemple.fr
+# Environment=APP_ORIGIN=https://app.petanque.exemple.fr
 ExecStart=/usr/bin/node server/dist/index.js
 Restart=on-failure
 RestartSec=3

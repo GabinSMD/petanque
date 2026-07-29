@@ -13,13 +13,21 @@
 # - DOMAIN vide  → installe seulement l'app + le service (HTTPS à faire via
 #                  Cloudflare Tunnel, voir docs/DEPLOIEMENT-ORACLE.md).
 # - DOMAIN fourni → installe aussi Caddy (HTTPS automatique Let's Encrypt).
+# - APP_DOMAIN fourni en plus → DOMAIN sert la page vitrine, APP_DOMAIN sert
+#                  l'application. Les deux noms doivent pointer vers cette VM.
 
 set -euo pipefail
 
 REPO_URL="${REPO_URL:?Définissez REPO_URL=https://github.com/USER/petanque.git}"
 BRANCH="${BRANCH:-main}"
 DOMAIN="${DOMAIN:-}"
+APP_DOMAIN="${APP_DOMAIN:-}"
 EMAIL="${EMAIL:-}"
+
+if [[ -n "$APP_DOMAIN" && -z "$DOMAIN" ]]; then
+  echo "APP_DOMAIN sans DOMAIN : indiquez aussi le domaine de la vitrine." >&2
+  exit 1
+fi
 APP_DIR="/opt/petanque/app"
 DATA_DIR="/opt/petanque/data"
 APP_USER="petanque"
@@ -52,6 +60,18 @@ else
   git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
 fi
 
+# Les adresses des deux noms de domaine sont figées dans le paquet du client :
+# ce fichier doit exister AVANT le build. Il n'est pas suivi par git, donc il
+# survit aux mises à jour (`git reset --hard` ne touche pas aux fichiers non
+# suivis) — voir deploy/update.sh.
+if [[ -n "$APP_DOMAIN" ]]; then
+  log "Adresses du client (client/.env.production)"
+  cat > "$APP_DIR/client/.env.production" <<EOF
+VITE_APP_ORIGIN=https://$APP_DOMAIN
+VITE_SITE_ORIGIN=https://$DOMAIN
+EOF
+fi
+
 log "Installation des dépendances + build"
 ( cd "$APP_DIR" && npm install && npm run build )
 
@@ -61,6 +81,12 @@ log "Service systemd"
 install -m 644 "$APP_DIR/deploy/petanque.service" /etc/systemd/system/petanque.service
 if [[ -n "$EMAIL" ]]; then
   sed -i "s#mailto:contact@exemple.fr#mailto:$EMAIL#" /etc/systemd/system/petanque.service
+fi
+if [[ -n "$APP_DOMAIN" ]]; then
+  # Décommente les deux lignes du service et y met les vrais noms. Le
+  # délimiteur ne peut pas être « # », qui apparaît dans le motif.
+  sed -i "s|^# *Environment=VITRINE_HOST=.*|Environment=VITRINE_HOST=$DOMAIN|" /etc/systemd/system/petanque.service
+  sed -i "s|^# *Environment=APP_ORIGIN=.*|Environment=APP_ORIGIN=https://$APP_DOMAIN|" /etc/systemd/system/petanque.service
 fi
 systemctl daemon-reload
 systemctl enable --now petanque
@@ -79,7 +105,7 @@ fi
 echo "⚠  N'oubliez pas d'ouvrir AUSSI 80/443 dans la Security List de votre VCN Oracle (console web)."
 
 if [[ -n "$DOMAIN" ]]; then
-  log "Caddy (HTTPS automatique) pour $DOMAIN"
+  log "Caddy (HTTPS automatique) pour ${APP_DOMAIN:+$DOMAIN et }${APP_DOMAIN:-$DOMAIN}"
   if ! command -v caddy >/dev/null; then
     apt-get install -y debian-keyring debian-archive-keyring apt-transport-https
     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
@@ -88,9 +114,15 @@ if [[ -n "$DOMAIN" ]]; then
       > /etc/apt/sources.list.d/caddy-stable.list
     apt-get update -y && apt-get install -y caddy
   fi
-  printf '%s {\n\tencode zstd gzip\n\treverse_proxy 127.0.0.1:8787\n}\n' "$DOMAIN" > /etc/caddy/Caddyfile
+  HOSTS="$DOMAIN"
+  [[ -n "$APP_DOMAIN" ]] && HOSTS="$DOMAIN, $APP_DOMAIN"
+  printf '%s {\n\tencode zstd gzip\n\treverse_proxy 127.0.0.1:8787\n}\n' "$HOSTS" > /etc/caddy/Caddyfile
   systemctl reload caddy || systemctl restart caddy
-  echo "✓ Application disponible sur https://$DOMAIN (le certificat peut prendre ~30 s)."
+  if [[ -n "$APP_DOMAIN" ]]; then
+    echo "✓ Vitrine sur https://$DOMAIN — application sur https://$APP_DOMAIN (certificats : ~30 s)."
+  else
+    echo "✓ Application disponible sur https://$DOMAIN (le certificat peut prendre ~30 s)."
+  fi
 else
   echo "✓ Application en écoute sur 127.0.0.1:8787. Configurez l'HTTPS (Caddy ou Cloudflare Tunnel)."
 fi

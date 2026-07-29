@@ -206,6 +206,13 @@ fonction dont il se sert.
   de classement.
 
 ### SaaS & hors-ligne
+- **Page vitrine** : un visiteur sans session est accueilli par une
+  présentation — ce que fait le logiciel, le hors-ligne, le déroulé d'une
+  journée, des captures réelles — et non par un formulaire de connexion. Elle
+  peut vivre sur son propre nom de domaine (`petanque.exemple.fr` pour la
+  vitrine, `app.petanque.exemple.fr` pour l'application) : les deux noms
+  arrivent sur le même serveur, qui choisit le document d'après l'en-tête
+  `Host`. Voir [DEPLOIEMENT.md](./docs/DEPLOIEMENT.md).
 - **Comptes club (multi-tenant)** : chaque organisation a ses concours, ses
   utilisateurs et son journal de modifications.
 - **Mode invité** : tout essayer **sans créer de compte** — les données

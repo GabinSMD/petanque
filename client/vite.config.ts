@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { execFileSync } from 'node:child_process';
@@ -29,6 +29,41 @@ function commitCourt(): string {
   }
 }
 
+/**
+ * Deux retouches sur le seul document de la vitrine, après le plugin PWA :
+ *
+ * - retirer le lien vers le manifeste, que le plugin injecte dans tous les
+ *   documents : sans lui, le navigateur ne proposera pas d'« installer » une
+ *   page de présentation comme si c'était l'application ;
+ * - rendre absolues les adresses Open Graph quand `VITE_SITE_ORIGIN` est
+ *   fournie, les aperçus de lien n'acceptant pas de chemin relatif.
+ */
+function vitrineHtml(): Plugin {
+  const site = (process.env.VITE_SITE_ORIGIN ?? '').replace(/\/+$/, '');
+  return {
+    name: 'petanque-vitrine-html',
+    enforce: 'post',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        if (!ctx.filename.endsWith('vitrine.html')) return html;
+        let out = html.replace(/\s*<link rel="manifest"[^>]*>/g, '');
+        if (site) {
+          out = out.replace(
+            /(<meta property="og:image" content=")(\/[^"]*)(")/,
+            `$1${site}$2$3`,
+          );
+          out = out.replace(
+            '<meta property="og:type"',
+            `<meta property="og:url" content="${site}/" />\n    <meta property="og:type"`,
+          );
+        }
+        return out;
+      },
+    },
+  };
+}
+
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
@@ -39,6 +74,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // `main.tsx` appelle `registerSW` lui-même : rien à injecter dans les
+      // documents. Surtout pas dans `vitrine.html`, qui ne doit installer aucun
+      // service worker — la page vitrine ne crée rien sur son origine.
+      injectRegister: null,
       includeAssets: ['favicon.svg'],
       manifest: {
         id: '/',
@@ -81,6 +120,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // La vitrine est une page publique en ligne : la précacher dans
+        // l'application n'aurait aucun usage hors connexion.
+        globIgnores: ['**/vitrine.html'],
         importScripts: ['push-sw.js'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
@@ -91,11 +133,23 @@ export default defineConfig({
           }
         ]
       }
-    })
+    }),
+    // Après VitePWA : c'est lui qui injecte le lien vers le manifeste.
+    vitrineHtml()
   ],
   resolve: {
     alias: {
       '@shared': fileURLToPath(new URL('../shared/src/index.ts', import.meta.url))
+    }
+  },
+  build: {
+    rollupOptions: {
+      // Deux documents : l'application, et la vitrine servie sur son propre nom
+      // de domaine (voir la sélection par en-tête Host côté serveur).
+      input: {
+        main: fileURLToPath(new URL('index.html', import.meta.url)),
+        vitrine: fileURLToPath(new URL('vitrine.html', import.meta.url))
+      }
     }
   },
   server: {

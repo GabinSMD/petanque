@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BouleLogo } from '../App';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BouleLogo } from '../components/BouleLogo';
 import {
   adoptLocalDataForNewOrg,
   getMeta,
@@ -30,7 +30,11 @@ interface AuthResponse {
 export function LoginPage() {
   const navigate = useNavigate();
   const existing = getSession();
-  const [mode, setMode] = useState<Mode>('login');
+  const [params] = useSearchParams();
+  // La vitrine amène ici avec l'intention déjà exprimée (« créer un compte »).
+  const [mode, setMode] = useState<Mode>(
+    params.get('mode') === 'inscription' ? 'register' : 'login',
+  );
   const [orgName, setOrgName] = useState('');
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
