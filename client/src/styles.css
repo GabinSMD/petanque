@@ -1947,19 +1947,29 @@ form label select {
 
 /* ----------------------------- Visite guidée ---------------------------- */
 
+/* La couche est transparente au clic ; seuls le fond assombri (quand il n'y a
+   pas de cible) et la carte en reçoivent. */
 .tour-layer {
   position: fixed;
   inset: 0;
   z-index: 90;
+  pointer-events: none;
 }
 
+/* Quand une cible est mise en lumière, le fond ne doit PAS capter le clic :
+   l'utilisateur doit pouvoir atteindre l'élément qu'on lui désigne. Le
+   noircissement vient de toute façon de l'ombre du surlignage. On sort alors du
+   guide par « Quitter » ou Échap. */
 .tour-backdrop {
   position: fixed;
   inset: 0;
+  pointer-events: none;
 }
 
+/* Pas de cible : le fond assombri redevient cliquable pour fermer. */
 .tour-backdrop-dim {
   background: rgba(10, 16, 35, 0.55);
+  pointer-events: auto;
 }
 
 .tour-spotlight {
@@ -1974,6 +1984,7 @@ form label select {
 .tour-card {
   position: fixed;
   z-index: 92;
+  pointer-events: auto;
   width: min(340px, calc(100vw - 24px));
   background: var(--card);
   border-radius: 14px;
@@ -2002,6 +2013,21 @@ form label select {
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+/* Étape qui attend un geste : pas de bouton « Suivant », une consigne. */
+.tour-consigne {
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tour-attente {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0.4rem 0 0;
 }
 
 .tour-buttons {
@@ -2209,6 +2235,19 @@ form label select {
 .chat-chip-alt {
   color: var(--muted);
   border-style: dashed;
+}
+
+/* Le guide passe devant l'action simple : faire vaut mieux que lire. */
+.chat-chip-guide {
+  background: linear-gradient(180deg, #2c55d4, var(--accent-dark));
+  border-color: var(--accent-dark);
+  color: #fff;
+  font-weight: 600;
+}
+
+.chat-chip-guide:hover {
+  background: var(--accent-dark);
+  color: #fff;
 }
 
 .chat-chip-action {

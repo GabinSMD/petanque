@@ -222,7 +222,7 @@ export function TeamsTab({ concours, teams }: Props) {
       )}
 
       {!locked && (
-        <form className="team-add-form no-print" onSubmit={(e) => void submit(e)}>
+        <form className="team-add-form no-print" data-tour="inscrire" onSubmit={(e) => void submit(e)}>
           <div className="team-add-players">
             {Array.from({ length: nbPlayers }, (_, i) => (
               <div key={i} className="player-inputs">

@@ -14,6 +14,22 @@ import type { Nouveaute } from '@shared';
  */
 export const JOURNAL: Nouveaute[] = [
   {
+    version: '0.3.0',
+    date: '2026-07-29',
+    items: [
+      {
+        icone: '🎓',
+        titre: 'L\'assistant vous fait faire, il ne raconte plus',
+        texte:
+          'Chaque geste courant a son guide pas à pas : l\'assistant surligne où cliquer, ' +
+          'puis attend que vous l\'ayez fait avant de proposer la suite. Tirer les poules, ' +
+          'saisir un score, lancer le tableau, remplir une feuille de match… Il reprend ' +
+          'là où vous en êtes, et ne vous répète pas ce qui est déjà fait.',
+        action: { label: 'Me guider', parcours: 'decouverte' },
+      },
+    ],
+  },
+  {
     version: '0.2.0',
     date: '2026-07-29',
     items: [

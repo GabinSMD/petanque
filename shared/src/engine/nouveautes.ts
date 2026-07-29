@@ -21,8 +21,8 @@ export interface NouveauteAction {
    * l'application, pas d'un concours en particulier.
    */
   path?: string;
-  /** Visite guidée à lancer à la place de la navigation. */
-  tour?: 'dashboard' | 'concours';
+  /** Parcours guidé à lancer à la place de la navigation (id du catalogue). */
+  parcours?: string;
 }
 
 export interface NouveauteItem {

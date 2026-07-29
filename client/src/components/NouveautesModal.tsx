@@ -1,9 +1,8 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { NouveauteAction } from '@shared';
+import { parcoursParId, type NouveauteAction } from '@shared';
 import { fermerNouveautes, getNouveautes, subscribeNouveautes } from '../help/nouveautesState';
-import { startTour } from '../help/tourState';
-import { concoursTour, dashboardTour } from '../help/tours';
+import { demarrerParcours } from '../help/parcoursState';
 
 /**
  * Pop-up « Nouveautés » : ce qui a changé depuis la dernière fois. Montée dans
@@ -27,9 +26,12 @@ export function NouveautesHost() {
 
   const suivre = (action: NouveauteAction) => {
     fermerNouveautes();
-    if (action.tour) {
-      startTour(action.tour === 'concours' ? concoursTour : dashboardTour);
-      return;
+    if (action.parcours) {
+      const parcours = parcoursParId(action.parcours);
+      if (parcours) {
+        demarrerParcours(parcours);
+        return;
+      }
     }
     if (action.path) navigate(action.path);
   };

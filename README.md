@@ -173,6 +173,13 @@ fonction dont il se sert.
   poules, corriger un score, consolante, forfait, affichage TV, hors-ligne…),
   recherche par mots-clés tolérante aux accents, boutons de navigation
   contextuelle — entièrement **hors-ligne**, aucun service externe.
+- **Parcours guidés interactifs** : « 🎓 Me guider pas à pas » ne raconte pas,
+  il fait faire. L'assistant surligne l'élément, puis **attend le geste** — un
+  clic sur la cible, ou un fait constaté dans les données (les poules
+  existent, le barrage est saisi). Une cible qui n'apparaît qu'après une action
+  est attendue, pas sautée ; les étapes déjà accomplies sont passées, donc un
+  parcours **reprend là où vous en êtes** ; et si vous partez ailleurs, il le
+  dit et propose de reprendre au lieu de surligner le vide.
 - **Version affichée en pied de page** (numéro, commit, date de compilation,
   injectés au build) : de quoi savoir ce que la tablette exécute vraiment.
 - **Pop-up « Nouveautés »** après une mise à jour : l'application se remplace

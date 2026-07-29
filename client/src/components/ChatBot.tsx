@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { FAQ, FEATURED_IDS, type FaqEntry } from '../help/faq';
 import { searchFaq } from '../help/matcher';
 import { rappelerNouveautes } from '../help/nouveautesState';
-import { startTour } from '../help/tourState';
-import { concoursTour, dashboardTour } from '../help/tours';
+import { demarrerParcours } from '../help/parcoursState';
+import { parcoursParId } from '@shared';
 
 interface BotMessage {
   role: 'bot';
@@ -101,10 +101,31 @@ export function ChatBot() {
     navigate(action.path.replace(':id', concoursId ?? ''));
   };
 
-  const restartTour = () => {
+  /**
+   * Lance un parcours guidé. Un parcours de concours réclame un concours
+   * ouvert : sans lui, on le dit au lieu de surligner le vide.
+   */
+  const guider = (id: string) => {
+    const parcours = parcoursParId(id);
+    if (!parcours) return;
+    if (parcours.besoinConcours && !concoursId) {
+      setMessages((m) => [
+        ...m,
+        {
+          role: 'bot',
+          text:
+            'Ce guide se déroule dans un concours. Ouvrez-en un depuis le tableau de bord, '
+            + 'puis redemandez-moi 😉',
+        },
+      ]);
+      navigate('/');
+      return;
+    }
     setOpen(false);
-    startTour(concoursId ? concoursTour : dashboardTour);
+    demarrerParcours(parcours, concoursId ?? null);
   };
+
+  const restartTour = () => guider(concoursId ? 'visite-concours' : 'decouverte');
 
   const showNouveautes = () => {
     setOpen(false);
@@ -151,7 +172,7 @@ export function ChatBot() {
                     <FaqAnswer
                       entry={msg.entry}
                       onAction={runAction}
-                      onTour={restartTour}
+                      onGuider={guider}
                       onNouveautes={showNouveautes}
                     />
                   )}
@@ -224,12 +245,12 @@ export function ChatBot() {
 function FaqAnswer({
   entry,
   onAction,
-  onTour,
+  onGuider,
   onNouveautes,
 }: {
   entry: FaqEntry;
   onAction: (entry: FaqEntry) => void;
-  onTour: () => void;
+  onGuider: (parcoursId: string) => void;
   onNouveautes: () => void;
 }) {
   return (
@@ -245,14 +266,18 @@ function FaqAnswer({
       )}
       {entry.note && <p className="faq-note">💡 {entry.note}</p>}
       <div className="chat-chips">
+        {/* Le guide d'abord : lire des étapes vaut moins que les faire. */}
+        {entry.parcours && (
+          <button
+            className="chat-chip chat-chip-guide"
+            onClick={() => onGuider(entry.parcours!)}
+          >
+            🎓 Me guider pas à pas
+          </button>
+        )}
         {entry.action && (
           <button className="chat-chip chat-chip-action" onClick={() => onAction(entry)}>
             🧭 {entry.action.label}
-          </button>
-        )}
-        {entry.id === 'tutoriel' && (
-          <button className="chat-chip chat-chip-action" onClick={onTour}>
-            🎓 Relancer la visite guidée
           </button>
         )}
         {entry.id === 'nouveautes' && (

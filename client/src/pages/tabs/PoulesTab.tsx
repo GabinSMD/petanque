@@ -149,6 +149,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
           {error && <p className="form-error">{error}</p>}
           <button
             className="btn btn-primary"
+            data-tour="tirer-poules"
             disabled={!summary || busy}
             onClick={() => void doDraw()}
           >

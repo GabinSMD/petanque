@@ -18,7 +18,7 @@ import { NouveautesHost } from './components/NouveautesModal';
 import { SyncBadge } from './components/SyncBadge';
 import { ChatBot } from './components/ChatBot';
 import { InstallPrompt } from './components/InstallPrompt';
-import { TourHost } from './components/Tour';
+import { ParcoursHost } from './components/Parcours';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -88,7 +88,7 @@ function Layout() {
       </main>
       <AppFooter />
       <ChatBot />
-      <TourHost />
+      <ParcoursHost />
       <NouveautesHost />
     </div>
   );
