@@ -1,0 +1,591 @@
+/* ==================================================================
+   Page vitrine (LandingPage) — servie à la racine aux visiteurs.
+   Réutilise les jetons de styles.css (--accent, --terra, --radius…)
+   et les classes .btn : la vitrine doit ressembler à l'application.
+   Ces styles ne concernent que la page publique ; ils vivent à part
+   pour ne pas alourdir la feuille de l'application.
+   ================================================================== */
+
+.lp {
+  --lp-max: 1120px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.lp-container {
+  width: 100%;
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding-left: max(1.1rem, env(safe-area-inset-left));
+  padding-right: max(1.1rem, env(safe-area-inset-right));
+}
+
+/* -------------------------------- En-tête -------------------------------- */
+
+.lp-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Liseré tricolore, comme dans l'application. Le blanc y est teinté : sur une
+   en-tête claire, du blanc pur ne se verrait pas et le liseré se lirait
+   « bleu puis rouge ». Même choix que la carte de connexion. */
+.lp-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0 34%,
+    #e8ecf7 34% 67%,
+    var(--terra) 67% 100%
+  );
+}
+
+.lp-header-inner {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 0.6rem max(1.1rem, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.lp-brand strong {
+  font-weight: 800;
+}
+
+.lp-nav {
+  display: flex;
+  gap: 1.1rem;
+  margin-left: auto;
+  font-size: 0.92rem;
+}
+
+.lp-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.2rem 0;
+  border-bottom: 2px solid transparent;
+}
+
+.lp-nav a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.lp-header-cta {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* --------------------------------- Hero --------------------------------- */
+
+.lp-hero {
+  padding: 3.2rem 0 0;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(29, 61, 156, 0.11), transparent 42%),
+    radial-gradient(circle at 94% 12%, rgba(210, 28, 52, 0.06), transparent 38%);
+}
+
+.lp-hero-inner {
+  text-align: center;
+  padding-bottom: 2.4rem;
+}
+
+.lp-eyebrow {
+  margin: 0 0 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.lp-hero h1 {
+  font-size: clamp(1.85rem, 4.2vw, 2.9rem);
+  line-height: 1.12;
+  margin: 0 auto 1rem;
+  max-width: 32ch;
+  text-wrap: balance;
+}
+
+.lp-accent {
+  color: var(--accent);
+}
+
+.lp-lead {
+  font-size: clamp(1rem, 1.5vw, 1.16rem);
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 62ch;
+  margin: 0 auto 1.6rem;
+}
+
+.lp-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+/* `.btn` est défini dans styles.css, chargée après cette feuille : à
+   spécificité égale elle gagnerait. On qualifie donc par `.btn`. */
+.btn.lp-btn-lg {
+  padding: 0.7rem 1.5rem;
+  font-size: 1.02rem;
+  border-radius: 9px;
+}
+
+.lp-cta-note {
+  color: var(--muted);
+  font-size: 0.88rem;
+  max-width: 56ch;
+  margin: 1rem auto 0;
+}
+
+/* ------------------------------ Captures ------------------------------ */
+
+.lp-shot {
+  margin: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+}
+
+.lp-shot-scroll {
+  display: block;
+}
+
+.lp-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.lp-shot-hero {
+  transform: translateY(1px);
+}
+
+/* Barre de fenêtre, pour situer la capture sans imiter un navigateur précis. */
+.lp-shot-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  background: #eef1f8;
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-shot-bar span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cfd6e6;
+}
+
+.lp-shot-wide,
+.lp-shot-dark {
+  margin-top: 2.4rem;
+}
+
+.lp-shot figcaption {
+  padding: 0.8rem 1rem 0.9rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
+
+.lp-shot-dark img {
+  background: #0b1329;
+}
+
+/* ------------------------------- Sections ------------------------------- */
+
+.lp-section {
+  padding: 3.4rem 0;
+}
+
+.lp-section h2 {
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  max-width: 34ch;
+  margin: 0 0 0.6rem;
+}
+
+.lp-section-lead {
+  color: var(--muted);
+  max-width: 66ch;
+  margin: 0 0 2rem;
+  line-height: 1.6;
+}
+
+.lp-offline {
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-offline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.6rem;
+}
+
+.lp-offline-item h3 {
+  font-size: 1.02rem;
+  margin: 0 0 0.4rem;
+  padding-top: 0.7rem;
+  border-top: 3px solid var(--accent);
+}
+
+.lp-offline-item p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ---------------------------- Fonctionnalités ---------------------------- */
+
+.lp-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  gap: 0.9rem;
+}
+
+.lp-feature {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.15rem 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+.lp-feature-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  display: block;
+  margin-bottom: 0.55rem;
+}
+
+.lp-feature h3 {
+  font-size: 1.02rem;
+  margin: 0 0 0.35rem;
+}
+
+.lp-feature p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.55;
+}
+
+/* ------------------------------- Deux usages ------------------------------ */
+
+.lp-usages {
+  background: var(--accent-soft);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-usages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.lp-usage {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.25rem;
+}
+
+.lp-usage h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.08rem;
+}
+
+.lp-usage p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* -------------------------------- Le jour J ------------------------------- */
+
+.lp-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.4rem;
+  counter-reset: lp-step;
+}
+
+.lp-steps li {
+  position: relative;
+  padding-top: 0.2rem;
+}
+
+.lp-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.6rem;
+}
+
+.lp-steps h3 {
+  font-size: 1.02rem;
+  margin: 0 0 0.35rem;
+}
+
+.lp-steps p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* ---------------------------------- FAQ ---------------------------------- */
+
+.lp-faq {
+  background: var(--card);
+  border-top: 1px solid var(--line);
+}
+
+.lp-faq-list {
+  max-width: 74ch;
+}
+
+.lp-faq-list details {
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-faq-list summary {
+  cursor: pointer;
+  padding: 0.9rem 0;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.lp-faq-list summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron maison : le marqueur natif diffère trop d'un navigateur à l'autre. */
+.lp-faq-list summary::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+
+.lp-faq-list details[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.lp-faq-list summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.lp-faq-list details p {
+  margin: 0 0 1rem;
+  padding-left: 1.3rem;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+/* ------------------------------ Appel final ------------------------------ */
+
+.lp-final {
+  padding: 3.4rem 0;
+  background: linear-gradient(180deg, #101f52, var(--accent));
+  color: #fff;
+  text-align: center;
+  position: relative;
+}
+
+.lp-final::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0 34%,
+    #ffffff 34% 67%,
+    var(--terra) 67% 100%
+  );
+}
+
+.lp-final h2 {
+  margin: 0 auto 0.6rem;
+  max-width: 30ch;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+}
+
+.lp-final p {
+  margin: 0 auto 1.6rem;
+  max-width: 58ch;
+  color: #d5ddf5;
+  line-height: 1.6;
+}
+
+.lp-cta-center {
+  justify-content: center;
+}
+
+.btn.lp-btn-invert {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+
+.btn.lp-btn-invert:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* --------------------------------- Pied --------------------------------- */
+
+.lp-footer {
+  background: #0d1836;
+  color: #aab6d6;
+  padding: 2rem 0 2.4rem;
+  padding-bottom: calc(2.4rem + env(safe-area-inset-bottom));
+  font-size: 0.88rem;
+}
+
+.lp-footer-inner {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.lp-brand-footer {
+  color: #fff;
+  font-size: 1rem;
+}
+
+.lp-footer-note {
+  margin: 0;
+  max-width: 78ch;
+  line-height: 1.6;
+}
+
+.lp-footer-links {
+  display: flex;
+  gap: 1.2rem;
+}
+
+.lp-footer-links a {
+  color: #cdd7ef;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.lp-footer-links a:hover {
+  text-decoration: underline;
+}
+
+/* -------------------------------- Mobile -------------------------------- */
+
+@media (max-width: 780px) {
+  /* La navigation par ancres est un raccourci : sur mobile les CTA passent
+     d'abord, la page se parcourt au pouce. */
+  .lp-nav {
+    display: none;
+  }
+
+  .lp-header-cta {
+    margin-left: auto;
+  }
+
+  .lp-hero {
+    padding-top: 2.2rem;
+  }
+
+  .lp-hero h1 {
+    max-width: none;
+  }
+
+  .lp-cta .btn {
+    width: 100%;
+  }
+
+  .lp-section {
+    padding: 2.4rem 0;
+  }
+
+  .lp-shot-wide,
+  .lp-shot-dark {
+    margin-top: 1.8rem;
+  }
+
+  /* Une capture d'écran d'ordinateur réduite à la largeur d'un téléphone n'est
+     plus qu'une texture. On la laisse à une taille lisible et on la fait
+     défiler horizontalement — la légende, elle, reste en place. */
+  .lp-shot-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .lp-shot-scroll img {
+    width: 900px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .lp-brand span {
+    /* Le nom du produit est repris juste en dessous par le titre : dans
+       l'en-tête, la place va aux deux boutons, qui ne doivent pas se casser. */
+    display: none;
+  }
+
+  .lp-header-cta .btn {
+    white-space: nowrap;
+  }
+}

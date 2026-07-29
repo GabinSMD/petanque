@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
-import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
 import { useSession } from './db/hooks';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
@@ -7,6 +15,7 @@ import { SyncBadge } from './components/SyncBadge';
 import { ChatBot } from './components/ChatBot';
 import { InstallPrompt } from './components/InstallPrompt';
 import { TourHost } from './components/Tour';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PalmaresPage } from './pages/PalmaresPage';
@@ -83,7 +92,12 @@ export function BouleLogo() {
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const session = useSession();
-  if (!session) return <Navigate to="/login" replace />;
+  const { pathname } = useLocation();
+  if (!session) {
+    // Un visiteur qui arrive sur la racine mérite une présentation, pas un
+    // formulaire de connexion. Partout ailleurs, la redirection ne change pas.
+    return pathname === '/' ? <LandingPage /> : <Navigate to="/login" replace />;
+  }
   return <>{children}</>;
 }
 
