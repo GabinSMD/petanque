@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSession } from '../db/hooks';
+import { appIsElsewhere } from '../lib/appUrl';
 
 /** Événement d'installation PWA (non typé par la lib DOM standard). */
 interface BeforeInstallPromptEvent extends Event {
@@ -32,13 +33,18 @@ function isIOS(): boolean {
  * sur iOS. Masquée si déjà installée ou refusée précédemment.
  *
  * Masquée aussi tant qu'aucune session n'existe : on ne demande pas à un
- * visiteur d'installer une application qu'il n'a pas encore essayée.
+ * visiteur d'installer une application qu'il n'a pas encore essayée. Et pas
+ * davantage sur une origine que l'application a quittée : ce serait inviter à
+ * installer l'adresse qu'on demande justement de quitter.
  */
 export function InstallPrompt() {
   const { pathname } = useLocation();
   const session = useSession();
   const hiddenRoute =
-    !session || pathname.includes('/affichage') || pathname.includes('/imprimer');
+    !session ||
+    appIsElsewhere() ||
+    pathname.includes('/affichage') ||
+    pathname.includes('/imprimer');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [iosHint, setIosHint] = useState(false);
   const [dismissed, setDismissed] = useState(() => {

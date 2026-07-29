@@ -12,6 +12,7 @@ import { useSession } from './db/hooks';
 import { BouleLogo } from './components/BouleLogo';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
+import { AncienneAdresse } from './components/AncienneAdresse';
 import { AppFooter } from './components/AppFooter';
 import { NouveautesHost } from './components/NouveautesModal';
 import { SyncBadge } from './components/SyncBadge';
@@ -73,6 +74,7 @@ function Layout() {
           )}
         </div>
       </header>
+      <AncienneAdresse />
       <main className="app-main">
         <Outlet />
       </main>

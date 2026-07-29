@@ -4466,3 +4466,34 @@ form label select {
 .stats-poules-liste li {
   margin: 0.15rem 0;
 }
+
+/* ------------------------ Application déménagée ------------------------ */
+
+/*
+ * Bandeau des appareils restés sur l'ancienne origine. Il ne se referme pas :
+ * un avertissement qu'on renvoie définitivement d'un clic ne déménage personne
+ * (la fenêtre d'explication, elle, ne s'ouvre qu'une fois).
+ */
+.demenagement-bandeau {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 1.1rem;
+  padding-left: calc(1.1rem + env(safe-area-inset-left));
+  padding-right: calc(1.1rem + env(safe-area-inset-right));
+  background: #fff6e0;
+  border-bottom: 1px solid #e8d9ad;
+  color: #6b4c07;
+  font-size: 0.92rem;
+}
+
+.demenagement-bandeau p {
+  margin: 0;
+  flex: 1 1 18rem;
+  line-height: 1.45;
+}
+
+.demenagement-bandeau .btn {
+  flex: none;
+}
