@@ -244,7 +244,15 @@ if (existsSync(CLIENT_DIST)) {
 
     /** Ce que la page vitrine a besoin de servir elle-même. */
     const VITRINE_ASSETS = /^\/(assets|vitrine)\//;
-    const VITRINE_FILES = new Set(['/favicon.svg', '/apple-touch-icon.png', '/robots.txt']);
+    const VITRINE_FILES = new Set([
+      '/favicon.svg',
+      '/apple-touch-icon.png',
+      '/robots.txt',
+      // Importé par le service worker de transition, et cible des notifications
+      // qu'il continue d'afficher.
+      '/push-sw.js',
+      '/pwa-192.png',
+    ]);
 
     app.addHook('onRequest', async (req, reply) => {
       const host = (req.hostname ?? '').toLowerCase().split(':')[0];
@@ -256,6 +264,18 @@ if (existsSync(CLIENT_DIST)) {
       // l'ancienne adresse garde ainsi une synchronisation qui fonctionne ; le
       // rediriger casserait ses requêtes POST, qu'une redirection dégrade.
       if (path.startsWith('/api/')) return;
+
+      // Le service worker de transition, servi à la place de celui de
+      // l'application. Il DOIT répondre 200 sans redirection : la mise à jour
+      // d'un service worker échoue sur une redirection, et un appareil resté
+      // ici ne recevrait plus jamais aucun code neuf. C'est le seul canal qui
+      // reste vers ces appareils — voir client/public/vitrine-sw.js.
+      // (Le `cache-control: max-age=0` du service de fichiers statiques suffit :
+      // l'algorithme de mise à jour d'un service worker contourne de toute façon
+      // le cache HTTP pour un script de moins de 24 h.)
+      if (path === '/sw.js') {
+        return reply.sendFile('vitrine-sw.js');
+      }
 
       if (path === '/' || path === '/vitrine.html') {
         return reply.sendFile('vitrine.html');
