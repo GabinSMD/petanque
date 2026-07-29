@@ -101,6 +101,10 @@ fonction dont il se sert.
 - **Pré-inscriptions en ligne** : les équipes s'inscrivent elles-mêmes via
   le lien public (« ✍️ Je m'inscris ») ; l'organisateur valide d'un clic à
   la table de marque.
+- **Statistiques des poules** (manuel §3.D.1.G) : la synthèse de ce qui n'est
+  pas fini, la poule qui attend depuis le plus longtemps en tête, et les
+  barrages qui retiennent leur poule. Sur trente poules, c'est ce qui permet de
+  trouver la retardataire sans tout parcourir.
 - **Plan des terrains** : plateau libre/occupé en direct, affectation
   automatique des parties en attente aux terrains libres, libération à la
   saisie du score.

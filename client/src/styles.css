@@ -4303,3 +4303,29 @@ form label select {
   background: #000;
   border-radius: var(--radius);
 }
+
+/* Statistiques des poules : la synthèse de ce qui reste à jouer. */
+.stats-poules {
+  margin: 0.5rem 0 1rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+}
+
+.stats-poules summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.stats-poules summary .tag {
+  margin-left: 0.4rem;
+}
+
+.stats-poules-liste {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.stats-poules-liste li {
+  margin: 0.15rem 0;
+}
