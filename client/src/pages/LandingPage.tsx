@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BouleLogo } from '../components/BouleLogo';
+import { JOURNAL } from '../help/nouveautes';
+import { ROADMAP, lienIssue } from '../help/roadmap';
 import { appIsElsewhere, appUrl } from '../lib/appUrl';
 import '../landing.css';
 
@@ -35,83 +37,204 @@ function useAncienneVersionDisponible(): boolean {
   return dispo;
 }
 
-/** Une fonctionnalité de la grille : un pictogramme, un titre, une phrase. */
-interface Feature {
-  icon: string;
-  title: string;
-  body: string;
+/**
+ * Révélation au défilement.
+ *
+ * Le masquage initial est porté par une classe sur la racine, décidée **au
+ * rendu** : sans JavaScript, ou avec « animations réduites », la classe n'est
+ * jamais posée et rien n'est caché. Une page dont le contenu dépend d'un script
+ * pour devenir visible est une page qui disparaît au premier incident.
+ *
+ * On mesure la position à chaque image plutôt que d'écouter des intersections :
+ * un `IntersectionObserver` ne signale que ce qui *traverse* la fenêtre, donc il
+ * rate ce qu'on saute — et on saute beaucoup, en cliquant une ancre du menu ou
+ * en jetant le doigt sur un écran tactile. Ce qui est sauté resterait invisible
+ * pour toujours. Ici, tout ce qui est passé sous le bas de la fenêtre se révèle,
+ * qu'on l'ait vu arriver ou non.
+ */
+function useRevelation(anime: boolean): void {
+  useEffect(() => {
+    if (!anime) return;
+    const cibles = Array.from(document.querySelectorAll('[data-revele]'));
+    let planifie = false;
+
+    const retirer = () => {
+      window.removeEventListener('scroll', planifier);
+      window.removeEventListener('resize', planifier);
+    };
+
+    const passer = () => {
+      planifie = false;
+      const limite = window.innerHeight * 0.94;
+      for (let i = cibles.length - 1; i >= 0; i--) {
+        const cible = cibles[i]!;
+        if (cible.getBoundingClientRect().top >= limite) continue;
+        cible.classList.add('lp-vu');
+        cibles.splice(i, 1);
+      }
+      if (cibles.length === 0) retirer();
+    };
+
+    function planifier(): void {
+      if (planifie) return;
+      planifie = true;
+      requestAnimationFrame(passer);
+    }
+
+    window.addEventListener('scroll', planifier, { passive: true });
+    window.addEventListener('resize', planifier);
+    passer(); // ce qui est déjà à l'écran ne doit pas attendre un geste
+    return retirer;
+  }, [anime]);
 }
 
-const FEATURES: Feature[] = [
+function animationsPossibles(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Une famille de fonctionnalités : un pictogramme, un titre, ce qu'elle couvre. */
+interface Famille {
+  icone: string;
+  titre: string;
+  chapeau: string;
+  points: string[];
+}
+
+/**
+ * L'inventaire, groupé par famille.
+ *
+ * Il doit rester le miroir de la section « Fonctionnalités » du README : c'est
+ * là qu'on tient le compte, et une vitrine qui en montre le tiers laisse croire
+ * à un logiciel trois fois plus petit qu'il n'est.
+ */
+const FAMILLES: Famille[] = [
   {
-    icon: '🎲',
-    title: 'Toutes les formules',
-    body:
-      'Poules puis élimination, élimination directe, formules fédérales A-B-C, ' +
-      'formule par groupes, mêlée tournante, système suisse, championnat toutes ' +
-      'rondes. Chacune avec ses règles, pas une approximation commune.',
+    icone: '🎲',
+    titre: 'Formules et tirages',
+    chapeau: 'Chaque formule avec ses règles, pas une approximation commune.',
+    points: [
+      'Poules puis élimination, élimination directe, formules fédérales A-B-C, formule par groupes',
+      'Mêlée tournante, système suisse, championnat toutes rondes',
+      'Tête-à-tête, doublette, triplette — parties en 13 points',
+      'Têtes de série réparties dans des poules ou des moitiés de tableau différentes',
+      'Protection de club : deux équipes du même club séparées au tirage',
+      'Cadrage automatique quand l’effectif n’est pas une puissance de 2, exempts prioritaires',
+    ],
   },
   {
-    icon: '🏆',
-    title: 'Poules et tableaux à la règle',
-    body:
-      'Poules de 4 complétées par des poules de 3, enchaînement gagnants / ' +
-      'perdants / barrage, cadrage automatique quand l’effectif n’est pas une ' +
-      'puissance de 2, 1er et 2e d’une même poule séparés dans le tableau.',
+    icone: '🏆',
+    titre: 'Poules, tableaux, classements',
+    chapeau: 'L’enchaînement se construit tout seul, au fil des scores.',
+    points: [
+      'Poules de 4 complétées par des poules de 3, gagnants / perdants / barrage',
+      'Qualifiés entrant au tableau au fil des poules, sans attendre la dernière',
+      '1er et 2e d’une même poule séparés dans le tableau',
+      'Consolante : repêchage des éliminés de poules ou des perdants du 1er tour',
+      'Classement en rondes : victoires, puis goal-average, puis points',
+      'Phases finales après les rondes (manuel §3.D.15)',
+      'Classement final : vainqueur, finaliste, demi-finalistes, éliminés par tour',
+    ],
   },
   {
-    icon: '✍️',
-    title: 'Scores et corrections',
-    body:
-      'Saisie contrôlée (13 points, pas de nul) et correction en cascade : ' +
-      'reprendre une partie amont réinitialise proprement tout ce qui en ' +
-      'dépendait, au lieu de laisser un tableau à moitié faux.',
+    icone: '✍️',
+    titre: 'La table de marque',
+    chapeau: 'Ce qu’on fait cent fois dans une journée doit être rapide et rattrapable.',
+    points: [
+      'Saisie contrôlée : 13 points, pas de match nul',
+      'Saisie rapide au numéro d’équipe, sans chercher la partie',
+      'Correction en cascade : reprendre une partie amont réinitialise proprement ce qui en dépendait',
+      'Terrains affectés automatiquement aux premières parties, modifiables ensuite',
+      'Plan des terrains : plateau libre ou occupé, en direct',
+      'Statistiques des poules (manuel §3.D.1.G) : repérer d’un coup d’œil la poule qui retarde tout le monde',
+      'Chronomètre de tour et signalement des retards',
+    ],
   },
   {
-    icon: '📺',
-    title: 'Affichage sur écran',
-    body:
-      'Une page en lecture seule pour la télévision du club ou le ' +
-      'vidéoprojecteur : grandes polices, poules et tableaux, mise à jour en ' +
-      'direct pendant que la table de marque saisit.',
+    icone: '📋',
+    titre: 'Inscriptions',
+    chapeau: 'La file d’attente du matin est le vrai goulot d’étranglement.',
+    points: [
+      'Équipes numérotées, joueurs avec numéro de licence facultatif',
+      'Import d’une liste d’inscrits en CSV (manuel §3.B.10.B)',
+      'Pré-inscriptions en ligne : les équipes s’inscrivent elles-mêmes, à valider d’un clic',
+      'Fichier des licenciés importé en CSV, autocomplétion à la saisie',
+      'Forfaits déclarés sans casser un tirage déjà fait',
+      'Composition modifiable après le tirage — sauf ce sur quoi le tirage repose (manuel §3.B.8)',
+    ],
   },
   {
-    icon: '🖨',
-    title: 'Tout ce qui s’imprime',
-    body:
-      'Feuilles de poules officielles, tickets de parties à distribuer, liste ' +
-      'des inscrits, liste des capitaines, tableaux et résultats.',
+    icone: '📺',
+    titre: 'Suivre et partager',
+    chapeau: 'Les joueurs cherchent l’information ; autant la leur donner.',
+    points: [
+      'Affichage TV ou vidéoprojecteur : page en lecture seule, grandes polices, en direct',
+      'Lien public par concours, révocable, avec QR code à afficher au boulodrome',
+      '« Je joue » ne montre que sa partie et sa convocation ; « je consulte » montre tout',
+      'Notifications push de convocation, même application fermée',
+      'Auto-déclaration des scores : une équipe déclare, l’adversaire confirme',
+    ],
   },
   {
-    icon: '🔗',
-    title: 'Lien public et QR code',
-    body:
-      'Les joueurs suivent le concours sur leur téléphone, sans compte. ' +
-      '« Je joue » ne montre que sa partie et sa convocation ; « je consulte » ' +
-      'montre tout. Le lien est révocable.',
+    icone: '🖨',
+    titre: 'Tout ce qui s’imprime',
+    chapeau: 'Le papier reste roi au boulodrome, et la mise en page le sait.',
+    points: [
+      'Feuilles de poules officielles, tickets de parties à distribuer',
+      'Liste des inscrits, liste des capitaines',
+      'Tableaux et résultats',
+      'Répartition des indemnités',
+    ],
   },
   {
-    icon: '🔔',
-    title: 'Convocations notifiées',
-    body:
-      'Une équipe s’abonne avec son numéro et reçoit une alerte sur son ' +
-      'téléphone à chaque convocation — barrage, tour suivant — même ' +
-      'application fermée. La table de marque n’a rien à faire.',
+    icone: '🏅',
+    titre: 'Concours fédéraux',
+    chapeau: 'Le manuel de l’arbitrage et des concours, appliqué à la lettre.',
+    points: [
+      'Contrôle des licences, dépôt équipe par équipe',
+      'Critères d’âge, de sexe et de classification, catégories fédérales',
+      'Championnat des clubs : les cinq compétitions, contrôle des mutés et des joueurs hors Union européenne (manuel §3.E)',
+      'Feuille de match remplie dans l’application, signée au doigt par les deux capitaines, avec empreinte du contenu signé',
+      'Échange des compositions entre les deux clubs par QR code',
+      'Retour au comité : courriel préparé, feuille exportable en fichier autonome',
+    ],
   },
   {
-    icon: '📋',
-    title: 'Championnat des clubs',
-    body:
-      'Contrôle des compositions (mutés, joueurs hors Union européenne), ' +
-      'feuille de match signée au doigt avec empreinte du contenu signé, et ' +
-      'échange des compositions entre les deux clubs par QR code.',
+    icone: '🗂',
+    titre: 'La saison du club',
+    chapeau: 'Un concours n’est pas un événement isolé.',
+    points: [
+      'Palmarès du club et classement des clubs',
+      'Catégories et vue « journée » : plusieurs concours le même jour, rangés',
+      'Archivage (manuel §3.F.3) : un concours rangé sort de la liste courante sans être perdu',
+      'Fractionnement multisite (manuel §3.B.10.D) : un concours réparti sur plusieurs boulodromes',
+      'Tir de précision : séries de 20 boules, 100 points maximum, classement à la volée',
+      'Sauvegarde et réimport d’un concours en fichier (manuel §3.F.2)',
+    ],
   },
   {
-    icon: '🗂',
-    title: 'Licenciés et palmarès',
-    body:
-      'Import CSV du fichier des licenciés, autocomplétion aux inscriptions, ' +
-      'palmarès du club, classement des clubs, répartition des indemnités.',
+    icone: '👥',
+    titre: 'À plusieurs, sur plusieurs appareils',
+    chapeau: 'Une table de marque, ce n’est jamais une seule personne.',
+    points: [
+      'Codes d’invitation (7 jours) pour rejoindre le club',
+      'Même compte sur l’ordinateur de la table de marque et la tablette du terrain',
+      'Synchronisation dans les deux sens, avec compteur de ce qui reste en attente',
+      'Chaque organisation a ses concours, ses utilisateurs et son journal de modifications',
+    ],
+  },
+  {
+    icone: '🎓',
+    titre: 'Prise en main',
+    chapeau: 'Un bénévole doit pouvoir tenir un concours sans avoir lu de mode d’emploi.',
+    points: [
+      'Création guidée en trois étapes, formules décrites en langage de joueur',
+      'Bandeau « prochaine étape » : chaque concours dit où il en est et ce qui vient',
+      'Assistant intégré : une vingtaine de guides pas-à-pas, qui accompagne au lieu de cataloguer',
+      'Parcours guidés interactifs : l’application fait faire, elle ne raconte pas',
+      'Concours d’exemple pour s’entraîner sans risque',
+      'Pop-up « Nouveautés » après une mise à jour, version affichée en pied de page',
+    ],
   },
 ];
 
@@ -178,6 +301,13 @@ const FAQ: { q: string; a: string }[] = [
       'table de marque comme la tablette du terrain.',
   },
   {
+    q: 'Et si le concours a déjà commencé quand une équipe se désiste ?',
+    a:
+      'Le forfait se déclare sans casser le tirage, et la correction d’un score ' +
+      'déjà saisi réinitialise proprement ce qui en dépendait — au lieu de ' +
+      'laisser un tableau à moitié faux.',
+  },
+  {
     q: 'Est-ce un logiciel officiel de la FFPJP ?',
     a:
       'Non. L’application applique les règles du manuel de l’arbitrage et des ' +
@@ -186,18 +316,66 @@ const FAQ: { q: string; a: string }[] = [
   },
 ];
 
+/** « 2026-07-29 » → « 29 juillet 2026 », et la date brute si elle est illisible. */
+function dateLongue(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/** Capture d'écran : version ordinateur, et version mobile sous 780 px. */
+function Capture({
+  nom,
+  largeur,
+  hauteur,
+  largeurMobile,
+  hauteurMobile,
+  alt,
+  differee = true,
+}: {
+  nom: string;
+  largeur: number;
+  hauteur: number;
+  largeurMobile: number;
+  hauteurMobile: number;
+  alt: string;
+  differee?: boolean;
+}) {
+  return (
+    <picture>
+      <source
+        media="(max-width: 780px)"
+        srcSet={`/vitrine/${nom}-mobile.webp`}
+        width={largeurMobile}
+        height={hauteurMobile}
+      />
+      <img
+        src={`/vitrine/${nom}.webp`}
+        width={largeur}
+        height={hauteur}
+        loading={differee ? 'lazy' : undefined}
+        decoding="async"
+        alt={alt}
+      />
+    </picture>
+  );
+}
+
 /**
- * Page vitrine servie à la racine aux visiteurs sans session.
+ * Page vitrine servie aux visiteurs.
  *
  * Elle vit hors du `Layout` applicatif (pas d’en-tête de synchronisation, pas
- * d’assistant) et porte sa propre en-tête.
+ * d’assistant) et porte sa propre en-tête. Sur un déploiement à deux noms de
+ * domaine, elle est un document à part entière (`vitrine.html`).
  */
 export function LandingPage() {
   const demenage = aUneAncienneInstallation();
   const ancienneVersion = useAncienneVersionDisponible();
+  const [anime] = useState(animationsPossibles);
+  useRevelation(anime);
 
   return (
-    <div className="lp">
+    <div className={anime ? 'lp lp-anime' : 'lp'}>
       <header className="lp-header">
         <div className="lp-header-inner">
           <span className="lp-brand">
@@ -207,9 +385,10 @@ export function LandingPage() {
             </span>
           </span>
           <nav className="lp-nav" aria-label="Sections de la page">
-            <a href="#hors-ligne">Hors ligne</a>
             <a href="#fonctionnalites">Fonctionnalités</a>
+            <a href="#hors-ligne">Hors ligne</a>
             <a href="#deroule">Le jour J</a>
+            <a href="#evolution">Nouveautés</a>
             <a href="#questions">Questions</a>
           </nav>
           <div className="lp-header-cta">
@@ -243,6 +422,7 @@ export function LandingPage() {
             </div>
           </div>
         )}
+
         <section className="lp-hero">
           <div className="lp-container lp-hero-inner">
             <p className="lp-eyebrow">Gestion de concours de pétanque</p>
@@ -260,12 +440,13 @@ export function LandingPage() {
               <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
                 Créer un compte club
               </a>
-              <a className="btn lp-btn-lg" href={appUrl('/login')}>
+              <a className="btn lp-btn-lg" href={appUrl('/login?invite=1')}>
                 🚀 Essayer sans compte
               </a>
             </div>
             <p className="lp-cta-note">
-              Rien à installer : l’application s’ouvre dans le navigateur, sur
+              Le mode invité ouvre l’application <strong>immédiatement</strong>, sans
+              formulaire. Rien à installer : elle s’ouvre dans le navigateur, sur
               l’ordinateur de la table de marque comme sur la tablette du terrain.
             </p>
           </div>
@@ -276,30 +457,32 @@ export function LandingPage() {
                 <span />
                 <span />
               </div>
-              <div className="lp-shot-scroll">
-                <img
-                  src="/vitrine/tableau.webp"
-                  width={1280}
-                  height={760}
-                  alt="Le tableau final d’un concours en doublettes : demi-finales et
-                    finale avec les scores, le vainqueur annoncé en tête, et
-                    l’indicateur « hors ligne » avec 27 modifications en attente de
-                    synchronisation."
-                />
-              </div>
+              <Capture
+                nom="tableau"
+                largeur={1280}
+                hauteur={760}
+                largeurMobile={390}
+                hauteurMobile={844}
+                differee={false}
+                alt="Le tableau final d’un concours en doublettes : demi-finales et finale
+                  avec les scores, le vainqueur annoncé en tête, et l’indicateur
+                  « hors ligne » avec les modifications en attente de synchronisation."
+              />
             </figure>
           </div>
         </section>
 
         <section className="lp-section lp-offline" id="hors-ligne">
           <div className="lp-container">
-            <h2>Le réseau manque au boulodrome. L’application n’en a pas besoin.</h2>
-            <p className="lp-section-lead">
+            <h2 data-revele>
+              Le réseau manque au boulodrome. L’application n’en a pas besoin.
+            </h2>
+            <p className="lp-section-lead" data-revele>
               Ce n’est pas un mode dégradé qu’on active en cas de problème : c’est la
               façon normale dont l’application fonctionne.
             </p>
             <div className="lp-offline-grid">
-              <div className="lp-offline-item">
+              <div className="lp-offline-item" data-revele>
                 <h3>Tout s’écrit d’abord sur l’appareil</h3>
                 <p>
                   L’interface lit et écrit dans le navigateur. Tirer les poules,
@@ -307,7 +490,7 @@ export function LandingPage() {
                   n’attend la réponse d’un serveur.
                 </p>
               </div>
-              <div className="lp-offline-item">
+              <div className="lp-offline-item" data-revele>
                 <h3>Rechargez la page sans réseau : tout est là</h3>
                 <p>
                   L’application est mise en cache et le navigateur a l’interdiction de
@@ -315,7 +498,7 @@ export function LandingPage() {
                   s’ouvre en plein écran.
                 </p>
               </div>
-              <div className="lp-offline-item">
+              <div className="lp-offline-item" data-revele>
                 <h3>La synchronisation attend son heure</h3>
                 <p>
                   Au retour du réseau, vos modifications partent et celles des autres
@@ -330,36 +513,40 @@ export function LandingPage() {
 
         <section className="lp-section" id="fonctionnalites">
           <div className="lp-container">
-            <h2>Ce que l’application sait faire</h2>
-            <p className="lp-section-lead">
-              Les règles du manuel de l’arbitrage et des concours, appliquées là où
-              elles se jouent.
+            <h2 data-revele>Ce que l’application sait faire</h2>
+            <p className="lp-section-lead" data-revele>
+              L’inventaire complet, groupé par moment de la journée. Les références au
+              manuel de l’arbitrage et des concours sont celles des règles réellement
+              appliquées.
             </p>
-            <ul className="lp-features">
-              {FEATURES.map((f) => (
-                <li key={f.title} className="lp-feature">
-                  <span className="lp-feature-icon" aria-hidden>
-                    {f.icon}
+            <ul className="lp-familles">
+              {FAMILLES.map((f) => (
+                <li key={f.titre} className="lp-famille" data-revele>
+                  <span className="lp-famille-icone" aria-hidden>
+                    {f.icone}
                   </span>
-                  <h3>{f.title}</h3>
-                  <p>{f.body}</p>
+                  <h3>{f.titre}</h3>
+                  <p className="lp-famille-chapeau">{f.chapeau}</p>
+                  <ul>
+                    {f.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
 
-            <figure className="lp-shot lp-shot-wide">
-              <div className="lp-shot-scroll">
-                <img
-                  src="/vitrine/poules.webp"
-                  width={1280}
-                  height={1118}
-                  loading="lazy"
-                  decoding="async"
-                  alt="Deux poules de quatre équipes terminées : 1ère partie, 2e partie,
-                    gagnants, perdants et barrage, chacune avec son terrain, son heure
-                    et son score ; les qualifiés 1er et 2e sont marqués."
-                />
-              </div>
+            <figure className="lp-shot lp-shot-wide" data-revele>
+              <Capture
+                nom="poules"
+                largeur={1280}
+                hauteur={1118}
+                largeurMobile={390}
+                hauteurMobile={844}
+                alt="Deux poules de quatre équipes terminées : 1ère partie, 2e partie,
+                  gagnants, perdants et barrage, chacune avec son terrain, son heure
+                  et son score ; les qualifiés 1er et 2e sont marqués."
+              />
               <figcaption>
                 Une poule de 4 jusqu’au barrage : l’enchaînement se construit tout
                 seul au fil des scores, et les qualifiés se marquent d’eux-mêmes.
@@ -370,13 +557,13 @@ export function LandingPage() {
 
         <section className="lp-section lp-usages">
           <div className="lp-container">
-            <h2>Deux usages, une seule application</h2>
-            <p className="lp-section-lead">
+            <h2 data-revele>Deux usages, une seule application</h2>
+            <p className="lp-section-lead" data-revele>
               Un club qui organise des concours amicaux n’a que faire du fichier des
               licenciés ou du championnat des clubs. Un réglage les fait disparaître.
             </p>
             <div className="lp-usages-grid">
-              <div className="lp-usage">
+              <div className="lp-usage" data-revele>
                 <h3>Concours amicaux</h3>
                 <p>
                   Mode fédéral décoché, il ne reste que ce qui sert : inscriptions,
@@ -384,7 +571,7 @@ export function LandingPage() {
                   licenciés, ni championnat des clubs, ni documents pour le comité.
                 </p>
               </div>
-              <div className="lp-usage">
+              <div className="lp-usage" data-revele>
                 <h3>Concours officiels</h3>
                 <p>
                   Critères d’âge, de sexe et de classification, contrôle des licences,
@@ -399,10 +586,10 @@ export function LandingPage() {
 
         <section className="lp-section" id="deroule">
           <div className="lp-container">
-            <h2>Le jour du concours</h2>
+            <h2 data-revele>Le jour du concours</h2>
             <ol className="lp-steps">
               {STEPS.map((s, i) => (
-                <li key={s.title}>
+                <li key={s.title} data-revele>
                   <span className="lp-step-num" aria-hidden>
                     {i + 1}
                   </span>
@@ -412,19 +599,17 @@ export function LandingPage() {
               ))}
             </ol>
 
-            <figure className="lp-shot lp-shot-dark">
-              <div className="lp-shot-scroll">
-                <img
-                  src="/vitrine/affichage.webp"
-                  width={1200}
-                  height={659}
-                  loading="lazy"
-                  decoding="async"
-                  alt="La page d’affichage public sur fond sombre : le vainqueur annoncé
-                    en bandeau, puis les tableaux du concours principal et de la
-                    consolante avec leurs scores, en grandes polices."
-                />
-              </div>
+            <figure className="lp-shot lp-shot-dark" data-revele>
+              <Capture
+                nom="affichage"
+                largeur={1200}
+                hauteur={659}
+                largeurMobile={390}
+                hauteurMobile={844}
+                alt="La page d’affichage public sur fond sombre : le vainqueur annoncé en
+                  bandeau, puis les tableaux du concours principal et de la consolante
+                  avec leurs scores, en grandes polices."
+              />
               <figcaption>
                 L’écran d’affichage : ce que les joueurs lisent sur la télévision du
                 club pendant que la table de marque saisit.
@@ -433,10 +618,82 @@ export function LandingPage() {
           </div>
         </section>
 
+        <section className="lp-section lp-evolution" id="evolution">
+          <div className="lp-container">
+            <h2 data-revele>Ce qui bouge</h2>
+            <p className="lp-section-lead" data-revele>
+              L’application est vivante : elle se met à jour toute seule, et vous dit ce
+              qu’elle a gagné. Voici ce qui vient, et ce qui est déjà arrivé.
+            </p>
+
+            <div className="lp-evolution-grid">
+              <div className="lp-roadmap" data-revele>
+                <h3>
+                  <span aria-hidden>🛠</span> En chantier
+                </h3>
+                <p className="lp-roadmap-note">
+                  Sans dates : on annonce l’intention, pas un calendrier de livraison.
+                  Chaque ligne renvoie à son suivi public.
+                </p>
+                <ul>
+                  {ROADMAP.map((c) => (
+                    <li key={c.titre}>
+                      <span className="lp-roadmap-icone" aria-hidden>
+                        {c.icone}
+                      </span>
+                      <div>
+                        <strong>{c.titre}</strong>
+                        <p>{c.texte}</p>
+                        <a
+                          className="lp-roadmap-lien"
+                          href={lienIssue(c.issue)}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          Suivre le sujet #{c.issue} ↗
+                        </a>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="lp-changelog" data-revele>
+                <h3>
+                  <span aria-hidden>✨</span> Déjà livré
+                </h3>
+                <p className="lp-roadmap-note">
+                  Le même journal que celui affiché dans l’application après une mise à
+                  jour — une seule source, donc rien à tenir à deux endroits.
+                </p>
+                {JOURNAL.map((entree, index) => (
+                  <details key={entree.version} open={index === 0}>
+                    <summary>
+                      <span className="lp-version">Version {entree.version}</span>
+                      <small>{dateLongue(entree.date)}</small>
+                    </summary>
+                    <ul>
+                      {entree.items.map((item) => (
+                        <li key={item.titre}>
+                          {item.icone && <span aria-hidden>{item.icone}</span>}
+                          <div>
+                            <strong>{item.titre}</strong>
+                            <p>{item.texte}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="lp-section lp-faq" id="questions">
           <div className="lp-container">
-            <h2>Questions</h2>
-            <div className="lp-faq-list">
+            <h2 data-revele>Questions</h2>
+            <div className="lp-faq-list" data-revele>
               {FAQ.map((item) => (
                 <details key={item.q}>
                   <summary>{item.q}</summary>
@@ -449,17 +706,17 @@ export function LandingPage() {
 
         <section className="lp-final">
           <div className="lp-container">
-            <h2>Essayez-la sur votre prochain concours</h2>
-            <p>
+            <h2 data-revele>Essayez-la sur votre prochain concours</h2>
+            <p data-revele>
               Le mode invité ouvre l’application tout de suite, sans compte et sans
               engagement. Un concours d’exemple est fourni pour s’entraîner sans
               risque.
             </p>
-            <div className="lp-cta lp-cta-center">
+            <div className="lp-cta lp-cta-center" data-revele>
               <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
                 Créer un compte club
               </a>
-              <a className="btn lp-btn-lg lp-btn-invert" href={appUrl('/login')}>
+              <a className="btn lp-btn-lg lp-btn-invert" href={appUrl('/login?invite=1')}>
                 🚀 Essayer sans compte
               </a>
             </div>
@@ -484,6 +741,7 @@ export function LandingPage() {
           <nav className="lp-footer-links" aria-label="Liens">
             <a href={appUrl('/login')}>Se connecter</a>
             <a href={appUrl('/login?mode=inscription')}>Créer un compte club</a>
+            <a href={appUrl('/login?invite=1')}>Essayer sans compte</a>
           </nav>
         </div>
       </footer>

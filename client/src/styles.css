@@ -210,8 +210,33 @@ input:disabled, select:disabled, input[readonly] {
   text-decoration-style: solid;
 }
 
+/* Retour à la page de présentation : discret, mais toujours là — on ne piège
+   personne sur un formulaire. */
+.login-retour {
+  display: block;
+  margin: 1.1rem 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.login-retour:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* Ouverture du mode invité : la carte reste, le formulaire ne clignote pas. */
+.login-card-attente {
+  text-align: center;
+}
+
+.login-card-attente .login-brand {
+  justify-content: center;
+}
+
 .login-version {
-  margin: 1.2rem 0 0;
+  margin: 0.6rem 0 0;
   text-align: center;
   color: var(--muted);
   font-size: 0.78rem;

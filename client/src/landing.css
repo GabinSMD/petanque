@@ -190,7 +190,7 @@
   overflow: hidden;
 }
 
-.lp-shot-scroll {
+.lp-shot picture {
   display: block;
 }
 
@@ -242,6 +242,9 @@
 
 .lp-section {
   padding: 3.4rem 0;
+  /* L'en-tête est collante : sans cette marge, un saut depuis le menu ferait
+     passer le titre de section dessous. */
+  scroll-margin-top: 4.5rem;
 }
 
 .lp-section h2 {
@@ -284,40 +287,77 @@
 
 /* ---------------------------- Fonctionnalités ---------------------------- */
 
-.lp-features {
+.lp-familles {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 1rem;
+  align-items: start;
 }
 
-.lp-feature {
+.lp-famille {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 1.1rem 1.15rem 1.2rem;
+  padding: 1.15rem 1.2rem 1.25rem;
   box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.lp-feature-icon {
+.lp-famille:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.lp-famille-icone {
   font-size: 1.5rem;
   line-height: 1;
   display: block;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.5rem;
 }
 
-.lp-feature h3 {
-  font-size: 1.02rem;
-  margin: 0 0 0.35rem;
+.lp-famille h3 {
+  font-size: 1.05rem;
+  margin: 0 0 0.3rem;
 }
 
-.lp-feature p {
-  margin: 0;
-  color: var(--muted);
+.lp-famille-chapeau {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
   font-size: 0.93rem;
-  line-height: 1.55;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.lp-famille ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.lp-famille ul li {
+  position: relative;
+  padding-left: 1.05rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+/* Une puce dessinée plutôt que la puce native : elle s'aligne sur la première
+   ligne même quand le texte en fait trois. */
+.lp-famille ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 /* ------------------------------- Deux usages ------------------------------ */
@@ -546,7 +586,225 @@
   text-decoration: underline;
 }
 
+
+/* ------------------------- Roadmap et nouveautés ------------------------- */
+
+.lp-evolution {
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-evolution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 1.4rem;
+  align-items: start;
+}
+
+.lp-roadmap,
+.lp-changelog {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.25rem 1.3rem;
+}
+
+.lp-roadmap > h3,
+.lp-changelog > h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.08rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.lp-roadmap-note {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.lp-roadmap > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.1rem;
+}
+
+.lp-roadmap > ul > li,
+.lp-changelog ul li {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+}
+
+.lp-roadmap-icone,
+.lp-changelog ul li > span {
+  flex: none;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.lp-roadmap strong,
+.lp-changelog strong {
+  display: block;
+  font-size: 0.97rem;
+  margin-bottom: 0.15rem;
+}
+
+.lp-roadmap p,
+.lp-changelog p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.lp-roadmap-lien {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.lp-roadmap-lien:hover {
+  text-decoration: underline;
+}
+
+.lp-changelog details {
+  border-top: 1px solid var(--line);
+}
+
+.lp-changelog details:first-of-type {
+  border-top: 0;
+}
+
+.lp-changelog summary {
+  cursor: pointer;
+  padding: 0.7rem 0;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.lp-changelog summary::-webkit-details-marker {
+  display: none;
+}
+
+.lp-changelog summary::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+
+.lp-changelog details[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.lp-changelog summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.lp-version {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-changelog summary small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.lp-changelog details ul {
+  list-style: none;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+/* --------------------------- Révélation au défilement --------------------- */
+
+/*
+ * Le masquage n'existe que si la racine porte `lp-anime`, posée au rendu quand
+ * le navigateur sait observer et que l'utilisateur n'a pas demandé moins
+ * d'animations. Sans JavaScript, la classe n'apparaît jamais et la page reste
+ * entièrement visible : une page dont le contenu attend un observateur pour
+ * s'afficher est une page qui disparaît au premier incident.
+ */
+.lp-anime [data-revele] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.lp-anime [data-revele].lp-vu {
+  opacity: 1;
+  transform: none;
+}
+
+/* Un léger décalage d'une carte à l'autre : la grille s'installe au lieu
+   d'apparaître d'un bloc. */
+.lp-anime .lp-famille:nth-child(2n) {
+  transition-delay: 0.05s;
+}
+
+.lp-anime .lp-famille:nth-child(3n) {
+  transition-delay: 0.1s;
+}
+
+.lp-anime .lp-offline-item:nth-child(2),
+.lp-anime .lp-steps li:nth-child(2) {
+  transition-delay: 0.06s;
+}
+
+.lp-anime .lp-offline-item:nth-child(3),
+.lp-anime .lp-steps li:nth-child(3) {
+  transition-delay: 0.12s;
+}
+
+.lp-anime .lp-steps li:nth-child(4) {
+  transition-delay: 0.18s;
+}
+
+/* ------------------------------ Reliefs au survol ------------------------- */
+
+.lp-usage,
+.lp-shot {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.lp-usage:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.lp-shot:hover {
+  box-shadow: 0 6px 14px rgba(20, 30, 58, 0.12), 0 16px 40px rgba(20, 30, 58, 0.16);
+}
+
+.btn.lp-btn-lg {
+  transition: transform 0.15s ease;
+}
+
+.btn.lp-btn-lg:hover {
+  transform: translateY(-1px);
+}
+
 /* -------------------------------- Mobile -------------------------------- */
+
 
 @media (max-width: 780px) {
   /* La navigation par ancres est un raccourci : sur mobile les CTA passent
@@ -580,18 +838,10 @@
     margin-top: 1.8rem;
   }
 
-  /* Une capture d'écran d'ordinateur réduite à la largeur d'un téléphone n'est
-     plus qu'une texture. On la laisse à une taille lisible et on la fait
-     défiler horizontalement — la légende, elle, reste en place. */
-  .lp-shot-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-  }
-
-  .lp-shot-scroll img {
-    width: 900px;
-    max-width: none;
+  /* Les captures ont une version mobile (voir <picture>) : plus besoin de
+     faire défiler une copie d'écran d'ordinateur réduite à une texture. */
+  .lp-shot picture {
+    display: block;
   }
 }
 

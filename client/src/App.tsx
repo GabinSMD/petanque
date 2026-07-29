@@ -12,6 +12,7 @@ import { useSession } from './db/hooks';
 import { BouleLogo } from './components/BouleLogo';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
+import { vitrineSeparee } from './lib/appUrl';
 import { AncienneAdresse } from './components/AncienneAdresse';
 import { AppFooter } from './components/AppFooter';
 import { FrontiereErreur } from './components/FrontiereErreur';
@@ -102,9 +103,12 @@ function RequireAuth({ children }: { children: ReactNode }) {
   const session = useSession();
   const { pathname } = useLocation();
   if (!session) {
-    // Un visiteur qui arrive sur la racine mérite une présentation, pas un
-    // formulaire de connexion. Partout ailleurs, la redirection ne change pas.
-    return pathname === '/' ? <LandingPage /> : <Navigate to="/login" replace />;
+    // Sur un déploiement à un seul nom de domaine, la racine est le seul endroit
+    // où présenter le logiciel : un visiteur y mérite une présentation, pas un
+    // formulaire. Quand la vitrine vit sur son propre nom, elle accueille déjà
+    // les visiteurs — ici, il n'y a plus qu'à se connecter.
+    if (pathname === '/' && !vitrineSeparee()) return <LandingPage />;
+    return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 }
