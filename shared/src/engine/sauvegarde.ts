@@ -8,6 +8,7 @@
  * fichier vient du disque de l'utilisateur, il peut avoir été bricolé.
  */
 import type { Concours, Match, Poule, Team } from '../types';
+import { validerEquipe } from './validationEquipe';
 
 export interface Sauvegarde {
   concours: Concours;
@@ -84,12 +85,16 @@ export function lireSauvegarde(texte: string): LectureSauvegarde {
   const concours = brut.concours;
   const rattache = (x: unknown): boolean =>
     estObjet(x) && typeof x.id === 'string' && x.concoursId === concours.id;
+  // Une équipe inexploitable est écartée comme une entité d'un autre concours :
+  // mieux vaut restaurer les quinze autres que faire échouer la restauration —
+  // ou écrire en base une équipe qui blanchit l'écran des inscriptions.
+  const equipeUtilisable = (x: unknown): boolean => rattache(x) && validerEquipe(x).ok;
 
   return {
     ok: true,
     sauvegarde: {
       concours,
-      teams: liste<Team>(brut.teams, rattache),
+      teams: liste<Team>(brut.teams, equipeUtilisable),
       poules: liste<Poule>(brut.poules, rattache),
       matches: liste<Match>(brut.matches, rattache),
     },
