@@ -151,7 +151,11 @@ export function ConcoursPage() {
           >
             🔗 Partager
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>
+          <button
+            className="btn btn-ghost btn-sm"
+            data-tour="imprimer"
+            onClick={() => window.print()}
+          >
             🖨 Imprimer
           </button>
         </div>
@@ -191,6 +195,7 @@ export function ConcoursPage() {
           <button
             key={t.key}
             className={active === t.key ? 'tab active' : 'tab'}
+            data-tour={`tab-${t.key}`}
             onClick={() => navigate(`/concours/${concours.id}/${t.key}`, { replace: true })}
           >
             {t.label}

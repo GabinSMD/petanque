@@ -74,7 +74,12 @@ export function ChampionnatClubsPage() {
               }}
             />
           </label>
-          <button className="btn btn-primary" disabled={busy} onClick={() => void creer()}>
+          <button
+            className="btn btn-primary"
+            data-tour="nouvelle-feuille"
+            disabled={busy}
+            onClick={() => void creer()}
+          >
             + Nouvelle feuille
           </button>
         </span>

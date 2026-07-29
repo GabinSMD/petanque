@@ -352,7 +352,7 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
     : new Set<string>();
   const qualifies = teams.filter((t) => idsQualifies.has(t.id));
   return (
-    <div className="export-bar no-print">
+    <div className="export-bar no-print" data-tour="exporter">
       <span className="export-bar-label">Exporter :</span>
       {/* Documents remis au comité : sans objet pour un concours de club. */}
       {hasBracket && federal && (

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createDemoConcours } from '../db/actions';
-import { startTour } from '../help/tourState';
-import { dashboardTour } from '../help/tours';
+import { demarrerParcours } from '../help/parcoursState';
+import { parcoursDecouverte } from '@shared';
 import { BouleLogo } from '../App';
 
 const WELCOME_KEY = 'petanque.welcomeDone';
@@ -28,7 +28,7 @@ export function WelcomeModal({ onClose }: { onClose: () => void }) {
   const visit = () => {
     markDone();
     onClose();
-    startTour(dashboardTour);
+    demarrerParcours(parcoursDecouverte);
   };
 
   const demo = async () => {

@@ -21,12 +21,18 @@ export interface FaqEntry {
   steps?: string[];
   note?: string;
   action?: FaqAction;
+  /**
+   * Parcours guidé qui fait *faire* ce que les `steps` décrivent (identifiant du
+   * catalogue partagé). L'assistant propose alors « Me guider pas à pas ».
+   */
+  parcours?: string;
 }
 
 export const FAQ: FaqEntry[] = [
   /* ------------------------------ Démarrer ------------------------------ */
   {
     id: 'creer-concours',
+    parcours: 'creer-concours',
     category: 'Démarrer',
     question: 'Comment créer un concours ?',
     keywords: ['creer', 'nouveau', 'concours', 'organiser', 'commencer', 'demarrer'],
@@ -144,6 +150,7 @@ export const FAQ: FaqEntry[] = [
   },
   {
     id: 'inscrire-equipes',
+    parcours: 'inscrire-equipes',
     category: 'Démarrer',
     question: 'Comment inscrire les équipes ?',
     keywords: ['inscrire', 'inscription', 'equipe', 'joueur', 'ajouter', 'licence', 'club'],
@@ -185,6 +192,7 @@ export const FAQ: FaqEntry[] = [
   /* ------------------------------- Poules ------------------------------- */
   {
     id: 'tirer-poules',
+    parcours: 'tirer-poules',
     category: 'Poules',
     question: 'Comment tirer les poules ?',
     keywords: ['tirage', 'tirer', 'poules', 'sort', 'aleatoire', 'generer'],
@@ -199,6 +207,7 @@ export const FAQ: FaqEntry[] = [
   },
   {
     id: 'deroulement-poule',
+    parcours: 'barrage',
     category: 'Poules',
     question: 'Comment se déroule une poule (barrage, qualifiés) ?',
     keywords: ['deroulement', 'barrage', 'qualifie', 'gagnants', 'perdants', 'poule', 'fonctionne'],
@@ -214,6 +223,7 @@ export const FAQ: FaqEntry[] = [
   },
   {
     id: 'saisir-score',
+    parcours: 'saisir-score',
     category: 'Scores',
     question: 'Comment saisir un score ?',
     keywords: ['saisir', 'score', 'resultat', 'points', 'valider', 'entrer', 'marquer'],
@@ -251,6 +261,7 @@ export const FAQ: FaqEntry[] = [
   },
   {
     id: 'corriger-score',
+    parcours: 'corriger-score',
     category: 'Scores',
     question: 'Comment corriger ou effacer un score ?',
     keywords: ['corriger', 'correction', 'effacer', 'erreur', 'score', 'tromper', 'modifier', 'annuler'],
@@ -286,6 +297,7 @@ export const FAQ: FaqEntry[] = [
   /* ------------------------------ Tableau ------------------------------- */
   {
     id: 'generer-tableau',
+    parcours: 'lancer-tableau',
     category: 'Tableau',
     question: 'Comment générer le tableau final ?',
     keywords: ['generer', 'tableau', 'final', 'phase', 'finale', 'qualifies'],
@@ -312,6 +324,7 @@ export const FAQ: FaqEntry[] = [
   },
   {
     id: 'consolante',
+    parcours: 'consolante',
     category: 'Tableau',
     question: 'Comment fonctionne la consolante ?',
     keywords: ['consolante', 'repechage', 'elimines', 'perdants', 'deuxieme', 'tableau b'],
@@ -349,6 +362,7 @@ export const FAQ: FaqEntry[] = [
   /* ------------------------- Affichage & partage ------------------------ */
   {
     id: 'affichage-tv',
+    parcours: 'affichage-public',
     category: 'Affichage',
     question: 'Comment afficher les résultats sur une TV ?',
     keywords: ['affichage', 'tv', 'ecran', 'videoprojecteur', 'public', 'projeter', 'television'],
@@ -361,6 +375,7 @@ export const FAQ: FaqEntry[] = [
   },
   {
     id: 'imprimer',
+    parcours: 'impressions',
     category: 'Affichage',
     question: 'Comment imprimer les feuilles et les tableaux ?',
     keywords: ['imprimer', 'impression', 'papier', 'feuille', 'pdf'],
@@ -374,6 +389,7 @@ export const FAQ: FaqEntry[] = [
   /* ------------------------------- Partage ------------------------------ */
   {
     id: 'partager-resultats',
+    parcours: 'affichage-public',
     category: 'Partage',
     question: 'Comment partager les résultats avec les joueurs ?',
     keywords: ['partager', 'lien', 'public', 'qr', 'telephone', 'spectateur', 'suivre'],
@@ -552,6 +568,7 @@ export const FAQ: FaqEntry[] = [
   },
   {
     id: 'exporter',
+    parcours: 'exporter-resultats',
     category: 'Résultats',
     question: 'Comment exporter les résultats (CSV, sauvegarde) ?',
     keywords: ['exporter', 'export', 'csv', 'json', 'sauvegarde', 'excel', 'tableur', 'classement', 'telecharger'],
@@ -591,6 +608,7 @@ export const FAQ: FaqEntry[] = [
   },
   {
     id: 'tutoriel',
+    parcours: 'decouverte',
     category: 'Démarrer',
     question: 'Revoir le tutoriel (visite guidée)',
     keywords: ['tutoriel', 'visite', 'guide', 'apprendre', 'decouvrir', 'demonstration', 'demo', 'aide'],
@@ -599,6 +617,24 @@ export const FAQ: FaqEntry[] = [
       'Cliquez sur « 🎓 Relancer la visite guidée » ci-dessous.',
       'Ou créez un « concours d\'exemple » pré-rempli depuis l\'écran de bienvenue pour vous entraîner sans risque.',
     ],
+  },
+  {
+    id: 'feuille-match',
+    parcours: 'feuille-match',
+    category: 'Championnat des clubs',
+    question: 'Comment remplir une feuille de match ?',
+    keywords: ['feuille', 'match', 'rencontre', 'championnat', 'clubs', 'coupe', 'capitaine', 'signature', 'composition'],
+    intro:
+      'Pour le championnat des clubs et la Coupe de France, la feuille se remplit dans l\'application :',
+    steps: [
+      'Depuis le tableau de bord, ouvrez « 🏅 Feuilles de match ».',
+      '« + Nouvelle feuille » : renseignez les deux clubs et la date.',
+      'Composez les équipes, puis saisissez les résultats des rencontres.',
+      'Les deux clubs peuvent échanger leurs compositions par QR code, sans réseau.',
+      'Faites signer les deux capitaines, puis imprimez ou exportez la feuille en fichier.',
+    ],
+    note: 'La feuille se synchronise entre les appareils du club, comme un concours.',
+    action: { label: 'Ouvrir les feuilles de match', path: '/championnat-clubs' },
   },
   {
     id: 'nouveautes',
