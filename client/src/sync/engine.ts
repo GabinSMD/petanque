@@ -3,15 +3,31 @@ import { db, getMeta, setMeta, wipeLocalData, type EntityRecord } from '../db/lo
 import { ApiError, postJson } from '../lib/api';
 import {
   ajouterEcart,
+  bilanEnAttente,
   changementApplicable,
   changementGagne,
   cleEntite,
+  decisionChangementOrg,
   envoisAcquittes,
+  type BilanEnAttente,
   type DonneeEcartee,
 } from '@shared';
 import { getDeviceId, getSession } from '../lib/session';
 
-export type SyncStatus = 'idle' | 'guest' | 'offline' | 'syncing' | 'synced' | 'error' | 'auth';
+export type SyncStatus =
+  | 'idle'
+  | 'guest'
+  | 'offline'
+  | 'syncing'
+  | 'synced'
+  | 'error'
+  | 'auth'
+  /**
+   * Des données non envoyées d'un autre compte sont sur cet appareil : la
+   * synchronisation est suspendue plutôt que de les effacer (§
+   * `decisionChangementOrg`). L'organisateur tranche.
+   */
+  | 'protege';
 
 interface ServerChange {
   type: EntityType;
@@ -46,6 +62,31 @@ let ecartees: DonneeEcartee[] = [];
 
 export function getDonneesEcartees(): DonneeEcartee[] {
   return ecartees;
+}
+
+/**
+ * Bilan des modifications non envoyées qui appartiennent à un autre compte.
+ *
+ * Renseigné quand la synchronisation refuse de purger la base : c'est ce qui
+ * permet à l'écran de dire quoi est en jeu, et de proposer une sauvegarde avant
+ * d'effacer. `null` le reste du temps.
+ */
+let protection: BilanEnAttente | null = null;
+
+export function getProtectionOrg(): BilanEnAttente | null {
+  return protection;
+}
+
+/**
+ * L'organisateur a choisi d'effacer les données de l'autre compte. C'est la
+ * seule porte de sortie qui efface : elle est explicite, et elle relance la
+ * synchronisation aussitôt.
+ */
+export async function purgerDonneesAutreCompte(): Promise<void> {
+  await wipeLocalData();
+  protection = null;
+  notifier();
+  await syncNow();
 }
 
 function notifier(): void {
@@ -129,11 +170,35 @@ export async function syncNow(): Promise<void> {
   syncing = true;
   setStatus('syncing');
   try {
-    // La base locale appartient à une organisation : purge si changement.
+    // La base locale appartient à une organisation. En changer purge — mais pas
+    // ce qui n'a jamais été envoyé : ces données ne sont sur aucun serveur, et
+    // les effacer en silence les perdrait pour de bon.
     const localOrg = await getMeta<string>('orgId');
-    if (localOrg && localOrg !== session.org.id) {
+    // Un décompte sur index, pas une lecture : à chaque échange, sur toute la base.
+    const enAttente = await db.entities.where('dirty').equals(1).count();
+    const decision = decisionChangementOrg({
+      orgLocale: localOrg,
+      orgSession: session.org.id,
+      enAttente,
+    });
+    if (decision.action === 'proteger') {
+      const lignes = await db.entities.where('dirty').equals(1).toArray();
+      const bilan = bilanEnAttente(
+        lignes.map((r) => ({ type: r.type, id: r.id, concoursId: r.concoursId || undefined })),
+      );
+      // La boucle repasse toutes les 30 s : ne réveiller l'écran que si le
+      // bilan a changé, sinon `useSyncExternalStore` re-rend pour rien.
+      if (!protection || protection.total !== bilan.total) {
+        protection = bilan;
+        notifier();
+      }
+      setStatus('protege');
+      return;
+    }
+    if (decision.action === 'purger') {
       await wipeLocalData();
     }
+    protection = null;
     await setMeta('orgId', session.org.id);
 
     const deviceId = getDeviceId();

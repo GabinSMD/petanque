@@ -3,11 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BouleLogo } from '../components/BouleLogo';
 import {
   adoptLocalDataForNewOrg,
+  compterEnAttente,
   getMeta,
   hasLocalConcours,
   setMeta,
   wipeLocalData,
 } from '../db/local';
+import { decisionChangementOrg } from '@shared';
 import { postJson } from '../lib/api';
 import {
   GUEST_ORG_ID,
@@ -73,9 +75,17 @@ export function LoginPage() {
           await wipeLocalData();
         }
       } else {
-        // Les données locales appartiennent à une organisation : purge si on change.
-        const localOrg = await getMeta<string>('orgId');
-        if (localOrg && localOrg !== res.org.id) {
+        // Les données locales appartiennent à une organisation : on purge ce qui
+        // est récupérable — tout est sur le serveur de l'autre compte — et on ne
+        // touche pas au reste. Ce qui n'a jamais été envoyé n'existe que sur cet
+        // appareil : la synchronisation suspend alors et laisse le choix, plutôt
+        // que d'effacer pendant que l'écran de connexion défile.
+        const decision = decisionChangementOrg({
+          orgLocale: await getMeta<string>('orgId'),
+          orgSession: res.org.id,
+          enAttente: await compterEnAttente(),
+        });
+        if (decision.action === 'purger') {
           await wipeLocalData();
         }
       }
@@ -228,16 +238,26 @@ export function LoginPage() {
   );
 
   async function startGuest(): Promise<void> {
-    const localOrg = await getMeta<string>('orgId');
-    if (localOrg && localOrg !== GUEST_ORG_ID) {
+    // Même règle qu'à la connexion : ce qui est déjà sur le serveur du compte
+    // s'efface sans cérémonie, ce qui ne l'est pas mérite d'être annoncé.
+    const enAttente = await compterEnAttente();
+    const decision = decisionChangementOrg({
+      orgLocale: await getMeta<string>('orgId'),
+      orgSession: GUEST_ORG_ID,
+      enAttente,
+    });
+    if (decision.action === 'proteger') {
       if (
         !window.confirm(
-          'Des données d\'un autre compte existent sur cet appareil : elles seront ' +
-            'effacées pour démarrer le mode invité. Continuer ?',
+          `Des données d'un autre compte n'ont pas encore été envoyées au serveur : ` +
+            `${enAttente} modification${enAttente > 1 ? 's' : ''} n'${enAttente > 1 ? 'existent' : 'existe'} que sur cet appareil ` +
+            'et seront définitivement perdues. Continuer quand même ?',
         )
       ) {
         return;
       }
+      await wipeLocalData();
+    } else if (decision.action === 'purger') {
       await wipeLocalData();
     }
     await setMeta('orgId', GUEST_ORG_ID);
