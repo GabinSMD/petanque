@@ -9,6 +9,7 @@ import {
   drawElimination,
   drawMainFromPoules,
   drawMeleeRonde,
+  drawGroupesABC,
   drawPoules,
   drawSwissRonde,
   firstRoundSources,
@@ -16,6 +17,7 @@ import {
   isByeMatch,
   nbToursQualification,
   numeroPremiereEquipe,
+  pouleGroupOutcome,
   pouleOutcome,
   placerQualifie,
   pouleSizes,
@@ -437,6 +439,7 @@ export async function generatePoules(
     sansProtection,
     protections: concours.protections ?? [],
     seeds,
+    sansBarrage: concours.parGroupes === true,
   });
   if (!draw) {
     throw new Error(
@@ -469,6 +472,15 @@ export async function generatePoules(
       }
     }
   }
+  // Formule par groupes : les trois concours se tirent quand les groupes sont
+  // finis, chacun recevant une tranche différente. Pas de tableau anticipé.
+  if (concours.parGroupes) {
+    await bulkPutEntities('poule', draw.poules);
+    await bulkPutEntities('match', draw.matches);
+    await putEntity('concours', { ...concours, status: 'poules' });
+    return;
+  }
+
   // Tableau créé vide dès maintenant : les qualifiés y entreront au fil des
   // poules, sans attendre la dernière (manuel §3.D.1.A).
   const nbAttendus = draw.poules.length * 2;
@@ -484,6 +496,40 @@ export async function generatePoules(
   await bulkPutEntities('poule', draw.poules);
   await bulkPutEntities('match', [...draw.matches, ...tableau]);
   await putEntity('concours', { ...concours, status: 'poules' });
+}
+
+/**
+ * Tire les trois concours de la formule par groupes (manuel §3.D.5), une fois
+ * tous les groupes terminés : A pour les équipes à 2 victoires, B pour celles à
+ * 1 — les deux du groupe — et C pour celles à 2 défaites.
+ */
+export async function generateConcoursGroupes(concours: Concours): Promise<void> {
+  const [poules, matches, teams] = await Promise.all([
+    listByConcours('poule', concours.id),
+    listByConcours('match', concours.id),
+    listByConcours('team', concours.id),
+  ]);
+  if (matches.some((m) => m.stage !== 'poule')) {
+    throw new Error('Les concours A, B et C sont déjà tirés');
+  }
+  const bilans = poules.map((p) =>
+    pouleGroupOutcome(
+      p,
+      matches.filter((m) => m.pouleId === p.id),
+    ),
+  );
+  const created = drawGroupesABC(concours.id, bilans, teams, ctx(), {
+    protections: concours.protections ?? [],
+  });
+
+  // Terrains par défaut sur les premières parties, dans la limite du disponible.
+  const numeros = terrainNumeros(concours.nbTerrains, concours.decalageTerrain);
+  let i = 0;
+  for (const m of created) {
+    if (m.round === 0 && !m.byeA && !m.byeB && i < numeros.length) m.terrain = numeros[i++]!;
+  }
+  await bulkPutEntities('match', created);
+  await putEntity('concours', { ...concours, status: 'tableau' });
 }
 
 /** Annule le tirage des poules (et tout tableau éventuel). */
@@ -905,8 +951,9 @@ async function recomputeAfter(concours: Concours, match: Match): Promise<void> {
     const changed = recomputePoule(poule, pouleMatches);
     await bulkPutEntities('match', changed);
     // Une poule qui livre un qualifié le fait entrer au tableau sans attendre
-    // les autres.
-    await placerQualifiesAction(concours);
+    // les autres. Sans objet en formule par groupes : les trois concours se
+    // tirent d'un coup, groupes terminés.
+    if (!concours.parGroupes) await placerQualifiesAction(concours);
   } else {
     // Toutes les parties, poules comprises : la propagation en a besoin pour
     // résoudre les places réservées à un qualifié de poule. Les écarter les

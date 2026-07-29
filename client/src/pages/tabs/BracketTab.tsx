@@ -156,7 +156,12 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
    * et ses repêchages mais les concours A, B et C du manuel §3.D.15 : chaque
    * tranche du classement joue son propre tableau.
    */
-  const finales = isRondesMode(concours.mode);
+  /**
+   * Trois tableaux nommés A, B et C : après des rondes (phases finales,
+   * §3.D.15) comme en formule par groupes (§3.D.5), ce ne sont pas un principal
+   * et ses repêchages mais trois concours distincts.
+   */
+  const finales = isRondesMode(concours.mode) || concours.parGroupes === true;
   const libelleStage: Record<'principal' | 'consolante' | 'complementaire', string> = finales
     ? { principal: 'Concours A', consolante: 'Concours B', complementaire: 'Concours C' }
     : { principal: 'Concours principal', consolante: 'Consolante', complementaire: 'Complémentaire' };

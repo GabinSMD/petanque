@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { pouleOutcome, pouleRemaining, terrainNumeros } from '@shared';
+import { pouleGroupOutcome, pouleOutcome, pouleRemaining, terrainNumeros } from '@shared';
 import {
   cancelPoules,
+  generateConcoursGroupes,
   generatePoules,
   generateTableauFromPoules,
   pouleSummary,
@@ -40,7 +41,13 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
 
   const pouleMatches = (p: Poule) => matches.filter((m) => m.pouleId === p.id);
   const outcomes = poules.map((p) => pouleOutcome(p, pouleMatches(p)));
-  const completeCount = outcomes.filter((o) => o.complete).length;
+  /**
+   * En formule par groupes, un groupe est fini sans barrage : `pouleOutcome`
+   * l'attendrait indéfiniment. C'est le bilan par victoires qui fait foi.
+   */
+  const completeCount = concours.parGroupes
+    ? poules.filter((p) => pouleGroupOutcome(p, pouleMatches(p)).complete).length
+    : outcomes.filter((o) => o.complete).length;
   const allComplete = poules.length > 0 && completeCount === poules.length;
   const scoresLocked = concours.status === 'tableau' || concours.status === 'termine';
 
@@ -60,7 +67,10 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
     setError(null);
     setBusy(true);
     try {
-      await generateTableauFromPoules(concours);
+      // Formule par groupes : trois concours d'un coup, pas un tableau et sa
+      // consolante (manuel §3.D.5).
+      if (concours.parGroupes) await generateConcoursGroupes(concours);
+      else await generateTableauFromPoules(concours);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Génération impossible');
     } finally {
@@ -189,12 +199,16 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
                 disabled={!allComplete || busy}
                 title={
                   allComplete
-                    ? 'Clôture les poules et lance la consolante'
-                    : 'Toutes les poules doivent être terminées'
+                    ? concours.parGroupes
+                      ? 'Tire les concours A, B et C depuis les groupes'
+                      : 'Clôture les poules et lance la consolante'
+                    : concours.parGroupes
+                      ? 'Tous les groupes doivent être terminés'
+                      : 'Toutes les poules doivent être terminées'
                 }
                 onClick={() => void doTableau()}
               >
-                Clôturer les poules →
+                {concours.parGroupes ? 'Tirer les concours A, B et C →' : 'Clôturer les poules →'}
               </button>
             </>
           )}

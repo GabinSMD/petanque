@@ -18,6 +18,7 @@ export * from './engine/federal';
 export * from './engine/feuilleMatch';
 export * from './engine/finales';
 export * from './engine/formules';
+export * from './engine/groupes';
 export * from './engine/impressions';
 export * from './engine/indemnites';
 export * from './engine/licenceQr';
