@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { LicenceScanModal } from '../../components/LicenceScanModal';
 import { MultisiteModal } from '../../components/MultisiteModal';
 import type { Concours, Player, RolePetanque, Team } from '@shared';
-import { addTeam, deleteTeam, updateTeam } from '../../db/actions';
+import { addTeam, deleteTeam, importerInscrits, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
 import { aDesCriteresLicence, controlerEquipe, libelleClubs, type ControleEquipe } from '@shared';
@@ -31,6 +31,7 @@ export function TeamsTab({ concours, teams }: Props) {
    */
   const [modification, setModification] = useState(false);
   const [erreurModif, setErreurModif] = useState<string | null>(null);
+  const [bilanImport, setBilanImport] = useState<string | null>(null);
   const individual = isIndividualMode(concours.mode);
   const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
   const locked = concours.status !== 'inscriptions';
@@ -136,6 +137,25 @@ export function TeamsTab({ concours, teams }: Props) {
     firstInput.current?.focus();
   };
 
+  /** Import d'une liste d'inscrits (manuel §3.B.10.B). */
+  const importer = async (fichier: File | undefined): Promise<void> => {
+    if (!fichier) return;
+    setErreurModif(null);
+    setBilanImport(null);
+    const res = await importerInscrits(concours, await fichier.text());
+    if (!res.ok) {
+      setErreurModif(res.erreur);
+      return;
+    }
+    setBilanImport(
+      `${res.ajoutees} équipe${res.ajoutees > 1 ? 's' : ''} importée${res.ajoutees > 1 ? 's' : ''}` +
+        (res.numerosConserves ? ', dossards du fichier conservés' : ', numérotées à la suite') +
+        (res.ignorees > 0
+          ? ` — ${res.ignorees} ligne${res.ignorees > 1 ? 's' : ''} sans joueur ignorée${res.ignorees > 1 ? 's' : ''}.`
+          : '.'),
+    );
+  };
+
   const summary =
     concours.mode === 'poules' ? pouleSummary(teams.length, concours.nbTerrains) : null;
   const mise = concours.miseParEquipe ?? 0;
@@ -154,8 +174,22 @@ export function TeamsTab({ concours, teams }: Props) {
             📷 Au lecteur de licences
           </button>
           <span className="hint">Caméra, douchette USB ou saisie du n° de licence.</span>
+          <label className="btn btn-ghost btn-sm" title="Reprendre une liste d'inscrits (CSV)">
+            📥 Importer une liste (CSV)
+            <input
+              type="file"
+              accept=".csv,text/csv,text/plain"
+              hidden
+              onChange={(e) => {
+                void importer(e.target.files?.[0]);
+                e.target.value = '';
+              }}
+            />
+          </label>
         </div>
       )}
+
+      {bilanImport && <p className="banner-warn no-print">📥 {bilanImport}</p>}
 
       {/* Fractionnement multisite (manuel §3.B.10.D) : avant le tirage, et
           seulement si l'effectif permet de donner 2 équipes à chaque site. */}
