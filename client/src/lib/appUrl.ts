@@ -14,9 +14,33 @@ const APP_ORIGIN = ((import.meta.env.VITE_APP_ORIGIN as string | undefined) ?? '
   '',
 );
 
+/** Origine de la page vitrine, pour y revenir depuis l'application. */
+const SITE_ORIGIN = ((import.meta.env.VITE_SITE_ORIGIN as string | undefined) ?? '').replace(
+  /\/+$/,
+  '',
+);
+
 /** Lien vers un chemin de l'application (absolu si elle est ailleurs). */
 export function appUrl(path: string): string {
   return `${APP_ORIGIN}${path}`;
+}
+
+/** Lien vers la page de présentation, où qu'elle soit servie. */
+export function siteUrl(): string {
+  return SITE_ORIGIN || '/';
+}
+
+/**
+ * Vrai si la présentation est un site à part, sur son propre nom de domaine.
+ *
+ * C'est ce qui décide de ce que l'application fait de sa racine quand personne
+ * n'est connecté : s'il existe une vitrine ailleurs, elle y accueille déjà les
+ * visiteurs, et l'application n'a plus qu'à demander de se connecter. Sur un
+ * déploiement à un seul nom de domaine, en revanche, la racine reste le seul
+ * endroit où présenter le logiciel.
+ */
+export function vitrineSeparee(): boolean {
+  return APP_ORIGIN !== '';
 }
 
 /**

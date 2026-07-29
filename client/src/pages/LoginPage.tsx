@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BouleLogo } from '../components/BouleLogo';
+import { siteUrl } from '../lib/appUrl';
 import {
   adoptLocalDataForNewOrg,
   compterEnAttente,
@@ -44,6 +45,25 @@ export function LoginPage() {
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  /**
+   * « Essayer sans compte » depuis la vitrine ouvre directement le mode invité :
+   * l'intention est déjà exprimée, la redemander ici serait un clic de trop.
+   *
+   * Seulement en l'absence de session : arriver ainsi alors qu'un compte est
+   * ouvert ne doit pas effacer ses données sur un simple paramètre d'adresse —
+   * dans ce cas le bouton reste là, avec sa demande de confirmation.
+   */
+  const [ouvertureInvite, setOuvertureInvite] = useState(
+    params.get('invite') === '1' && !existing,
+  );
+  const inviteLance = useRef(false);
+
+  useEffect(() => {
+    if (!ouvertureInvite || inviteLance.current) return;
+    inviteLance.current = true;
+    void startGuest().then(() => setOuvertureInvite(false));
+  }, [ouvertureInvite]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -105,6 +125,22 @@ export function LoginPage() {
       setBusy(false);
     }
   };
+
+  if (ouvertureInvite) {
+    return (
+      <div className="login-page">
+        <div className="login-card login-card-attente">
+          <div className="login-brand">
+            <BouleLogo />
+            <h1>
+              Pétanque <strong>Concours</strong>
+            </h1>
+          </div>
+          <p className="login-tagline">Ouverture du mode invité…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-page">
@@ -229,6 +265,10 @@ export function LoginPage() {
             </p>
           </>
         )}
+
+        <a className="login-retour" href={siteUrl()}>
+          ← Découvrir l’application
+        </a>
 
         <p className="login-version" title={versionDetaillee()}>
           {versionCourte()}
