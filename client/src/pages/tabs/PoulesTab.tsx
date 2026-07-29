@@ -20,7 +20,8 @@ import {
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
 import { ProtectionsModal } from '../../components/ProtectionsModal';
-import { useModeFederalActif } from '../../db/hooks';
+import { useBilanAvantTirage, useModeFederalActif } from '../../db/hooks';
+import { BilanTirageModal } from '../../components/BilanTirageModal';
 import { TeamLabel } from '../../components/TeamLabel';
 import { POULE_SLOT_LABELS } from '../../lib/labels';
 
@@ -63,6 +64,20 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
    */
   const stats = statistiquesPoules(poules, matches);
   const maintenant = new Date().toISOString();
+
+  /**
+   * Contrôle des inscriptions au tirage (manuel §3.B.6) : le bilan est présenté
+   * avant de tirer, et une seule fois — l'organisateur voit, puis décide. Il ne
+   * bloque pas : le manuel non plus.
+   */
+  const bilan = useBilanAvantTirage(concours, teams);
+  const [bilanOuvert, setBilanOuvert] = useState(false);
+  const [bilanVu, setBilanVu] = useState(false);
+
+  const avecControle = (tirer: () => void): void => {
+    if (!bilanVu && bilan && bilan.lignes.length > 0) setBilanOuvert(true);
+    else tirer();
+  };
 
   const doDraw = async () => {
     setError(null);
@@ -151,10 +166,22 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             className="btn btn-primary"
             data-tour="tirer-poules"
             disabled={!summary || busy}
-            onClick={() => void doDraw()}
+            onClick={() => avecControle(() => void doDraw())}
           >
             🎲 Tirer les poules
           </button>
+          {bilanOuvert && bilan && (
+            <BilanTirageModal
+              bilan={bilan}
+              concoursId={concours.id}
+              onCorriger={() => setBilanOuvert(false)}
+              onTirer={() => {
+                setBilanOuvert(false);
+                setBilanVu(true);
+                void doDraw();
+              }}
+            />
+          )}
         </div>
       </div>
     );

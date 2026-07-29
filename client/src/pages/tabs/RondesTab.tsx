@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import type { Concours, Match, RolePetanque, Team } from '@shared';
 import { championnatRondes, rondeComplete, rondeStandings, rondesTirees } from '@shared';
 import { annulerDerniereRonde, setMatchTerrain, tirerRonde, updateConcours } from '../../db/actions';
+import { useBilanAvantTirage } from '../../db/hooks';
+import { BilanTirageModal } from '../../components/BilanTirageModal';
 import { ScoreForm } from '../../components/ScoreForm';
 import { StandingsTable } from '../../components/StandingsTable';
 import { PhasesFinalesPanel } from '../../components/PhasesFinalesPanel';
@@ -69,6 +71,15 @@ export function RondesTab({ concours, teams, matches }: Props) {
   const peutFinales =
     (concours.mode === 'suisse' || concours.mode === 'championnat') && !locked;
 
+  /** Contrôle des inscriptions au premier tirage (manuel §3.B.6). */
+  const bilan = useBilanAvantTirage(concours, teams);
+  const [bilanOuvert, setBilanOuvert] = useState(false);
+  const [bilanVu, setBilanVu] = useState(false);
+  const avecControle = (tirer: () => void): void => {
+    if (tirees === 0 && !bilanVu && bilan && bilan.lignes.length > 0) setBilanOuvert(true);
+    else tirer();
+  };
+
   const doTirer = async () => {
     setError(null);
     setBusy(true);
@@ -118,10 +129,22 @@ export function RondesTab({ concours, teams, matches }: Props) {
           <button
             className="btn btn-primary"
             disabled={active.length < 2 || busy}
-            onClick={() => void doTirer()}
+            onClick={() => avecControle(() => void doTirer())}
           >
             🎲 {concours.mode === 'championnat' ? 'Générer le calendrier' : 'Tirer la ronde 1'}
           </button>
+          {bilanOuvert && bilan && (
+            <BilanTirageModal
+              bilan={bilan}
+              concoursId={concours.id}
+              onCorriger={() => setBilanOuvert(false)}
+              onTirer={() => {
+                setBilanOuvert(false);
+                setBilanVu(true);
+                void doTirer();
+              }}
+            />
+          )}
         </div>
       </div>
     );

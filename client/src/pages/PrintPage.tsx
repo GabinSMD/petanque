@@ -11,14 +11,15 @@ import {
   type TriEquipes,
 } from '@shared';
 import {
+  BilanLicences,
   BilanPaiements,
-  PartiesLancees,
   GraphiqueTableau,
   ListeAbsents,
   ListeEngages,
+  PartiesLancees,
   ResultatsPresse,
 } from '../components/PrintDocs';
-import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
+import { useBilanAvantTirage, useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { teamDisplayName } from '../components/TeamLabel';
 import { FORMAT_LABELS, NIVEAU_LABELS, POULE_SLOT_LABELS, formatDateFr } from '../lib/labels';
 
@@ -50,6 +51,8 @@ export function PrintPage() {
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const arbitrage = useMemo(() => arbitrageReport(teams, matches), [teams, matches]);
   const presse = useMemo(() => presseSections(teams, matches, 'principal'), [teams, matches]);
+  // Bilan des licences (§3.B.6) : le même calcul que la modale avant tirage.
+  const bilan = useBilanAvantTirage(concours, teams);
   const [tri, setTri] = useState<TriEquipes>('numero');
   const [toursMasques, setToursMasques] = useState<Set<number>>(new Set());
   const printed = useRef(false);
@@ -235,6 +238,7 @@ export function PrintPage() {
       {doc === 'paiements' && <BilanPaiements concours={concours} teams={teams} tri={tri} />}
 
       {doc === 'absents' && <ListeAbsents teams={teams} />}
+      {doc === 'bilan-licences' && bilan && <BilanLicences bilan={bilan} />}
 
       {doc === 'parties-lancees' && (
         <PartiesLancees

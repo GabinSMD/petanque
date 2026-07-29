@@ -2,12 +2,14 @@
  * Documents imprimables du manuel « Gestion Concours » : listes d'inscrits et
  * de capitaines (§3.B.9.A et B), bilan des paiements (§3.B.9.D), résultats
  * pour la presse (§3.D.1.B.4.6), impression des absents (§3.D.1.B.4.7) et
- * graphique du tableau (§3.D.1.B.4.4).
+ * graphique du tableau (§3.D.1.B.4.4), et bilan de validité des inscriptions
+ * avant tirage (§3.B.6).
  *
  * `PrintPage` porte l'enveloppe (en-tête, barre d'outils, lancement de
  * l'impression) ; ici on ne fait que la mise en page de chaque document.
  */
-import type { Concours, Match, Poule, Team } from '@shared';
+import { Fragment } from 'react';
+import type { BilanAvantTirage, Concours, Match, Poule, Team } from '@shared';
 import {
   dureeMinutes,
   libelleClubs,
@@ -18,6 +20,7 @@ import {
   type TriEquipes,
 } from '@shared';
 import { matchLabel, sideName } from '../lib/matchLabel';
+import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../lib/labels';
 
 const maj = (s: string): string => s.toLocaleUpperCase('fr-FR');
 
@@ -171,6 +174,64 @@ export function BilanPaiements({
 /* ------------------------------------------------------------------ */
 /* Absents                                                             */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Bilan de validité des inscriptions (manuel §3.B.6) : « Cliquer sur "Imprimer
+ * Bilan" pour rectifier les anomalies ». On part corriger avec cette feuille,
+ * dossard par dossard, donc les équipes en règle n'y figurent pas.
+ */
+export function BilanLicences({ bilan }: { bilan: BilanAvantTirage }) {
+  return (
+    <div className="print-liste">
+      <h2>Contrôle des inscriptions avant tirage</h2>
+      <p>
+        {bilan.conformes} équipe{bilan.conformes > 1 ? 's' : ''} en règle sur {bilan.total}.
+        {bilan.inconnues > 0
+          ? ` ${bilan.inconnues} licence${bilan.inconnues > 1 ? 's' : ''} introuvable${
+              bilan.inconnues > 1 ? 's' : ''
+            } dans le fichier des licenciés.`
+          : ''}
+      </p>
+      {bilan.lignes.length === 0 ? (
+        <p>Aucune anomalie : toutes les équipes répondent aux critères du concours.</p>
+      ) : (
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Joueur</th>
+              <th>À rectifier</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bilan.lignes.map((ligne) => (
+              <Fragment key={ligne.number}>
+                {ligne.anomaliesEquipe.length > 0 && (
+                  <tr>
+                    <td className="cell-number">{ligne.number}</td>
+                    <td>— équipe —</td>
+                    <td>{ligne.anomaliesEquipe.map((a) => ANOMALIE_EQUIPE_LABELS[a]).join(', ')}</td>
+                  </tr>
+                )}
+                {ligne.joueurs.map((j) => (
+                  <tr key={`${ligne.number}-${j.name}`}>
+                    <td className="cell-number">{ligne.number}</td>
+                    <td>{maj(j.name)}</td>
+                    <td>
+                      {j.inconnu && j.anomalies.length === 0
+                        ? 'licence introuvable dans le fichier'
+                        : j.anomalies.map((a) => ANOMALIE_LABELS[a]).join(', ')}
+                    </td>
+                  </tr>
+                ))}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
 
 export function ListeAbsents({ teams }: { teams: Team[] }) {
   const absents = trierEquipes(

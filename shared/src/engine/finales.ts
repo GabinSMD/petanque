@@ -21,7 +21,7 @@
 import type { Match, MatchStage, Team } from '../types';
 import type { EngineCtx } from './ctx';
 import { drawElimination } from './bracket';
-import { rondeStandings, type Standing } from './rondes';
+import { confrontationDirecte, memeNiveau, rondeStandings, type Standing } from './rondes';
 
 /** Une configuration de phases finales : la taille de chaque tableau. */
 export interface ConfigFinales {
@@ -98,48 +98,6 @@ export function configsPossibles(nbEntrants: number): ConfigFinales[] {
   });
 }
 
-/** Les deux camps d'une partie, que ce soit des équipes ou une mêlée. */
-function camps(m: Match): [string[], string[]] {
-  return [
-    m.playersA ?? (m.teamAId ? [m.teamAId] : []),
-    m.playersB ?? (m.teamBId ? [m.teamBId] : []),
-  ];
-}
-
-/** Camp vainqueur d'une partie jouée, au score ou par désignation. */
-function coteGagnante(m: Match): 'A' | 'B' | null {
-  if (m.scoreA !== null && m.scoreB !== null) {
-    if (m.scoreA > m.scoreB) return 'A';
-    if (m.scoreB > m.scoreA) return 'B';
-    return null;
-  }
-  return m.vainqueur ?? null;
-}
-
-/**
- * Confrontation directe entre deux inscrits : `1` si le premier a gagné leurs
- * rencontres, `-1` si c'est le second, `0` s'ils ne se sont jamais rencontrés
- * ou s'ils se sont partagés les victoires.
- */
-export function confrontationDirecte(aId: string, bId: string, matches: Match[]): number {
-  let bilan = 0;
-  for (const m of matches) {
-    if (m.stage !== 'ronde' || !m.done) continue;
-    const [cA, cB] = camps(m);
-    const aEnA = cA.includes(aId);
-    const aEnB = cB.includes(aId);
-    const bEnA = cA.includes(bId);
-    const bEnB = cB.includes(bId);
-    // Il faut qu'ils se soient affrontés, pas qu'ils aient joué ensemble.
-    if (!((aEnA && bEnB) || (aEnB && bEnA))) continue;
-    const gagnante = coteGagnante(m);
-    if (!gagnante) continue;
-    const aGagne = (gagnante === 'A' && aEnA) || (gagnante === 'B' && aEnB);
-    bilan += aGagne ? 1 : -1;
-  }
-  return Math.sign(bilan);
-}
-
 /** Une ligne de classement prête pour les phases finales. */
 export interface LigneClassement extends Standing {
   /** Rang, partagé quand une égalité n'a pas pu être départagée. */
@@ -147,9 +105,6 @@ export interface LigneClassement extends Standing {
   /** Vrai quand cette ligne reste à égalité avec une autre. */
   exAequo: boolean;
 }
-
-const memeNiveau = (a: Standing, b: Standing): boolean =>
-  a.wins === b.wins && a.diff === b.diff && a.pointsFor === b.pointsFor;
 
 /**
  * Classement des rondes en vue des phases finales : victoires, goal-average,

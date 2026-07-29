@@ -13,7 +13,7 @@
  * demandé et que la donnée nécessaire manque, c'est une anomalie — on ne peut
  * pas certifier ce qu'on ne sait pas.
  */
-import type { CategorieAge, Licencie, Player } from '../types';
+import type { CategorieAge, CritereClassification, CritereSexe, Licencie, Player } from '../types';
 import { estHorsUE } from './championnat';
 
 /** Champs susceptibles d'être en anomalie, tels que le manuel les surligne. */
@@ -57,6 +57,36 @@ export interface CriteresLicence {
    */
   maxMutes?: number;
   maxHorsUE?: number;
+}
+
+/**
+ * Critères de contrôle déduits d'un concours. Le calcul était recopié dans
+ * l'écran des licences ; il sert maintenant aussi au bilan avant tirage, et
+ * deux copies auraient divergé.
+ */
+export function criteresDuConcours(c: {
+  date: string;
+  categorieAge?: CategorieAge;
+  strict?: boolean;
+  critereSexe?: CritereSexe;
+  critereClassification?: CritereClassification;
+  homogene?: boolean;
+  certificatsValides?: string[];
+  maxMutes?: number;
+  maxHorsUE?: number;
+}): CriteresLicence {
+  return {
+    annee: Number(c.date.slice(0, 4)),
+    dateConcours: c.date,
+    categorieAge: c.categorieAge,
+    strict: c.strict,
+    sexe: c.critereSexe,
+    classification: c.critereClassification,
+    homogene: c.homogene,
+    certificatsValides: new Set(c.certificatsValides ?? []),
+    maxMutes: c.maxMutes,
+    maxHorsUE: c.maxHorsUE,
+  };
 }
 
 export interface ControleJoueur {

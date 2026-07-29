@@ -345,6 +345,31 @@ input:disabled, select:disabled, input[readonly] {
 .sync-idle .sync-dot { background: #ccc; }
 .sync-guest .sync-dot { background: #f2cd6b; }
 
+/* Bilan de validité avant tirage : parcouru dossard par dossard. */
+.liste-bilan {
+  list-style: none;
+  margin: 0.8rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.liste-bilan > li {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
+}
+
+.liste-bilan ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+}
+
 /* Synchronisation suspendue : des données d'un autre compte sont en jeu. */
 .sync-protege {
   background: rgba(242, 205, 107, 0.3);

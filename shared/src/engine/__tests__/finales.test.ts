@@ -4,8 +4,10 @@ import {
   buildFinales,
   classementFinales,
   configsPossibles,
-  confrontationDirecte,
 } from '../finales';
+// La confrontation directe a rejoint le classement des rondes : elle sert
+// désormais aussi à l'écran des rondes et à l'affichage public.
+import { confrontationDirecte } from '../rondes';
 import type { Match, Team } from '../../types';
 import { makeTeams, testCtx } from './helpers';
 
