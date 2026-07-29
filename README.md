@@ -114,6 +114,10 @@ fonction dont il se sert.
   d'avance** (36 points sur la feuille du CD26). Une feuille fausse se voit
   avant d'être signée. Le barème est une donnée : il varie d'un comité à
   l'autre.
+- **Une feuille par rencontre, synchronisée** : les feuilles sont des entités
+  répliquées, pas un brouillon d'appareil. Elles se retrouvent sur les autres
+  tablettes du club, survivent à la perte de l'une d'elles, et se conservent
+  d'une rencontre à l'autre.
 - **Signature des capitaines dans l'application** : chacun signe au doigt sur
   la tablette. Signer **verrouille la feuille** — plus rien n'est modifiable —
   et une **empreinte du contenu signé** est imprimée à côté des signatures. Si

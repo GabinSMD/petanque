@@ -344,9 +344,25 @@ export interface Licencie {
 /* Protocole de synchronisation SaaS                                   */
 /* ------------------------------------------------------------------ */
 
-export type EntityType = 'concours' | 'team' | 'poule' | 'match' | 'licencie';
+/**
+ * Types d'entités répliquées.
+ *
+ * ⚠ Le serveur tient sa propre liste blanche dans `server/src/sync.ts` — il ne
+ * peut pas lire celle-ci sans casser son `rootDir` et donc son chemin de
+ * déploiement. **Tout ajout ici doit être fait là-bas aussi**, dans le même
+ * commit : un type absent de la liste du serveur est ignoré silencieusement, et
+ * l'entité ne quitte jamais l'appareil.
+ */
+export type EntityType = 'concours' | 'team' | 'poule' | 'match' | 'licencie' | 'feuilleMatch';
 
-export const ENTITY_TYPES: EntityType[] = ['concours', 'team', 'poule', 'match', 'licencie'];
+export const ENTITY_TYPES: EntityType[] = [
+  'concours',
+  'team',
+  'poule',
+  'match',
+  'licencie',
+  'feuilleMatch',
+];
 
 export interface SyncChange {
   type: EntityType;

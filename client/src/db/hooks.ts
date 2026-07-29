@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSyncExternalStore } from 'react';
-import type { Concours, Licencie, Match, Poule, Team } from '@shared';
+import type { Concours, FeuilleMatch, Licencie, Match, Poule, Team } from '@shared';
 import { db } from './local';
 import { besoinModeFederal } from '@shared';
 import { useModeFederal } from '../lib/modeFederal';
@@ -81,6 +81,25 @@ export function useLicenciesCount(): number {
       0,
     ) ?? 0
   );
+}
+
+/** Feuilles de match du club, la plus récente d'abord. */
+export function useFeuillesMatch(): FeuilleMatch[] | undefined {
+  return useLiveQuery(async () => {
+    const rows = await db.entities.where('[type+concoursId]').equals(['feuilleMatch', '']).toArray();
+    return rows
+      .filter((r) => r.deleted === 0 && r.data)
+      .map((r) => r.data as FeuilleMatch)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  }, []);
+}
+
+export function useFeuilleMatch(id: string | undefined): FeuilleMatch | undefined {
+  return useLiveQuery(async () => {
+    if (!id) return undefined;
+    const row = await db.entities.get(['feuilleMatch', id]);
+    return row && row.deleted === 0 ? (row.data as FeuilleMatch) : undefined;
+  }, [id]);
 }
 
 /**

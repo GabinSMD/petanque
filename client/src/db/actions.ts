@@ -51,11 +51,13 @@ import {
   CONFIGS_FINALES,
   archiver,
   buildFinales,
+  feuilleDepuisMemoire,
+  feuilleVierge,
   desarchiver,
   repartirEntreSites,
   classementFinales,
 } from '@shared';
-import type { Site } from '@shared';
+import type { FeuilleMatch, Site } from '@shared';
 import { db } from './local';
 import {
   bulkPutEntities,
@@ -696,6 +698,85 @@ export async function enregistrerOrdreClassement(
   ordre: string[],
 ): Promise<void> {
   await putEntity('concours', { ...concours, ordreClassement: ordre });
+}
+
+/* ------------------------------------------------------------------ */
+/* Feuilles de match (championnat des clubs)                           */
+/* ------------------------------------------------------------------ */
+
+/** Ancienne mémoire d'appareil, reprise une fois puis effacée. */
+const CLE_MEMOIRE_FEUILLE = 'petanque-championnat-clubs';
+
+export async function listFeuillesMatch(): Promise<FeuilleMatch[]> {
+  const rows = await db.entities.where('[type+concoursId]').equals(['feuilleMatch', '']).toArray();
+  return rows
+    .filter((r) => r.deleted === 0 && r.data)
+    .map((r) => r.data as FeuilleMatch)
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
+
+export async function creerFeuilleMatch(): Promise<string> {
+  const feuille = feuilleVierge(
+    crypto.randomUUID(),
+    new Date().toISOString().slice(0, 10),
+    'cnc_open',
+  );
+  await putEntity('feuilleMatch', { ...feuille, updatedAt: monotonicNow() });
+  return feuille.id;
+}
+
+export async function updateFeuilleMatch(feuille: FeuilleMatch): Promise<void> {
+  // L'horodatage est ce qui arbitre entre deux appareils : il se pose ici, au
+  // seul point d'écriture, et jamais dans l'écran.
+  await putEntity('feuilleMatch', { ...feuille, updatedAt: monotonicNow() });
+}
+
+export async function deleteFeuilleMatch(id: string): Promise<void> {
+  await softDeleteMany([{ type: 'feuilleMatch', id }]);
+}
+
+/**
+ * Reprend la feuille que la version précédente gardait dans le navigateur.
+ *
+ * Appelée une seule fois : la mémoire est effacée dès que la feuille est
+ * devenue une entité, sinon un deuxième appareil la reprendrait à son tour et
+ * créerait un doublon. Une mémoire illisible ne bloque rien — la reprise rend
+ * une feuille vierge plutôt que d'échouer.
+ */
+export async function reprendreFeuilleLocale(): Promise<string | null> {
+  // La clé est lue **et retirée** avant le premier `await`, donc de façon
+  // indivisible pour tout autre appelant : sans cela, deux appels concurrents —
+  // deux onglets, ou le double appel des effets en développement — liraient tous
+  // les deux la même mémoire et créeraient deux feuilles identiques.
+  let brut: string | null = null;
+  try {
+    brut = localStorage.getItem(CLE_MEMOIRE_FEUILLE);
+    if (brut !== null) localStorage.removeItem(CLE_MEMOIRE_FEUILLE);
+  } catch {
+    return null;
+  }
+  if (!brut) return null;
+
+  let lu: unknown = null;
+  try {
+    lu = JSON.parse(brut);
+  } catch {
+    lu = null;
+  }
+  const feuille = feuilleDepuisMemoire(crypto.randomUUID(), lu);
+  try {
+    await putEntity('feuilleMatch', { ...feuille, updatedAt: monotonicNow() });
+  } catch (err) {
+    // Écriture impossible : on remet la mémoire en place plutôt que de perdre
+    // la feuille du club.
+    try {
+      localStorage.setItem(CLE_MEMOIRE_FEUILLE, brut);
+    } catch {
+      /* stockage indisponible : plus rien à tenter */
+    }
+    throw err;
+  }
+  return feuille.id;
 }
 
 /* ------------------------------------------------------------------ */
