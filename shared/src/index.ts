@@ -7,6 +7,7 @@ export * from './engine/qualification';
 export * from './engine/multisite';
 export * from './engine/poules';
 export * from './engine/apresTirage';
+export * from './engine/validationEquipe';
 export * from './engine/arbitrage';
 export * from './engine/archives';
 export * from './engine/bracket';

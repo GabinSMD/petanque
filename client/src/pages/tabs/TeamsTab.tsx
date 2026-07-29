@@ -129,7 +129,15 @@ export function TeamsTab({ concours, teams }: Props) {
       }))
       .filter((p) => p.name.length > 0);
     if (players.length === 0) return;
-    await addTeam(concours.id, players, club);
+    setErreurModif(null);
+    try {
+      await addTeam(concours.id, players, club);
+    } catch (err) {
+      // Refus à l'écriture : on le montre au lieu de perdre la saisie sans
+      // rien dire — c'est ce qui rendait le défaut invisible.
+      setErreurModif(err instanceof Error ? err.message : String(err));
+      return;
+    }
     setNames(Array(nbPlayers).fill(''));
     setLicences(Array(nbPlayers).fill(''));
     setClubs(Array(nbPlayers).fill(''));

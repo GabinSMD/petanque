@@ -1,7 +1,7 @@
 import type { EntityType } from '@shared';
 import { db, getMeta, setMeta, wipeLocalData, type EntityRecord } from '../db/local';
 import { ApiError, postJson } from '../lib/api';
-import { changementGagne, cleEntite, envoisAcquittes } from '@shared';
+import { changementApplicable, changementGagne, cleEntite, envoisAcquittes } from '@shared';
 import { getDeviceId, getSession } from '../lib/session';
 
 export type SyncStatus = 'idle' | 'guest' | 'offline' | 'syncing' | 'synced' | 'error' | 'auth';
@@ -124,6 +124,12 @@ export async function syncNow(): Promise<void> {
         for (const ch of res.changes) {
           const local = await db.entities.get([ch.type, ch.id]);
           if (!changementGagne(ch, local)) continue;
+          // Une équipe malformée poussée par un appareil d'une autre version
+          // blanchirait l'écran des inscriptions : on garde ce qu'on a.
+          if (!changementApplicable(ch)) {
+            console.warn('Synchronisation : changement ignoré, donnée inexploitable', ch.type, ch.id);
+            continue;
+          }
           const record: EntityRecord = {
             type: ch.type,
             id: ch.id,
