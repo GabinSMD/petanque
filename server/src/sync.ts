@@ -4,7 +4,21 @@ import { nextSeq } from './db.js';
 import type { EntityRow } from './db.js';
 import type { AuthContext } from './index.js';
 
-const ENTITY_TYPES = new Set(['concours', 'team', 'poule', 'match', 'licencie']);
+/**
+ * Types acceptés à la réplication. Copie de `ENTITY_TYPES` dans
+ * `shared/src/types.ts` : le serveur ne peut pas importer `shared` sans sortir
+ * de son `rootDir`. **Les deux listes doivent rester identiques** — un type
+ * connu du client mais absent d'ici est ignoré sans bruit, et l'entité reste
+ * bloquée sur l'appareil.
+ */
+const ENTITY_TYPES = new Set([
+  'concours',
+  'team',
+  'poule',
+  'match',
+  'licencie',
+  'feuilleMatch',
+]);
 const MAX_CHANGES_PER_PUSH = 2000;
 const PULL_PAGE_SIZE = 2000;
 

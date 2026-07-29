@@ -16,6 +16,8 @@
  * championnat à l'autre, et celui du CD26 n'est qu'un cas.
  */
 
+import type { CompetitionClubId } from './championnat';
+
 /** Formation d'une partie de la rencontre. */
 export type TypePartie = 'tete_a_tete' | 'doublette' | 'triplette';
 
@@ -233,4 +235,216 @@ export function empreinteFeuille(c: ContenuFeuille): string {
     h = Math.imul(h, 0x01000193) >>> 0;
   }
   return h.toString(16).toUpperCase().padStart(8, '0');
+}
+
+/* ------------------------------------------------------------------ */
+/* La feuille comme entité : elle se synchronise et se conserve         */
+/* ------------------------------------------------------------------ */
+
+/** Un joueur de la composition adverse, recopié de sa feuille. */
+export interface JoueurAdverse {
+  nom: string;
+  licence: string;
+}
+
+export interface RemplacementFeuille {
+  remplace: string;
+  remplacant: string;
+}
+
+/** Signature recueillie : le tracé, l'heure, et ce qui a été signé. */
+export interface SignatureFeuille {
+  image: string;
+  quand: string;
+  empreinte: string;
+}
+
+/**
+ * Feuille de match d'une rencontre.
+ *
+ * C'est une entité à part entière, et non un brouillon d'appareil : elle se
+ * synchronise entre les tablettes du club, survit à la perte de l'une d'elles,
+ * et un club en garde autant que de rencontres jouées dans la saison.
+ *
+ * Elle ne dépend d'aucun concours — une rencontre de championnat des clubs n'en
+ * est pas un — d'où un `concoursId` vide, comme pour les licenciés.
+ */
+export interface FeuilleMatch {
+  id: string;
+  /** Vide : une feuille n'appartient à aucun concours. */
+  concoursId: string;
+  competition: CompetitionClubId;
+  maxMutes: number;
+  date: string;
+  division: string;
+  poule: string;
+  club: string;
+  numeroClub: string;
+  adversaire: string;
+  numeroClubAdverse: string;
+  capitaineNom: string;
+  capitaineLicence: string;
+  /** Notre composition : numéros de licence, contrôlés depuis le fichier. */
+  licences: string[];
+  /** Composition adverse, recopiée : ses licences ne sont pas dans notre fichier. */
+  adversaireJoueurs: JoueurAdverse[];
+  heureDebut: string;
+  heureFin: string;
+  parties: PartieRencontre[];
+  places: { a: string[]; b: string[] }[];
+  remplacements: {
+    a: Record<string, RemplacementFeuille[]>;
+    b: Record<string, RemplacementFeuille[]>;
+  };
+  remarques: string;
+  courrielComite: string;
+  signatures: { a: SignatureFeuille | null; b: SignatureFeuille | null };
+  updatedAt: string;
+}
+
+/** Nombre de joueurs par camp selon la formation. */
+const TAILLE_FORMATION: Record<TypePartie, number> = {
+  tete_a_tete: 1,
+  doublette: 2,
+  triplette: 3,
+};
+
+/** Places vides, une par partie, dimensionnées selon la formation. */
+export function placesVides(bareme: BaremeRencontre = BAREME_CDC): { a: string[]; b: string[] }[] {
+  return partiesVides(bareme).map((p) => ({
+    a: Array<string>(TAILLE_FORMATION[p.type]).fill(''),
+    b: Array<string>(TAILLE_FORMATION[p.type]).fill(''),
+  }));
+}
+
+/** Feuille neuve, prête à remplir. */
+export function feuilleVierge(
+  id: string,
+  date: string,
+  competition: CompetitionClubId,
+): FeuilleMatch {
+  return {
+    id,
+    concoursId: '',
+    competition,
+    maxMutes: 1,
+    date,
+    division: '',
+    poule: '',
+    club: '',
+    numeroClub: '',
+    adversaire: '',
+    numeroClubAdverse: '',
+    capitaineNom: '',
+    capitaineLicence: '',
+    licences: [],
+    adversaireJoueurs: Array.from({ length: 8 }, () => ({ nom: '', licence: '' })),
+    heureDebut: '',
+    heureFin: '',
+    parties: partiesVides(BAREME_CDC),
+    places: placesVides(),
+    remplacements: { a: {}, b: {} },
+    remarques: '',
+    courrielComite: '',
+    signatures: { a: null, b: null },
+    updatedAt: '',
+  };
+}
+
+/**
+ * Reprend la feuille que l'ancienne version laissait dans le navigateur, pour
+ * qu'un club en cours de saison ne perde pas la rencontre du jour.
+ *
+ * Tout ce qui est illisible est remplacé par du vierge plutôt que de faire
+ * échouer la reprise : mieux vaut une feuille à recommencer qu'un écran mort.
+ * Des parties qui ne correspondent plus au barème sont refaites — les afficher
+ * telles quelles donnerait des totaux faux.
+ */
+export function feuilleDepuisMemoire(id: string, brut: unknown): FeuilleMatch {
+  const vierge = feuilleVierge(id, new Date().toISOString().slice(0, 10), 'cnc_open');
+  if (!brut || typeof brut !== 'object') return vierge;
+  const m = brut as Record<string, unknown>;
+
+  const texte = (cle: string, defaut = ''): string =>
+    typeof m[cle] === 'string' ? (m[cle] as string) : defaut;
+  const attendues = partiesVides(BAREME_CDC);
+  const parties = Array.isArray(m.parties) && m.parties.length === attendues.length
+    ? attendues.map((attendue, i) => {
+        const lue = (m.parties as unknown[])[i] as Partial<PartieRencontre> | undefined;
+        if (!lue || lue.type !== attendue.type) return attendue;
+        return {
+          type: attendue.type,
+          scoreA: typeof lue.scoreA === 'number' ? lue.scoreA : null,
+          scoreB: typeof lue.scoreB === 'number' ? lue.scoreB : null,
+          jeu: typeof lue.jeu === 'string' ? lue.jeu : undefined,
+        };
+      })
+    : attendues;
+
+  const modele = placesVides();
+  const places = Array.isArray(m.places) && m.places.length === modele.length
+    ? modele.map((attendue, i) => {
+        const lue = (m.places as unknown[])[i] as { a?: unknown; b?: unknown } | undefined;
+        const cote = (v: unknown, taille: number): string[] =>
+          Array.isArray(v) && v.length === taille ? v.map((x) => (typeof x === 'string' ? x : '')) : Array<string>(taille).fill('');
+        return { a: cote(lue?.a, attendue.a.length), b: cote(lue?.b, attendue.b.length) };
+      })
+    : modele;
+
+  return {
+    ...vierge,
+    competition: (typeof m.competition === 'string'
+      ? (m.competition as CompetitionClubId)
+      : vierge.competition),
+    maxMutes: typeof m.maxMutes === 'number' ? m.maxMutes : vierge.maxMutes,
+    date: texte('date', vierge.date),
+    division: texte('division'),
+    poule: texte('poule'),
+    club: texte('club'),
+    numeroClub: texte('numeroClub'),
+    adversaire: texte('adversaire'),
+    numeroClubAdverse: texte('numeroClubAdverse'),
+    capitaineNom: texte('capitaineNom'),
+    capitaineLicence: texte('capitaineLicence'),
+    licences: Array.isArray(m.licences)
+      ? (m.licences as unknown[]).filter((l): l is string => typeof l === 'string')
+      : [],
+    adversaireJoueurs: Array.isArray(m.adversaireJoueurs)
+      ? vierge.adversaireJoueurs.map((defaut, i) => {
+          const lu = (m.adversaireJoueurs as unknown[])[i] as Partial<JoueurAdverse> | undefined;
+          return {
+            nom: typeof lu?.nom === 'string' ? lu.nom : defaut.nom,
+            licence: typeof lu?.licence === 'string' ? lu.licence : defaut.licence,
+          };
+        })
+      : vierge.adversaireJoueurs,
+    heureDebut: texte('heureDebut'),
+    heureFin: texte('heureFin'),
+    parties,
+    places,
+    remplacements:
+      m.remplacements && typeof m.remplacements === 'object'
+        ? {
+            a: ((m.remplacements as Record<string, unknown>).a ?? {}) as FeuilleMatch['remplacements']['a'],
+            b: ((m.remplacements as Record<string, unknown>).b ?? {}) as FeuilleMatch['remplacements']['b'],
+          }
+        : { a: {}, b: {} },
+    remarques: texte('remarques'),
+    courrielComite: texte('courrielComite'),
+    signatures:
+      m.signatures && typeof m.signatures === 'object'
+        ? {
+            a: ((m.signatures as Record<string, unknown>).a ?? null) as SignatureFeuille | null,
+            b: ((m.signatures as Record<string, unknown>).b ?? null) as SignatureFeuille | null,
+          }
+        : { a: null, b: null },
+  };
+}
+
+/** De quoi reconnaître une feuille dans une liste. */
+export function resumeFeuille(f: Pick<FeuilleMatch, 'club' | 'adversaire'>): string {
+  const nous = f.club.trim();
+  const eux = f.adversaire.trim();
+  if (nous && eux) return `${nous} contre ${eux}`;
+  return nous || eux || 'Rencontre sans équipes';
 }

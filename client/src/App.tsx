@@ -14,6 +14,7 @@ import { ConcoursPage } from './pages/ConcoursPage';
 import { DisplayPage } from './pages/DisplayPage';
 import { LicenciesPage } from './pages/LicenciesPage';
 import { ChampionnatClubsPage } from './pages/ChampionnatClubsPage';
+import { FeuilleMatchPage } from './pages/FeuilleMatchPage';
 import { PrintPage } from './pages/PrintPage';
 import { PublicPage } from './pages/PublicPage';
 
@@ -119,6 +120,7 @@ export function App() {
           <Route path="/palmares" element={<PalmaresPage />} />
           <Route path="/licencies" element={<LicenciesPage />} />
           <Route path="/championnat-clubs" element={<ChampionnatClubsPage />} />
+          <Route path="/championnat-clubs/:id" element={<FeuilleMatchPage />} />
           <Route path="/concours/:id" element={<ConcoursPage />} />
           <Route path="/concours/:id/:tab" element={<ConcoursPage />} />
         </Route>

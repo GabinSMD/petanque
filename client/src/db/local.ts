@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { Concours, EntityType, Licencie, Match, Poule, Team } from '@shared';
+import type { Concours, EntityType, FeuilleMatch, Licencie, Match, Poule, Team } from '@shared';
 
 /** Correspondance type d'entité → objet du domaine. */
 export interface EntityDataMap {
@@ -8,6 +8,7 @@ export interface EntityDataMap {
   poule: Poule;
   match: Match;
   licencie: Licencie;
+  feuilleMatch: FeuilleMatch;
 }
 
 export interface EntityRecord<T extends EntityType = EntityType> {
