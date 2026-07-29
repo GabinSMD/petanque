@@ -165,7 +165,44 @@ input:disabled, select:disabled, input[readonly] {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 1.2rem 1.1rem 3rem;
+  padding: 1.2rem 1.1rem 2rem;
+}
+
+/* Pied de page : la version de l'application, toujours au même endroit.
+   La marge droite dégage la bulle de l'assistant, qui est fixée dans ce coin. */
+.app-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.7rem 1.1rem 0.9rem;
+  padding-right: calc(5rem + env(safe-area-inset-right));
+  padding-bottom: calc(0.9rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.app-footer-brand strong {
+  font-weight: 700;
+}
+
+.app-footer-version {
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+.login-version {
+  margin: 1.2rem 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  cursor: help;
 }
 
 .page-head {
