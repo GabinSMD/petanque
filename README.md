@@ -221,6 +221,13 @@ navigateur — c'est ce qui permet un hors-ligne total.
 
 ### Protocole de synchronisation
 
+Le client n'acquitte que ce que le serveur a **accepté** : une entité refusée
+reste en attente et visible au compteur, plutôt que d'être crue synchronisée
+alors qu'elle n'est nulle part. Les deux décisions qui gouvernent la réplication
+— « ce changement remplace-t-il l'état local ? » et « cet envoi est-il
+acquitté ? » — vivent dans `shared/src/engine/replication.ts`, où elles sont
+testées.
+
 ```
 POST /api/sync  { cursor, deviceId, changes: [{type, id, data, updatedAt, deleted}] }
              →  { cursor, hasMore, accepted, changes: [...] }

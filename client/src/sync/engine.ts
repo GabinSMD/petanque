@@ -1,6 +1,7 @@
 import type { EntityType } from '@shared';
 import { db, getMeta, setMeta, wipeLocalData, type EntityRecord } from '../db/local';
 import { ApiError, postJson } from '../lib/api';
+import { changementGagne, cleEntite, envoisAcquittes } from '@shared';
 import { getDeviceId, getSession } from '../lib/session';
 
 export type SyncStatus = 'idle' | 'guest' | 'offline' | 'syncing' | 'synced' | 'error' | 'auth';
@@ -114,15 +115,15 @@ export async function syncNow(): Promise<void> {
         })),
       });
 
+      // Ce que le serveur a réellement pris. Acquitter un envoi qu'il n'a pas
+      // accepté marquerait « synchronisée » une donnée qui n'est nulle part.
+      const acquittes = envoisAcquittes(dirty, res.accepted ?? []);
+
       await db.transaction('rw', db.entities, async () => {
         // 1. Applique les changements du serveur (dernier-écrivain-gagnant).
         for (const ch of res.changes) {
           const local = await db.entities.get([ch.type, ch.id]);
-          const wins =
-            !local ||
-            ch.updatedAt > local.updatedAt ||
-            (ch.updatedAt === local.updatedAt && local.dirty === 0);
-          if (!wins) continue;
+          if (!changementGagne(ch, local)) continue;
           const record: EntityRecord = {
             type: ch.type,
             id: ch.id,
@@ -136,8 +137,9 @@ export async function syncNow(): Promise<void> {
           };
           await db.entities.put(record);
         }
-        // 2. Acquitte les envois restés inchangés depuis leur lecture.
+        // 2. Acquitte les envois acceptés, restés inchangés depuis leur lecture.
         for (const rec of dirty) {
+          if (!acquittes.has(cleEntite(rec.type, rec.id))) continue;
           const cur = await db.entities.get([rec.type, rec.id]);
           if (cur && cur.dirty === 1 && cur.updatedAt === rec.updatedAt) {
             await db.entities.put({ ...cur, dirty: 0 });
@@ -148,6 +150,10 @@ export async function syncNow(): Promise<void> {
 
       const remaining = await db.entities.where('dirty').equals(1).count();
       if (!res.hasMore && remaining === 0) break;
+      // Aucun envoi accepté et rien reçu : recommencer donnerait le même
+      // résultat. On s'arrête plutôt que d'enchaîner vingt requêtes identiques
+      // — ce qui arriverait avec une entité que le serveur refuse.
+      if (!res.hasMore && acquittes.size === 0 && res.changes.length === 0) break;
     }
     lastSyncAt = new Date().toISOString();
     setStatus('synced');
