@@ -22,6 +22,10 @@ import { useFeuilleMatch, useLicencies } from '../db/hooks';
 import { updateFeuilleMatch } from '../db/actions';
 import { SignaturePad } from '../components/SignaturePad';
 import {
+  EchangeCompositionModal,
+  appliquerComposition,
+} from '../components/EchangeCompositionModal';
+import {
   FeuilleMatchVerso,
   type JoueurFeuille,
   type Remplacements,
@@ -54,6 +58,7 @@ export function FeuilleMatchPage() {
 
   const [saisie, setSaisie] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  const [echange, setEchange] = useState(false);
   const champ = useRef<HTMLInputElement>(null);
 
   if (!feuille) {
@@ -404,12 +409,33 @@ export function FeuilleMatchPage() {
               🗑 Réinitialiser l'équipe
             </button>
           )}
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setEchange(true)}
+            title="Montrer notre composition à l'autre club, ou recevoir la sienne"
+          >
+            🔁 Échanger les compositions
+          </button>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => window.print()}>
             🖨 Feuille de rencontre
           </button>
         </span>
       </form>
       </fieldset>
+
+      {echange && (
+        <EchangeCompositionModal
+          feuille={etat}
+          joueurs={joueurs}
+          onClose={() => setEchange(false)}
+          onRecevoir={(compo) => {
+            const { patch, message: dit } = appliquerComposition(etat, compo);
+            maj(patch);
+            setMessage(dit);
+          }}
+        />
+      )}
 
       {message && <p className="hint no-print">{message}</p>}
 

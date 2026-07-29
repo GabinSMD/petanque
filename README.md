@@ -114,6 +114,13 @@ fonction dont il se sert.
   d'avance** (36 points sur la feuille du CD26). Une feuille fausse se voit
   avant d'être signée. Le barème est une donnée : il varie d'un comité à
   l'autre.
+- **Échange des compositions entre les deux clubs** : le club visiteur montre un
+  QR code, l'hôte le scanne, et les huit lignes de l'équipe adverse se
+  remplissent avec les numéros de licence — au lieu d'être recopiées à la main
+  alors que l'autre club les a déjà saisies et contrôlées chez lui. Rien ne
+  passe par le réseau ni par un compte commun : au boulodrome il n'y a souvent
+  ni l'un ni l'autre. Le code est du texte lisible, donc recopiable si une
+  caméra fait défaut.
 - **Une feuille par rencontre, synchronisée** : les feuilles sont des entités
   répliquées, pas un brouillon d'appareil. Elles se retrouvent sur les autres
   tablettes du club, survivent à la perte de l'une d'elles, et se conservent
