@@ -20,6 +20,7 @@ export * from './engine/finales';
 export * from './engine/formules';
 export * from './engine/groupes';
 export * from './engine/impressions';
+export * from './engine/inscritsImport';
 export * from './engine/indemnites';
 export * from './engine/licenceQr';
 export * from './engine/licences';

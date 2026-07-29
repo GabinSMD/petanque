@@ -98,6 +98,12 @@ fonction dont il se sert.
   et du palmarès sans rien perdre, et revient d'un clic. Le palmarès annonce
   toujours combien de concours archivés il laisse de côté — un vainqueur ne
   disparaît pas en silence.
+- **Import d'une liste d'inscrits** (manuel §3.B.10.B) : reprendre en CSV la
+  liste d'un autre concours — l'export « 📋 Engagés » de l'application se
+  réimporte tel quel, dossards, licences, clubs, forfaits et règlements
+  compris. Une colonne par joueur est acceptée aussi, pour un tableur fait à la
+  main. Dans un concours vide, les dossards du fichier sont conservés ; sinon
+  les équipes s'ajoutent à la suite.
 - **Pré-inscriptions en ligne** : les équipes s'inscrivent elles-mêmes via
   le lien public (« ✍️ Je m'inscris ») ; l'organisateur valide d'un clic à
   la table de marque.
