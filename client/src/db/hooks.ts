@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import type {
   BilanEnAttente,
   Concours,
@@ -11,7 +11,14 @@ import type {
   Team,
 } from '@shared';
 import { db } from './local';
-import { besoinModeFederal } from '@shared';
+import {
+  aDesCriteresLicence,
+  besoinModeFederal,
+  bilanAvantTirage,
+  controlerEquipe,
+  criteresDuConcours,
+  type BilanAvantTirage,
+} from '@shared';
 import { useModeFederal } from '../lib/modeFederal';
 import {
   getDonneesEcartees,
@@ -130,6 +137,27 @@ export function usePendingCount(): number {
 
 export function useSyncStatus(): SyncStatus {
   return useSyncExternalStore(subscribeSyncStatus, getSyncStatus);
+}
+
+/**
+ * Bilan de validité des inscriptions (manuel §3.B.6), ou `null` quand le
+ * concours n'a aucun critère fédéral — un concours amical n'a rien à contrôler.
+ */
+export function useBilanAvantTirage(
+  concours: Concours | undefined,
+  teams: Team[],
+): BilanAvantTirage | null {
+  const licencies = useLicencies() ?? [];
+  return useMemo(() => {
+    if (!concours || !aDesCriteresLicence(concours)) return null;
+    const fiches = new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l]));
+    const criteres = criteresDuConcours(concours);
+    return bilanAvantTirage(
+      teams
+        .filter((t) => !t.forfait)
+        .map((t) => ({ number: t.number, controle: controlerEquipe(t.players, fiches, criteres) })),
+    );
+  }, [concours, teams, licencies]);
 }
 
 /** Données reçues d'un autre appareil et écartées faute d'être lisibles. */

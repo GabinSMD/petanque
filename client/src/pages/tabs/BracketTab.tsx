@@ -13,6 +13,8 @@ import { SeedPicker } from '../../components/SeedPicker';
 import { ProtectionsModal } from '../../components/ProtectionsModal';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
 import { isRondesMode } from '../../lib/labels';
+import { BilanTirageModal } from '../../components/BilanTirageModal';
+import { useBilanAvantTirage } from '../../db/hooks';
 
 interface Props {
   concours: Concours;
@@ -22,6 +24,14 @@ interface Props {
 }
 
 export function BracketTab({ concours, teams, matches, poules }: Props) {
+  /** Contrôle des inscriptions au tirage (manuel §3.B.6). */
+  const bilan = useBilanAvantTirage(concours, teams);
+  const [bilanOuvert, setBilanOuvert] = useState(false);
+  const [bilanVu, setBilanVu] = useState(false);
+  const avecControle = (tirer: () => void): void => {
+    if (!bilanVu && bilan && bilan.lignes.length > 0) setBilanOuvert(true);
+    else tirer();
+  };
   const [stage, setStage] = useState<'principal' | 'consolante' | 'complementaire'>('principal');
   // Protection club appliquée par défaut, comme dans le logiciel fédéral.
   const [protection, setProtection] = useState(true);
@@ -80,7 +90,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
             <button
               className="btn btn-primary"
               disabled={activeTeams.length < 2 || busy}
-              onClick={() => {
+              onClick={() => avecControle(() => {
                 setBusy(true);
                 setError(null);
                 generateTableauDirect(concours, !protection, seeds)
@@ -88,10 +98,28 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
                     setError(err instanceof Error ? err.message : 'Tirage impossible'),
                   )
                   .finally(() => setBusy(false));
-              }}
+              })}
             >
               🎲 Tirer le tableau
             </button>
+            {bilanOuvert && bilan && (
+              <BilanTirageModal
+                bilan={bilan}
+                concoursId={concours.id}
+                onCorriger={() => setBilanOuvert(false)}
+                onTirer={() => {
+                  setBilanOuvert(false);
+                  setBilanVu(true);
+                  setBusy(true);
+                  setError(null);
+                  generateTableauDirect(concours, !protection, seeds)
+                    .catch((err) =>
+                      setError(err instanceof Error ? err.message : 'Tirage impossible'),
+                    )
+                    .finally(() => setBusy(false));
+                }}
+              />
+            )}
           </div>
         </div>
       );
