@@ -20,6 +20,7 @@ import {
 } from '@shared';
 import { useFeuilleMatch, useLicencies } from '../db/hooks';
 import { updateFeuilleMatch } from '../db/actions';
+import { exportFeuilleJSON } from '../lib/export';
 import { SignaturePad } from '../components/SignaturePad';
 import {
   EchangeCompositionModal,
@@ -417,12 +418,27 @@ export function FeuilleMatchPage() {
           >
             🔁 Échanger les compositions
           </button>
+        </span>
+      </form>
+      </fieldset>
+
+      {/* Hors du verrou : imprimer et sauvegarder une feuille signée est
+          précisément ce qu'on veut faire après l'avoir signée. */}
+      <div className="toolbar no-print">
+        <span className="toolbar-actions">
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => exportFeuilleJSON(etat)}
+            title="Fichier autonome : à archiver, à transmettre, ou à reprendre ailleurs"
+          >
+            💾 Sauvegarde (JSON)
+          </button>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => window.print()}>
             🖨 Feuille de rencontre
           </button>
         </span>
-      </form>
-      </fieldset>
+      </div>
 
       {echange && (
         <EchangeCompositionModal

@@ -69,6 +69,14 @@ export function lireSauvegarde(texte: string): LectureSauvegarde {
       erreur: `Sauvegarde en version ${version}, plus récente que cette application (${VERSION_SAUVEGARDE}). Mettez l'application à jour.`,
     };
   }
+  // L'erreur qui arrivera vraiment : on mélange les deux sortes de fichiers.
+  if (brut.type === 'feuilleMatch' || brut.feuille !== undefined) {
+    return {
+      ok: false,
+      erreur:
+        'Ce fichier est une feuille de match, pas un concours : importez-le depuis « Feuilles de match ».',
+    };
+  }
   if (!concoursValide(brut.concours)) {
     return { ok: false, erreur: 'La sauvegarde ne contient pas de concours exploitable.' };
   }

@@ -448,3 +448,85 @@ export function resumeFeuille(f: Pick<FeuilleMatch, 'club' | 'adversaire'>): str
   if (nous && eux) return `${nous} contre ${eux}`;
   return nous || eux || 'Rencontre sans équipes';
 }
+
+/* ------------------------------------------------------------------ */
+/* La feuille en fichier : archiver, transmettre, reprendre            */
+/* ------------------------------------------------------------------ */
+
+/** Version du format écrite par l'export ; on relit celle-ci et les précédentes. */
+export const VERSION_FEUILLE_FICHIER = 1;
+
+/** Marque de type dans l'enveloppe, pour distinguer des sauvegardes de concours. */
+export const TYPE_FEUILLE_FICHIER = 'feuilleMatch';
+
+export type LectureFeuilleFichier =
+  | { ok: true; feuille: FeuilleMatch }
+  | { ok: false; erreur: string };
+
+/**
+ * Écrit une feuille dans un fichier autonome. Un concours sait se sauver depuis
+ * le §3.F.1 ; une feuille signée doit pouvoir en faire autant — pour l'archiver,
+ * la transmettre, ou la reprendre sur un appareil qui n'a pas le compte du club.
+ */
+export function ecrireFeuilleFichier(feuille: FeuilleMatch): string {
+  return JSON.stringify(
+    {
+      exportedAt: new Date().toISOString(),
+      app: 'petanque-concours',
+      type: TYPE_FEUILLE_FICHIER,
+      version: VERSION_FEUILLE_FICHIER,
+      feuille,
+    },
+    null,
+    2,
+  );
+}
+
+/**
+ * Relit un fichier de feuille. Comme pour les sauvegardes de concours, on ne
+ * fait confiance à rien : le fichier vient du disque et peut avoir été bricolé.
+ * Le contenu passe donc par la même remise en état que la reprise d'une ancienne
+ * mémoire — des parties qui ne correspondent plus au barème sont refaites plutôt
+ * qu'affichées avec des totaux faux.
+ *
+ * L'identifiant est réattribué : la feuille s'importe **à côté** de l'originale,
+ * jamais par-dessus. L'empreinte du contenu signé n'en dépend pas, donc une
+ * feuille signée reste comparable à son exemplaire papier.
+ */
+export function lireFeuilleFichier(
+  texte: string,
+  nouvelId: () => string = () => `feuille-${Date.now().toString(36)}`,
+): LectureFeuilleFichier {
+  let brut: unknown;
+  try {
+    brut = JSON.parse(texte);
+  } catch {
+    return { ok: false, erreur: "Ce fichier n'est pas un JSON lisible." };
+  }
+  if (typeof brut !== 'object' || brut === null || Array.isArray(brut)) {
+    return { ok: false, erreur: 'Ce fichier ne contient pas de feuille de match.' };
+  }
+  const enveloppe = brut as Record<string, unknown>;
+  if (enveloppe.app !== 'petanque-concours') {
+    return { ok: false, erreur: "Ce fichier n'a pas été écrit par Pétanque Concours." };
+  }
+  // L'erreur qui arrivera vraiment : on mélange les deux sortes de fichiers.
+  if (enveloppe.concours !== undefined && enveloppe.feuille === undefined) {
+    return {
+      ok: false,
+      erreur:
+        "Ce fichier est une sauvegarde de concours, pas une feuille de match : importez-le depuis « Mes concours ».",
+    };
+  }
+  const version = typeof enveloppe.version === 'number' ? enveloppe.version : 0;
+  if (version > VERSION_FEUILLE_FICHIER) {
+    return {
+      ok: false,
+      erreur: `Feuille en version ${version}, plus récente que cette application (${VERSION_FEUILLE_FICHIER}). Mettez l'application à jour.`,
+    };
+  }
+  if (!enveloppe.feuille || typeof enveloppe.feuille !== 'object') {
+    return { ok: false, erreur: 'Ce fichier ne contient pas de feuille de match.' };
+  }
+  return { ok: true, feuille: feuilleDepuisMemoire(nouvelId(), enveloppe.feuille) };
+}

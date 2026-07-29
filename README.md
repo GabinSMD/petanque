@@ -132,6 +132,12 @@ fonction dont il se sert.
   l'exemplaire signé, et l'application le dit. Corriger exige d'effacer
   explicitement les signatures, jamais en silence. Une feuille en anomalie n'est
   pas signable du tout.
+- **Sauvegarde en fichier** : une feuille s'exporte en JSON autonome, signatures
+  comprises, et se réimporte — pour l'archiver, la transmettre, ou la reprendre
+  sur un appareil qui n'a pas le compte du club. Elle arrive toujours **à côté**
+  des existantes, jamais par-dessus, et l'empreinte du contenu signé reste
+  vérifiable après l'aller-retour. Les deux imports — concours et feuille —
+  reconnaissent le fichier de l'autre et le disent.
 - **Retour au comité** : courriel préparé (objet, résultat, remarques) auquel
   joindre la feuille signée — ou dépôt sur le site du comité. C'est la signature
   qui fait foi.
