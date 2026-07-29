@@ -15,6 +15,7 @@ import { CreateConcoursWizard } from '../components/CreateConcoursWizard';
 import { ImportSauvegarde } from '../components/ImportSauvegarde';
 import { Modal } from '../components/Modal';
 import { WelcomeModal, isWelcomeDone } from '../components/WelcomeModal';
+import { annoncerNouveautes } from '../help/nouveautesState';
 import { useSession } from '../db/hooks';
 import {
   FORMAT_LABELS,
@@ -63,6 +64,14 @@ export function DashboardPage() {
     }
   }, [searchParams, setSearchParams]);
   const [welcome, setWelcome] = useState(() => !isWelcomeDone());
+
+  // Nouveautés après une mise à jour automatique. Annoncées ici et nulle part
+  // ailleurs : sur un concours, la pop-up couperait un tirage ou une saisie —
+  // elle attendra le prochain passage par le tableau de bord.
+  useEffect(() => {
+    annoncerNouveautes(!isWelcomeDone());
+  }, []);
+
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   /** Vue « archivés » (manuel §3.F.3) : les concours rangés, hors de la liste courante. */
   const [voirArchives, setVoirArchives] = useState(false);

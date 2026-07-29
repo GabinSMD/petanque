@@ -4,6 +4,7 @@ import { useSession } from './db/hooks';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
 import { AppFooter } from './components/AppFooter';
+import { NouveautesHost } from './components/NouveautesModal';
 import { SyncBadge } from './components/SyncBadge';
 import { ChatBot } from './components/ChatBot';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -68,6 +69,7 @@ function Layout() {
       <AppFooter />
       <ChatBot />
       <TourHost />
+      <NouveautesHost />
     </div>
   );
 }

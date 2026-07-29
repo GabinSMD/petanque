@@ -25,6 +25,7 @@ export * from './engine/indemnites';
 export * from './engine/licenceQr';
 export * from './engine/licences';
 export * from './engine/licencesImport';
+export * from './engine/nouveautes';
 export * from './engine/replication';
 export * from './engine/retards';
 export * from './engine/statistiquesPoules';
