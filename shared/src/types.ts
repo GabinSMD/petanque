@@ -185,6 +185,12 @@ export interface Concours {
    */
   recupCadrage?: boolean;
   /**
+   * Formule par groupes A-B-C (manuel §3.D.5) : groupes de 4 sans barrage, dont
+   * l'issue se lit au nombre de victoires — 2 victoires au concours A, 1 au B
+   * (les deux équipes), 0 au C. Tout le monde continue de jouer.
+   */
+  parGroupes?: boolean;
+  /**
    * Autorise à désigner le vainqueur d'une partie sans saisir le score, pour
    * aller plus vite. Réservé aux formules où le score ne sert pas au
    * classement : en rondes, il faut les points.

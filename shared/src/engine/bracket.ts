@@ -328,6 +328,8 @@ export function drawMainFromPoules(
   concoursId: string,
   outcomes: PouleOutcome[],
   ctx: EngineCtx,
+  /** Tableau visé : le concours B de la formule par groupes s'y appuie aussi. */
+  stage: MatchStage = 'principal',
 ): Match[] {
   interface Qualified {
     teamId: string;
@@ -390,7 +392,7 @@ export function drawMainFromPoules(
     ctx,
   );
 
-  const matches = createBracketMatches(concoursId, 'principal', units, ctx);
+  const matches = createBracketMatches(concoursId, stage, units, ctx);
   return applyChanges(matches, propagate(matches));
 }
 

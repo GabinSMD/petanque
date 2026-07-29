@@ -80,6 +80,11 @@ export interface DrawPoulesOptions {
   nbTerrains?: number;
   /** Têtes de série (ids ordonnés) : réparties dans des poules différentes. */
   seeds?: string[];
+  /**
+   * Formule par groupes (manuel §3.D.5) : pas de barrage, l'issue se lit au
+   * nombre de victoires.
+   */
+  sansBarrage?: boolean;
 }
 
 /**
@@ -187,7 +192,7 @@ export function drawPoules(
       updatedAt: now,
     };
     poules.push(poule);
-    matches.push(...createPouleMatches(concoursId, poule, ctx));
+    matches.push(...createPouleMatches(concoursId, poule, ctx, { sansBarrage: opts.sansBarrage }));
   });
 
   return { poules, matches };
@@ -226,7 +231,20 @@ function pouleMatch(
  * Poule de 4 : M1 (t1-t2), M2 (t3-t4), gagnants, perdants, barrage.
  * Poule de 3 : M1 (t1-t2, t3 exempt), gagnants (vainqueur M1 - t3), barrage.
  */
-export function createPouleMatches(concoursId: string, poule: Poule, ctx: EngineCtx): Match[] {
+export interface OptionsPouleMatches {
+  /**
+   * Formule par groupes (manuel §3.D.5) : le barrage n'est pas joué, les deux
+   * équipes à une victoire allant toutes les deux dans le concours B.
+   */
+  sansBarrage?: boolean;
+}
+
+export function createPouleMatches(
+  concoursId: string,
+  poule: Poule,
+  ctx: EngineCtx,
+  opts: OptionsPouleMatches = {},
+): Match[] {
   const t = poule.teamIds;
   if (t.length === 4) {
     return [
@@ -234,8 +252,13 @@ export function createPouleMatches(concoursId: string, poule: Poule, ctx: Engine
       pouleMatch(concoursId, poule, 'M2', t[2]!, t[3]!, ctx),
       pouleMatch(concoursId, poule, 'GAGNANTS', null, null, ctx),
       pouleMatch(concoursId, poule, 'PERDANTS', null, null, ctx),
-      pouleMatch(concoursId, poule, 'BARRAGE', null, null, ctx),
+      ...(opts.sansBarrage
+        ? []
+        : [pouleMatch(concoursId, poule, 'BARRAGE', null, null, ctx)]),
     ];
+  }
+  if (opts.sansBarrage) {
+    throw new Error('Formule par groupes : groupes de 4 requis (victoires non comparables à 3)');
   }
   if (t.length === 3) {
     return [

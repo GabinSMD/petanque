@@ -54,6 +54,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [consolante, setConsolante] = useState(initial?.consolante ?? true);
   const [complementaire, setComplementaire] = useState(initial?.complementaire ?? false);
   const [recupCadrage, setRecupCadrage] = useState(initial?.recupCadrage ?? false);
+  const [parGroupes, setParGroupes] = useState(initial?.parGroupes ?? false);
   const [vainqueurSeul, setVainqueurSeul] = useState(initial?.vainqueurSeul ?? false);
   const [formule, setFormule] = useState<Formule>(initial ? formuleOf(initial) : 'ab');
   const [niveau, setNiveau] = useState<NiveauConcours | ''>(initial?.niveau ?? '');
@@ -112,9 +113,13 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             complementaire: formule === 'abc' || formule === 'abc_recup' || formule === 'abc_cd19',
           }
         : {
-            consolante: MODE_INFO[mode].consolante ? consolante : false,
+            // Formule par groupes : le concours B n'est pas une consolante, et il
+            // n'y a pas de repêchage — la donnée doit le dire.
+            consolante: parGroupes ? false : MODE_INFO[mode].consolante ? consolante : false,
             complementaire: MODE_INFO[mode].consolante && consolante ? complementaire : false,
-            recupCadrage: mode === 'poules' && consolante && recupCadrage ? true : undefined,
+            recupCadrage:
+              mode === 'poules' && consolante && recupCadrage && !parGroupes ? true : undefined,
+            parGroupes: mode === 'poules' && parGroupes ? true : undefined,
           }),
       scoreMax,
       nbTerrains,
@@ -342,7 +347,22 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           <span className="hint">{FORMULE_HINTS[formule]}</span>
         </label>
       )}
-      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && (
+      {mode === 'poules' && (
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={parGroupes}
+            onChange={(e) => setParGroupes(e.target.checked)}
+            disabled={lockStructure}
+          />
+          Formule par groupes A-B-C (manuel §3.D.5) : tout le monde continue
+          <span className="hint">
+            Groupes de 4 sans barrage. L'équipe à 2 victoires va au concours A, les deux à 1 victoire
+            au B, celle à 2 défaites au C — personne ne rentre après deux parties.
+          </span>
+        </label>
+      )}
+      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && !parGroupes && (
         <>
           <label className="checkbox-label">
             <input

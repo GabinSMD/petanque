@@ -33,6 +33,10 @@ fonction dont il se sert.
     perdants sont reversés d'un tableau à l'autre — consolante, complémentaire,
     et récupération des perdants du 2ᵉ tour du principal au cadrage de la
     consolante (ou au complémentaire, variante CD19) ;
+  - **Formule par groupes A-B-C** (manuel §3.D.5) : groupes de 4 **sans
+    barrage**, dont l'issue se lit au nombre de victoires — 2 victoires au
+    concours A, 1 victoire au B (les **deux** équipes), 0 au C. Personne ne
+    rentre après deux parties ;
   - **Mêlée tournante** : inscriptions individuelles, équipes tirées au sort
     à chaque ronde — effectifs inégaux gérés comme sur le terrain (une
     triplette peut rencontrer une doublette, personne n'est exempt),
