@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-rout
 import { useSession } from './db/hooks';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
+import { AppFooter } from './components/AppFooter';
 import { SyncBadge } from './components/SyncBadge';
 import { ChatBot } from './components/ChatBot';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -64,6 +65,7 @@ function Layout() {
       <main className="app-main">
         <Outlet />
       </main>
+      <AppFooter />
       <ChatBot />
       <TourHost />
     </div>

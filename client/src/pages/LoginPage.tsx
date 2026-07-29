@@ -16,6 +16,7 @@ import {
   startGuestSession,
   type Session,
 } from '../lib/session';
+import { versionCourte, versionDetaillee } from '../lib/version';
 import { syncNow } from '../sync/engine';
 
 type Mode = 'login' | 'register';
@@ -214,6 +215,10 @@ export function LoginPage() {
             </p>
           </>
         )}
+
+        <p className="login-version" title={versionDetaillee()}>
+          {versionCourte()}
+        </p>
       </div>
     </div>
   );
