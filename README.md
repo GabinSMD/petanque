@@ -171,8 +171,15 @@ fonction dont il se sert.
   tableau → clôture).
 - **Assistant intégré** 💬 : une vingtaine de guides pas-à-pas (tirer les
   poules, corriger un score, consolante, forfait, affichage TV, hors-ligne…),
-  recherche par mots-clés tolérante aux accents, boutons de navigation
-  contextuelle — entièrement **hors-ligne**, aucun service externe.
+  recherche par mots-clés tolérante aux accents — entièrement **hors-ligne**,
+  aucun service externe.
+- **Il accompagne au lieu de cataloguer** : après avoir répondu, l'assistant
+  propose la **suite de votre concours** (« les poules sont finies, place au
+  tableau »), déduite de l'état réel des données — jamais des « sujets
+  voisins ». Question mal comprise ? Il demande une précision ancrée dans
+  l'écran où vous êtes plutôt que de dérouler le sommaire. Il se resitue à
+  l'ouverture (« vous êtes sur *Concours du 12/07* : il reste 3 parties à
+  saisir »), et le sommaire ne revient que sur demande explicite.
 - **Parcours guidés interactifs** : « 🎓 Me guider pas à pas » ne raconte pas,
   il fait faire. L'assistant surligne l'élément, puis **attend le geste** — un
   clic sur la cible, ou un fait constaté dans les données (les poules

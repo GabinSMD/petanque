@@ -28,6 +28,7 @@ export * from './engine/licenceQr';
 export * from './engine/licences';
 export * from './engine/licencesImport';
 export * from './engine/nouveautes';
+export * from './engine/accompagnement';
 export * from './engine/parcours';
 export * from './engine/parcoursCatalogue';
 export * from './engine/replication';
