@@ -103,3 +103,38 @@ après coup ; au-delà du raisonnable, elles seront exclues du précache.
 - La page se rend hors session sur `/`, en 1280 px et en 375 px.
 - Un utilisateur connecté voit toujours son tableau de bord sur `/`.
 - `/palmares` sans session redirige toujours vers `/login`.
+
+## Suite : deux noms de domaine (décidé le même jour)
+
+La vitrine passe sur `petanque.gabin-simond.fr`, l'application sur
+`app.petanque.gabin-simond.fr`. Les deux noms arrivent sur le même serveur, qui
+choisit le document d'après l'en-tête `Host` (`VITRINE_HOST`, `APP_ORIGIN`).
+
+La vitrine devient un **document distinct** (`vitrine.html`), construit depuis le
+même composant React par une seconde entrée Vite : 64 Ko gzip au lieu de 199, ni
+service worker ni base locale sur son origine. Deux raisons, dans cet ordre :
+
+1. **Une seule origine pour les données.** Servir l'application sous les deux
+   noms scinderait les données locales entre deux origines : qui crée son compte
+   sur l'un puis revient sur l'autre retrouve un appareil vide.
+2. **Le poids.** Faire télécharger toute l'application à un visiteur qui lit une
+   page de présentation.
+
+Sur le nom de la vitrine, `/api/…` reste servi normalement — un appareil déjà
+installé depuis l'ancienne adresse continue de se synchroniser, alors qu'une
+redirection dégraderait ses requêtes POST. Tout le reste part en 301 vers
+`APP_ORIGIN` : les liens publics `/p/:token` distribués aux équipes et les QR
+codes affichés au boulodrome doivent continuer de fonctionner.
+
+Le déménagement a un coût qu'on ne masque pas : ce qui n'a jamais été
+synchronisé — les concours du mode invité — reste attaché à l'ancienne origine.
+La vitrine détecte la session locale laissée sur place et l'explique dans un
+bandeau.
+
+Détail d'implémentation qui découle du découpage : `BouleLogo` quitte `App.tsx`
+pour son propre module, sinon la vitrine embarquerait le routeur et toutes les
+pages de l'application.
+
+Vérifié à la requête (`curl -H Host:`) sur les deux hôtes, avec et sans
+`VITRINE_HOST`. Voir `docs/DEPLOIEMENT.md` pour les étapes DNS, `.env.production`,
+service et Caddy.
