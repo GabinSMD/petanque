@@ -1,12 +1,22 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSyncExternalStore } from 'react';
-import type { Concours, DonneeEcartee, FeuilleMatch, Licencie, Match, Poule, Team } from '@shared';
+import type {
+  BilanEnAttente,
+  Concours,
+  DonneeEcartee,
+  FeuilleMatch,
+  Licencie,
+  Match,
+  Poule,
+  Team,
+} from '@shared';
 import { db } from './local';
 import { besoinModeFederal } from '@shared';
 import { useModeFederal } from '../lib/modeFederal';
 import {
   getDonneesEcartees,
   getLastSyncAt,
+  getProtectionOrg,
   getSyncStatus,
   subscribeSyncStatus,
   type SyncStatus,
@@ -125,6 +135,14 @@ export function useSyncStatus(): SyncStatus {
 /** Données reçues d'un autre appareil et écartées faute d'être lisibles. */
 export function useDonneesEcartees(): DonneeEcartee[] {
   return useSyncExternalStore(subscribeSyncStatus, getDonneesEcartees);
+}
+
+/**
+ * Modifications non envoyées appartenant à un autre compte, quand la
+ * synchronisation est suspendue pour ne pas les effacer.
+ */
+export function useProtectionOrg(): BilanEnAttente | null {
+  return useSyncExternalStore(subscribeSyncStatus, getProtectionOrg);
 }
 
 export function useLastSyncAt(): string | null {

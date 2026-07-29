@@ -52,6 +52,15 @@ export async function setMeta(key: string, value: unknown): Promise<void> {
   await db.meta.put({ key, value });
 }
 
+/**
+ * Modifications locales pas encore acquittées par le serveur. C'est ce qui
+ * serait perdu par une purge : le décompte sert donc à décider, pas seulement
+ * à afficher.
+ */
+export async function compterEnAttente(): Promise<number> {
+  return db.entities.where('dirty').equals(1).count();
+}
+
 /** Vide toutes les données locales (changement d'organisation, déconnexion). */
 export async function wipeLocalData(): Promise<void> {
   await db.transaction('rw', db.entities, db.meta, async () => {

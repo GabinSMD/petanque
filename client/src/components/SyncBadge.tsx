@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { usePendingCount, useSyncStatus } from '../db/hooks';
 import { syncNow } from '../sync/engine';
 import { isStoragePersisted, subscribeStorage } from '../lib/storage';
+import { PanneauAutreCompte } from './PanneauAutreCompte';
 
 const LABELS: Record<string, { text: string; cls: string }> = {
   idle: { text: 'Local', cls: 'sync-idle' },
@@ -11,6 +12,7 @@ const LABELS: Record<string, { text: string; cls: string }> = {
   syncing: { text: 'Synchronisation…', cls: 'sync-syncing' },
   synced: { text: 'Synchronisé', cls: 'sync-ok' },
   error: { text: 'Erreur réseau', cls: 'sync-error' },
+  protege: { text: 'En attente d\'un choix', cls: 'sync-protege' },
   auth: { text: 'Session expirée', cls: 'sync-error' },
 };
 
@@ -20,6 +22,7 @@ function useStoragePersisted(): boolean | null {
 
 export function SyncBadge() {
   const status = useSyncStatus();
+  const [panneau, setPanneau] = useState(false);
   const pending = usePendingCount();
   const persisted = useStoragePersisted();
   const info = LABELS[status] ?? LABELS.idle!;
@@ -33,6 +36,25 @@ export function SyncBadge() {
       <Link to="/login" className={`sync-badge ${info.cls}`} data-tour="sync">
         <span className="sync-dot" /> {info.text} — se reconnecter
       </Link>
+    );
+  }
+
+  if (status === 'protege') {
+    // La synchronisation est suspendue : le badge n'a rien à forcer, il ouvre
+    // le choix qui la débloquera.
+    return (
+      <>
+        <button
+          className="sync-badge sync-protege"
+          data-tour="sync"
+          onClick={() => setPanneau(true)}
+          title="Des données non envoyées d'un autre compte sont sur cet appareil"
+        >
+          <span className="sync-dot" /> {info.text}
+          {pending > 0 && <span className="sync-pending">{pending}</span>}
+        </button>
+        {panneau && <PanneauAutreCompte onClose={() => setPanneau(false)} />}
+      </>
     );
   }
 
