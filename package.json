@@ -1,6 +1,6 @@
 {
   "name": "petanque-concours",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Gestion de concours de pétanque en SaaS avec mode hors-ligne (local-first)",
   "type": "module",

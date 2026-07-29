@@ -600,6 +600,19 @@ export const FAQ: FaqEntry[] = [
       'Ou créez un « concours d\'exemple » pré-rempli depuis l\'écran de bienvenue pour vous entraîner sans risque.',
     ],
   },
+  {
+    id: 'nouveautes',
+    category: 'Démarrer',
+    question: 'Quoi de neuf dans cette version ?',
+    keywords: ['nouveau', 'nouveaute', 'neuf', 'quoi', 'change', 'changement', 'version', 'mise', 'jour', 'ajoute'],
+    intro:
+      'L\'application se met à jour toute seule ; le tour d\'horizon de ce qu\'elle a gagné se rouvre à volonté :',
+    steps: [
+      'Cliquez sur « ✨ Voir les nouveautés » ci-dessous.',
+      'Ou, depuis n\'importe quel écran, sur le numéro de version en bas de page.',
+    ],
+    note: 'La version exacte que vous utilisez y est affichée : c\'est elle qu\'on vous demandera en cas de souci.',
+  },
 ];
 
 /** Suggestions mises en avant à l'ouverture de l'assistant. */

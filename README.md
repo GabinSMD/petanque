@@ -173,6 +173,13 @@ fonction dont il se sert.
   poules, corriger un score, consolante, forfait, affichage TV, hors-ligne…),
   recherche par mots-clés tolérante aux accents, boutons de navigation
   contextuelle — entièrement **hors-ligne**, aucun service externe.
+- **Version affichée en pied de page** (numéro, commit, date de compilation,
+  injectés au build) : de quoi savoir ce que la tablette exécute vraiment.
+- **Pop-up « Nouveautés »** après une mise à jour : l'application se remplace
+  silencieusement (PWA en mise à jour automatique), la pop-up fait le tour
+  d'horizon de ce qu'elle a gagné, avec un bouton pour aller voir. Les versions
+  sautées sont cumulées en une seule fenêtre ; le tour d'horizon se rouvre
+  depuis le pied de page ou l'assistant (« Quoi de neuf ? »).
 
 ### Partage & auto-arbitrage
 - **Lien public** par concours (révocable, avec **QR code** à afficher au
@@ -301,9 +308,22 @@ docker run -p 8787:8787 -v petanque-data:/app/server/data petanque-concours
 4. Dès que le réseau revient (ou en partage de connexion), tout se
    synchronise ; le second appareil du club voit les résultats.
 
+## Publier une nouveauté
+
+Livrer quelque chose que l'utilisateur verra, c'est deux gestes :
+
+1. ajouter un point dans `client/src/help/nouveautes.ts`, sous la version en
+   cours (ou une nouvelle entrée de version) ;
+2. monter le `version` du `package.json` racine.
+
+C'est le **journal** qui déclenche la pop-up, pas le `package.json` : un oubli
+de bump ne rend pas la détection muette, il fait seulement mentir l'étiquette du
+pied de page. La version retenue est toujours la plus haute que le journal
+publie, et l'ordre du tableau n'a pas d'importance (`recapNouveautes` trie).
+
 ## Tests
 
-- `shared/` : 22 tests Vitest couvrant la répartition des poules, le
+- `shared/` : 417 tests Vitest couvrant la répartition des poules, le
   déroulement 4/3 avec barrage, les corrections en cascade, le cadrage et les
   exempts, l'appariement premiers/seconds, la consolante alimentée par les
   perdants et les classements.
