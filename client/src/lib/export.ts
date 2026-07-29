@@ -1,5 +1,5 @@
-import type { Concours, Match, Poule, Team } from '@shared';
-import { arbitrageReport, designationCategorie, libelleClubs } from '@shared';
+import type { Concours, FeuilleMatch, Match, Poule, Team } from '@shared';
+import { arbitrageReport, designationCategorie, ecrireFeuilleFichier, libelleClubs } from '@shared';
 import { teamDisplayName } from '../components/TeamLabel';
 import { DISCIPLINE_LABELS, FORMAT_LABELS, MODE_LABELS, NIVEAU_LABELS } from './labels';
 import { finalRanking } from './results';
@@ -219,6 +219,17 @@ export function exportClassementCSV(
     classementCSV(concours, teams, poules, matches),
     'text/csv',
   );
+}
+
+/** Sauvegarde d'une feuille de match dans un fichier autonome. */
+export function exportFeuilleJSON(feuille: FeuilleMatch): void {
+  const nom = [
+    'feuille',
+    feuille.date,
+    feuille.club || 'nous',
+    feuille.adversaire || 'adversaire',
+  ].join('-');
+  downloadText(`${safeFilename(nom)}.json`, ecrireFeuilleFichier(feuille), 'application/json');
 }
 
 export function exportBackupJSON(

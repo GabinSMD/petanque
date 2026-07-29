@@ -4,6 +4,7 @@ import { COMPETITIONS_CLUB, bilanRencontre, resumeFeuille, BAREME_CDC } from '@s
 import {
   creerFeuilleMatch,
   deleteFeuilleMatch,
+  importerFeuilleMatch,
   reprendreFeuilleLocale,
 } from '../db/actions';
 import { useFeuillesMatch } from '../db/hooks';
@@ -20,6 +21,7 @@ export function ChampionnatClubsPage() {
   const navigate = useNavigate();
   const feuilles = useFeuillesMatch();
   const [busy, setBusy] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   // Reprise de la feuille laissée par l'ancienne version, une seule fois.
   useEffect(() => {
@@ -33,6 +35,17 @@ export function ChampionnatClubsPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const importer = async (fichier: File | undefined): Promise<void> => {
+    if (!fichier) return;
+    setErreur(null);
+    const res = await importerFeuilleMatch(await fichier.text());
+    if (!res.ok) {
+      setErreur(res.erreur);
+      return;
+    }
+    navigate(`/championnat-clubs/${res.id}`);
   };
 
   const supprimer = async (id: string, resume: string): Promise<void> => {
@@ -49,11 +62,25 @@ export function ChampionnatClubsPage() {
           <Link className="btn btn-sm" to="/">
             ← Mes concours
           </Link>
+          <label className="btn btn-sm" title="Reprendre une feuille reçue en fichier">
+            📥 Importer une feuille
+            <input
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={(e) => {
+                void importer(e.target.files?.[0]);
+                e.target.value = '';
+              }}
+            />
+          </label>
           <button className="btn btn-primary" disabled={busy} onClick={() => void creer()}>
             + Nouvelle feuille
           </button>
         </span>
       </div>
+
+      {erreur && <p className="form-error">{erreur}</p>}
 
       <p className="hint">
         Championnat des clubs et Coupe de France : contrôle de la composition, ordre des rencontres,

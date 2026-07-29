@@ -53,6 +53,7 @@ import {
   buildFinales,
   feuilleDepuisMemoire,
   feuilleVierge,
+  lireFeuilleFichier,
   desarchiver,
   repartirEntreSites,
   classementFinales,
@@ -733,6 +734,20 @@ export async function updateFeuilleMatch(feuille: FeuilleMatch): Promise<void> {
 
 export async function deleteFeuilleMatch(id: string): Promise<void> {
   await softDeleteMany([{ type: 'feuilleMatch', id }]);
+}
+
+/**
+ * Importe une feuille reçue en fichier. Elle arrive **à côté** des existantes,
+ * avec un identifiant neuf : importer ne doit jamais écraser la feuille d'une
+ * rencontre déjà jouée.
+ */
+export async function importerFeuilleMatch(texte: string): Promise<
+  { ok: true; id: string } | { ok: false; erreur: string }
+> {
+  const lecture = lireFeuilleFichier(texte, () => crypto.randomUUID());
+  if (!lecture.ok) return { ok: false, erreur: lecture.erreur };
+  await putEntity('feuilleMatch', { ...lecture.feuille, updatedAt: monotonicNow() });
+  return { ok: true, id: lecture.feuille.id };
 }
 
 /**
