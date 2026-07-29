@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSyncExternalStore } from 'react';
-import type { Concours, FeuilleMatch, Licencie, Match, Poule, Team } from '@shared';
+import type { Concours, DonneeEcartee, FeuilleMatch, Licencie, Match, Poule, Team } from '@shared';
 import { db } from './local';
 import { besoinModeFederal } from '@shared';
 import { useModeFederal } from '../lib/modeFederal';
 import {
+  getDonneesEcartees,
   getLastSyncAt,
   getSyncStatus,
   subscribeSyncStatus,
@@ -119,6 +120,11 @@ export function usePendingCount(): number {
 
 export function useSyncStatus(): SyncStatus {
   return useSyncExternalStore(subscribeSyncStatus, getSyncStatus);
+}
+
+/** Données reçues d'un autre appareil et écartées faute d'être lisibles. */
+export function useDonneesEcartees(): DonneeEcartee[] {
+  return useSyncExternalStore(subscribeSyncStatus, getDonneesEcartees);
 }
 
 export function useLastSyncAt(): string | null {

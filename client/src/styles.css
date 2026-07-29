@@ -345,6 +345,16 @@ input:disabled, select:disabled, input[readonly] {
 .sync-idle .sync-dot { background: #ccc; }
 .sync-guest .sync-dot { background: #f2cd6b; }
 
+/* Données reçues illisibles : présent sans crier, jusqu'à acquittement. */
+.sync-ecartees {
+  background: rgba(255, 176, 143, 0.25);
+  border-color: rgba(255, 176, 143, 0.7);
+}
+
+.sync-ecartees .sync-dot {
+  background: #ffb08f;
+}
+
 .sync-pending {
   background: var(--terra);
   border-radius: 999px;

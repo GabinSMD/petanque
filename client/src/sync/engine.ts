@@ -1,7 +1,14 @@
 import type { EntityType } from '@shared';
 import { db, getMeta, setMeta, wipeLocalData, type EntityRecord } from '../db/local';
 import { ApiError, postJson } from '../lib/api';
-import { changementApplicable, changementGagne, cleEntite, envoisAcquittes } from '@shared';
+import {
+  ajouterEcart,
+  changementApplicable,
+  changementGagne,
+  cleEntite,
+  envoisAcquittes,
+  type DonneeEcartee,
+} from '@shared';
 import { getDeviceId, getSession } from '../lib/session';
 
 export type SyncStatus = 'idle' | 'guest' | 'offline' | 'syncing' | 'synced' | 'error' | 'auth';
@@ -26,10 +33,42 @@ let status: SyncStatus = 'idle';
 let lastSyncAt: string | null = null;
 const listeners = new Set<() => void>();
 
+/**
+ * Données reçues du serveur mais inexploitables (§ `changementApplicable`).
+ *
+ * Elles sont retenues et affichées : les refuser en silence laissait
+ * l'organisateur devant onze équipes ici et douze là-bas, sans explication —
+ * et devant la tentation de ressaisir ce qui existe déjà ailleurs. La liste est
+ * enregistrée dans `meta`, donc elle survit à un rechargement : l'écart ne se
+ * produit pas forcément sous les yeux de quelqu'un.
+ */
+let ecartees: DonneeEcartee[] = [];
+
+export function getDonneesEcartees(): DonneeEcartee[] {
+  return ecartees;
+}
+
+function notifier(): void {
+  for (const fn of listeners) fn();
+}
+
+async function memoriserEcart(type: string, id: string): Promise<void> {
+  ecartees = ajouterEcart(ecartees, { type, id, quand: new Date().toISOString() });
+  await setMeta('ecartees', ecartees);
+  notifier();
+}
+
+/** L'organisateur a pris connaissance du signalement. */
+export async function oublierDonneesEcartees(): Promise<void> {
+  ecartees = [];
+  await setMeta('ecartees', ecartees);
+  notifier();
+}
+
 function setStatus(next: SyncStatus): void {
   if (status === next) return;
   status = next;
-  for (const fn of listeners) fn();
+  notifier();
 }
 
 export function getSyncStatus(): SyncStatus {
@@ -119,6 +158,9 @@ export async function syncNow(): Promise<void> {
       // accepté marquerait « synchronisée » une donnée qui n'est nulle part.
       const acquittes = envoisAcquittes(dirty, res.accepted ?? []);
 
+      // Retenus pendant la transaction, enregistrés après : écrire dans `meta`
+      // depuis une transaction qui ne porte que sur `entities` la ferait échouer.
+      const aSignaler: { type: string; id: string }[] = [];
       await db.transaction('rw', db.entities, async () => {
         // 1. Applique les changements du serveur (dernier-écrivain-gagnant).
         for (const ch of res.changes) {
@@ -128,6 +170,7 @@ export async function syncNow(): Promise<void> {
           // blanchirait l'écran des inscriptions : on garde ce qu'on a.
           if (!changementApplicable(ch)) {
             console.warn('Synchronisation : changement ignoré, donnée inexploitable', ch.type, ch.id);
+            aSignaler.push({ type: ch.type, id: ch.id });
             continue;
           }
           const record: EntityRecord = {
@@ -153,6 +196,7 @@ export async function syncNow(): Promise<void> {
         }
       });
       await setMeta('cursor', res.cursor);
+      for (const { type, id } of aSignaler) await memoriserEcart(type, id);
 
       const remaining = await db.entities.where('dirty').equals(1).count();
       if (!res.hasMore && remaining === 0) break;
@@ -186,6 +230,12 @@ let loopStarted = false;
 export function startSyncLoop(): void {
   if (loopStarted) return;
   loopStarted = true;
+  void getMeta<DonneeEcartee[]>('ecartees').then((liste) => {
+    if (liste && liste.length > 0) {
+      ecartees = liste;
+      notifier();
+    }
+  });
   window.addEventListener('online', () => void syncNow());
   window.addEventListener('offline', () => setStatus('offline'));
   window.setInterval(() => void syncNow(), 30_000);
