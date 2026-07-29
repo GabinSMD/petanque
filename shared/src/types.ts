@@ -199,8 +199,21 @@ export interface Concours {
   /** Score gagnant d'une mène complète (13 en pétanque). */
   scoreMax: number;
   nbTerrains: number;
-  /** Nombre de rondes prévues (mêlée, système suisse) ou de séries (tir). */
+  /**
+   * Nombre de rondes prévues (mêlée, système suisse) ou de séries (tir).
+   *
+   * En championnat, c'est le **marathon** du manuel §3.D.14.B : la rotation
+   * circulaire s'arrête là au lieu de jouer le calendrier complet. Absent =
+   * calendrier complet (chacun rencontre chacun).
+   */
   nbRondes?: number;
+  /**
+   * Système suisse : n'opposer que des équipes à égalité **stricte** de
+   * victoires (manuel §3.D.14.C, graphique 17), quitte à laisser des exempts.
+   * Absent/false = appariement par classement, gagnant contre perdant toléré
+   * (graphique 15).
+   */
+  ggStrict?: boolean;
   /** Durée indicative des parties en minutes (parties au temps). */
   tempsLimite?: number;
   /**

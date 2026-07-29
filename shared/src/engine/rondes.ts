@@ -149,15 +149,31 @@ const pairKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|$
  * Effectif impair : l'équipe la moins bien classée n'ayant pas encore
  * été exempte gagne d'office 13 à 7.
  */
+export interface OptionsSwiss {
+  /**
+   * Appariement **strict** (manuel §3.D.14.C, graphique 17) : on n'oppose que
+   * des équipes ayant exactement le même nombre de victoires. Un groupe de
+   * taille impaire produit donc un exempt — « d'où des exempts à certains
+   * tours ». Sans cette option, l'appariement suit le classement et tolère
+   * qu'un gagnant rencontre un perdant, ce qui est le graphique 15.
+   */
+  strict?: boolean;
+}
+
 export function drawSwissRonde(
   concoursId: string,
   teams: Team[],
   previous: Match[],
   round: number,
   ctx: EngineCtx,
+  opts: OptionsSwiss = {},
 ): Match[] {
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
   const rondeMatches = previous.filter((m) => m.stage === 'ronde');
+
+  if (opts.strict && round > 0) {
+    return drawStrictRonde(concoursId, teams, rondeMatches, round, ctx);
+  }
 
   let ranked: string[];
   if (round === 0) {
@@ -197,6 +213,66 @@ export function drawSwissRonde(
   return matches;
 }
 
+/**
+ * Appariement strict par nombre de victoires (graphique 17).
+ *
+ * Les équipes sont regroupées par victoires, et on n'apparie qu'à l'intérieur
+ * d'un groupe. Un groupe impair laisse une équipe exempte — crédité 13-7 comme
+ * un forfait, à l'image du reste de l'application — en évitant celles qui l'ont
+ * déjà été. C'est la contrepartie assumée de la stricte égalité : le manuel
+ * l'annonce explicitement.
+ */
+function drawStrictRonde(
+  concoursId: string,
+  teams: Team[],
+  rondeMatches: Match[],
+  round: number,
+  ctx: EngineCtx,
+): Match[] {
+  const classement = rondeStandings(teams, rondeMatches);
+  const groupes = new Map<number, string[]>();
+  for (const s of classement) {
+    const g = groupes.get(s.wins) ?? [];
+    g.push(s.id);
+    groupes.set(s.wins, g);
+  }
+
+  const dejaExempts = new Set(
+    rondeMatches.filter((m) => m.byeB && m.teamAId).map((m) => m.teamAId!),
+  );
+  const dejaJoue = new Set<string>();
+  for (const m of rondeMatches) {
+    if (m.teamAId && m.teamBId) dejaJoue.add(pairKey(m.teamAId, m.teamBId));
+  }
+
+  const matches: Match[] = [];
+  let position = 0;
+  // Des plus victorieux aux moins victorieux : l'ordre des tables suit le
+  // classement, comme sur le graphique fédéral.
+  for (const victoires of [...groupes.keys()].sort((a, b) => b - a)) {
+    let pool = [...groupes.get(victoires)!];
+
+    if (pool.length % 2 === 1) {
+      // Exempt : le moins bien placé du groupe qui ne l'a pas encore été.
+      const exempt =
+        [...pool].reverse().find((id) => !dejaExempts.has(id)) ?? pool[pool.length - 1]!;
+      pool = pool.filter((id) => id !== exempt);
+      matches.push(byeMatch(concoursId, exempt, round, position++, ctx));
+      dejaExempts.add(exempt);
+    }
+
+    while (pool.length >= 2) {
+      const a = pool.shift()!;
+      let idx = pool.findIndex((b) => !dejaJoue.has(pairKey(a, b)));
+      if (idx === -1) idx = 0; // revanche inévitable dans un groupe épuisé
+      const b = pool.splice(idx, 1)[0]!;
+      dejaJoue.add(pairKey(a, b));
+      matches.push({ ...baseMatch(concoursId, round, position++, ctx), teamAId: a, teamBId: b });
+    }
+  }
+  return matches;
+}
+
 /* ------------------------------------------------------------------ */
 /* Championnat (toutes rondes)                                         */
 /* ------------------------------------------------------------------ */
@@ -205,14 +281,27 @@ export function drawSwissRonde(
  * Calendrier toutes rondes (méthode du cercle) : chacun rencontre chacun
  * exactement une fois. Effectif impair : chaque équipe se repose une ronde
  * (aucun point crédité, tout le monde joue le même nombre de parties).
+ *
+ * `maxRondes` arrête la rotation avant la fin : c'est le marathon du manuel
+ * §3.D.14.B, « 3 à 10 parties par rotation circulaire ». La méthode du cercle
+ * garantit qu'aucune paire ne se répète, même tronquée — on prend simplement
+ * les premières rondes du calendrier.
  */
-export function buildChampionnat(concoursId: string, teams: Team[], ctx: EngineCtx): Match[] {
+export function buildChampionnat(
+  concoursId: string,
+  teams: Team[],
+  ctx: EngineCtx,
+  maxRondes?: number,
+): Match[] {
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
+  if (maxRondes !== undefined && maxRondes < 1) {
+    throw new Error('Il faut au moins une ronde');
+  }
   const ids: (string | null)[] = shuffle(teams, ctx.rng).map((t) => t.id);
   if (ids.length % 2 === 1) ids.push(null); // fantôme = ronde de repos
 
   const size = ids.length;
-  const rounds = size - 1;
+  const rounds = Math.min(size - 1, maxRondes ?? size - 1);
   const half = size / 2;
   const rot = [...ids];
   const matches: Match[] = [];
