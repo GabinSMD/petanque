@@ -51,7 +51,9 @@ fonction dont il se sert.
   départagées par confrontation directe, et interversion à la main de ce qu'elle
   ne tranche pas.
 - **Inscriptions** : équipes numérotées, joueurs avec n° de licence optionnel,
-  club, forfaits, verrouillage après tirage.
+  club, forfaits, verrouillage après tirage — avec un **mode modification**
+  (manuel §3.B.8) pour remplacer ou ajouter un joueur après le tirage sans y
+  toucher : ni les dossards, ni les places au tableau.
 - **Poules à la FFPJP** : poules de 4 complétées par des poules de 3
   (7 → 1×4 + 1×3, 9 → 3×3…), enchaînement automatique
   *1ère partie / 2e partie → gagnants / perdants → barrage*, qualification du

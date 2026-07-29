@@ -52,6 +52,7 @@ import {
   archiver,
   buildFinales,
   feuilleDepuisMemoire,
+  modificationApresTirage,
   feuilleVierge,
   lireFeuilleFichier,
   desarchiver,
@@ -309,7 +310,23 @@ export async function addTeam(
   await putEntity('team', team);
 }
 
+/**
+ * Enregistre une équipe modifiée.
+ *
+ * Après le tirage, la règle du manuel §3.B.8 s'applique : la composition peut
+ * changer — c'est fait pour, un joueur se remplace — mais pas ce sur quoi le
+ * tirage repose. La vérification est ici, au point d'écriture, et pas seulement
+ * dans l'écran : un champ masqué n'est pas une garantie.
+ */
 export async function updateTeam(team: Team): Promise<void> {
+  const concours = await getEntity('concours', team.concoursId);
+  if (concours && concours.status !== 'inscriptions') {
+    const avant = await getEntity('team', team.id);
+    if (avant) {
+      const verdict = modificationApresTirage(avant, team);
+      if (!verdict.ok) throw new Error(verdict.raison);
+    }
+  }
   await putEntity('team', team);
 }
 

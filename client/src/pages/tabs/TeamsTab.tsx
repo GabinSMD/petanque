@@ -25,6 +25,12 @@ interface Props {
 export function TeamsTab({ concours, teams }: Props) {
   const [scanning, setScanning] = useState(false);
   const [multisite, setMultisite] = useState(false);
+  /**
+   * Mode modification (manuel §3.B.8) : après le tirage, la composition
+   * redevient modifiable — un joueur se remplace — sans toucher au tirage.
+   */
+  const [modification, setModification] = useState(false);
+  const [erreurModif, setErreurModif] = useState<string | null>(null);
   const individual = isIndividualMode(concours.mode);
   const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
   const locked = concours.status !== 'inscriptions';
@@ -264,12 +270,28 @@ export function TeamsTab({ concours, teams }: Props) {
         </p>
       )}
 
-      {locked && (
+      {locked && !modification && (
         <p className="hint no-print">
-          Inscriptions verrouillées : le tirage a été effectué. Annulez le tirage pour
-          modifier les équipes. Vous pouvez toujours marquer un forfait.
+          Inscriptions verrouillées : le tirage a été effectué. Vous pouvez marquer un forfait, ou{' '}
+          <button className="btn-lien" onClick={() => setModification(true)}>
+            passer en mode modification
+          </button>{' '}
+          pour remplacer un joueur sans toucher au tirage.
         </p>
       )}
+
+      {locked && modification && (
+        <p className="banner-warn no-print">
+          ✎ Mode modification — vous pouvez remplacer ou ajouter un joueur. Le tirage n'est pas
+          touché : ni les numéros de dossard, ni les places au tableau. Le contrôle des licences se
+          refait à chaque changement.{' '}
+          <button className="btn-lien" onClick={() => { setModification(false); setEditingId(null); }}>
+            Terminer
+          </button>
+        </p>
+      )}
+
+      {erreurModif && <p className="form-error no-print">{erreurModif}</p>}
 
       {teams.length > 0 && (
         <div className="export-bar no-print">
@@ -328,7 +350,11 @@ export function TeamsTab({ concours, teams }: Props) {
                 trackPaid={trackPaid}
                 avecRoles={avecRoles}
                 rolesProposes={rolesProposes}
-                onDone={() => setEditingId(null)}
+                onErreur={setErreurModif}
+                onDone={() => {
+                  setEditingId(null);
+                  setErreurModif(null);
+                }}
               />
             ) : (
               <tr key={team.id} className={team.forfait ? 'row-forfait' : ''}>
@@ -366,10 +392,14 @@ export function TeamsTab({ concours, teams }: Props) {
                   </td>
                 )}
                 <td className="no-print cell-actions">
-                  {!locked && (
+                  {(!locked || modification) && (
                     <button
                       className="btn-icon"
-                      title="Modifier"
+                      title={
+                        locked
+                          ? 'Modifier la composition (le tirage n\'est pas touché)'
+                          : 'Modifier'
+                      }
                       onClick={() => setEditingId(team.id)}
                     >
                       ✎
@@ -472,6 +502,7 @@ function TeamEditRow({
   trackPaid,
   avecRoles,
   rolesProposes,
+  onErreur,
   onDone,
 }: {
   team: Team;
@@ -479,6 +510,7 @@ function TeamEditRow({
   trackPaid: boolean;
   avecRoles: boolean;
   rolesProposes: RolePetanque[];
+  onErreur: (message: string | null) => void;
   onDone: () => void;
 }) {
   const [names, setNames] = useState<string[]>(
@@ -504,7 +536,13 @@ function TeamEditRow({
       }))
       .filter((p) => p.name.length > 0);
     if (players.length === 0) return;
-    await updateTeam({ ...team, players, club: club.trim() || undefined });
+    try {
+      await updateTeam({ ...team, players, club: club.trim() || undefined });
+    } catch (err) {
+      // Refus de la règle d'après-tirage : on le montre au lieu de perdre la saisie.
+      onErreur(err instanceof Error ? err.message : String(err));
+      return;
+    }
     onDone();
   };
 
