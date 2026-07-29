@@ -114,9 +114,16 @@ fonction dont il se sert.
   d'avance** (36 points sur la feuille du CD26). Une feuille fausse se voit
   avant d'être signée. Le barème est une donnée : il varie d'un comité à
   l'autre.
-- **Retour au comité** : impression, signature des deux capitaines, puis
-  courriel préparé (objet, résultat, remarques) auquel joindre la feuille
-  signée — c'est la signature qui fait foi.
+- **Signature des capitaines dans l'application** : chacun signe au doigt sur
+  la tablette. Signer **verrouille la feuille** — plus rien n'est modifiable —
+  et une **empreinte du contenu signé** est imprimée à côté des signatures. Si
+  la feuille est modifiée après coup, l'empreinte ne correspond plus à celle de
+  l'exemplaire signé, et l'application le dit. Corriger exige d'effacer
+  explicitement les signatures, jamais en silence. Une feuille en anomalie n'est
+  pas signable du tout.
+- **Retour au comité** : courriel préparé (objet, résultat, remarques) auquel
+  joindre la feuille signée — ou dépôt sur le site du comité. C'est la signature
+  qui fait foi.
 
 ### Prise en main
 - **Création guidée en 3 étapes** : des cartes de formules en langage
