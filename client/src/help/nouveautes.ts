@@ -14,6 +14,22 @@ import type { Nouveaute } from '@shared';
  */
 export const JOURNAL: Nouveaute[] = [
   {
+    version: '0.4.0',
+    date: '2026-07-29',
+    items: [
+      {
+        icone: '🧭',
+        titre: 'L\'assistant sait où vous en êtes',
+        texte:
+          'Il ne renvoie plus vers une liste de sujets après avoir répondu : il propose la ' +
+          'suite de *votre* concours — « les poules sont finies, place au tableau ». Et ' +
+          'quand il ne comprend pas la question, il demande une précision au lieu de ' +
+          'dérouler le sommaire. Le sommaire reste là, sous le champ de saisie.',
+        action: { label: 'Ouvrir l\'assistant', parcours: 'decouverte' },
+      },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-07-29',
     items: [

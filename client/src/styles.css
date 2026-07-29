@@ -2237,6 +2237,25 @@ form label select {
   border-style: dashed;
 }
 
+/* Retour au sommaire : discret, en pied de panneau. Le menu ne revient que
+   sur demande explicite — l'assistant accompagne, il ne catalogue pas. */
+.chat-sommaire {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.chat-sommaire:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
 /* Le guide passe devant l'action simple : faire vaut mieux que lire. */
 .chat-chip-guide {
   background: linear-gradient(180deg, #2c55d4, var(--accent-dark));

@@ -1,16 +1,38 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  parcoursParId,
+  pistesContextuelles,
+  suiteSuggeree,
+  type EtatParcours,
+} from '@shared';
+import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { FAQ, FEATURED_IDS, type FaqEntry } from '../help/faq';
 import { searchFaq } from '../help/matcher';
 import { rappelerNouveautes } from '../help/nouveautesState';
 import { demarrerParcours } from '../help/parcoursState';
-import { parcoursParId } from '@shared';
+
+/**
+ * L'assistant accompagne : il ne repropose pas un menu.
+ *
+ * Il se comportait comme un moteur de recherche dans une FAQ — il répondait,
+ * puis affichait des « sujets voisins », c'est-à-dire un catalogue ; et quand il
+ * ne trouvait rien, la liste complète des sujets vedettes. Quelqu'un au milieu
+ * d'un geste se retrouvait devant un sommaire au lieu de l'étape suivante.
+ *
+ * Désormais chaque réponse est suivie de **la suite du parcours de
+ * l'utilisateur**, déduite de l'état réel du concours (voir `suiteSuggeree`), et
+ * une question incomprise donne une demande de précision ancrée dans cet état
+ * plutôt qu'un déroulé du sommaire. Le sommaire reste accessible, mais
+ * seulement au début de la conversation ou sur demande explicite.
+ */
 
 interface BotMessage {
   role: 'bot';
   text?: string;
   entry?: FaqEntry;
-  suggestions?: FaqEntry[];
+  /** Parcours proposés (identifiants du catalogue) : accompagnement, pas menu. */
+  guides?: string[];
 }
 
 interface UserMessage {
@@ -20,55 +42,110 @@ interface UserMessage {
 
 type Message = BotMessage | UserMessage;
 
-const WELCOME: BotMessage = {
+const BONJOUR: BotMessage = {
   role: 'bot',
   text:
     'Bonjour 👋 Je suis l\'assistant. Posez votre question (« comment corriger un score ? ») ' +
-    'ou choisissez un sujet ci-dessous — je vous guide pas à pas, même hors connexion.',
+    'ou laissez-moi vous guider — je fonctionne aussi hors connexion.',
 };
 
 export function ChatBot() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([WELCOME]);
+  const [messages, setMessages] = useState<Message[]>([BONJOUR]);
   const [input, setInput] = useState('');
   const [showAll, setShowAll] = useState(false);
+  /** Sommaire réclamé explicitement : la seule façon de le revoir. */
+  const [sommaire, setSommaire] = useState(false);
+  /** Dernier contexte salué, pour se resituer quand on change de concours. */
+  const salueRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   const concoursId = location.pathname.match(/^\/concours\/([^/]+)/)?.[1];
+  const concours = useConcours(concoursId);
+  const teams = useTeams(concoursId);
+  const poules = usePoules(concoursId);
+  const matches = useMatches(concoursId);
+
+  const etat: EtatParcours = useMemo(
+    () => ({
+      concours: concours ?? null,
+      teams: teams ?? [],
+      poules: poules ?? [],
+      matches: matches ?? [],
+    }),
+    [concours, teams, poules, matches],
+  );
+  const donneesPretes = teams !== undefined && poules !== undefined && matches !== undefined;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, open]);
 
-  const answerWith = (entry: FaqEntry, alternatives: FaqEntry[] = []) => {
-    setMessages((m) => [...m, { role: 'bot', entry, suggestions: alternatives.slice(0, 3) }]);
-  };
+  /** Là où l'utilisateur se trouve, dit simplement. */
+  const ouSuisJe = (): string =>
+    concours ? `Vous êtes sur « ${concours.name} »` : 'Vous êtes sur le tableau de bord';
+
+  /**
+   * À l'ouverture, l'assistant dit où l'on en est plutôt que d'attendre une
+   * question. Une fois par contexte : rouvrir le panneau dans un autre concours
+   * mérite de se resituer, le rouvrir au même endroit non. Et seulement quand
+   * les données ont répondu — sans quoi il annoncerait un concours vierge.
+   */
+  const contexte = concoursId ?? 'tableau-de-bord';
+  useEffect(() => {
+    if (!open || salueRef.current === contexte || !donneesPretes) return;
+    salueRef.current = contexte;
+    const suite = suiteSuggeree(etat);
+    setMessages((m) => [
+      ...m,
+      { role: 'bot', text: `${ouSuisJe()}. ${suite.phrase}`, guides: [suite.parcours] },
+    ]);
+    // `etat` volontairement hors dépendances : on salue à l'ouverture, pas à
+    // chaque changement de donnée.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, contexte, donneesPretes]);
 
   const ask = (text: string) => {
-    setMessages((m) => [...m, { role: 'user', text }]);
-    const matches = searchFaq(text, FAQ);
-    const top = matches[0];
-    if (top && top.score >= 2) {
-      answerWith(
-        top.entry,
-        matches.slice(1, 4).map((r) => r.entry),
-      );
-    } else {
+    setSommaire(false);
+    const resultats = searchFaq(text, FAQ);
+    const meilleur = resultats[0];
+    const suite = suiteSuggeree(etat);
+
+    if (meilleur && meilleur.score >= 2) {
+      const entry = meilleur.entry;
+      // La suite du parcours, jamais des « sujets voisins » : si la question
+      // portait déjà sur l'étape courante, on le dit au lieu de dévier.
+      const memeSujet = entry.parcours === suite.parcours;
       setMessages((m) => [
         ...m,
+        { role: 'user', text },
+        { role: 'bot', entry },
         {
           role: 'bot',
-          text:
-            'Je n\'ai pas trouvé de guide correspondant. Voici les sujets les plus proches — ' +
-            'ou reformulez avec un mot-clé (poules, score, tableau, consolante, hors ligne…).',
-          suggestions: (matches.length > 0 ? matches.map((r) => r.entry) : FEATURED_IDS.map(
-            (id) => FAQ.find((e) => e.id === id)!,
-          )).slice(0, 4),
+          text: memeSujet
+            ? 'Et c\'est justement là que vous en êtes. On s\'y met ensemble ?'
+            : suite.phrase,
+          guides: [suite.parcours],
         },
       ]);
+      return;
     }
+
+    // Question incomprise : demander une précision ancrée dans l'état du
+    // concours. Dérouler le sommaire renverrait l'utilisateur à sa recherche.
+    setMessages((m) => [
+      ...m,
+      { role: 'user', text },
+      {
+        role: 'bot',
+        text:
+          `Je ne suis pas sûr d'avoir compris. ${ouSuisJe()} : ` +
+          'est-ce que vous cherchez à faire l\'une de ces choses ?',
+        guides: pistesContextuelles(etat),
+      },
+    ]);
   };
 
   const submit = (e: FormEvent) => {
@@ -80,8 +157,21 @@ export function ChatBot() {
   };
 
   const pick = (entry: FaqEntry) => {
-    setMessages((m) => [...m, { role: 'user', text: entry.question }]);
-    answerWith(entry);
+    setSommaire(false);
+    const suite = suiteSuggeree(etat);
+    const memeSujet = entry.parcours === suite.parcours;
+    setMessages((m) => [
+      ...m,
+      { role: 'user', text: entry.question },
+      { role: 'bot', entry },
+      {
+        role: 'bot',
+        text: memeSujet
+          ? 'Et c\'est justement là que vous en êtes. On s\'y met ensemble ?'
+          : suite.phrase,
+        guides: [suite.parcours],
+      },
+    ]);
   };
 
   const runAction = (entry: FaqEntry) => {
@@ -114,8 +204,8 @@ export function ChatBot() {
         {
           role: 'bot',
           text:
-            'Ce guide se déroule dans un concours. Ouvrez-en un depuis le tableau de bord, '
-            + 'puis redemandez-moi 😉',
+            'Ce guide se déroule dans un concours. Ouvrez-en un depuis le tableau de bord, ' +
+            'puis redemandez-moi 😉',
         },
       ]);
       navigate('/');
@@ -125,15 +215,20 @@ export function ChatBot() {
     demarrerParcours(parcours, concoursId ?? null);
   };
 
-  const restartTour = () => guider(concoursId ? 'visite-concours' : 'decouverte');
-
   const showNouveautes = () => {
     setOpen(false);
     rappelerNouveautes();
   };
 
+  const demanderSommaire = () => {
+    setSommaire(true);
+    setMessages((m) => [...m, { role: 'bot', text: 'Voici tous les sujets que je connais :' }]);
+  };
+
   const featured = FEATURED_IDS.map((id) => FAQ.find((e) => e.id === id)!).filter(Boolean);
   const categories = [...new Set(FAQ.map((e) => e.category))];
+  /** Aucune question encore posée : le sommaire a sa place. Après, non. */
+  const vierge = !messages.some((m) => m.role === 'user');
 
   return (
     <>
@@ -142,7 +237,7 @@ export function ChatBot() {
         data-tour="help"
         onClick={() => setOpen(!open)}
         aria-label={open ? 'Fermer l\'assistant' : 'Ouvrir l\'assistant'}
-        title="Assistant — questions fréquentes"
+        title="Assistant — il vous guide pas à pas"
       >
         {open ? '✕' : '💬'}
       </button>
@@ -176,22 +271,32 @@ export function ChatBot() {
                       onNouveautes={showNouveautes}
                     />
                   )}
-                  {msg.suggestions && msg.suggestions.length > 0 && (
+                  {msg.guides && msg.guides.length > 0 && (
                     <div className="chat-chips">
-                      {msg.suggestions.map((s) => (
-                        <button key={s.id} className="chat-chip" onClick={() => pick(s)}>
-                          {s.question}
-                        </button>
-                      ))}
+                      {msg.guides.map((id) => {
+                        const p = parcoursParId(id);
+                        if (!p) return null;
+                        return (
+                          <button
+                            key={id}
+                            className="chat-chip chat-chip-guide"
+                            onClick={() => guider(id)}
+                          >
+                            🎓 {p.titre}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
               ),
             )}
 
-            {messages.length === 1 && (
+            {(vierge || sommaire) && (
               <div className="chat-suggestions">
-                <p className="chat-suggestions-title">Questions fréquentes :</p>
+                <p className="chat-suggestions-title">
+                  {sommaire ? 'Tous les sujets :' : 'Ou une question fréquente :'}
+                </p>
                 <div className="chat-chips">
                   {featured.map((entry) => (
                     <button key={entry.id} className="chat-chip" onClick={() => pick(entry)}>
@@ -200,9 +305,6 @@ export function ChatBot() {
                   ))}
                   <button className="chat-chip chat-chip-alt" onClick={() => setShowAll(!showAll)}>
                     {showAll ? 'Réduire ▲' : 'Tous les sujets ▼'}
-                  </button>
-                  <button className="chat-chip chat-chip-alt" onClick={restartTour}>
-                    🎓 Relancer la visite guidée
                   </button>
                   <button className="chat-chip chat-chip-alt" onClick={showNouveautes}>
                     ✨ Quoi de neuf ?
@@ -236,6 +338,11 @@ export function ChatBot() {
               Envoyer
             </button>
           </form>
+          {!vierge && !sommaire && (
+            <button className="chat-sommaire" onClick={demanderSommaire}>
+              📋 Revoir tous les sujets
+            </button>
+          )}
         </div>
       )}
     </>
