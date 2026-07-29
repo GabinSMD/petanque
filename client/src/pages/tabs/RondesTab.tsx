@@ -32,7 +32,10 @@ export function RondesTab({ concours, teams, matches }: Props) {
     concours.mode === 'championnat'
       ? tirees > 0
         ? tirees
-        : championnatRondes(Math.max(active.length, 2))
+        : Math.min(
+            championnatRondes(Math.max(active.length, 2)),
+            concours.nbRondes ?? Number.POSITIVE_INFINITY,
+          )
       : (concours.nbRondes ?? 4);
   const currentComplete = tirees > 0 && rondeComplete(rondeMatches, tirees - 1);
   const allDone = tirees >= planned && currentComplete && rondeMatches.every((m) => m.done);
@@ -89,10 +92,21 @@ export function RondesTab({ concours, teams, matches }: Props) {
             {active.length} {entrantWord(concours.mode, active.length > 1)} (hors forfaits).{' '}
             {MODE_INFO[concours.mode].description}
           </p>
-          {concours.mode !== 'championnat' && (
+          {concours.mode !== 'championnat' ? (
             <p className="hint">
               {planned} rondes prévues — modifiable dans ⚙ Paramètres.
+              {concours.mode === 'suisse' && concours.ggStrict
+                ? ' Appariement strict : seules des équipes à égalité de victoires se rencontrent, avec des exempts si un groupe est impair.'
+                : ''}
             </p>
+          ) : (
+            concours.nbRondes !== undefined && (
+              <p className="hint">
+                Marathon : {planned} ronde{planned > 1 ? 's' : ''} au lieu de{' '}
+                {championnatRondes(Math.max(active.length, 2))} pour le calendrier complet —
+                modifiable dans ⚙ Paramètres.
+              </p>
+            )
           )}
           {bilanRoles && (
             <p className="hint">

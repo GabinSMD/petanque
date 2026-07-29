@@ -57,6 +57,7 @@ import {
   modificationApresTirage,
   feuilleVierge,
   lireFeuilleFichier,
+  lireInscritsCsv,
   desarchiver,
   repartirEntreSites,
   classementFinales,
@@ -110,6 +111,7 @@ export interface ConcoursInput {
   scoreMax: number;
   nbTerrains: number;
   nbRondes?: number;
+  ggStrict?: boolean;
   tempsLimite?: number;
   miseParEquipe?: number;
   planTerrains?: boolean;
@@ -330,6 +332,61 @@ export async function updateTeam(team: Team): Promise<void> {
     }
   }
   await putEntity('team', team);
+}
+
+/**
+ * Insère une liste d'inscrits lue dans un fichier (manuel §3.B.10.B).
+ *
+ * Les dossards du fichier sont conservés quand c'est possible — un concours
+ * vide, des numéros tous présents et sans doublon avec l'existant : c'est le cas
+ * du club qui repart de l'export d'un qualificatif, et ses listes papier restent
+ * valables. Sinon les équipes sont ajoutées à la suite, avec des numéros neufs.
+ */
+export async function importerInscrits(
+  concours: Concours,
+  texte: string,
+): Promise<{ ok: true; ajoutees: number; ignorees: number; numerosConserves: boolean } | { ok: false; erreur: string }> {
+  if (concours.status !== 'inscriptions') {
+    return { ok: false, erreur: 'Importez avant le tirage : les inscriptions sont verrouillées.' };
+  }
+  const lecture = lireInscritsCsv(texte);
+  if (!lecture.ok) return { ok: false, erreur: lecture.erreur };
+
+  const existantes = await listByConcours('team', concours.id);
+  const numerosPris = new Set(existantes.map((t) => t.number));
+  const numerosDuFichier = lecture.equipes.map((e) => e.number);
+  const tousNumerotes = numerosDuFichier.every((n) => typeof n === 'number');
+  const sansDoublon = new Set(numerosDuFichier).size === numerosDuFichier.length;
+  const libres = numerosDuFichier.every((n) => n === undefined || !numerosPris.has(n));
+  const numerosConserves = tousNumerotes && sansDoublon && libres;
+
+  const now = monotonicNow();
+  let prochain = numeroPremiereEquipe(
+    existantes.map((t) => t.number),
+    concours.decalageEquipe,
+  );
+  const nouvelles: Team[] = lecture.equipes.map((e) => ({
+    id: crypto.randomUUID(),
+    concoursId: concours.id,
+    number: numerosConserves ? e.number! : prochain++,
+    players: e.players.map((p) => ({
+      name: p.name,
+      licence: p.licence,
+      club: p.club ?? e.club,
+    })),
+    club: e.club,
+    forfait: e.forfait,
+    paid: e.paid || undefined,
+    updatedAt: now,
+  }));
+
+  await bulkPutEntities('team', nouvelles);
+  return {
+    ok: true,
+    ajoutees: nouvelles.length,
+    ignorees: lecture.ignorees,
+    numerosConserves,
+  };
 }
 
 export async function deleteTeam(team: Team): Promise<void> {
@@ -658,7 +715,7 @@ export async function tirerRonde(concours: Concours): Promise<void> {
   let created: Match[];
   if (concours.mode === 'championnat') {
     if (round > 0) throw new Error('Le calendrier du championnat est déjà généré');
-    created = buildChampionnat(concours.id, entrants, ctx());
+    created = buildChampionnat(concours.id, entrants, ctx(), concours.nbRondes);
   } else if (concours.mode === 'melee') {
     if (round > 0 && !rondeComplete(matches, round - 1)) {
       throw new Error('Terminez la ronde en cours avant d\'en tirer une nouvelle');
@@ -668,7 +725,9 @@ export async function tirerRonde(concours: Concours): Promise<void> {
     if (round > 0 && !rondeComplete(matches, round - 1)) {
       throw new Error('Terminez la ronde en cours avant d\'en tirer une nouvelle');
     }
-    created = drawSwissRonde(concours.id, entrants, matches, round, ctx());
+    created = drawSwissRonde(concours.id, entrants, matches, round, ctx(), {
+      strict: concours.ggStrict,
+    });
   } else {
     throw new Error('Cette formule ne se joue pas en rondes');
   }

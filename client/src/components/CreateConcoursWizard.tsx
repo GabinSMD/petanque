@@ -52,6 +52,8 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const [planTerrains, setPlanTerrains] = useState(true);
   const [scoreMax, setScoreMax] = useState(13);
   const [nbRondes, setNbRondes] = useState(4);
+  // Marathon : championnat tronqué. Vide = calendrier complet.
+  const [marathonRondes, setMarathonRondes] = useState<number | ''>('');
   const [tempsLimite, setTempsLimite] = useState<number | ''>('');
   const [miseParEquipe, setMiseParEquipe] = useState<number | ''>('');
   const [consolante, setConsolante] = useState(true);
@@ -91,9 +93,13 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       nbTerrains,
       planTerrains,
       nbRondes:
-        (isRondesMode(mode) && mode !== 'championnat') || isTirMode(mode)
-          ? nbRondes
-          : undefined,
+        mode === 'championnat'
+          ? marathonRondes === ''
+            ? undefined
+            : Number(marathonRondes)
+          : isRondesMode(mode) || isTirMode(mode)
+            ? nbRondes
+            : undefined,
       tempsLimite:
         tempsLimite === '' || isTirMode(mode) ? undefined : Number(tempsLimite),
       miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
@@ -262,6 +268,21 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                   max={12}
                   value={nbRondes}
                   onChange={(e) => setNbRondes(Number(e.target.value))}
+                />
+              </label>
+            )}
+            {mode === 'championnat' && (
+              <label>
+                Rondes du marathon (facultatif)
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={marathonRondes}
+                  placeholder="calendrier complet"
+                  onChange={(e) =>
+                    setMarathonRondes(e.target.value === '' ? '' : Number(e.target.value))
+                  }
                 />
               </label>
             )}

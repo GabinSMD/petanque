@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FAQ, FEATURED_IDS, type FaqEntry } from '../help/faq';
 import { searchFaq } from '../help/matcher';
+import { rappelerNouveautes } from '../help/nouveautesState';
 import { startTour } from '../help/tourState';
 import { concoursTour, dashboardTour } from '../help/tours';
 
@@ -105,6 +106,11 @@ export function ChatBot() {
     startTour(concoursId ? concoursTour : dashboardTour);
   };
 
+  const showNouveautes = () => {
+    setOpen(false);
+    rappelerNouveautes();
+  };
+
   const featured = FEATURED_IDS.map((id) => FAQ.find((e) => e.id === id)!).filter(Boolean);
   const categories = [...new Set(FAQ.map((e) => e.category))];
 
@@ -141,7 +147,14 @@ export function ChatBot() {
               ) : (
                 <div key={i} className="chat-bubble chat-bot">
                   {msg.text && <p className="chat-text">{msg.text}</p>}
-                  {msg.entry && <FaqAnswer entry={msg.entry} onAction={runAction} onTour={restartTour} />}
+                  {msg.entry && (
+                    <FaqAnswer
+                      entry={msg.entry}
+                      onAction={runAction}
+                      onTour={restartTour}
+                      onNouveautes={showNouveautes}
+                    />
+                  )}
                   {msg.suggestions && msg.suggestions.length > 0 && (
                     <div className="chat-chips">
                       {msg.suggestions.map((s) => (
@@ -169,6 +182,9 @@ export function ChatBot() {
                   </button>
                   <button className="chat-chip chat-chip-alt" onClick={restartTour}>
                     🎓 Relancer la visite guidée
+                  </button>
+                  <button className="chat-chip chat-chip-alt" onClick={showNouveautes}>
+                    ✨ Quoi de neuf ?
                   </button>
                 </div>
                 {showAll &&
@@ -209,10 +225,12 @@ function FaqAnswer({
   entry,
   onAction,
   onTour,
+  onNouveautes,
 }: {
   entry: FaqEntry;
   onAction: (entry: FaqEntry) => void;
   onTour: () => void;
+  onNouveautes: () => void;
 }) {
   return (
     <div className="faq-answer">
@@ -235,6 +253,11 @@ function FaqAnswer({
         {entry.id === 'tutoriel' && (
           <button className="chat-chip chat-chip-action" onClick={onTour}>
             🎓 Relancer la visite guidée
+          </button>
+        )}
+        {entry.id === 'nouveautes' && (
+          <button className="chat-chip chat-chip-action" onClick={onNouveautes}>
+            ✨ Voir les nouveautés
           </button>
         )}
       </div>

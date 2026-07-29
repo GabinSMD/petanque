@@ -1,7 +1,33 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
+/** Version applicative : celle du package racine, source unique de vérité. */
+const appVersion = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+).version as string;
+
+/**
+ * Commit court. Le déploiement VM construit dans un dépôt git, donc `git`
+ * répond ; l'image Docker exclut `.git` (voir .dockerignore) et retombe sur
+ * APP_COMMIT, sinon sur une chaîne vide — le pied de page s'en accommode.
+ */
+function commitCourt(): string {
+  if (process.env.APP_COMMIT) return process.env.APP_COMMIT.slice(0, 7);
+  try {
+    return execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], {
+      cwd: fileURLToPath(new URL('.', import.meta.url)),
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+  } catch {
+    return '';
+  }
+}
 
 /**
  * Deux retouches sur le seul document de la vitrine, après le plugin PWA :
@@ -27,7 +53,10 @@ function vitrineHtml(): Plugin {
             /(<meta property="og:image" content=")(\/[^"]*)(")/,
             `$1${site}$2$3`,
           );
-          out = out.replace('<meta property="og:type"', `<meta property="og:url" content="${site}/" />\n    <meta property="og:type"`);
+          out = out.replace(
+            '<meta property="og:type"',
+            `<meta property="og:url" content="${site}/" />\n    <meta property="og:type"`,
+          );
         }
         return out;
       },
@@ -36,6 +65,11 @@ function vitrineHtml(): Plugin {
 }
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __APP_COMMIT__: JSON.stringify(commitCourt()),
+    __APP_BUILT_AT__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     VitePWA({
