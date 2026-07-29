@@ -111,6 +111,7 @@ export interface ConcoursInput {
   scoreMax: number;
   nbTerrains: number;
   nbRondes?: number;
+  ggStrict?: boolean;
   tempsLimite?: number;
   miseParEquipe?: number;
   planTerrains?: boolean;
@@ -714,7 +715,7 @@ export async function tirerRonde(concours: Concours): Promise<void> {
   let created: Match[];
   if (concours.mode === 'championnat') {
     if (round > 0) throw new Error('Le calendrier du championnat est déjà généré');
-    created = buildChampionnat(concours.id, entrants, ctx());
+    created = buildChampionnat(concours.id, entrants, ctx(), concours.nbRondes);
   } else if (concours.mode === 'melee') {
     if (round > 0 && !rondeComplete(matches, round - 1)) {
       throw new Error('Terminez la ronde en cours avant d\'en tirer une nouvelle');
@@ -724,7 +725,9 @@ export async function tirerRonde(concours: Concours): Promise<void> {
     if (round > 0 && !rondeComplete(matches, round - 1)) {
       throw new Error('Terminez la ronde en cours avant d\'en tirer une nouvelle');
     }
-    created = drawSwissRonde(concours.id, entrants, matches, round, ctx());
+    created = drawSwissRonde(concours.id, entrants, matches, round, ctx(), {
+      strict: concours.ggStrict,
+    });
   } else {
     throw new Error('Cette formule ne se joue pas en rondes');
   }

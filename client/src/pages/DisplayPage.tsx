@@ -166,7 +166,7 @@ function DisplayRondes({
       <section>
         <h2 className="display-section-title">
           Ronde {tirees}
-          {concours.nbRondes && concours.mode !== 'championnat'
+          {concours.nbRondes
             ? ` / ${concours.nbRondes}`
             : ''}
         </h2>

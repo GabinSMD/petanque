@@ -80,6 +80,11 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [nbTerrains, setNbTerrains] = useState(initial?.nbTerrains ?? 8);
   const [planTerrains, setPlanTerrains] = useState(initial?.planTerrains ?? true);
   const [nbRondes, setNbRondes] = useState(initial?.nbRondes ?? 4);
+  // Marathon : un championnat tronqué à N rondes. Vide = calendrier complet.
+  const [marathonRondes, setMarathonRondes] = useState<number | ''>(
+    initial?.mode === 'championnat' ? (initial.nbRondes ?? '') : '',
+  );
+  const [ggStrict, setGgStrict] = useState(initial?.ggStrict ?? false);
   const [tempsLimite, setTempsLimite] = useState<number | ''>(initial?.tempsLimite ?? '');
 
   // Sur un concours fédéral, la catégorie découle des critères normalisés
@@ -124,7 +129,15 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       scoreMax,
       nbTerrains,
       planTerrains,
-      nbRondes: isRondesMode(mode) && mode !== 'championnat' ? nbRondes : undefined,
+      nbRondes:
+        mode === 'championnat'
+          ? marathonRondes === ''
+            ? undefined
+            : Number(marathonRondes)
+          : isRondesMode(mode)
+            ? nbRondes
+            : undefined,
+      ggStrict: mode === 'suisse' && ggStrict ? true : undefined,
       tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
       // En rondes, le classement se fait au goal-average : le score est requis.
       vainqueurSeul: !isRondesMode(mode) && !isTirMode(mode) && vainqueurSeul ? true : undefined,
@@ -275,6 +288,22 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             />
           </label>
         )}
+        {mode === 'championnat' && (
+          <label>
+            Rondes du marathon (facultatif)
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={marathonRondes}
+              placeholder="calendrier complet"
+              onChange={(e) =>
+                setMarathonRondes(e.target.value === '' ? '' : Number(e.target.value))
+              }
+            />
+            <small>Vide : chacun rencontre chacun.</small>
+          </label>
+        )}
         {!isTirMode(mode) && (
           <label>
             Temps limité (min, facultatif)
@@ -359,6 +388,21 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           <span className="hint">
             Groupes de 4 sans barrage. L'équipe à 2 victoires va au concours A, les deux à 1 victoire
             au B, celle à 2 défaites au C — personne ne rentre après deux parties.
+          </span>
+        </label>
+      )}
+      {mode === 'suisse' && (
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={ggStrict}
+            onChange={(e) => setGgStrict(e.target.checked)}
+          />
+          Gagnant contre gagnant strict (manuel §3.D.14.C)
+          <span className="hint">
+            N'oppose que des équipes à égalité stricte de victoires. Un groupe impair laisse une
+            équipe exempte, créditée d'un 13-7 comme un forfait. Sans l'option, l'appariement suit
+            le classement et un gagnant peut rencontrer un perdant.
           </span>
         </label>
       )}
