@@ -9,6 +9,7 @@ export * from './engine/poules';
 export * from './engine/apresTirage';
 export * from './engine/validationEquipe';
 export * from './engine/incidents';
+export * from './engine/donneesEcartees';
 export * from './engine/arbitrage';
 export * from './engine/archives';
 export * from './engine/bracket';

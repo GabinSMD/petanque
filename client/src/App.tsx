@@ -16,6 +16,7 @@ import { AppFooter } from './components/AppFooter';
 import { FrontiereErreur } from './components/FrontiereErreur';
 import { NouveautesHost } from './components/NouveautesModal';
 import { SyncBadge } from './components/SyncBadge';
+import { AlerteEcartees } from './components/AlerteEcartees';
 import { ChatBot } from './components/ChatBot';
 import { InstallPrompt } from './components/InstallPrompt';
 import { TourHost } from './components/Tour';
@@ -58,6 +59,7 @@ function Layout() {
         </Link>
         <div className="header-right">
           <SyncBadge />
+          <AlerteEcartees />
           {session && (
             <div className="user-box">
               <span className="org-name" title={session.user.name}>
