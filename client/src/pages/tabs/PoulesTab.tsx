@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { pouleGroupOutcome, pouleOutcome, pouleRemaining, terrainNumeros } from '@shared';
+import {
+  dureeMinutes,
+  pouleGroupOutcome,
+  pouleOutcome,
+  pouleRemaining,
+  statistiquesPoules,
+  terrainNumeros,
+} from '@shared';
 import {
   cancelPoules,
   generateConcoursGroupes,
@@ -50,6 +57,12 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
     : outcomes.filter((o) => o.complete).length;
   const allComplete = poules.length > 0 && completeCount === poules.length;
   const scoresLocked = concours.status === 'tableau' || concours.status === 'termine';
+  /**
+   * Statistiques des poules (manuel §3.D.1.G) : ce qui n'est pas fini, la plus
+   * en retard d'abord, et les barrages prêts à annoncer.
+   */
+  const stats = statistiquesPoules(poules, matches);
+  const maintenant = new Date().toISOString();
 
   const doDraw = async () => {
     setError(null);
@@ -225,6 +238,40 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
           )}
         </span>
       </div>
+
+      {/* Statistiques des poules (manuel §3.D.1.G) : sur trente poules, c'est
+          ce qui permet de trouver la retardataire sans tout parcourir. */}
+      {stats.length > 0 && concours.status === 'poules' && (
+        <details className="stats-poules no-print" open={stats.length <= 6}>
+          <summary>
+            🔍 {stats.length} poule{stats.length > 1 ? 's' : ''} en cours
+            {stats.some((s) => s.barragePret) && (
+              <span className="tag tag-warn">
+                {stats.filter((s) => s.barragePret).length} barrage
+                {stats.filter((s) => s.barragePret).length > 1 ? 's' : ''} à jouer
+              </span>
+            )}
+          </summary>
+          <ul className="stats-poules-liste">
+            {stats.map((s) => {
+              const minutes = s.depuis ? dureeMinutes(s.depuis, maintenant) : null;
+              return (
+                <li key={s.poule.id}>
+                  <strong>Poule {s.poule.index}</strong>{' '}
+                  <span className="hint">
+                    {s.restantes} partie{s.restantes > 1 ? 's' : ''} à jouer
+                  </span>
+                  {s.barragePret && <span className="tag tag-warn">barrage à jouer</span>}
+                  {minutes !== null && minutes > 0 && (
+                    <span className="hint"> — en attente depuis {minutes} min</span>
+                  )}
+                  {s.depuis === null && <span className="hint"> — rien d'annoncé</span>}
+                </li>
+              );
+            })}
+          </ul>
+        </details>
+      )}
 
       <div className="poule-grid">
         {poules.map((poule, i) => {
