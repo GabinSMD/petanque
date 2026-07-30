@@ -62,6 +62,7 @@ import {
   repartirEntreSites,
   classementFinales,
   renumeroterPourInsertion,
+  eliminesManquants,
 } from '@shared';
 import type { FeuilleMatch, Site } from '@shared';
 import { db } from './local';
@@ -595,8 +596,27 @@ export async function generatePoules(
   const tableau =
     toursQualif !== null && toursQualif > 0 ? tronquerTableau(complet, toursQualif) : complet;
 
+  /**
+   * Consolante créée vide elle aussi (manuel §3.D.3) : les éliminés y entrent
+   * au fil des poules, comme les qualifiés au tableau principal. Une poule
+   * finie fait donc jouer ses sortants sans attendre les autres.
+   *
+   * Deux cas gardent l'ancien chemin, à la clôture des poules : la
+   * récupération au cadrage (§3.D.4), où la consolante mêle éliminés et
+   * perdants du tableau, et la formule par groupes (§3.D.5), qui répartit en
+   * trois concours. Ils sont plus intriqués et attendent leur propre lot.
+   */
+  const nbElimines = draw.poules.reduce(
+    (n, p) => n + (p.teamIds.length === 4 ? 2 : 1),
+    0,
+  );
+  const consolante =
+    concours.consolante && !concours.recupCadrage && nbElimines >= 2
+      ? buildTableauVide(concours.id, nbElimines, ctx(), 'consolante')
+      : [];
+
   await bulkPutEntities('poule', draw.poules);
-  await bulkPutEntities('match', [...draw.matches, ...tableau]);
+  await bulkPutEntities('match', [...draw.matches, ...tableau, ...consolante]);
   await putEntity('concours', { ...concours, status: 'poules' });
 }
 
@@ -668,7 +688,10 @@ export async function generateTableauFromPoules(concours: Concours): Promise<voi
   const main = dejaLa ? [] : drawMainFromPoules(concours.id, outcomes, ctx());
   let conso: Match[] = [];
   let comp: Match[] = [];
-  if (concours.consolante) {
+  // La consolante alimentée au fil des poules (§3.D.3) existe déjà : la tirer
+  // ici en créerait une seconde, et les parties déjà jouées se perdraient.
+  const consoDejaLa = existants.some((m) => m.stage === 'consolante');
+  if (concours.consolante && !consoDejaLa) {
     const eliminatedIds = outcomes.flatMap((o) => o.eliminated);
     const teams = await listByConcours('team', concours.id);
     const eliminated = teams.filter((t) => eliminatedIds.includes(t.id));
@@ -1104,6 +1127,12 @@ export async function placerQualifiesAction(
 
   const manquants = qualifiesManquants(poules, matches);
   for (const q of manquants) matches = placerQualifie(matches, q, ctx());
+  // Consolante alimentée au fil des poules (§3.D.3), quand elle a été créée
+  // vide au tirage — sinon elle se tire à la clôture, ancien chemin.
+  const sortants = matches.some((m) => m.stage === 'consolante')
+    ? eliminesManquants(poules, matches)
+    : [];
+  for (const e of sortants) matches = placerQualifie(matches, e, ctx(), 'consolante');
   // On propage même sans nouveau qualifié : une correction en poule change qui
   // est 1er ou 2e, et le tableau doit suivre. Sortir tôt laisserait les cases
   // sur l'ancienne équipe.
@@ -1112,7 +1141,7 @@ export async function placerQualifiesAction(
   // poule qu'elle lit qui est qualifié.
   const changed = propagate(matches);
   const parId = new Map(changed.map((m) => [m.id, m]));
-  const refsPlacees = new Set(manquants.map((q) => q.ref));
+  const refsPlacees = new Set([...manquants, ...sortants].map((q) => q.ref));
   // On écrit les places nouvellement réservées et tout ce que la propagation a
   // touché, sans repasser sur le reste du tableau.
   const aEcrire = matches

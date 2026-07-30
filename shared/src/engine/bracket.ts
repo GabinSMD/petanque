@@ -108,9 +108,18 @@ export function propagate(all: Match[]): Match[] {
    */
   const qualifieDe = (ref: string): string | null => {
     const [pouleId, rang] = ref.split(':');
-    const slot = rang === '2' ? 'BARRAGE' : 'GAGNANTS';
+    // Rangs 1 et 2 : les qualifiés, vainqueurs. Rangs 3 et 4 : les éliminés,
+    // perdants des mêmes parties — c'est ainsi que la consolante s'alimente au
+    // fil des poules (§3.D.3).
+    const slot = rang === '2' || rang === '4' ? 'BARRAGE' : 'GAGNANTS';
     const source = all.find((m) => m.pouleId === pouleId && m.pouleSlot === slot);
-    return winnerOf(source ? (cur.get(source.id) ?? source) : undefined);
+    const partie = source ? (cur.get(source.id) ?? source) : undefined;
+    if (rang === '3') {
+      const perdantsSrc = all.find((m) => m.pouleId === pouleId && m.pouleSlot === 'PERDANTS');
+      const perdants = perdantsSrc ? (cur.get(perdantsSrc.id) ?? perdantsSrc) : undefined;
+      return loserOf(perdants);
+    }
+    return rang === '4' ? loserOf(partie) : winnerOf(partie);
   };
 
   for (const stage of ['principal', 'consolante', 'complementaire'] as const) {
