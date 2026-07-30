@@ -1,5 +1,5 @@
 import type { Concours, FeuilleMatch, Match, Poule, Team } from '@shared';
-import { arbitrageReport, designationCategorie, ecrireFeuilleFichier, libelleClubs } from '@shared';
+import { arbitrageReport, csvInscrits, designationCategorie, ecrireFeuilleFichier, libelleClubs } from '@shared';
 import { teamDisplayName } from '../components/TeamLabel';
 import { DISCIPLINE_LABELS, FORMAT_LABELS, MODE_LABELS, NIVEAU_LABELS } from './labels';
 import { finalRanking } from './results';
@@ -40,22 +40,28 @@ function toCSV(rows: (string | number | null | undefined)[][]): string {
   return rows.map((r) => r.map(csvCell).join(';')).join('\r\n');
 }
 
-/** CSV des équipes engagées (dossard, joueurs, licences, club, réglé). */
-export function engagesCSV(concours: Concours, teams: Team[]): string {
-  const rows: (string | number | null)[][] = [
-    ['N°', 'Joueurs', 'Licences', 'Club', 'Forfait', 'Réglé'],
-  ];
-  for (const t of [...teams].sort((a, b) => a.number - b.number)) {
-    rows.push([
-      t.number,
-      t.players.map((p) => p.name).join(' / '),
-      t.players.map((p) => p.licence ?? '').join(' / '),
-      libelleClubs(t.players, t.club),
-      t.forfait ? 'oui' : '',
-      t.paid ? 'oui' : '',
-    ]);
-  }
-  return toCSV(rows);
+/**
+ * CSV des équipes engagées (dossard, joueurs, licences, club, réglé).
+ *
+ * Le format vit dans le moteur, à côté de son lecteur : c'est un fichier fait
+ * pour être réimporté, et les deux sont éprouvés ensemble par aller-retour.
+ */
+export function engagesCSV(_concours: Concours, teams: Team[]): string {
+  return csvInscrits(teams);
+}
+
+/**
+ * Liste spécifique (manuel §3.D.1.B.5.1) : la sélection cochée à la main,
+ * dans le même format que les engagés — c'est ce fichier qui amorce le
+ * concours suivant.
+ */
+export function exportListeSpecifique(concours: Concours, teams: Team[]): void {
+  const retenues = teams.filter((t) => t.retenue);
+  downloadText(
+    `${safeFilename(concours.name)}-liste-specifique.csv`,
+    csvInscrits(retenues),
+    'text/csv',
+  );
 }
 
 /** CSV du classement final (rang, équipe, joueurs, licences, club). */

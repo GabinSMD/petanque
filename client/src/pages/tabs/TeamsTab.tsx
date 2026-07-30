@@ -16,6 +16,7 @@ import {
 } from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../../lib/labels';
 import { RegistrationsPanel } from '../../components/RegistrationsPanel';
+import { exportListeSpecifique } from '../../lib/export';
 import {
   FORMAT_LABELS,
   PLAYERS_PER_TEAM,
@@ -68,6 +69,12 @@ export function TeamsTab({ concours, teams, poules }: Props) {
    * pas d'insertion en cours.
    */
   const [insertionAvant, setInsertionAvant] = useState<number | null>(null);
+  /**
+   * Liste spécifique (manuel §3.D.1.B.5.1) : une sélection cochée à la main
+   * pendant le concours, exportée pour amorcer le suivant. Le manuel en fait la
+   * sortie normale d'un qualificatif.
+   */
+  const retenues = teams.filter((t) => t.retenue).length;
   const trouvailles = useMemo(() => chercherEquipes(teams, recherche), [teams, recherche]);
   /** Liste affichée : filtrée dès qu'une recherche est en cours. */
   const affichees =
@@ -402,6 +409,29 @@ export function TeamsTab({ concours, teams, poules }: Props) {
         </p>
       )}
 
+      {retenues > 0 && (
+        <p className="hint no-print">
+          📋 Liste spécifique : {retenues} équipe{retenues > 1 ? 's' : ''} retenue
+          {retenues > 1 ? 's' : ''}.{' '}
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => exportListeSpecifique(concours, teams)}
+          >
+            Exporter (CSV)
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              for (const t of teams.filter((x) => x.retenue)) {
+                void updateTeam({ ...t, retenue: undefined });
+              }
+            }}
+          >
+            Tout décocher
+          </button>
+        </p>
+      )}
+
       {teams.length >= 8 && (
         <div className="recherche-equipe no-print">
           <label>
@@ -434,6 +464,9 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       <table className="teams-table">
         <thead>
           <tr>
+            <th className="no-print" title="Liste spécifique (manuel §3.D.1.B.5.1)">
+              ✓
+            </th>
             <th>N°</th>
             <th>{individual ? 'Participant' : 'Joueurs'}</th>
             <th>Club</th>
@@ -460,6 +493,16 @@ export function TeamsTab({ concours, teams, poules }: Props) {
               />
             ) : (
               <tr key={team.id} className={team.forfait ? 'row-forfait' : ''}>
+                <td className="no-print cell-retenue">
+                  <input
+                    type="checkbox"
+                    checked={team.retenue ?? false}
+                    title="Retenir dans la liste spécifique"
+                    onChange={(e) =>
+                      void updateTeam({ ...team, retenue: e.target.checked || undefined })
+                    }
+                  />
+                </td>
                 <td className="cell-number">{team.number}</td>
                 <td>
                   {team.players.map((p, i) => (
@@ -742,6 +785,7 @@ function TeamEditRow({
 
   return (
     <tr className="row-editing">
+      <td className="no-print" />
       <td className="cell-number">{team.number}</td>
       <td>
         {Array.from({ length: nbPlayers }, (_, i) => (

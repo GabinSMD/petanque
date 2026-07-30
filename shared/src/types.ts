@@ -267,6 +267,12 @@ export interface Team {
    * licences à la table de marque. Absent = pas encore passée.
    */
   licencesDeposees?: string;
+  /**
+   * Retenue dans la « Liste Spécifique » (manuel §3.D.1.B.5.1) : sélection
+   * cochée à la main pendant le concours, exportée pour amorcer le suivant.
+   * C'est un choix de l'organisateur, jamais un calcul.
+   */
+  retenue?: boolean;
   updatedAt: string;
 }
 

@@ -37,7 +37,41 @@ export type LectureInscrits =
   | { ok: true; equipes: EquipeImportee[]; ignorees: number }
   | { ok: false; erreur: string };
 
-const strip = (s: string): string => s.replace(/^"(.*)"$/, '$1').trim();
+const strip = (s: string): string => s.replace(/^"([\s\S]*)"$/, '$1').replace(/""/g, '"').trim();
+
+/**
+ * Découpe une ligne CSV en respectant les guillemets : un séparateur entre
+ * guillemets fait partie de la valeur. Sans cela, un club nommé « Boule; et
+ * Cie » — ou n'importe quel champ échappé par un tableur — crée une colonne
+ * fantôme et décale tout le reste de la ligne.
+ */
+function decouper(ligne: string, delim: string): string[] {
+  const cells: string[] = [];
+  let courant = '';
+  let dansGuillemets = false;
+  for (let i = 0; i < ligne.length; i += 1) {
+    const c = ligne[i]!;
+    if (c === '"') {
+      // Deux guillemets successifs à l'intérieur : un guillemet littéral.
+      if (dansGuillemets && ligne[i + 1] === '"') {
+        courant += '""';
+        i += 1;
+      } else {
+        dansGuillemets = !dansGuillemets;
+        courant += c;
+      }
+      continue;
+    }
+    if (c === delim && !dansGuillemets) {
+      cells.push(courant);
+      courant = '';
+      continue;
+    }
+    courant += c;
+  }
+  cells.push(courant);
+  return cells;
+}
 
 const norm = (s: string): string =>
   s
@@ -62,9 +96,9 @@ export function lireInscritsCsv(texte: string): LectureInscrits {
 
   const premiere = lignes[0]!;
   const delim = [';', ',', '\t'].reduce((best, d) =>
-    premiere.split(d).length > premiere.split(best).length ? d : best,
+    decouper(premiere, d).length > decouper(premiere, best).length ? d : best,
   );
-  const entetes = premiere.split(delim).map((c) => norm(strip(c)));
+  const entetes = decouper(premiere, delim).map((c) => norm(strip(c)));
 
   // Un fichier de licenciés a une ligne par personne, avec nom ET prénom
   // séparés : c'est la confusion qui arrivera vraiment.
@@ -108,7 +142,7 @@ export function lireInscritsCsv(texte: string): LectureInscrits {
   let ignorees = 0;
 
   for (const ligne of lignes.slice(1)) {
-    const cells = ligne.split(delim).map(strip);
+    const cells = decouper(ligne, delim).map(strip);
     const cell = (i: number): string | undefined => (i >= 0 ? cells[i] || undefined : undefined);
 
     let players: JoueurInscrit[] = [];
