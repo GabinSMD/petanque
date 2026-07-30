@@ -10,7 +10,14 @@ import type {
   Formule,
   TeamFormat,
 } from '@shared';
-import { designationCategorie, estConcoursOfficiel, formuleOf, nomConcoursFederal } from '@shared';
+import {
+  CHAMPIONNATS_CDF,
+  designationCategorie,
+  estConcoursOfficiel,
+  formuleOf,
+  nomConcoursFederal,
+  parametresCDF,
+} from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import { useLicencies, useModeFederalActif } from '../db/hooks';
 import {
@@ -58,6 +65,12 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [vainqueurSeul, setVainqueurSeul] = useState(initial?.vainqueurSeul ?? false);
   const [formule, setFormule] = useState<Formule>(initial ? formuleOf(initial) : 'ab');
   const [niveau, setNiveau] = useState<NiveauConcours | ''>(initial?.niveau ?? '');
+  /**
+   * « Choix CDF » (manuel §3.A) : le championnat choisi impose ses paramètres.
+   * Le code n'est pas enregistré — ce sont les paramètres qui comptent, et les
+   * lire ailleurs qu'à leur place les ferait diverger.
+   */
+  const [codeCDF, setCodeCDF] = useState('');
   const [comiteOrganisateur, setComiteOrganisateur] = useState(initial?.comiteOrganisateur ?? '');
   const [clubOrganisateur, setClubOrganisateur] = useState(initial?.clubOrganisateur ?? '');
   const [decalageEquipe, setDecalageEquipe] = useState<number | ''>(initial?.decalageEquipe ?? '');
@@ -98,6 +111,19 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
     critereSexe,
     critereClassification,
   });
+
+  /** Applique le championnat choisi aux quatre critères qu'il fixe. */
+  const appliquerCDF = (code: string): void => {
+    setCodeCDF(code);
+    const p = parametresCDF(code);
+    if (!p) return;
+    setFormat(p.format);
+    setCategorieAge(p.categorieAge);
+    setStrict(p.strict);
+    setCritereSexe(p.critereSexe);
+    setCritereClassification(p.critereClassification);
+    setHomogene(p.homogene);
+  };
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -486,6 +512,26 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                 ))}
               </select>
             </label>
+            {niveau === 'championnat' && (
+              <label>
+                Choix CDF
+                <select
+                  value={codeCDF}
+                  onChange={(e) => appliquerCDF(e.target.value)}
+                >
+                  <option value="">Non précisé</option>
+                  {CHAMPIONNATS_CDF.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.code}-{c.label}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  Renseigne d'un coup la formation, la catégorie stricte, le genre et
+                  l'homogénéité — un paramétrage de championnat ne se corrige pas après le tirage.
+                </small>
+              </label>
+            )}
             <label>
               Comité organisateur
               <input
