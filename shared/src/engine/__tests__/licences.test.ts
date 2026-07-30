@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { categorieAgeDe, controlerEquipe, type CriteresLicence } from '../licences';
+import {
+  CATEGORIES_AGE_CONCOURS,
+  categorieAgeDe,
+  controlerEquipe,
+  type CriteresLicence,
+} from '../licences';
 import type { Licencie } from '../../types';
 
 const BASE: CriteresLicence = { annee: 2026 };
@@ -363,5 +368,23 @@ describe('homogénéité avec des clubs saisis à la main', () => {
       { ...BASE, homogene: true, ignorerLicencesManquantes: true },
     );
     expect(r.anomaliesEquipe).not.toContain('homogeneite');
+  });
+});
+
+describe('catégories proposées à un concours (§3.A)', () => {
+  it('sont les sept de la fenêtre fédérale, sans le +55', () => {
+    // La fenêtre « Création Nouveau Concours » liste Tous / Vétéran / Sénior /
+    // Junior / Cadet / Minime / Benjamin. Le « +55 » n'y est pas : il n'existe
+    // que sur le panneau des compétitions de clubs, et le proposer ici écrirait
+    // en base une catégorie que `Concours.categorieAge` ne connaît pas.
+    expect(CATEGORIES_AGE_CONCOURS).toEqual([
+      'veterans',
+      'seniors',
+      'juniors',
+      'cadets',
+      'minimes',
+      'benjamins',
+    ]);
+    expect(CATEGORIES_AGE_CONCOURS).not.toContain('plus55');
   });
 });

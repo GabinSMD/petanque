@@ -49,6 +49,23 @@ export type CategorieCritere = CategorieAge | 'plus55';
  */
 export type ToleranceCategorie = 'une_en_dessous';
 
+/**
+ * Catégories qu'un **concours** peut exiger, dans l'ordre de la fenêtre
+ * « Création Nouveau Concours » : Vétéran, Sénior, Junior, Cadet, Minime,
+ * Benjamin — et pas de `+55`, qui n'existe que sur le panneau des compétitions
+ * de clubs. Sans cette liste, le `+55` ajouté pour le CNC se retrouvait proposé
+ * à la création d'un concours, où il aurait écrit en base une catégorie que
+ * `Concours.categorieAge` ne connaît pas.
+ */
+export const CATEGORIES_AGE_CONCOURS: CategorieAge[] = [
+  'veterans',
+  'seniors',
+  'juniors',
+  'cadets',
+  'minimes',
+  'benjamins',
+];
+
 export interface CriteresLicence {
   /** Année de référence du concours (bornes d'âge et validité de licence). */
   annee: number;
