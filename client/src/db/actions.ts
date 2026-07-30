@@ -61,6 +61,7 @@ import {
   desarchiver,
   repartirEntreSites,
   classementFinales,
+  renumeroterPourInsertion,
 } from '@shared';
 import type { FeuilleMatch, Site } from '@shared';
 import { db } from './local';
@@ -312,6 +313,40 @@ export async function addTeam(
     updatedAt: monotonicNow(),
   };
   await putEntity('team', team);
+}
+
+/**
+ * Insère une équipe à un dossard donné (manuel §3.B.1, zone 24).
+ *
+ * Les dossards suivants montent d'un cran. Réservé aux inscriptions : après le
+ * tirage, §3.B.8 interdit de toucher aux numéros — le tableau et les listes
+ * imprimées en dépendent.
+ */
+export async function insererEquipe(
+  concours: Concours,
+  dossard: number,
+  players: Player[],
+  club?: string,
+): Promise<void> {
+  if (concours.status !== 'inscriptions') {
+    throw new Error('Le tirage est fait : les dossards ne changent plus (§3.B.8).');
+  }
+  const teams = await listByConcours('team', concours.id);
+  const changements = renumeroterPourInsertion(teams, dossard);
+  const parId = new Map(teams.map((t) => [t.id, t]));
+  const decalees = changements.map((c) => ({ ...parId.get(c.id)!, number: c.number }));
+  // Les décalages d'abord : la nouvelle équipe prend une place libérée, jamais
+  // un dossard encore occupé.
+  if (decalees.length > 0) await bulkPutEntities('team', decalees);
+  await putEntity('team', {
+    id: crypto.randomUUID(),
+    concoursId: concours.id,
+    number: dossard,
+    players,
+    club: club?.trim() || undefined,
+    forfait: false,
+    updatedAt: monotonicNow(),
+  });
 }
 
 /**
