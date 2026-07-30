@@ -28,14 +28,37 @@ export type ChampLicence =
 
 export type AnomalieEquipe = 'mixte' | 'homogeneite' | 'mutes' | 'horsUE';
 
+/**
+ * Catégorie qu'un concours peut **exiger**. C'est presque la catégorie d'un
+ * joueur, à une valeur près : le `+55` du panneau « Critères Personnels » des
+ * compétitions de clubs (§3.E) est un critère de sélection, jamais la catégorie
+ * d'appartenance de quelqu'un — un joueur de 57 ans est sénior, et le reste.
+ * D'où deux types : `categorieAgeDe` rend l'une, `CriteresLicence` demande
+ * l'autre.
+ */
+export type CategorieCritere = CategorieAge | 'plus55';
+
+/**
+ * Jusqu'où le plancher d'âge s'abaisse hors mode strict.
+ *
+ *  - absent : toutes les catégories inférieures sont admises. C'est la règle des
+ *    concours, et ce champ n'a pas à la changer ;
+ *  - `une_en_dessous` : **une seule** catégorie s'ouvre en dessous. C'est ce
+ *    qu'écrit le panneau des compétitions de clubs — « Seniors (Junior) »,
+ *    « Juniors (Cadet) », « Cadets (Minime) », « Minimes (Ben.) ».
+ */
+export type ToleranceCategorie = 'une_en_dessous';
+
 export interface CriteresLicence {
   /** Année de référence du concours (bornes d'âge et validité de licence). */
   annee: number;
   /** Date du concours (YYYY-MM-DD) : validité du certificat médical. */
   dateConcours?: string;
-  categorieAge?: CategorieAge;
+  categorieAge?: CategorieCritere;
   /** Interdit les catégories d'âge inférieures. */
   strict?: boolean;
+  /** Hors mode strict, jusqu'où descendre. Voir `ToleranceCategorie`. */
+  toleranceCategorie?: ToleranceCategorie;
   sexe?: 'tous' | 'masculin' | 'feminin' | 'mixte';
   classification?: 'tous' | 'elite' | 'honneur' | 'promotion';
   /** Équipes homogènes exigées (tous les joueurs du même club). */
@@ -110,14 +133,44 @@ export interface ControleEquipe {
  * `minimumOnly` : la catégorie se définit par un âge plancher — « vétérans »
  * ne s'ouvre donc pas aux plus jeunes, même hors mode strict.
  */
-const BORNES: Record<CategorieAge, { min?: number; max?: number; minimumOnly?: boolean }> = {
+const BORNES: Record<CategorieCritere, { min?: number; max?: number; minimumOnly?: boolean }> = {
   veterans: { min: 60, minimumOnly: true },
+  // §3.E : le « +55 » du panneau des compétitions de clubs. Un plancher, comme
+  // les vétérans — personne n'est trop vieux pour un championnat +55.
+  plus55: { min: 55, minimumOnly: true },
   seniors: { min: 18 },
   juniors: { min: 15, max: 17 },
   cadets: { min: 12, max: 14 },
   minimes: { min: 9, max: 11 },
   benjamins: { max: 8 },
 };
+
+/**
+ * Les catégories de la plus âgée à la plus jeune, telles que le panneau fédéral
+ * les liste. Sert à trouver « celle du dessous », et rien d'autre.
+ */
+const ORDRE: CategorieCritere[] = [
+  'veterans',
+  'plus55',
+  'seniors',
+  'juniors',
+  'cadets',
+  'minimes',
+  'benjamins',
+];
+
+/**
+ * Plancher d'âge quand une seule catégorie s'ouvre en dessous : c'est le
+ * plancher de cette catégorie-là. Un critère qui est déjà un plancher
+ * (vétérans, +55) ne descend pas : « et celle du dessous » n'a pas de sens quand
+ * il n'y a pas de plafond.
+ */
+function plancherUneEnDessous(categorie: CategorieCritere): number | undefined {
+  const bornes = BORNES[categorie];
+  if (bornes.minimumOnly) return bornes.min;
+  const dessous = ORDRE[ORDRE.indexOf(categorie) + 1];
+  return dessous ? BORNES[dessous].min : bornes.min;
+}
 
 /** Âge fédéral : différence des millésimes, sans tenir compte du jour. */
 export function ageFederal(dateNaissance: string, annee: number): number {
@@ -199,8 +252,15 @@ export function controlerEquipe(
         } else {
           const age = ageFederal(fiche.dateNaissance, criteres.annee);
           // Hors mode strict, la directive fédérale admet les catégories
-          // inférieures : le plancher tombe, le plafond reste.
-          const plancher = criteres.strict || bornes.minimumOnly ? bornes.min : undefined;
+          // inférieures : le plancher tombe, le plafond reste. Les compétitions
+          // de clubs n'en ouvrent qu'une (§3.E) : le plancher descend d'un cran
+          // au lieu de disparaître.
+          const plancher =
+            criteres.strict || bornes.minimumOnly
+              ? bornes.min
+              : criteres.toleranceCategorie === 'une_en_dessous'
+                ? plancherUneEnDessous(criteres.categorieAge)
+                : undefined;
           const plafond = bornes.max;
           if (
             (plancher !== undefined && age < plancher) ||

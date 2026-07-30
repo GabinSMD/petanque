@@ -1,4 +1,4 @@
-import type { CategorieAge, ConcoursMode, ConcoursStatus, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
+import type { CategorieAge, CategorieCritere, ConcoursMode, ConcoursStatus, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
 import type { AnomalieEquipe, ChampLicence } from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
@@ -232,8 +232,11 @@ export function suggestedName(mode: ConcoursMode, format: TeamFormat, date: stri
 /* Contrôle des licences                                               */
 /* ------------------------------------------------------------------ */
 
-export const CATEGORIE_AGE_LABELS: Record<CategorieAge, string> = {
+export const CATEGORIE_AGE_LABELS: Record<CategorieCritere, string> = {
   veterans: 'Vétérans (60 ans et plus)',
+  // §3.E : catégorie de sélection des compétitions de clubs. Personne n'« est »
+  // +55 — c'est un plancher qu'un concours exige.
+  plus55: '+55 (55 ans et plus)',
   seniors: 'Séniors (18 ans et plus)',
   juniors: 'Juniors (15 à 17 ans)',
   cadets: 'Cadets (12 à 14 ans)',

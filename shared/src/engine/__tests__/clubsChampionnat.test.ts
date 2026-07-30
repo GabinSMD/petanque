@@ -129,9 +129,36 @@ describe('compétitions de clubs prédéfinies', () => {
     expect(criteresCompetition('cnc_open', 2026, 3).maxMutes).toBe(3);
   });
 
-  it('les jeunes admettent les catégories plus jeunes que juniors', () => {
+  it('les jeunes admettent les cadets, et rien de plus jeune', () => {
+    // « Juniors (Cadet) » sur le panneau fédéral : une seule catégorie s'ouvre
+    // en dessous. J'avais ouvert toutes les catégories inférieures.
     const c = criteresCompetition('cnc_jeunes', 2026, 0);
     expect(c.categorieAge).toBe('juniors');
     expect(c.strict).toBe(false);
+    expect(c.toleranceCategorie).toBe('une_en_dessous');
+  });
+
+  it('toutes les compétitions de clubs n ouvrent qu une catégorie en dessous', () => {
+    for (const c of COMPETITIONS_CLUB) {
+      expect(criteresCompetition(c.id, 2026, 0).toleranceCategorie, c.id).toBe('une_en_dessous');
+    }
+  });
+
+  it('porte le championnat « +55 »', () => {
+    const c = criteresCompetition('cnc_plus55', 2026, 0);
+    expect(c.categorieAge).toBe('plus55');
+    expect(COMPETITIONS_CLUB.map((x) => x.id)).toContain('cnc_plus55');
+  });
+
+  it('les trois états du contingent hors UE (Tous / Limite 1 Externe / Aucune)', () => {
+    // Le manuel : « Choix du nbre de joueurs mutés dans l'équipe (étranger hors
+    // UE) », avec trois positions. Le 1 était codé en dur.
+    expect(criteresCompetition('cnc_open', 2026, 0, undefined, 'un_externe').maxHorsUE).toBe(1);
+    expect(criteresCompetition('cnc_open', 2026, 0, undefined, 'aucun').maxHorsUE).toBe(0);
+    // « Tous » : aucun plafond, donc aucun contrôle du tout.
+    expect(criteresCompetition('cnc_open', 2026, 0, undefined, 'tous').maxHorsUE).toBeUndefined();
+    // Sans précision, on garde la limite d'un seul : c'est le cas courant, et
+    // c'est le comportement qui existait avant les trois états.
+    expect(criteresCompetition('cnc_open', 2026, 0).maxHorsUE).toBe(1);
   });
 });

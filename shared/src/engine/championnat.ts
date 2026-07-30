@@ -5,11 +5,11 @@
  * d'équipe est réglementaire, comme le fait le menu fédéral. Les critères
  * viennent des mêmes règles que le dépôt des licences, avec deux contingents
  * propres aux compétitions de clubs : les joueurs mutés, dont le nombre est
- * fixé par l'organisateur, et les joueurs étrangers hors Union européenne,
- * limités à un par équipe.
+ * fixé par l'organisateur, et les joueurs étrangers hors Union européenne, dont
+ * le contingent a trois positions — tous, un seul, aucun.
  */
-import type { CategorieAge, CritereSexe } from '../types';
-import type { CriteresLicence } from './licences';
+import type { CritereSexe } from '../types';
+import type { CategorieCritere, CriteresLicence } from './licences';
 
 /** Les 27 États membres, en codes ISO à trois et deux lettres. */
 const UE = new Set([
@@ -46,14 +46,30 @@ export type CompetitionClubId =
   | 'cnc_open'
   | 'cnc_feminin'
   | 'cnc_jeunes'
-  | 'cnc_veterans';
+  | 'cnc_veterans'
+  | 'cnc_plus55';
+
+/**
+ * Les trois positions du contingent d'étrangers hors Union européenne. Le manuel
+ * (§3.E, p.113) : « Choix du nbre de joueurs mutés dans l'équipe (étranger hors
+ * UE) », et le panneau offre **Tous / Limite 1 Externe / Aucune**. La limite
+ * d'un seul était codée en dur ici : les deux autres positions étaient
+ * inatteignables.
+ */
+export type ContingentHorsUE = 'tous' | 'un_externe' | 'aucun';
+
+const PLAFOND_HORS_UE: Record<ContingentHorsUE, number | undefined> = {
+  tous: undefined,
+  un_externe: 1,
+  aucun: 0,
+};
 
 export interface CompetitionClub {
   id: CompetitionClubId;
   label: string;
   /** Filtre prédéfini, comme les choix du menu fédéral. */
   sexe: CritereSexe;
-  categorieAge?: CategorieAge;
+  categorieAge?: CategorieCritere;
   /**
    * Homogénéité club exigée. Le manuel : « il faut Homogène club pour tous les
    * championnats sauf pour les championnats jeunes ».
@@ -79,14 +95,22 @@ export const COMPETITIONS_CLUB: CompetitionClub[] = [
     categorieAge: 'veterans',
     homogene: true,
   },
+  {
+    id: 'cnc_plus55',
+    label: 'CNC / CRC / CDC — +55',
+    sexe: 'tous',
+    categorieAge: 'plus55',
+    homogene: true,
+  },
 ];
 
-/** Critères de contrôle d'une compétition, pour l'année et le quota donnés. */
+/** Critères de contrôle d'une compétition, pour l'année et les quotas donnés. */
 export function criteresCompetition(
   id: CompetitionClubId,
   annee: number,
   maxMutes: number,
   dateRencontre?: string,
+  horsUE: ContingentHorsUE = 'un_externe',
 ): CriteresLicence {
   const competition = COMPETITIONS_CLUB.find((c) => c.id === id) ?? COMPETITIONS_CLUB[0]!;
   return {
@@ -94,11 +118,14 @@ export function criteresCompetition(
     dateConcours: dateRencontre,
     sexe: competition.sexe,
     categorieAge: competition.categorieAge,
-    // Jamais strict : une catégorie inférieure joue chez les plus âgés, et
-    // « jeunes » couvre juniors et en dessous.
+    // Jamais strict : une catégorie inférieure joue chez les plus âgés.
     strict: false,
+    // Mais une seule, comme l'écrit le panneau fédéral — « Juniors (Cadet) », et
+    // non « juniors et tout ce qui est plus jeune ». J'avais ouvert toutes les
+    // catégories inférieures.
+    toleranceCategorie: 'une_en_dessous',
     homogene: competition.homogene,
     maxMutes,
-    maxHorsUE: 1,
+    maxHorsUE: PLAFOND_HORS_UE[horsUE],
   };
 }

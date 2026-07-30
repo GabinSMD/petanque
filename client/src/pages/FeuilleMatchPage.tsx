@@ -16,6 +16,7 @@ import {
   pointsEnJeu,
   type ChampLicence,
   type CompetitionClubId,
+  type ContingentHorsUE,
   type FeuilleMatch,
 } from '@shared';
 import { useFeuilleMatch, useLicencies } from '../db/hooks';
@@ -89,6 +90,7 @@ export function FeuilleMatchPage() {
     Number(etat.date.slice(0, 4)) || new Date().getFullYear(),
     etat.maxMutes,
     etat.date,
+    etat.horsUE,
   );
   const controle = controlerEquipe(joueurs, parLicence, criteres);
   const competition = COMPETITIONS_CLUB.find((c) => c.id === etat.competition)!;
@@ -282,6 +284,17 @@ export function FeuilleMatchPage() {
               onChange={(e) => maj({ maxMutes: Number(e.target.value) })}
             />
           </label>
+          <label>
+            Étrangers hors UE
+            <select
+              value={etat.horsUE}
+              onChange={(e) => maj({ horsUE: e.target.value as ContingentHorsUE })}
+            >
+              <option value="tous">Tous</option>
+              <option value="un_externe">Limite 1 externe</option>
+              <option value="aucun">Aucun</option>
+            </select>
+          </label>
         </div>
         <div className="form-row">
           <label>
@@ -381,8 +394,12 @@ export function FeuilleMatchPage() {
           {competition.categorieAge
             ? CATEGORIE_AGE_LABELS[competition.categorieAge].toLowerCase()
             : 'toutes catégories'}{' '}
-          · {competition.homogene ? 'équipe homogène exigée' : 'homogénéité non exigée'} · 1 joueur
-          hors UE au plus
+          · {competition.homogene ? 'équipe homogène exigée' : 'homogénéité non exigée'} ·{' '}
+          {etat.horsUE === 'tous'
+            ? 'étrangers hors UE sans limite'
+            : etat.horsUE === 'aucun'
+              ? 'aucun étranger hors UE'
+              : '1 joueur hors UE au plus'}
         </p>
       </div>
 
@@ -564,7 +581,13 @@ export function FeuilleMatchPage() {
               Hors Union européenne :{' '}
               {joueurs.filter((p) => estHorsUE(parLicence.get(p.licence!)?.nationalite) === true)
                 .length}{' '}
-              / 1 autorisé
+              {/* Le contingent se choisit rencontre par rencontre : l'écrire en dur
+                  ferait mentir la feuille signée. */}
+              {criteres.maxHorsUE === undefined
+                ? '— aucune limite'
+                : criteres.maxHorsUE === 0
+                  ? '/ aucun autorisé'
+                  : `/ ${criteres.maxHorsUE} autorisé`}
             </li>
           </ul>
 
