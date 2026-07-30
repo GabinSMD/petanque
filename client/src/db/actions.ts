@@ -113,6 +113,7 @@ export interface ConcoursInput {
   nbTerrains: number;
   nbRondes?: number;
   ggStrict?: boolean;
+  tirageDiffere?: boolean;
   tempsLimite?: number;
   miseParEquipe?: number;
   planTerrains?: boolean;
@@ -1080,8 +1081,22 @@ export async function setMatchTerrain(match: Match, terrain: number | null): Pro
  * Appelée après chaque saisie en poule : le concours n'attend pas la poule la
  * plus lente (manuel §3.D.1.A).
  */
-export async function placerQualifiesAction(concours: Concours): Promise<number> {
+export async function placerQualifiesAction(
+  concours: Concours,
+  /**
+   * Tirage explicite : passe outre le « tirage à la reprise ». C'est le geste
+   * de l'organisateur, pas l'entrée automatique au fil des poules.
+   */
+  force = false,
+): Promise<number> {
   if (concours.mode !== 'poules') return 0;
+  // Tirage différé (§3.D.1.A) : les qualifiés attendent. On propage quand même,
+  // pour que les cases déjà placées suivent une correction de poule.
+  if (concours.tirageDiffere && !force) {
+    const tout = await listByConcours('match', concours.id);
+    await bulkPutEntities('match', propagate(tout));
+    return 0;
+  }
   const poules = await listByConcours('poule', concours.id);
   if (poules.length === 0) return 0;
   let matches = await listByConcours('match', concours.id);

@@ -5,6 +5,7 @@ import {
   pouleGroupOutcome,
   pouleOutcome,
   pouleRemaining,
+  qualifiesManquants,
   statistiquesPoules,
   terrainNumeros,
 } from '@shared';
@@ -13,9 +14,11 @@ import {
   generateConcoursGroupes,
   generatePoules,
   generateTableauFromPoules,
+  placerQualifiesAction,
   pouleSummary,
   setMatchRetard,
   setMatchTerrain,
+  updateConcours,
 } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
@@ -101,6 +104,27 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
       else await generateTableauFromPoules(concours);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Génération impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * Qualifiés connus qui n'ont pas encore de place au tableau. Non nul
+   * seulement en « tirage à la reprise » : sinon ils entrent au fil de l'eau.
+   */
+  const enAttente = useMemo(
+    () => (concours.mode === 'poules' ? qualifiesManquants(poules, matches).length : 0),
+    [concours.mode, poules, matches],
+  );
+
+  const doPlacer = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await placerQualifiesAction(concours, true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Placement impossible');
     } finally {
       setBusy(false);
     }
@@ -195,6 +219,30 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
         </span>
         {error && <span className="form-error">{error}</span>}
         <span className="toolbar-actions">
+          {!scoresLocked && (
+            <label
+              className="checkbox-label checkbox-inline"
+              title="Manuel §3.D.1.A : les qualifiés attendent que vous tiriez, au lieu d'entrer au tableau au fil des poules"
+            >
+              <input
+                type="checkbox"
+                checked={concours.tirageDiffere ?? false}
+                onChange={(e) =>
+                  void updateConcours({ ...concours, tirageDiffere: e.target.checked || undefined })
+                }
+              />
+              ⏸ Tirage à la reprise
+            </label>
+          )}
+          {enAttente > 0 && (
+            <button
+              className="btn btn-primary btn-sm"
+              disabled={busy}
+              onClick={() => void doPlacer()}
+            >
+              🎲 Placer {enAttente} qualifié{enAttente > 1 ? 's' : ''}
+            </button>
+          )}
           {poules.length > 4 && (
             <>
               <button
