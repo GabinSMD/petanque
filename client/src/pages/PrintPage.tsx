@@ -9,6 +9,7 @@ import {
   roundLabel,
   rondesTirees,
   type TriEquipes,
+  rapportDelegue,
 } from '@shared';
 import {
   BilanLicences,
@@ -50,6 +51,9 @@ export function PrintPage() {
   const matches = useMatches(id) ?? [];
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const arbitrage = useMemo(() => arbitrageReport(teams, matches), [teams, matches]);
+  // Rapport du délégué (§3.D.15) : les mêmes données, dans l'ordre et avec les
+  // colonnes du document fédéral.
+  const delegue = useMemo(() => rapportDelegue(teams, matches), [teams, matches]);
   const presse = useMemo(() => presseSections(teams, matches, 'principal'), [teams, matches]);
   // Bilan des licences (§3.B.6) : le même calcul que la modale avant tirage.
   const bilan = useBilanAvantTirage(concours, teams);
@@ -272,6 +276,57 @@ export function PrintPage() {
             titre="Graphique — complémentaire"
           />
         </>
+      )}
+
+      {doc === 'delegue' && (
+        <div className="print-arbitrage">
+          <h2 className="print-arbitrage-title">{delegue.titre}</h2>
+          <p className="hint print-arbitrage-intro">
+            Phases finales — document du délégué (manuel §3.D.15). Les sections vont du perdant le
+            plus précoce au champion, comme sur la feuille fédérale.
+          </p>
+          {delegue.sections.map((section) => (
+            <section key={section.label} className="print-arbitrage-section">
+              <h3>{section.label}</h3>
+              <table className="print-arbitrage-table">
+                <thead>
+                  <tr>
+                    <th>N° licence</th>
+                    <th>Nom, prénom</th>
+                    <th>Association ou club</th>
+                    <th>N° dép.</th>
+                    <th>N° équipe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {section.teams.map((team) =>
+                    team.players.map((p, i) => (
+                      <tr key={`${team.number}-${i}`}>
+                        <td>{p.licence ?? ''}</td>
+                        <td>{p.name.toLocaleUpperCase('fr-FR')}</td>
+                        <td>{p.club ?? (i === 0 ? (team.club ?? '') : '')}</td>
+                        <td>{p.departement ?? ''}</td>
+                        <td>{i === 0 ? team.number : ''}</td>
+                      </tr>
+                    )),
+                  )}
+                </tbody>
+              </table>
+            </section>
+          ))}
+          {delegue.sections.length === 0 && (
+            <p>Aucun résultat à reporter : les phases finales ne sont pas encore assez avancées.</p>
+          )}
+          <section className="print-arbitrage-sign">
+            <p>
+              Délégué : <span className="print-rule" />
+            </p>
+            <p>
+              Fait à <span className="print-rule print-rule-sm" /> le{' '}
+              <span className="print-rule print-rule-sm" />
+            </p>
+          </section>
+        </div>
       )}
 
       {doc === 'arbitrage' && (
