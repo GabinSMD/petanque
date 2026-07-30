@@ -278,7 +278,10 @@ export function RondesTab({ concours, teams, matches }: Props) {
         <aside className="rondes-standings">
           <h3>
             Classement {isIndividualMode(concours.mode) ? 'individuel' : ''}
-            <span className="hint"> — victoires puis goal-average</span>
+            <span className="hint">
+              {' '}
+              — victoires, goal-average, puis confrontation directe
+            </span>
           </h3>
           <StandingsTable standings={standings} teamsById={teamsById} />
         </aside>

@@ -86,7 +86,7 @@ export const FAQ: FaqEntry[] = [
       'Créez un concours « Système suisse » et choisissez le nombre de rondes (4 ou 5 en général).',
       'Ronde 1 : tirage aléatoire. Ensuite, les équipes de même niveau se rencontrent (1er contre 2e, etc.), sans revanche.',
       'Effectif impair : l\'équipe la moins bien classée n\'ayant pas encore été exempte gagne d\'office 13 à 7.',
-      'Le classement (victoires puis goal-average) se met à jour à chaque saisie.',
+      'Le classement se met à jour à chaque saisie : victoires, puis goal-average, puis confrontation directe entre équipes à égalité.',
     ],
   },
   {
@@ -97,7 +97,7 @@ export const FAQ: FaqEntry[] = [
     steps: [
       'Créez un concours « Championnat » : le calendrier complet est généré d\'un coup (chacun rencontre chacun).',
       'Effectif impair : chaque équipe se repose une ronde, tout le monde joue autant de parties.',
-      'Saisissez les scores ronde par ronde ; le classement finalise aux victoires puis au goal-average.',
+      'Saisissez les scores ronde par ronde ; le classement finalise aux victoires, au goal-average, puis à la confrontation directe.',
     ],
     note: 'Au-delà de 8 équipes le nombre de parties devient vite important — préférez alors le système suisse.',
   },
