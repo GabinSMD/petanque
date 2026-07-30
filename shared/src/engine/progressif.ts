@@ -10,23 +10,24 @@
  * corriger un résultat de poule met le tableau à jour tout seul, exactement
  * comme pour les places de repêchage.
  */
-import type { Match, Poule } from '../types';
+import type { Match, MatchStage, Poule } from '../types';
 import type { EngineCtx } from './ctx';
 import { shuffle } from './ctx';
 import { nextPow2 } from './bracket';
-import { winnerOf } from './match';
+import { loserOf, winnerOf } from './match';
 
 /** Un qualifié attendu : la poule d'où il sort, et son rang (1er ou 2e). */
 export interface Qualifie {
   pouleId: string;
-  rang: 1 | 2;
+  /** 1er ou 2e de poule (qualifiés), 3e ou 4e (éliminés, pour la consolante). */
+  rang: 1 | 2 | 3 | 4;
   /** `pouleId:rang`, la référence écrite dans la case du tableau. */
   ref: string;
   /** Équipe qualifiée, telle qu'elle est connue à cet instant. */
   teamId: string;
 }
 
-const refDe = (pouleId: string, rang: 1 | 2): string => `${pouleId}:${rang}`;
+const refDe = (pouleId: string, rang: 1 | 2 | 3 | 4): string => `${pouleId}:${rang}`;
 
 /**
  * Tableau principal créé vide, dimensionné pour les qualifiés attendus
@@ -37,6 +38,8 @@ export function buildTableauVide(
   concoursId: string,
   nbQualifies: number,
   ctx: EngineCtx,
+  /** Tableau visé : la consolante s'alimente au fil des poules elle aussi. */
+  stage: MatchStage = 'principal',
 ): Match[] {
   if (nbQualifies < 2) return [];
   const size = nextPow2(nbQualifies);
@@ -60,7 +63,7 @@ export function buildTableauVide(
       matches.push({
         id: ctx.newId(),
         concoursId,
-        stage: 'principal',
+        stage,
         round,
         position,
         teamAId: null,
@@ -107,6 +110,43 @@ export function qualifiesManquants(poules: Poule[], matches: Match[]): Qualifie[
 }
 
 /**
+ * Éliminés désormais connus et pas encore placés en consolante.
+ *
+ * Symétrique de `qualifiesManquants` : le 4e de poule est connu dès la partie
+ * des perdants — sans attendre le barrage — et le 3e après le barrage. Une
+ * poule de trois n'a pas de partie des perdants, donc pas de 4e.
+ *
+ * Les rangs 3 et 4 prolongent le schéma de références `pouleId:rang` : la case
+ * mémorise d'où vient l'équipe, pas laquelle, si bien qu'une correction en
+ * poule se répercute d'elle-même.
+ */
+export function eliminesManquants(poules: Poule[], matches: Match[]): Qualifie[] {
+  const dejaPlaces = new Set(
+    matches.flatMap((m) => [m.qualifFromA, m.qualifFromB]).filter((r): r is string => Boolean(r)),
+  );
+
+  const out: Qualifie[] = [];
+  for (const poule of poules) {
+    const pouleMatches = matches.filter((m) => m.pouleId === poule.id);
+    const perdants = pouleMatches.find((m) => m.pouleSlot === 'PERDANTS');
+    const barrage = pouleMatches.find((m) => m.pouleSlot === 'BARRAGE');
+    const candidats: [3 | 4, string | null][] = [
+      // Rang 3 : le perdant de la partie des perdants, dernier de la poule.
+      [3, poule.teamIds.length === 4 ? loserOf(perdants) : null],
+      // Rang 4 : le perdant du barrage, troisième de la poule.
+      [4, loserOf(barrage)],
+    ];
+    for (const [rang, teamId] of candidats) {
+      if (!teamId) continue;
+      const ref = refDe(poule.id, rang);
+      if (dejaPlaces.has(ref)) continue;
+      out.push({ pouleId: poule.id, rang, ref, teamId });
+    }
+  }
+  return out;
+}
+
+/**
  * Place un qualifié dans une case libre du premier tour.
  *
  * Le manuel dit « de façon tout à fait aléatoire ». On garde ce hasard, avec
@@ -116,8 +156,13 @@ export function qualifiesManquants(poules: Poule[], matches: Match[]): Qualifie[
  * satisfait, on place quand même — mieux vaut un tableau complet qu'un
  * concours arrêté.
  */
-export function placerQualifie(matches: Match[], qualifie: Qualifie, ctx: EngineCtx): Match[] {
-  const principal = matches.filter((m) => m.stage === 'principal' && m.round === 0);
+export function placerQualifie(
+  matches: Match[],
+  qualifie: Qualifie,
+  ctx: EngineCtx,
+  stage: MatchStage = 'principal',
+): Match[] {
+  const principal = matches.filter((m) => m.stage === stage && m.round === 0);
   if (principal.length === 0) return matches;
 
   /** Poule d'origine d'une case déjà occupée. */
