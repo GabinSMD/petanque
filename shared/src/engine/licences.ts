@@ -173,7 +173,12 @@ export function controlerEquipe(
     const anomalies: ChampLicence[] = [];
     const fiche = p.licence ? fiches.get(p.licence) : undefined;
 
-    if (!p.licence && !criteres.ignorerLicencesManquantes) anomalies.push('licence');
+    // Une licence étrangère est une licence : le joueur n'est pas « sans ».
+    // Ses autres critères restent invérifiables faute de fiche fédérale, et on
+    // ne les invente pas.
+    if (!p.licence && !p.licenceEtrangere && !criteres.ignorerLicencesManquantes) {
+      anomalies.push('licence');
+    }
 
     const categorie = categorieAgeDe(fiche?.dateNaissance, criteres.annee);
 
@@ -260,8 +265,14 @@ export function controlerEquipe(
   // Contingent de joueurs hors UE : un seul par équipe. Une nationalité
   // illisible ne compte pas — voir `estHorsUE`.
   if (criteres.maxHorsUE !== undefined) {
-    const horsUE = fichesEquipe.filter((f) => estHorsUE(f.nationalite) === true).length;
-    if (horsUE > criteres.maxHorsUE) anomaliesEquipe.push('horsUE');
+    // Deux sources : la nationalité des fiches fédérales, et le pays d'une
+    // licence étrangère (§3.B.1, zone 21) — un joueur licencié en Suisse compte
+    // sans avoir de fiche française.
+    const horsUEFiches = fichesEquipe.filter((f) => estHorsUE(f.nationalite) === true).length;
+    const horsUEEtrangers = players.filter(
+      (p) => p.licenceEtrangere && estHorsUE(p.licenceEtrangere) === true,
+    ).length;
+    if (horsUEFiches + horsUEEtrangers > criteres.maxHorsUE) anomaliesEquipe.push('horsUE');
   }
 
   // Homogénéité : tous les joueurs du même club. Le club vient de la fiche

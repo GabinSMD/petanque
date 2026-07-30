@@ -73,6 +73,13 @@ export interface Player {
   name: string;
   licence?: string;
   /**
+   * Licence délivrée par une fédération étrangère (manuel §3.B.1, zone 21) :
+   * code pays, par exemple `BE` ou `CH`. Le joueur **a** une licence, elle n'est
+   * simplement pas française — la signaler manquante ferait chercher un numéro
+   * qui n'existe pas. Le code sert aussi au contingent hors UE (§3.C).
+   */
+  licenceEtrangere?: string;
+  /**
    * Rôle de prédilection, déclaré à l'inscription. Facultatif : non renseigné,
    * le joueur complète n'importe quel camp.
    */
