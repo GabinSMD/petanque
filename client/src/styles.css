@@ -370,6 +370,45 @@ input:disabled, select:disabled, input[readonly] {
 .sync-idle .sync-dot { background: #ccc; }
 .sync-guest .sync-dot { background: #f2cd6b; }
 
+/* Photos du podium : vignettes côte à côte, sans écraser la page. */
+.photos-podium {
+  margin: 1rem 0;
+}
+
+.liste-photos,
+.public-photos {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.liste-photos li,
+.public-photos li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.liste-photos img,
+.public-photos img {
+  max-width: 11rem;
+  max-height: 8rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+
+.liste-photos .btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Licence étrangère : un code pays, court par nature. */
 .licence-etrangere {
   max-width: 11rem;

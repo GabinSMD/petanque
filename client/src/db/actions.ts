@@ -66,8 +66,9 @@ import {
   marquerRetirage,
   placerVainqueur,
   vainqueursManquants,
+  photoAcceptable,
 } from '@shared';
-import type { FeuilleMatch, Site } from '@shared';
+import type { EmplacementPhoto, FeuilleMatch, Site } from '@shared';
 import { db } from './local';
 import {
   bulkPutEntities,
@@ -1143,6 +1144,36 @@ export async function placerVainqueursAction(
     );
   if (aEcrire.length > 0) await bulkPutEntities('match', aEcrire);
   return attente.length;
+}
+
+/**
+ * Enregistre une photo du podium (manuel §3.D.1.B.5.5).
+ *
+ * L'accord des personnes est horodaté au moment de l'enregistrement : c'est lui
+ * qui autorise la publication, et sans lui rien n'est écrit. L'écran ne propose
+ * l'ajout qu'une fois la case cochée ; la règle est répétée ici parce qu'un
+ * écran se contourne.
+ */
+export async function enregistrerPhoto(
+  concoursId: string,
+  emplacement: EmplacementPhoto,
+  image: string,
+): Promise<void> {
+  const verdict = photoAcceptable(image);
+  if (!verdict.ok) throw new Error(verdict.raison);
+  await putEntity('photo', {
+    id: crypto.randomUUID(),
+    concoursId,
+    emplacement,
+    image,
+    consentement: monotonicNow(),
+    updatedAt: monotonicNow(),
+  });
+}
+
+/** Retire une photo : elle disparaît de la page publique à la synchronisation. */
+export async function supprimerPhoto(id: string): Promise<void> {
+  await softDeleteMany([{ type: 'photo', id }]);
 }
 
 export async function setMatchTerrain(match: Match, terrain: number | null): Promise<void> {

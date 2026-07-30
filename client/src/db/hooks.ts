@@ -3,6 +3,7 @@ import { useMemo, useSyncExternalStore } from 'react';
 import type {
   BilanEnAttente,
   Concours,
+  PhotoConcours,
   DonneeEcartee,
   FeuilleMatch,
   Licencie,
@@ -158,6 +159,15 @@ export function useBilanAvantTirage(
         .map((t) => ({ number: t.number, controle: controlerEquipe(t.players, fiches, criteres) })),
     );
   }, [concours, teams, licencies]);
+}
+
+/** Photos du podium d'un concours (manuel §3.D.1.B.5.5). */
+export function usePhotos(concoursId: string | undefined): PhotoConcours[] | undefined {
+  return useLiveQuery(async () => {
+    if (!concoursId) return [];
+    const rows = await db.entities.where('[type+concoursId]').equals(['photo', concoursId]).toArray();
+    return rows.filter((r) => r.deleted === 0 && r.data).map((r) => r.data as PhotoConcours);
+  }, [concoursId]);
 }
 
 /** Données reçues d'un autre appareil et écartées faute d'être lisibles. */

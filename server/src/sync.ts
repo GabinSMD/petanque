@@ -18,6 +18,7 @@ const ENTITY_TYPES = new Set([
   'match',
   'licencie',
   'feuilleMatch',
+  'photo',
 ]);
 const MAX_CHANGES_PER_PUSH = 2000;
 const PULL_PAGE_SIZE = 2000;
