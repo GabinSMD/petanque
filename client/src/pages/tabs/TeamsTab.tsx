@@ -55,6 +55,11 @@ export function TeamsTab({ concours, teams, poules }: Props) {
   const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
   const [licences, setLicences] = useState<string[]>(Array(nbPlayers).fill(''));
   const [clubs, setClubs] = useState<string[]>(Array(nbPlayers).fill(''));
+  /**
+   * Pays d'une licence étrangère (manuel §3.B.1, zone 21). Saisi à la place du
+   * numéro : le joueur a une licence, elle n'est pas française.
+   */
+  const [etrangeres, setEtrangeres] = useState<string[]>(Array(nbPlayers).fill(''));
   const [roles, setRoles] = useState<(RolePetanque | '')[]>(Array(nbPlayers).fill(''));
   const [club, setClub] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -153,6 +158,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
     setLicences(Array(nbPlayers).fill(''));
     setClubs(Array(nbPlayers).fill(''));
     setRoles(Array(nbPlayers).fill(''));
+    setEtrangeres(Array(nbPlayers).fill(''));
   }
 
   const submit = async (e: FormEvent) => {
@@ -161,6 +167,9 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       .map((name, i) => ({
         name: name.trim(),
         licence: licences[i]?.trim() || undefined,
+        licenceEtrangere: licences[i]?.trim()
+          ? undefined
+          : etrangeres[i]?.trim().toUpperCase() || undefined,
         // À défaut de club propre, celui de l'équipe : un concours de club
         // n'a pas à saisir la même chose trois fois.
         club: clubs[i]?.trim() || club.trim() || undefined,
@@ -181,6 +190,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
     setLicences(Array(nbPlayers).fill(''));
     setClubs(Array(nbPlayers).fill(''));
     setRoles(Array(nbPlayers).fill(''));
+    setEtrangeres(Array(nbPlayers).fill(''));
     firstInput.current?.focus();
   };
 
@@ -285,6 +295,18 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   }}
                   placeholder="N° licence"
                 />
+                {!licences[i]?.trim() && (
+                  <input
+                    className="licence-etrangere"
+                    value={etrangeres[i] ?? ''}
+                    onChange={(e) =>
+                      setEtrangeres(etrangeres.map((v, j) => (j === i ? e.target.value : v)))
+                    }
+                    placeholder="Pays si licence étrangère"
+                    title="Manuel §3.B.1, zone 21 : joueur affilié à la fédération de son pays. Code pays (BE, CH…) : il compte au contingent hors UE."
+                    maxLength={3}
+                  />
+                )}
                 <input
                   className="club-input club-input-joueur"
                   value={clubs[i] ?? ''}
@@ -509,6 +531,12 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                     <span key={i} className="player-chip">
                       {p.name}
                       {p.licence && <em className="licence"> {p.licence}</em>}
+                      {!p.licence && p.licenceEtrangere && (
+                        <em className="licence" title="Licence étrangère">
+                          {' '}
+                          🌍 {p.licenceEtrangere}
+                        </em>
+                      )}
                       {avecRoles && p.role && (
                         <span className="role-tag" title={ROLE_LABELS[p.role]}>
                           {ROLE_ABREGE[p.role]}

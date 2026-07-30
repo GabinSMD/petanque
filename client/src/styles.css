@@ -370,6 +370,11 @@ input:disabled, select:disabled, input[readonly] {
 .sync-idle .sync-dot { background: #ccc; }
 .sync-guest .sync-dot { background: #f2cd6b; }
 
+/* Licence étrangère : un code pays, court par nature. */
+.licence-etrangere {
+  max-width: 11rem;
+}
+
 /* Liste spécifique : une colonne étroite, la case et rien d'autre. */
 .cell-retenue {
   width: 1.6rem;
