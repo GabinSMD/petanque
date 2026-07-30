@@ -63,6 +63,9 @@ import {
   classementFinales,
   renumeroterPourInsertion,
   eliminesManquants,
+  marquerRetirage,
+  placerVainqueur,
+  vainqueursManquants,
 } from '@shared';
 import type { FeuilleMatch, Site } from '@shared';
 import { db } from './local';
@@ -115,6 +118,7 @@ export interface ConcoursInput {
   nbRondes?: number;
   ggStrict?: boolean;
   tirageDiffere?: boolean;
+  retirageParTour?: boolean;
   tempsLimite?: number;
   miseParEquipe?: number;
   planTerrains?: boolean;
@@ -593,8 +597,13 @@ export async function generatePoules(
   const toursQualif = concours.nbQualifies
     ? nbToursQualification(nbAttendus, concours.nbQualifies)
     : null;
-  const tableau =
+  const tableauBrut =
     toursQualif !== null && toursQualif > 0 ? tronquerTableau(complet, toursQualif) : complet;
+  // Retirage à chaque tour (§3.D.1.A) : les tours au-delà du premier portent la
+  // marque, et se rempliront par tirage au lieu de suivre l'arbre.
+  const tableau = concours.retirageParTour
+    ? marquerRetirage(tableauBrut, 'principal')
+    : tableauBrut;
 
   /**
    * Consolante créée vide elle aussi (manuel §3.D.3) : les éliminés y entrent
@@ -744,7 +753,8 @@ export async function generateTableauDirect(
   const tours = concours.nbQualifies
     ? nbToursQualification(teams.length, concours.nbQualifies)
     : null;
-  const main = tours !== null && tours > 0 ? tronquerTableau(complet, tours) : complet;
+  const brut = tours !== null && tours > 0 ? tronquerTableau(complet, tours) : complet;
+  const main = concours.retirageParTour ? marquerRetirage(brut, 'principal') : brut;
   // Tableaux B et C selon la formule fédérale (perdants reversés d'un
   // tableau à l'autre) — voir `buildFormuleBrackets`.
   const secondary = buildFormuleBrackets(concours.id, main, formuleOf(concours), ctx());
@@ -1084,6 +1094,8 @@ async function recomputeAfter(concours: Concours, match: Match): Promise<void> {
     // les autres. Sans objet en formule par groupes : les trois concours se
     // tirent d'un coup, groupes terminés.
     if (!concours.parGroupes) await placerQualifiesAction(concours);
+    // Le tableau se remplit aussi : un qualifié entré peut déjà avoir gagné.
+    await placerVainqueursAction(concours);
   } else {
     // Toutes les parties, poules comprises : la propagation en a besoin pour
     // résoudre les places réservées à un qualifié de poule. Les écarter les
@@ -1091,7 +1103,46 @@ async function recomputeAfter(concours: Concours, match: Match): Promise<void> {
     const all = await listByConcours('match', concours.id);
     const changed = propagate(all);
     await bulkPutEntities('match', changed);
+    // Retirage par tour (§3.D.1.A) : le vainqueur qui vient d'être connu prend
+    // une place au tour suivant, tirée au sort.
+    await placerVainqueursAction(concours);
   }
+}
+
+/**
+ * Tire les vainqueurs dans les cases du tour suivant (manuel §3.D.1.A), quand le
+ * tableau est en retirage. Appelée après chaque saisie : le manuel place la
+ * première équipe qui arrive, sans attendre le reste du tour.
+ *
+ * `force` passe outre le « tirage à la reprise » — c'est le geste explicite de
+ * l'organisateur qui tire le tour devant les équipes.
+ */
+export async function placerVainqueursAction(
+  concours: Concours,
+  force = false,
+): Promise<number> {
+  if (!concours.retirageParTour) return 0;
+  let matches = await listByConcours('match', concours.id);
+  if (!matches.some((m) => m.stage === 'principal' && m.retirage)) return 0;
+  if (concours.tirageDiffere && !force) return 0;
+
+  const attente = vainqueursManquants(matches, 'principal');
+  if (attente.length === 0) return 0;
+  for (const v of attente) matches = placerVainqueur(matches, 'principal', v, ctx());
+  const changed = propagate(matches);
+  const parId = new Map(changed.map((m) => [m.id, m]));
+  const refs = new Set(attente.map((v) => v.matchId));
+  const aEcrire = matches
+    .filter((m) => m.stage === 'principal')
+    .map((m) => parId.get(m.id) ?? m)
+    .filter(
+      (m) =>
+        parId.has(m.id) ||
+        (m.vainqueurDeA && refs.has(m.vainqueurDeA)) ||
+        (m.vainqueurDeB && refs.has(m.vainqueurDeB)),
+    );
+  if (aEcrire.length > 0) await bulkPutEntities('match', aEcrire);
+  return attente.length;
 }
 
 export async function setMatchTerrain(match: Match, terrain: number | null): Promise<void> {

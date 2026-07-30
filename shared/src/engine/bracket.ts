@@ -151,6 +151,22 @@ export function propagate(all: Match[]): Match[] {
           }
         }
 
+        // … ou par le vainqueur d'une partie désignée (retirage par tour).
+        if (m.vainqueurDeA) {
+          const src = cur.get(m.vainqueurDeA);
+          const expected = src && src.done ? winnerOf(src) : null;
+          if (m.teamAId !== expected) {
+            m = update(m, { teamAId: expected, scoreA: null, scoreB: null, done: false });
+          }
+        }
+        if (m.vainqueurDeB) {
+          const src = cur.get(m.vainqueurDeB);
+          const expected = src && src.done ? winnerOf(src) : null;
+          if (m.teamBId !== expected) {
+            m = update(m, { teamBId: expected, scoreA: null, scoreB: null, done: false });
+          }
+        }
+
         // … ou par un perdant.
         if (m.loserFromA) {
           const src = cur.get(m.loserFromA);
@@ -174,12 +190,16 @@ export function propagate(all: Match[]): Match[] {
           if (m.done && !real) m = update(m, { done: false });
         }
 
-        // 3. Montée du vainqueur.
+        // 3. Montée du vainqueur, par la position dans l'arbre.
         if (r < maxRound) {
           const targetId = keyToId.get(`${r + 1}:${m.position >> 1}`);
           if (targetId) {
             const target = cur.get(targetId)!;
             const expected = m.done ? winnerOf(m) : null;
+            // Retirage par tour : la partie visée s'attribue au sort et dit
+            // elle-même d'où viennent ses équipes. L'arbre n'a pas voix au
+            // chapitre, sinon les deux mécanismes se contrediraient.
+            if (target.retirage) continue;
             if (m.position % 2 === 0) {
               if (target.teamAId !== expected) {
                 update(target, { teamAId: expected, scoreA: null, scoreB: null, done: false });

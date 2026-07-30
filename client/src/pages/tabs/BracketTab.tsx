@@ -4,6 +4,7 @@ import {
   bracketSizeOf,
   estQualificatif,
   formeCadrage,
+  vainqueursManquants,
   isByeMatch,
   pouleOutcome,
   roundLabel,
@@ -16,6 +17,7 @@ import {
   generateTableauDirect,
   generateTableauFromPoules,
   updateConcours,
+  placerVainqueursAction,
 } from '../../db/actions';
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
@@ -56,6 +58,28 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
    */
   const [tourCadrage, setTourCadrage] = useState(0);
 
+  /**
+   * Vainqueurs qui attendent une place au tour suivant (manuel §3.D.1.A). Non
+   * nul seulement en retirage **et** tirage à la reprise : sinon ils sont placés
+   * au fil des résultats.
+   */
+  const vainqueursEnAttente = useMemo(
+    () => (concours.retirageParTour ? vainqueursManquants(matches, 'principal').length : 0),
+    [concours.retirageParTour, matches],
+  );
+
+  const doTirerTour = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await placerVainqueursAction(concours, true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Tirage impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const principal = matches.filter((m) => m.stage === 'principal');
   const consolante = matches.filter((m) => m.stage === 'consolante');
   const complementaire = matches.filter((m) => m.stage === 'complementaire');
@@ -93,6 +117,24 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               🛡 Groupes de protection
               {concours.protections?.length ? ` (${concours.protections.length})` : ''}
             </button>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={concours.retirageParTour ?? false}
+                onChange={(e) =>
+                  void updateConcours({
+                    ...concours,
+                    retirageParTour: e.target.checked || undefined,
+                  })
+                }
+              />
+              Retirage à chaque tour (manuel §3.D.1.A)
+              <span className="hint">
+                Les vainqueurs sont tirés au sort dans le tour suivant, comme le logiciel fédéral :
+                aucun chemin n'est connu d'avance. Décoché, le tableau est un arbre figé au tirage et
+                chaque équipe sait qui elle peut rencontrer.
+              </span>
+            </label>
             {toursCadragePossibles(activeTeams.length).length > 1 && (
               <label>
                 Cadrage
@@ -260,6 +302,11 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
           </span>
         )}
         <span className="toolbar-actions">
+          {vainqueursEnAttente > 0 && (
+            <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => void doTirerTour()}>
+              🎲 Tirer {vainqueursEnAttente} place{vainqueursEnAttente > 1 ? 's' : ''} du tour suivant
+            </button>
+          )}
           <a
             className="btn btn-ghost btn-sm"
             href={`/concours/${concours.id}/imprimer/parties`}

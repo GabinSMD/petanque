@@ -215,6 +215,13 @@ export interface Concours {
    */
   nbRondes?: number;
   /**
+   * Retirage à chaque tour du tableau principal (manuel §3.D.1.A) : les
+   * vainqueurs sont tirés au sort dans les cases du tour suivant au lieu de
+   * monter par la position dans l'arbre. Absent = arbre fixe, où le chemin
+   * jusqu'à la finale est connu dès le tirage.
+   */
+  retirageParTour?: boolean;
+  /**
    * « Tirage à la reprise » (manuel §3.D.1.A) : les qualifiés des poules
    * n'entrent pas au tableau au fil de l'eau, ils attendent que l'organisateur
    * tire. C'est le concours interrompu en fin de soirée, dont on veut tirer le
@@ -326,6 +333,21 @@ export interface Match {
    * repêchages. C'est ce qui permet d'entrer au tableau au fil des poules
    * (manuel §3.D.1.A) sans attendre la dernière.
    */
+  /**
+   * Retirage à chaque tour (manuel §3.D.1.A) : cette place reçoit le vainqueur
+   * de la partie désignée, tirée au sort au moment où il arrive. Comme pour les
+   * autres références, elle retient la **partie** et non l'équipe, si bien
+   * qu'une correction en amont se répercute.
+   */
+  vainqueurDeA?: string;
+  vainqueurDeB?: string;
+  /**
+   * Cette partie reçoit ses équipes par **tirage** et non par la position dans
+   * l'arbre (manuel §3.D.1.A). Posé à la création du tableau : la donnée dit
+   * elle-même comment elle se remplit, plutôt que de dépendre d'un réglage lu
+   * ailleurs — deux mécanismes sur les mêmes cases se contrediraient.
+   */
+  retirage?: boolean;
   qualifFromA?: string;
   qualifFromB?: string;
   scoreA: number | null;
