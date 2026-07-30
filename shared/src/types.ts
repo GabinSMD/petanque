@@ -208,6 +208,13 @@ export interface Concours {
    */
   nbRondes?: number;
   /**
+   * « Tirage à la reprise » (manuel §3.D.1.A) : les qualifiés des poules
+   * n'entrent pas au tableau au fil de l'eau, ils attendent que l'organisateur
+   * tire. C'est le concours interrompu en fin de soirée, dont on veut tirer le
+   * tour suivant le lendemain devant les équipes présentes.
+   */
+  tirageDiffere?: boolean;
+  /**
    * Système suisse : n'opposer que des équipes à égalité **stricte** de
    * victoires (manuel §3.D.14.C, graphique 17), quitte à laisser des exempts.
    * Absent/false = appariement par classement, gagnant contre perdant toléré

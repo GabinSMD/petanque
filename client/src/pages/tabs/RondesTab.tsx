@@ -1,6 +1,12 @@
 import { useMemo, useState } from 'react';
 import type { Concours, Match, RolePetanque, Team } from '@shared';
-import { championnatRondes, rondeComplete, rondeStandings, rondesTirees } from '@shared';
+import {
+  championnatRondes,
+  proposerRondeSupplementaire,
+  rondeComplete,
+  rondeStandings,
+  rondesTirees,
+} from '@shared';
 import { annulerDerniereRonde, setMatchTerrain, tirerRonde, updateConcours } from '../../db/actions';
 import { useBilanAvantTirage } from '../../db/hooks';
 import { BilanTirageModal } from '../../components/BilanTirageModal';
@@ -70,6 +76,27 @@ export function RondesTab({ concours, teams, matches }: Props) {
    */
   const peutFinales =
     (concours.mode === 'suisse' || concours.mode === 'championnat') && !locked;
+
+  /**
+   * Partie supplémentaire (manuel §3.D.14.A) : la question se pose à la
+   * première saisie de la dernière ronde prévue, quand l'organisateur voit
+   * l'heure qu'il est et l'état des terrains. Une seule fois par ronde — la
+   * ronde déjà proposée est retenue le temps de la séance.
+   */
+  const [proposeeSur, setProposeeSur] = useState<number | null>(null);
+  const auSauve = (m: Match): void => {
+    if (concours.mode === 'championnat') return; // calendrier fixe, rien à ajouter
+    const dejaSaisis = rondeMatches.filter(
+      (x) => x.round === m.round && x.id !== m.id && x.done && !x.byeB,
+    ).length;
+    const proposer = proposerRondeSupplementaire({
+      rondesTirees: tirees,
+      rondesPrevues: planned,
+      rondeSaisie: m.round,
+      scoresDejaSaisis: dejaSaisis,
+    });
+    if (proposer && proposeeSur !== m.round) setProposeeSur(m.round);
+  };
 
   /** Contrôle des inscriptions au premier tirage (manuel §3.B.6). */
   const bilan = useBilanAvantTirage(concours, teams);
@@ -159,6 +186,24 @@ export function RondesTab({ concours, teams, matches }: Props) {
 
   return (
     <div className="tab-content">
+      {proposeeSur !== null && (
+        <div className="banner-warn no-print">
+          Dernière ronde prévue en cours. Une partie de plus ?{' '}
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => {
+              void updateConcours({ ...concours, nbRondes: planned + 1 });
+              setProposeeSur(null);
+            }}
+          >
+            Ajouter une {planned + 1}
+            <sup>e</sup> ronde
+          </button>{' '}
+          <button className="btn btn-sm btn-ghost" onClick={() => setProposeeSur(null)}>
+            Non, on s'arrête là
+          </button>
+        </div>
+      )}
       <div className="toolbar no-print">
         <span className="toolbar-info">
           Ronde {tirees} / {planned}
@@ -244,7 +289,12 @@ export function RondesTab({ concours, teams, matches }: Props) {
                           <SideLabel match={m} side="A" teamsById={teamsById} />
                         </td>
                         <td className="match-score">
-                          <ScoreForm concours={concours} match={m} disabled={locked} />
+                          <ScoreForm
+                            concours={concours}
+                            match={m}
+                            disabled={locked}
+                            onSaved={() => auSauve(m)}
+                          />
                         </td>
                         <td className="match-team match-team-right">
                           <SideLabel match={m} side="B" teamsById={teamsById} />

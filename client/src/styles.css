@@ -370,6 +370,15 @@ input:disabled, select:disabled, input[readonly] {
 .sync-idle .sync-dot { background: #ccc; }
 .sync-guest .sync-dot { background: #f2cd6b; }
 
+/* Case à cocher dans une barre d'outils : sur une ligne, sans bloc. */
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 /* Retrouver une équipe : la question la plus posée à la table de marque. */
 .recherche-equipe {
   display: flex;
