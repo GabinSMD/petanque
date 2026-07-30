@@ -355,6 +355,11 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
     ? new Set(qualifiesTableau(matches, 'principal'))
     : new Set<string>();
   const qualifies = teams.filter((t) => idsQualifies.has(t.id));
+  /**
+   * Phases finales jouées (manuel §3.D.15) : le délégué a son propre document.
+   * Sans elles, le rapport d'arbitrage suffit — c'est le même contenu.
+   */
+  const avecFinales = isRondesMode(concours.mode) && matches.some((m) => m.stage === 'principal');
   return (
     <div className="export-bar no-print" data-tour="exporter">
       <span className="export-bar-label">Exporter :</span>
@@ -375,6 +380,17 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
           >
             🧾 Arbitrage (CSV)
           </button>
+          {/* Phases finales en système suisse : le délégué a son propre
+              document (manuel §3.D.15), même contenu dans l'ordre fédéral. */}
+          {avecFinales && (
+            <Link
+              className="btn btn-ghost btn-sm"
+              to={`/concours/${concours.id}/imprimer/delegue`}
+              title="Résultat du concours à remplir par le délégué (phases finales)"
+            >
+              📋 Rapport du délégué
+            </Link>
+          )}
           <Link
             className="btn btn-ghost btn-sm"
             to={`/concours/${concours.id}/imprimer/presse`}

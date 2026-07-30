@@ -37,6 +37,7 @@ export * from './engine/parcours';
 export * from './engine/cadrage';
 export * from './engine/retirage';
 export * from './engine/photos';
+export * from './engine/rapportDelegue';
 export * from './engine/recherche';
 export * from './engine/insertionEquipe';
 export * from './engine/rondeSupplementaire';
