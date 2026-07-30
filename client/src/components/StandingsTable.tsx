@@ -12,7 +12,10 @@ interface Props {
   compact?: boolean;
 }
 
-/** Classement des formules en rondes : victoires puis goal-average. */
+/**
+ * Classement des formules en rondes : victoires, goal-average, puis
+ * confrontation directe entre équipes à égalité (manuel §3.D.15).
+ */
 export function StandingsTable({ standings, teamsById, limit, compact }: Props) {
   const rows = limit ? standings.slice(0, limit) : standings;
   return (
