@@ -370,6 +370,12 @@ input:disabled, select:disabled, input[readonly] {
 .sync-idle .sync-dot { background: #ccc; }
 .sync-guest .sync-dot { background: #f2cd6b; }
 
+/* Liste spécifique : une colonne étroite, la case et rien d'autre. */
+.cell-retenue {
+  width: 1.6rem;
+  text-align: center;
+}
+
 /* Case à cocher dans une barre d'outils : sur une ligne, sans bloc. */
 .checkbox-inline {
   display: inline-flex;
