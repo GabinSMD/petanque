@@ -1,12 +1,19 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { LicenceScanModal } from '../../components/LicenceScanModal';
+import { Modal } from '../../components/Modal';
 import { MultisiteModal } from '../../components/MultisiteModal';
-import type { Concours, Player, RolePetanque, Team } from '@shared';
-import { addTeam, deleteTeam, importerInscrits, updateTeam } from '../../db/actions';
+import type { Concours, Player, Poule, RolePetanque, Team } from '@shared';
+import { addTeam, deleteTeam, importerInscrits, insererEquipe, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
-import { aDesCriteresLicence, controlerEquipe, libelleClubs, type ControleEquipe } from '@shared';
+import {
+  aDesCriteresLicence,
+  chercherEquipes,
+  controlerEquipe,
+  libelleClubs,
+  type ControleEquipe,
+} from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../../lib/labels';
 import { RegistrationsPanel } from '../../components/RegistrationsPanel';
 import {
@@ -20,9 +27,11 @@ import {
 interface Props {
   concours: Concours;
   teams: Team[];
+  /** Poules déjà tirées : sert à dire où joue une équipe retrouvée. */
+  poules: Poule[];
 }
 
-export function TeamsTab({ concours, teams }: Props) {
+export function TeamsTab({ concours, teams, poules }: Props) {
   const [scanning, setScanning] = useState(false);
   const [multisite, setMultisite] = useState(false);
   /**
@@ -48,6 +57,29 @@ export function TeamsTab({ concours, teams }: Props) {
   const [roles, setRoles] = useState<(RolePetanque | '')[]>(Array(nbPlayers).fill(''));
   const [club, setClub] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  /**
+   * Recherche d'équipe (manuel §3.D.1.D, « la loupe ») : « je suis dans quelle
+   * poule ? » est la question la plus posée à la table de marque, et sur cent
+   * équipes la liste ne répond pas.
+   */
+  const [recherche, setRecherche] = useState('');
+  /**
+   * Dossard devant lequel insérer une équipe (manuel §3.B.1, zone 24). `null` =
+   * pas d'insertion en cours.
+   */
+  const [insertionAvant, setInsertionAvant] = useState<number | null>(null);
+  const trouvailles = useMemo(() => chercherEquipes(teams, recherche), [teams, recherche]);
+  /** Liste affichée : filtrée dès qu'une recherche est en cours. */
+  const affichees =
+    recherche.trim().length > 0 ? trouvailles.map((t) => t.team) : teams;
+  /**
+   * Où joue cette équipe, si on le sait : c'est la vraie réponse à « je suis
+   * dans quelle poule ? ». La poule est cherchée dans les poules du concours.
+   */
+  const placeDe = (teamId: string): string => {
+    const poule = poules.find((p) => p.teamIds.includes(teamId));
+    return poule ? `poule ${poule.index}` : '';
+  };
   const firstInput = useRef<HTMLInputElement>(null);
   const licencies = useLicencies() ?? [];
   const licencieByName = new Map(licencies.map((l) => [l.name.toLowerCase(), l]));
@@ -370,6 +402,34 @@ export function TeamsTab({ concours, teams }: Props) {
         </p>
       )}
 
+      {teams.length >= 8 && (
+        <div className="recherche-equipe no-print">
+          <label>
+            🔍 Retrouver une équipe
+            <input
+              type="search"
+              value={recherche}
+              placeholder="Nom d'un joueur, dossard, licence ou club"
+              onChange={(e) => setRecherche(e.target.value)}
+            />
+          </label>
+          {recherche.trim().length > 0 && (
+            <span className="hint">
+              {trouvailles.length === 0
+                ? 'Aucune équipe ne correspond.'
+                : `${trouvailles.length} équipe${trouvailles.length > 1 ? 's' : ''} : ${trouvailles
+                    .map(
+                      (t) =>
+                        `n°${t.team.number}${
+                          t.motif === 'joueur' || t.motif === 'licence' ? ` (${t.joueur})` : ''
+                        }${placeDe(t.team.id) ? ` — ${placeDe(t.team.id)}` : ''}`,
+                    )
+                    .join(', ')}`}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="table-scroll">
       <table className="teams-table">
         <thead>
@@ -383,7 +443,7 @@ export function TeamsTab({ concours, teams }: Props) {
           </tr>
         </thead>
         <tbody>
-          {teams.map((team) =>
+          {affichees.map((team) =>
             editingId === team.id ? (
               <TeamEditRow
                 key={team.id}
@@ -447,6 +507,15 @@ export function TeamsTab({ concours, teams }: Props) {
                       ✎
                     </button>
                   )}
+                  {!locked && (
+                    <button
+                      className="btn-icon"
+                      title={`Insérer une équipe avant le n°${team.number} (les suivants décalent)`}
+                      onClick={() => setInsertionAvant(team.number)}
+                    >
+                      ↧
+                    </button>
+                  )}
                   <button
                     className="btn-icon"
                     title={team.forfait ? 'Annuler le forfait' : 'Déclarer forfait'}
@@ -507,7 +576,90 @@ export function TeamsTab({ concours, teams }: Props) {
           )}
         </p>
       )}
+
+      {insertionAvant !== null && (
+        <InsertionModal
+          concours={concours}
+          dossard={insertionAvant}
+          nbPlayers={nbPlayers}
+          onClose={() => setInsertionAvant(null)}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * Insertion d'une équipe à un dossard donné (manuel §3.B.1, zone 24).
+ *
+ * Le dossard est annoncé en clair avec sa conséquence : les suivants décalent.
+ * C'est irréversible pour les étiquettes déjà distribuées, donc ça se dit avant,
+ * pas après.
+ */
+function InsertionModal({
+  concours,
+  dossard,
+  nbPlayers,
+  onClose,
+}: {
+  concours: Concours;
+  dossard: number;
+  nbPlayers: number;
+  onClose: () => void;
+}) {
+  const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
+  const [club, setClub] = useState('');
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  const valider = async (): Promise<void> => {
+    const players = names
+      .map((name) => ({ name: name.trim() }))
+      .filter((p) => p.name.length > 0);
+    if (players.length === 0) {
+      setErreur('Il faut au moins un joueur.');
+      return;
+    }
+    try {
+      await insererEquipe(concours, dossard, players, club);
+      onClose();
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  return (
+    <Modal title={`Insérer une équipe au n°${dossard}`} onClose={onClose}>
+      <p>
+        L'équipe prendra le dossard <strong>{dossard}</strong>, et toutes les équipes à partir de ce
+        numéro monteront d'un cran.
+      </p>
+      <p className="hint">
+        Les étiquettes déjà distribuées à partir du n°{dossard} ne correspondront plus : réimprimez
+        la liste des inscrits après l'insertion.
+      </p>
+      {names.map((name, i) => (
+        <label key={i}>
+          Joueur {i + 1}
+          <input
+            value={name}
+            onChange={(e) => setNames(names.map((n, j) => (j === i ? e.target.value : n)))}
+          />
+        </label>
+      ))}
+      <label>
+        Club
+        <input value={club} onChange={(e) => setClub(e.target.value)} />
+      </label>
+      {erreur && <p className="form-error">{erreur}</p>}
+      <div className="form-actions">
+        <button className="btn btn-primary" onClick={() => void valider()}>
+          Insérer
+        </button>
+        <button className="btn btn-ghost" onClick={onClose}>
+          Annuler
+        </button>
+      </div>
+    </Modal>
   );
 }
 

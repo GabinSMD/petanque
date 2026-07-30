@@ -216,7 +216,9 @@ export function ConcoursPage() {
           remet la frontière à zéro quand on change d'onglet, donc en changer
           suffit à continuer le concours. */}
       <FrontiereErreur key={active} portee="onglet">
-        {active === 'equipes' && <TeamsTab concours={concours} teams={teams ?? []} />}
+        {active === 'equipes' && (
+          <TeamsTab concours={concours} teams={teams ?? []} poules={poules ?? []} />
+        )}
         {active === 'licences' && <LicencesTab concours={concours} teams={teams ?? []} />}
         {active === 'poules' && (
           <PoulesTab concours={concours} teams={teams ?? []} poules={poules ?? []} matches={matches ?? []} />

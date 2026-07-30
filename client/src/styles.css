@@ -370,6 +370,19 @@ input:disabled, select:disabled, input[readonly] {
 .sync-idle .sync-dot { background: #ccc; }
 .sync-guest .sync-dot { background: #f2cd6b; }
 
+/* Retrouver une équipe : la question la plus posée à la table de marque. */
+.recherche-equipe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+}
+
+.recherche-equipe input {
+  min-width: 16rem;
+}
+
 /* Bilan de validité avant tirage : parcouru dossard par dossard. */
 .liste-bilan {
   list-style: none;
