@@ -114,6 +114,106 @@ describe('contrôle : catégorie d âge', () => {
   });
 });
 
+describe('contrôle : la catégorie « et celle du dessous » (§3.E)', () => {
+  // Le panneau « Critères Personnels » des compétitions de clubs (copie d'écran
+  // p.116) écrit ses catégories avec une parenthèse : « Seniors (Junior) »,
+  // « Juniors (Cadet) », « Cadets (Minime) », « Minimes (Ben.) ». Une seule
+  // catégorie s'ouvre en dessous, pas toutes les plus jeunes.
+  const junior = fiche({ licence: 'j', dateNaissance: '2010-06-01' }); // 16 ans
+  const cadet = fiche({ licence: 'c', dateNaissance: '2013-06-01' }); // 13 ans
+  const minime = fiche({ licence: 'm', dateNaissance: '2016-06-01' }); // 10 ans
+
+  it('« Seniors (Junior) » admet un junior', () => {
+    const r = controlerEquipe([joueur('j')], base(junior), {
+      ...BASE,
+      categorieAge: 'seniors',
+      toleranceCategorie: 'une_en_dessous',
+    });
+    expect(r.joueurs[0]!.anomalies).not.toContain('dateNaissance');
+  });
+
+  it('« Seniors (Junior) » refuse un cadet : deux catégories plus bas', () => {
+    const r = controlerEquipe([joueur('c')], base(cadet), {
+      ...BASE,
+      categorieAge: 'seniors',
+      toleranceCategorie: 'une_en_dessous',
+    });
+    expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
+  });
+
+  it('« Juniors (Cadet) » admet un cadet et refuse un minime', () => {
+    const criteres: CriteresLicence = {
+      ...BASE,
+      categorieAge: 'juniors',
+      toleranceCategorie: 'une_en_dessous',
+    };
+    expect(
+      controlerEquipe([joueur('c')], base(cadet), criteres).joueurs[0]!.anomalies,
+    ).not.toContain('dateNaissance');
+    expect(
+      controlerEquipe([joueur('m')], base(minime), criteres).joueurs[0]!.anomalies,
+    ).toContain('dateNaissance');
+  });
+
+  it('la tolérance ouvre le plancher, jamais le plafond', () => {
+    // Un sénior reste hors d'un championnat junior : la parenthèse descend, elle
+    // ne monte pas.
+    const senior = fiche({ licence: 's', dateNaissance: '1990-06-01' });
+    const r = controlerEquipe([joueur('s')], base(senior), {
+      ...BASE,
+      categorieAge: 'juniors',
+      toleranceCategorie: 'une_en_dessous',
+    });
+    expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
+  });
+
+  it('sans tolérance déclarée, le comportement des concours ne change pas', () => {
+    // Hors compétition de clubs, la directive fédérale admet toutes les
+    // catégories inférieures : ce test garde cette règle intacte.
+    const r = controlerEquipe([joueur('m')], base(minime), {
+      ...BASE,
+      categorieAge: 'seniors',
+      strict: false,
+    });
+    expect(r.joueurs[0]!.anomalies).not.toContain('dateNaissance');
+  });
+});
+
+describe('contrôle : la catégorie « +55 » (§3.E)', () => {
+  // La liste des catégories du panneau fédéral porte un « +55 » entre
+  // « Vétérans » et « Seniors (Junior) » : un plancher d'âge, comme les
+  // vétérans, mais cinq ans plus bas.
+  it('admet un joueur de 55 ans et plus', () => {
+    const b = base(
+      fiche({ licence: '55', dateNaissance: '1971-06-01' }), // 55 ans
+      fiche({ licence: '66', dateNaissance: '1960-06-01' }), // 66 ans
+    );
+    const criteres: CriteresLicence = { ...BASE, categorieAge: 'plus55' };
+    expect(controlerEquipe([joueur('55')], b, criteres).joueurs[0]!.anomalies).not.toContain(
+      'dateNaissance',
+    );
+    expect(controlerEquipe([joueur('66')], b, criteres).joueurs[0]!.anomalies).not.toContain(
+      'dateNaissance',
+    );
+  });
+
+  it('refuse un joueur de 54 ans', () => {
+    const b = base(fiche({ licence: '54', dateNaissance: '1972-06-01' }));
+    const r = controlerEquipe([joueur('54')], b, { ...BASE, categorieAge: 'plus55' });
+    expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
+  });
+
+  it('un plancher n a pas de « catégorie du dessous » : 50 ans reste refusé', () => {
+    const b = base(fiche({ licence: '50', dateNaissance: '1976-06-01' }));
+    const r = controlerEquipe([joueur('50')], b, {
+      ...BASE,
+      categorieAge: 'plus55',
+      toleranceCategorie: 'une_en_dessous',
+    });
+    expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
+  });
+});
+
 describe('contrôle : sexe', () => {
   const h = fiche({ licence: 'h', sexe: 'M' });
   const f = fiche({ licence: 'f', sexe: 'F' });

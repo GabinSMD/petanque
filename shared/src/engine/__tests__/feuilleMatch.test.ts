@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   BAREME_CDC,
   bilanRencontre,
+  feuilleDepuisMemoire,
+  feuilleVierge,
   partiesVides,
   pointsEnJeu,
   type PartieRencontre,
@@ -103,5 +105,40 @@ describe('bilan d\'une feuille de match', () => {
     const bilan = bilanRencontre(autre, toutesA);
     expect(bilan.totalA).toBe(12);
     expect(bilan.totalA + bilan.totalB).toBe(pointsEnJeu(autre));
+  });
+});
+
+describe('contingent d\'étrangers hors UE porté par la feuille (§3.E)', () => {
+  it('une feuille neuve limite à un joueur hors UE', () => {
+    // C'est la position courante du panneau fédéral, et le comportement qui
+    // existait quand la limite était codée en dur.
+    expect(feuilleVierge('f1', '2026-03-01', 'cnc_open').horsUE).toBe('un_externe');
+  });
+
+  it('garde la position choisie', () => {
+    const f = feuilleDepuisMemoire('f1', {
+      ...feuilleVierge('f1', '2026-03-01', 'cnc_open'),
+      horsUE: 'aucun',
+    });
+    expect(f.horsUE).toBe('aucun');
+  });
+
+  it('une feuille d\'avant ce champ retombe sur la limite d\'un seul', () => {
+    // Les feuilles déjà synchronisées entre les tablettes du club n'ont pas ce
+    // champ : elles doivent continuer à se contrôler comme avant, pas devenir
+    // subitement sans limite.
+    const ancienne: Record<string, unknown> = {
+      ...feuilleVierge('f1', '2026-03-01', 'cnc_open'),
+    };
+    delete ancienne.horsUE;
+    expect(feuilleDepuisMemoire('f1', ancienne).horsUE).toBe('un_externe');
+  });
+
+  it('refuse une position inventée plutôt que de la propager', () => {
+    const f = feuilleDepuisMemoire('f1', {
+      ...feuilleVierge('f1', '2026-03-01', 'cnc_open'),
+      horsUE: 'trois_externes',
+    });
+    expect(f.horsUE).toBe('un_externe');
   });
 });
