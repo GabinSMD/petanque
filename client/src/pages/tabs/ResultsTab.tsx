@@ -15,6 +15,7 @@ import {
 import { updateConcours } from '../../db/actions';
 import { useModeFederalActif } from '../../db/hooks';
 import { StandingsTable } from '../../components/StandingsTable';
+import { PhotosPodium } from '../../components/PhotosPodium';
 import { TeamLabel } from '../../components/TeamLabel';
 import { TirRanking } from '../../components/TirRanking';
 import { isIndividualMode, isRondesMode, isTirMode } from '../../lib/labels';
@@ -48,6 +49,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
     return (
       <div className="tab-content results">
         <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
+        <PhotosPodium concours={concours} />
         <section className="result-section">
           <h2>Classement du tir de précision</h2>
           <TirRanking teams={teams} matches={matches} teamsById={teamsById} />
@@ -75,6 +77,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
     return (
       <div className="tab-content results">
         <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
+        <PhotosPodium concours={concours} />
         {finales.map(({ stage, titre }) => {
           const groups = bracketRanking(matches, stage);
           if (groups.length === 0) return null;
@@ -143,6 +146,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
   return (
     <div className="tab-content results">
       <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
+        <PhotosPodium concours={concours} />
       {principalGroups.length > 0 && (
         <section className="result-section">
           <h2>Concours principal</h2>

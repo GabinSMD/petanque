@@ -134,11 +134,23 @@ export function registerPublicRoutes(
         };
       });
 
+    /**
+     * Photos du podium (manuel §3.D.1.B.5.5) : une photo d'équipe est une
+     * donnée personnelle et cette page est publique. Le serveur ne diffuse donc
+     * que celles dont l'organisateur a constaté l'accord — le client applique
+     * déjà la règle, elle est répétée ici parce qu'un client d'une autre
+     * version pourrait ne pas la connaître.
+     */
+    const photos = byType('photo').filter(
+      (p: { consentement?: string; image?: string }) => Boolean(p.consentement && p.image),
+    );
+
     return {
       concours: JSON.parse(concoursRow.data),
       teams: byType('team'),
       poules: byType('poule'),
       matches: byType('match'),
+      photos,
       declarations,
       generatedAt: new Date().toISOString(),
     };

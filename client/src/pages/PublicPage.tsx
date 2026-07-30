@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import type { Concours, Match, Poule, Team } from '@shared';
-import { pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
+import type { Concours, Match, PhotoConcours, Poule, Team } from '@shared';
+import { EMPLACEMENTS_PHOTO, photosPubliables, pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
 import { matchLabel, pendingMatchesForTeam, sideName, teamSideInMatch } from '../lib/matchLabel';
 import { followedTeams, pushSupported, subscribeForTeams } from '../lib/push';
 import { BracketView } from './tabs/BracketTab';
@@ -34,6 +34,8 @@ interface PublicData {
   teams: Team[];
   poules: Poule[];
   matches: Match[];
+  /** Photos du podium (manuel §3.D.1.B.5.5), déjà filtrées par le serveur. */
+  photos?: PhotoConcours[];
   declarations: PublicDeclaration[];
   generatedAt: string;
 }
@@ -591,8 +593,32 @@ function ResultsView({
   const consolante = matches.filter((m) => m.stage === 'consolante');
   const rondes = isRondesMode(concours.mode);
 
+  /**
+   * Photos du podium : le serveur ne renvoie que celles dont l'accord est
+   * constaté, et `photosPubliables` reprend le tri et le plafond de poids — un
+   * serveur d'une autre version pourrait ne pas les appliquer.
+   */
+  const photos = photosPubliables(data.photos ?? []);
+
   return (
     <>
+      {photos.length > 0 && (
+        <section className="result-section">
+          <h2>Podium</h2>
+          <ul className="public-photos">
+            {photos.map((p) => (
+              <li key={p.id}>
+                <img
+                  src={p.image}
+                  alt={EMPLACEMENTS_PHOTO.find((e) => e.id === p.emplacement)?.label ?? 'Podium'}
+                  loading="lazy"
+                />
+                <span>{EMPLACEMENTS_PHOTO.find((e) => e.id === p.emplacement)?.label}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {concours.status === 'inscriptions' && (
         <section className="result-section">
           <h2>Équipes inscrites ({data.teams.length})</h2>

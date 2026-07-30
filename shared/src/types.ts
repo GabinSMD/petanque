@@ -414,7 +414,15 @@ export interface Licencie {
  * commit : un type absent de la liste du serveur est ignoré silencieusement, et
  * l'entité ne quitte jamais l'appareil.
  */
-export type EntityType = 'concours' | 'team' | 'poule' | 'match' | 'licencie' | 'feuilleMatch';
+export type EntityType =
+  | 'concours'
+  | 'team'
+  | 'poule'
+  | 'match'
+  | 'licencie'
+  | 'feuilleMatch'
+  /** Photo du podium diffusée sur la page publique (manuel §3.D.1.B.5.5). */
+  | 'photo';
 
 export const ENTITY_TYPES: EntityType[] = [
   'concours',
@@ -423,6 +431,10 @@ export const ENTITY_TYPES: EntityType[] = [
   'match',
   'licencie',
   'feuilleMatch',
+  // Tout ajout ici doit être fait dans `server/src/sync.ts` **dans le même
+  // commit** : le serveur tient sa propre copie et ignore en silence un type
+  // qu'il ne connaît pas, laissant l'entité bloquée sur l'appareil.
+  'photo',
 ];
 
 export interface SyncChange {
