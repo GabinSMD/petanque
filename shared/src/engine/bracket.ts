@@ -320,6 +320,14 @@ function drawEliminationCadrageDiffere(
   opts: EliminationDrawOptions,
 ): Match[] {
   const k = opts.tourCadrage ?? 0;
+  if (opts.seeds && opts.seeds.length > 0) {
+    // Les têtes de série se placent aux positions standard d'un tableau plein ;
+    // un cadrage différé change ces positions. Plutôt que de les ignorer en
+    // silence — l'organisateur croirait ses têtes protégées — on refuse.
+    throw new Error(
+      'Têtes de série et cadrage différé ne se combinent pas : choisissez l\'un ou l\'autre.',
+    );
+  }
   const forme = formeCadrage(teams.length, k);
   const tourDuCadrage = forme[k];
   if (!tourDuCadrage) throw new Error('Cadrage impossible : tour hors du tableau.');

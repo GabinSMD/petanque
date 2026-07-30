@@ -1,6 +1,15 @@
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { bracketSizeOf, isByeMatch, pouleOutcome, roundLabel, winnerOf, estQualificatif } from '@shared';
+import {
+  bracketSizeOf,
+  estQualificatif,
+  formeCadrage,
+  isByeMatch,
+  pouleOutcome,
+  roundLabel,
+  toursCadragePossibles,
+  winnerOf,
+} from '@shared';
 import {
   annulerPhasesFinales,
   cancelTableau,
@@ -40,6 +49,12 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  /**
+   * Tour du cadrage (manuel §3.D.11 : « vous devez choisir à quel tour vous
+   * voulez faire le cadrage »). C'est une décision de tirage, pas un paramètre
+   * du concours : elle se prend ici, effectif connu, et n'a plus de sens après.
+   */
+  const [tourCadrage, setTourCadrage] = useState(0);
 
   const principal = matches.filter((m) => m.stage === 'principal');
   const consolante = matches.filter((m) => m.stage === 'consolante');
@@ -78,6 +93,29 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               🛡 Groupes de protection
               {concours.protections?.length ? ` (${concours.protections.length})` : ''}
             </button>
+            {toursCadragePossibles(activeTeams.length).length > 1 && (
+              <label>
+                Cadrage
+                <select
+                  value={tourCadrage}
+                  onChange={(e) => setTourCadrage(Number(e.target.value))}
+                  disabled={seeds.length > 0}
+                >
+                  {toursCadragePossibles(activeTeams.length).map((tour) => (
+                    <option key={tour} value={tour}>
+                      {tour === 0
+                        ? `Au 1er tour — ${formeCadrage(activeTeams.length, 0)[0]!.exempts} équipes exemptes`
+                        : `Au tour ${tour + 1} — tout le monde joue ${tour} partie${tour > 1 ? 's' : ''} d'abord`}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {seeds.length > 0
+                    ? 'Indisponible avec des têtes de série : leurs positions supposent un tableau plein.'
+                    : 'Différer le cadrage évite qu\'une partie des équipes passe un tour sans jouer.'}
+                </small>
+              </label>
+            )}
             {groupesOuverts && (
               <ProtectionsModal
                 concours={concours}
@@ -93,7 +131,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               onClick={() => avecControle(() => {
                 setBusy(true);
                 setError(null);
-                generateTableauDirect(concours, !protection, seeds)
+                generateTableauDirect(concours, !protection, seeds, tourCadrage)
                   .catch((err) =>
                     setError(err instanceof Error ? err.message : 'Tirage impossible'),
                   )
@@ -112,7 +150,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
                   setBilanVu(true);
                   setBusy(true);
                   setError(null);
-                  generateTableauDirect(concours, !protection, seeds)
+                  generateTableauDirect(concours, !protection, seeds, tourCadrage)
                     .catch((err) =>
                       setError(err instanceof Error ? err.message : 'Tirage impossible'),
                     )

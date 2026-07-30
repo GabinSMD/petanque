@@ -669,6 +669,8 @@ export async function generateTableauDirect(
   concours: Concours,
   sansProtection: boolean,
   seeds: string[] = [],
+  /** Tour du cadrage (manuel §3.D.11) : 0 = au premier tour, comme le défaut. */
+  tourCadrage = 0,
 ): Promise<void> {
   const teams = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
   if (teams.length < 2) throw new Error('Il faut au moins 2 équipes');
@@ -676,6 +678,7 @@ export async function generateTableauDirect(
     sansProtection,
     protections: concours.protections ?? [],
     seeds,
+    tourCadrage,
   });
   // Concours qualificatif : on ne crée pas les tours au-delà du nombre de
   // qualifiés voulu (manuel §3.D.7). Le tableau s'arrête là.
