@@ -28,6 +28,7 @@ export * from './engine/impressions';
 export * from './engine/inscritsImport';
 export * from './engine/inscritsExport';
 export * from './engine/indemnites';
+export * from './engine/licenceEtrangere';
 export * from './engine/licenceQr';
 export * from './engine/licences';
 export * from './engine/licencesImport';

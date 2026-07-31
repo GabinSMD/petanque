@@ -43,6 +43,9 @@ import {
   type Formule,
   type NiveauConcours,
   type Licencie,
+  type LicencieEtranger,
+  type SaisieFicheEtrangere,
+  normaliserFicheEtrangere,
   type LicencieRow,
   type Match,
   type Player,
@@ -514,6 +517,54 @@ export async function importLicencies(
 
 export async function deleteLicencie(id: string): Promise<void> {
   await softDeleteMany([{ type: 'licencie', id }]);
+}
+
+/* ------------------------------------------------------------------ */
+/* Base personnelle de licenciés étrangers (§3.B.1, zone 21)           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Base **personnelle**, distincte du fichier fédéral : ces fiches sont saisies à
+ * la main et doivent survivre à un « vider et réimporter » des licenciés.
+ */
+export async function listLicenciesEtrangers(): Promise<LicencieEtranger[]> {
+  const rows = await db.entities
+    .where('[type+concoursId]')
+    .equals(['licencieEtranger', ''])
+    .toArray();
+  return rows
+    .filter((r) => r.deleted === 0 && r.data)
+    .map((r) => r.data as LicencieEtranger)
+    .sort((a, b) => a.nom.localeCompare(b.nom) || a.prenom.localeCompare(b.prenom));
+}
+
+/**
+ * Enregistre une fiche. Une fiche existante est reconnue par son numéro de
+ * licence, sinon par nom + prénom + pays : rescanner le même Suisse ne doit pas
+ * créer un deuxième exemplaire.
+ */
+export async function saveLicencieEtranger(
+  saisie: SaisieFicheEtrangere,
+): Promise<{ ok: true; fiche: LicencieEtranger } | { ok: false; raison: string }> {
+  const r = normaliserFicheEtrangere(saisie);
+  if (!r.ok) return r;
+  const base = await listLicenciesEtrangers();
+  const cle = (f: { licence?: string; nom: string; prenom: string; pays: string }): string =>
+    f.licence?.trim()
+      ? `l:${f.licence.trim().toUpperCase()}`
+      : `n:${f.nom}|${f.prenom}|${f.pays}`;
+  const existante = base.find((f) => cle(f) === cle(r.fiche));
+  const fiche: LicencieEtranger = {
+    ...r.fiche,
+    id: existante?.id ?? crypto.randomUUID(),
+    updatedAt: monotonicNow(),
+  };
+  await putEntity('licencieEtranger', fiche);
+  return { ok: true, fiche };
+}
+
+export async function deleteLicencieEtranger(id: string): Promise<void> {
+  await softDeleteMany([{ type: 'licencieEtranger', id }]);
 }
 
 export async function deleteAllLicencies(): Promise<void> {

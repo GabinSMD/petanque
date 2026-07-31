@@ -401,6 +401,29 @@ export interface Licencie {
   updatedAt: string;
 }
 
+/**
+ * Fiche de la **base personnelle** de licenciés étrangers (manuel §3.B.1,
+ * zone 21, fenêtre « Création Licence Etrangère : Base Personnelle »).
+ *
+ * Distincte de `Licencie`, qui porte les mêmes champs : le fichier des licenciés
+ * est un import fédéral qu'on purge et remplace, alors que ces fiches sont
+ * saisies à la main et doivent survivre à un réimport. Voir
+ * `engine/licenceEtrangere.ts`.
+ */
+export interface LicencieEtranger {
+  id: string;
+  /** Numéro délivré par sa fédération — pas un numéro fédéral français. */
+  licence?: string;
+  nom: string;
+  prenom: string;
+  /** Date de naissance au format YYYY-MM-DD (saisie en JJ/MM/AAAA). */
+  dateNaissance?: string;
+  sexe?: Sexe;
+  /** Code pays à deux lettres de sa fédération (`BE`, `CH`…). */
+  pays: string;
+  updatedAt: string;
+}
+
 /* ------------------------------------------------------------------ */
 /* Protocole de synchronisation SaaS                                   */
 /* ------------------------------------------------------------------ */
@@ -422,7 +445,9 @@ export type EntityType =
   | 'licencie'
   | 'feuilleMatch'
   /** Photo du podium diffusée sur la page publique (manuel §3.D.1.B.5.5). */
-  | 'photo';
+  | 'photo'
+  /** Fiche de la base personnelle de licenciés étrangers (§3.B.1, zone 21). */
+  | 'licencieEtranger';
 
 export const ENTITY_TYPES: EntityType[] = [
   'concours',
@@ -435,6 +460,7 @@ export const ENTITY_TYPES: EntityType[] = [
   // commit** : le serveur tient sa propre copie et ignore en silence un type
   // qu'il ne connaît pas, laissant l'entité bloquée sur l'appareil.
   'photo',
+  'licencieEtranger',
 ];
 
 export interface SyncChange {

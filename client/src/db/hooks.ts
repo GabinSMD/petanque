@@ -7,6 +7,7 @@ import type {
   DonneeEcartee,
   FeuilleMatch,
   Licencie,
+  LicencieEtranger,
   Match,
   Poule,
   Team,
@@ -73,6 +74,23 @@ export function usePoules(concoursId: string | undefined): Poule[] | undefined {
 
 export function useMatches(concoursId: string | undefined): Match[] | undefined {
   return useEntityList<Match>('match', concoursId);
+}
+
+/**
+ * Base personnelle de licenciés étrangers (§3.B.1, zone 21). Distincte du
+ * fichier fédéral, qu'un réimport remplace.
+ */
+export function useLicenciesEtrangers(): LicencieEtranger[] | undefined {
+  return useLiveQuery(async () => {
+    const rows = await db.entities
+      .where('[type+concoursId]')
+      .equals(['licencieEtranger', ''])
+      .toArray();
+    return rows
+      .filter((r) => r.deleted === 0 && r.data)
+      .map((r) => r.data as LicencieEtranger)
+      .sort((a, b) => a.nom.localeCompare(b.nom) || a.prenom.localeCompare(b.prenom));
+  }, []);
 }
 
 export function useLicencies(): Licencie[] | undefined {
