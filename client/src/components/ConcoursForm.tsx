@@ -11,12 +11,18 @@ import type {
   TeamFormat,
 } from '@shared';
 import {
-  CHAMPIONNATS_CDF,
+  CATEGORIES_AGE_CONCOURS,
+  JEUX_FEDERAUX,
+  championnatsDuJeu,
   designationCategorie,
   estConcoursOfficiel,
   formuleOf,
+  jeuDuConcours,
+  jeuFederal,
   nomConcoursFederal,
   parametresCDF,
+  type JeuFederal,
+  type ParametresCDF,
 } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import { useLicencies, useModeFederalActif } from '../db/hooks';
@@ -71,6 +77,13 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
    * lire ailleurs qu'à leur place les ferait diverger.
    */
   const [codeCDF, setCodeCDF] = useState('');
+  /**
+   * « Jeu » (manuel §3.A) : le type de championnat. Il commande la liste des
+   * championnats proposés, et pour PROMOTION comme pour VETERANS il impose
+   * directement les critères — ces deux-là n'ont pas de liste. Pas plus
+   * enregistré que le code CDF : il se relit du concours.
+   */
+  const [jeu, setJeu] = useState<JeuFederal>(initial ? jeuDuConcours(initial) : 'petanque');
   const [comiteOrganisateur, setComiteOrganisateur] = useState(initial?.comiteOrganisateur ?? '');
   const [clubOrganisateur, setClubOrganisateur] = useState(initial?.clubOrganisateur ?? '');
   const [decalageEquipe, setDecalageEquipe] = useState<number | ''>(initial?.decalageEquipe ?? '');
@@ -112,11 +125,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
     critereClassification,
   });
 
-  /** Applique le championnat choisi aux quatre critères qu'il fixe. */
-  const appliquerCDF = (code: string): void => {
-    setCodeCDF(code);
-    const p = parametresCDF(code);
-    if (!p) return;
+  /** Pose les critères d'un championnat — ceux du CDF ou ceux du jeu. */
+  const appliquerParametres = (p: ParametresCDF): void => {
     setFormat(p.format);
     setCategorieAge(p.categorieAge);
     setStrict(p.strict);
@@ -124,6 +134,29 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
     setCritereClassification(p.critereClassification);
     setHomogene(p.homogene);
   };
+
+  /** Applique le championnat choisi aux quatre critères qu'il fixe. */
+  const appliquerCDF = (code: string): void => {
+    setCodeCDF(code);
+    const p = parametresCDF(code);
+    if (p) appliquerParametres(p);
+  };
+
+  /**
+   * Change de jeu : la liste des championnats change avec lui, donc le code
+   * choisi ne veut plus rien dire et repart à zéro. PROMOTION et VETERANS
+   * imposent leurs critères eux-mêmes, faute de liste.
+   */
+  const changerJeu = (id: JeuFederal): void => {
+    setJeu(id);
+    setCodeCDF('');
+    if (id === 'provencal') setDiscipline('jeu_provencal');
+    else if (discipline === 'jeu_provencal') setDiscipline('petanque');
+    const p = jeuFederal(id)?.parametres;
+    if (p) appliquerParametres(p);
+  };
+
+  const championnatsProposes = championnatsDuJeu(jeu);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -499,6 +532,20 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           </p>
           <div className="form-row">
             <label>
+              Jeu
+              <select value={jeu} onChange={(e) => changerJeu(e.target.value as JeuFederal)}>
+                {JEUX_FEDERAUX.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {j.label}
+                  </option>
+                ))}
+              </select>
+              <small>
+                Type de championnat, comme dans la fenêtre fédérale : il commande la liste des
+                championnats, et pour Promotion et Vétérans il pose lui-même les critères.
+              </small>
+            </label>
+            <label>
               Niveau
               <select
                 value={niveau}
@@ -512,7 +559,10 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                 ))}
               </select>
             </label>
-            {niveau === 'championnat' && (
+            {/* « Choix CDF » n'apparaît que si le jeu a une liste : sur les
+                copies d'écran PROMOTION et VETERANS, la ligne disparaît de la
+                fenêtre — elle n'est pas grisée. */}
+            {niveau === 'championnat' && championnatsProposes.length > 0 && (
               <label>
                 Choix CDF
                 <select
@@ -520,7 +570,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                   onChange={(e) => appliquerCDF(e.target.value)}
                 >
                   <option value="">Non précisé</option>
-                  {CHAMPIONNATS_CDF.map((c) => (
+                  {championnatsProposes.map((c) => (
                     <option key={c.code} value={c.code}>
                       {c.code}-{c.label}
                     </option>
@@ -531,6 +581,12 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                   l'homogénéité — un paramétrage de championnat ne se corrige pas après le tirage.
                 </small>
               </label>
+            )}
+            {niveau === 'championnat' && championnatsProposes.length === 0 && (
+              <p className="hint">
+                {jeuFederal(jeu)?.label} n'a pas de liste de championnats : les critères sont
+                imposés par le jeu lui-même.
+              </p>
             )}
             <label>
               Comité organisateur
@@ -655,9 +711,11 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                 onChange={(e) => setCategorieAge(e.target.value as CategorieAge | '')}
               >
                 <option value="">Toutes catégories</option>
-                {Object.entries(CATEGORIE_AGE_LABELS).map(([value, label]) => (
+                {/* La liste du concours, pas celle des compétitions de clubs :
+                    le « +55 » n'est pas proposé à la création d'un concours. */}
+                {CATEGORIES_AGE_CONCOURS.map((value) => (
                   <option key={value} value={value}>
-                    {label}
+                    {CATEGORIE_AGE_LABELS[value]}
                   </option>
                 ))}
               </select>
