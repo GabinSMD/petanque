@@ -19,6 +19,7 @@ const ENTITY_TYPES = new Set([
   'licencie',
   'feuilleMatch',
   'photo',
+  'licencieEtranger',
 ]);
 const MAX_CHANGES_PER_PUSH = 2000;
 const PULL_PAGE_SIZE = 2000;

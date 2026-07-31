@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { LicenceEtrangereModal } from '../../components/LicenceEtrangereModal';
 import { LicenceScanModal } from '../../components/LicenceScanModal';
 import { Modal } from '../../components/Modal';
 import { MultisiteModal } from '../../components/MultisiteModal';
@@ -8,6 +9,7 @@ import { addTeam, deleteTeam, importerInscrits, insererEquipe, updateTeam } from
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
 import {
+  PAYS_LICENCE_ETRANGERE,
   aDesCriteresLicence,
   chercherEquipes,
   controlerEquipe,
@@ -60,6 +62,8 @@ export function TeamsTab({ concours, teams, poules }: Props) {
    * numéro : le joueur a une licence, elle n'est pas française.
    */
   const [etrangeres, setEtrangeres] = useState<string[]>(Array(nbPlayers).fill(''));
+  /** Index du joueur dont on ouvre la fiche étrangère, ou `null`. */
+  const [ficheEtrangere, setFicheEtrangere] = useState<number | null>(null);
   const [roles, setRoles] = useState<(RolePetanque | '')[]>(Array(nbPlayers).fill(''));
   const [club, setClub] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -296,16 +300,34 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   placeholder="N° licence"
                 />
                 {!licences[i]?.trim() && (
-                  <input
-                    className="licence-etrangere"
-                    value={etrangeres[i] ?? ''}
-                    onChange={(e) =>
-                      setEtrangeres(etrangeres.map((v, j) => (j === i ? e.target.value : v)))
-                    }
-                    placeholder="Pays si licence étrangère"
-                    title="Manuel §3.B.1, zone 21 : joueur affilié à la fédération de son pays. Code pays (BE, CH…) : il compte au contingent hors UE."
-                    maxLength={3}
-                  />
+                  <span className="licence-etrangere-groupe">
+                    {/* Une liste et non un code libre : le contingent hors UE se
+                        calcule sur ce code, et un « SUI » tapé à la main ne
+                        compterait dans aucun contrôle. */}
+                    <select
+                      className="licence-etrangere"
+                      value={etrangeres[i] ?? ''}
+                      onChange={(e) =>
+                        setEtrangeres(etrangeres.map((v, j) => (j === i ? e.target.value : v)))
+                      }
+                      title="Manuel §3.B.1, zone 21 : joueur affilié à la fédération de son pays. Le pays compte au contingent hors UE."
+                    >
+                      <option value="">Licence française</option>
+                      {PAYS_LICENCE_ETRANGERE.map((p) => (
+                        <option key={p.code} value={p.code}>
+                          {p.nom}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setFicheEtrangere(i)}
+                      title="Fiche de licence étrangère, conservée sur la base personnelle"
+                    >
+                      🌍 Fiche
+                    </button>
+                  </span>
                 )}
                 <input
                   className="club-input club-input-joueur"
@@ -654,6 +676,20 @@ export function TeamsTab({ concours, teams, poules }: Props) {
           dossard={insertionAvant}
           nbPlayers={nbPlayers}
           onClose={() => setInsertionAvant(null)}
+        />
+      )}
+
+      {ficheEtrangere !== null && (
+        <LicenceEtrangereModal
+          onChoisir={(joueur) => {
+            const i = ficheEtrangere;
+            setNames(names.map((n, j) => (j === i ? joueur.name : n)));
+            setEtrangeres(etrangeres.map((v, j) => (j === i ? joueur.licenceEtrangere : v)));
+            // Une licence étrangère n'est pas un numéro fédéral : le champ
+            // français reste vide, sinon on chercherait une fiche inexistante.
+            setLicences(licences.map((l, j) => (j === i ? '' : l)));
+          }}
+          onClose={() => setFicheEtrangere(null)}
         />
       )}
     </div>
