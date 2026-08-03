@@ -18,6 +18,7 @@
  * Il n'interdit pas de tirer : le manuel non plus. L'organisateur reste maître,
  * mais il a vu.
  */
+import type { BesoinTerrains } from './besoinTerrains';
 import type { AnomalieEquipe, ChampLicence, ControleEquipe } from './licences';
 
 export interface JoueurEnAnomalie {
@@ -49,10 +50,17 @@ export interface BilanAvantTirage {
   inconnues: number;
   /** Équipes en anomalie, par dossard croissant. */
   lignes: LigneBilanTirage[];
+  /**
+   * Besoin en terrains, comme le « Rapport avant tirage » du manuel l'annonce
+   * (« Vous aurez Besoin de 16 Terrains au maximum »). Absent quand la question
+   * n'a pas de sens — tir de précision, effectif que les poules refusent.
+   */
+  terrains?: BesoinTerrains;
 }
 
 export function bilanAvantTirage(
   equipes: { number: number; controle: ControleEquipe }[],
+  terrains?: BesoinTerrains,
 ): BilanAvantTirage {
   const lignes: LigneBilanTirage[] = [];
   let conformes = 0;
@@ -80,5 +88,6 @@ export function bilanAvantTirage(
     conformes,
     inconnues,
     lignes: lignes.sort((a, b) => a.number - b.number),
+    terrains,
   };
 }

@@ -1,5 +1,6 @@
 import type { BilanAvantTirage } from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../lib/labels';
+import { BesoinTerrainsHint } from './BesoinTerrains';
 import { Modal } from './Modal';
 
 /**
@@ -36,6 +37,9 @@ export function BilanTirageModal({ bilan, concoursId, onTirer, onCorriger }: Pro
             } dans le fichier des licenciés.`
           : '.'}
       </p>
+      {/* Le rapport fédéral annonce les terrains dans la même fenêtre que le
+          contrôle des inscriptions : on fait pareil. */}
+      <BesoinTerrainsHint besoin={bilan.terrains} />
       <ul className="liste-bilan">
         {bilan.lignes.map((ligne) => (
           <li key={ligne.number}>
