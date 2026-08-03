@@ -1,4 +1,4 @@
-import type { CategorieAge, CategorieCritere, ConcoursMode, ConcoursStatus, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
+import type { CategorieAge, CategorieCritere, ConcoursMode, ConcoursStatus, EtatMise, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
 import type { AnomalieEquipe, ChampLicence } from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
@@ -164,6 +164,13 @@ export function entrantWord(mode: ConcoursMode, plural = false): string {
   const word = isTirMode(mode) ? 'tireur' : isIndividualMode(mode) ? 'participant' : 'équipe';
   return plural ? `${word}s` : word;
 }
+
+/** Les trois positions du cadre « Mises » (manuel §3.B.1, zone 19). */
+export const ETAT_MISE_LABELS: Record<EtatMise, string> = {
+  non_paye: 'Non payé',
+  paye: 'Payé',
+  facturation: 'Facturation',
+};
 
 export const STATUS_LABELS: Record<ConcoursStatus, string> = {
   inscriptions: 'Inscriptions',

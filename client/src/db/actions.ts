@@ -425,7 +425,9 @@ export async function importerInscrits(
     })),
     club: e.club,
     forfait: e.forfait,
-    paid: e.paid || undefined,
+    mise: e.mise,
+    // Ancien booléen gardé en accord, pour les appareils restés en arrière.
+    paid: e.mise === 'paye' || undefined,
     updatedAt: now,
   }));
 

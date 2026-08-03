@@ -442,6 +442,25 @@ input:disabled, select:disabled, input[readonly] {
   font-size: 1rem;
 }
 
+/* Mises : le sélecteur à trois états et son commentaire, l'un sous l'autre. */
+.mise-select {
+  min-width: 7.5rem;
+}
+
+.mise-commentaire {
+  margin-top: 0.2rem;
+  min-width: 7.5rem;
+  font-size: 0.85em;
+}
+
+@media print {
+  /* À l'impression, la liste des équipes n'a pas besoin du commentaire : le
+     bilan des paiements le porte déjà, dans sa propre colonne. */
+  .mise-commentaire {
+    display: none;
+  }
+}
+
 /* Liste spécifique : une colonne étroite, la case et rien d'autre. */
 .cell-retenue {
   width: 1.6rem;

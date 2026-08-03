@@ -11,7 +11,9 @@
 import { Fragment } from 'react';
 import type { BilanAvantTirage, Concours, Match, Poule, Team } from '@shared';
 import {
+  bilanMises,
   dureeMinutes,
+  etatMise,
   libelleClubs,
   partiesLancees,
   presseSections,
@@ -20,7 +22,7 @@ import {
   type TriEquipes,
 } from '@shared';
 import { matchLabel, sideName } from '../lib/matchLabel';
-import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../lib/labels';
+import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS, ETAT_MISE_LABELS } from '../lib/labels';
 
 const maj = (s: string): string => s.toLocaleUpperCase('fr-FR');
 
@@ -120,7 +122,7 @@ export function BilanPaiements({
 }) {
   const mise = concours.miseParEquipe ?? 0;
   const ordonnees = trierEquipes(teams, tri);
-  const regles = ordonnees.filter((t) => t.paid);
+  const bilan = bilanMises(ordonnees, mise);
   const euros = (n: number) => `${n.toLocaleString('fr-FR')} €`;
 
   return (
@@ -132,8 +134,9 @@ export function BilanPaiements({
             <th>N°</th>
             <th>Équipe</th>
             <th>Club</th>
-            <th>Réglé</th>
+            <th>Mise</th>
             <th>Montant</th>
+            <th>Commentaire</th>
           </tr>
         </thead>
         <tbody>
@@ -142,23 +145,33 @@ export function BilanPaiements({
               <td className="cell-number">{t.number}</td>
               <td>{t.players.map((p) => maj(p.name)).join(' / ')}</td>
               <td>{libelleClubs(t.players, t.club)}</td>
-              <td>{t.paid ? 'oui' : 'non'}</td>
-              <td>{t.paid && mise > 0 ? euros(mise) : ''}</td>
+              <td>{ETAT_MISE_LABELS[etatMise(t)]}</td>
+              {/* Le montant n'est porté que par les équipes payées : une
+                  facturation n'est pas en caisse. */}
+              <td>{etatMise(t) === 'paye' && mise > 0 ? euros(mise) : ''}</td>
+              <td>{t.commentaireMise ?? ''}</td>
             </tr>
           ))}
         </tbody>
       </table>
       <ul className="print-bilan">
         <li>
-          Équipes réglées : {regles.length} / {ordonnees.length}
+          Équipes réglées : {bilan.parEtat.paye} / {ordonnees.length - bilan.forfaits}
+          {bilan.forfaits > 0 && ` (+ ${bilan.forfaits} forfait${bilan.forfaits > 1 ? 's' : ''})`}
         </li>
+        {bilan.parEtat.facturation > 0 && (
+          <li>À facturer : {bilan.parEtat.facturation} équipe{bilan.parEtat.facturation > 1 ? 's' : ''}</li>
+        )}
         {mise > 0 && (
           <>
             <li>Mise par équipe : {euros(mise)}</li>
+            {/* Trois lignes et non une : le trésorier signe un compte de caisse,
+                pas une addition qui mélange l'encaissé et le facturé. */}
             <li>
-              <strong>Total encaissé : {euros(regles.length * mise)}</strong>
+              <strong>Total encaissé : {euros(bilan.encaisse)}</strong>
             </li>
-            <li>Reste à encaisser : {euros((ordonnees.length - regles.length) * mise)}</li>
+            {bilan.aFacturer > 0 && <li>Total à facturer : {euros(bilan.aFacturer)}</li>}
+            <li>Reste à encaisser : {euros(bilan.restantDu)}</li>
           </>
         )}
       </ul>

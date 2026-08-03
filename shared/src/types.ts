@@ -7,6 +7,12 @@
 export type TeamFormat = 'tete_a_tete' | 'doublette' | 'triplette';
 
 /**
+ * Mise d'une équipe : les trois positions du cadre « Mises » (manuel §3.B.1,
+ * zone 19). Les règles qui vont avec sont dans `engine/mises.ts`.
+ */
+export type EtatMise = 'non_paye' | 'paye' | 'facturation';
+
+/**
  * Formule du concours :
  * - poules : poules de 3/4 puis tableau (le classique FFPJP)
  * - elimination_directe : tableau à la coupe
@@ -314,8 +320,23 @@ export interface Team {
   players: Player[];
   club?: string;
   forfait: boolean;
-  /** Engagement réglé (suivi de caisse). */
+  /**
+   * Engagement réglé. **Ancien champ**, gardé en accord avec `mise` : une
+   * tablette restée sur la version précédente ne lit que celui-ci. Voir
+   * `engine/mises.ts`.
+   */
   paid?: boolean;
+  /**
+   * Mise de l'équipe (manuel §3.B.1, zone 19) : le cadre « Mises » a **trois**
+   * positions — Non Payé, Payé, Facturation. Absent sur les équipes inscrites
+   * avant ce champ, où `paid` fait foi.
+   */
+  mise?: EtatMise;
+  /**
+   * Commentaire libre du cadre « Mises » (« chèque n° 214 », « facture au
+   * comité »). Le champ est *dans* ce cadre sur la copie d'écran, d'où son nom.
+   */
+  commentaireMise?: string;
   /**
    * Horodatage du dépôt des licences (manuel §3.C) : l'équipe a présenté ses
    * licences à la table de marque. Absent = pas encore passée.

@@ -22,7 +22,7 @@ const equipe = (
 describe('export d\'une liste d\'inscrits (§3.B.10.A)', () => {
   it('porte l\'en-tête que notre import reconnaît', () => {
     const csv = csvInscrits([equipe(1, [['DUPOND Jean', '02600100']])]);
-    expect(csv.split('\r\n')[0]).toBe('N°;Joueurs;Licences;Club;Forfait;Réglé');
+    expect(csv.split('\r\n')[0]).toBe('N°;Joueurs;Licences;Club;Forfait;Mise');
   });
 
   it('se relit tel quel : c\'est tout l\'intérêt du fichier', () => {
@@ -32,7 +32,7 @@ describe('export d\'une liste d\'inscrits (§3.B.10.A)', () => {
     const teams = [
       equipe(1, [['DUPOND Jean', '02600100'], ['MARTIN Lina', '02600101']], {
         club: 'Boule de l\'Avenir',
-        paid: true,
+        mise: 'paye',
       }),
       equipe(2, [['BLANC Odette'], ['NOIR Paul']], { forfait: true }),
       equipe(3, [['SEUL Gérard', '02600103']], { club: 'Crest' }),
@@ -41,7 +41,7 @@ describe('export d\'une liste d\'inscrits (§3.B.10.A)', () => {
     expect(relu.ok).toBe(true);
     if (!relu.ok) return;
     expect(relu.equipes).toHaveLength(3);
-    expect(relu.equipes[0]).toMatchObject({ number: 1, paid: true, forfait: false });
+    expect(relu.equipes[0]).toMatchObject({ number: 1, mise: 'paye', forfait: false });
     // Le lecteur rend le club au niveau de l'équipe : le fichier n'a qu'une
     // colonne Club, et c'est l'insertion qui le recopie sur les joueurs.
     expect(relu.equipes[0]!.club).toBe('Boule de l\'Avenir');
@@ -86,5 +86,21 @@ describe('export d\'une liste d\'inscrits (§3.B.10.A)', () => {
 
   it('sur une liste vide, ne rend que l\'en-tête', () => {
     expect(csvInscrits([]).split('\r\n')).toHaveLength(1);
+  });
+});
+
+describe('les trois états survivent à l\'aller-retour du fichier', () => {
+  it('une facturation reste une facturation', () => {
+    // C'est tout l'intérêt de la colonne : un export qui ramène « oui/non »
+    // perdrait la distinction, et le trésorier reprendrait un compte faux.
+    const teams = [
+      equipe(1, [['PAYE Jean', '02600100']], { mise: 'paye' }),
+      equipe(2, [['FACTURE Lina', '02600101']], { mise: 'facturation' }),
+      equipe(3, [['IMPAYE Paul', '02600102']], { mise: 'non_paye' }),
+    ];
+    const relu = lireInscritsCsv(csvInscrits(teams));
+    expect(relu.ok).toBe(true);
+    if (!relu.ok) return;
+    expect(relu.equipes.map((e) => e.mise)).toEqual(['paye', 'facturation', 'non_paye']);
   });
 });
