@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { ConcoursMode, Discipline, TeamFormat } from '@shared';
+import { bornesParties } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
   CATEGORY_SUGGESTIONS,
@@ -52,6 +53,12 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const [planTerrains, setPlanTerrains] = useState(true);
   const [scoreMax, setScoreMax] = useState(13);
   const [nbRondes, setNbRondes] = useState(4);
+  /**
+   * Bornes du nombre de parties (§3.D.14). L'appariement strict ne se choisit pas
+   * ici mais dans les paramètres : à la création, ce sont donc les bornes de la
+   * formule non stricte.
+   */
+  const bornes = mode ? bornesParties({ mode }) : undefined;
   // Marathon : championnat tronqué. Vide = calendrier complet.
   const [marathonRondes, setMarathonRondes] = useState<number | ''>('');
   const [tempsLimite, setTempsLimite] = useState<number | ''>('');
@@ -264,11 +271,16 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 {isTirMode(mode) ? 'Nombre de séries' : 'Nombre de rondes'}
                 <input
                   type="number"
-                  min={1}
-                  max={12}
+                  min={bornes?.min ?? 1}
+                  max={bornes?.max ?? 12}
                   value={nbRondes}
                   onChange={(e) => setNbRondes(Number(e.target.value))}
                 />
+                {bornes && (
+                  <span className="hint">
+                    De {bornes.min} à {bornes.max} parties (manuel §3.D.14).
+                  </span>
+                )}
               </label>
             )}
             {mode === 'championnat' && (
@@ -276,8 +288,8 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 Rondes du marathon (facultatif)
                 <input
                   type="number"
-                  min={1}
-                  max={20}
+                  min={bornes?.min ?? 1}
+                  max={bornes?.max ?? 20}
                   value={marathonRondes}
                   placeholder="calendrier complet"
                   onChange={(e) =>
