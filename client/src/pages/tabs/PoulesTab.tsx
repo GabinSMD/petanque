@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
+  besoinTerrains,
   dureeMinutes,
   pouleGroupOutcome,
   pouleOutcome,
@@ -23,6 +24,7 @@ import {
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
 import { ProtectionsModal } from '../../components/ProtectionsModal';
+import { BesoinTerrainsHint } from '../../components/BesoinTerrains';
 import { useBilanAvantTirage, useModeFederalActif } from '../../db/hooks';
 import { BilanTirageModal } from '../../components/BilanTirageModal';
 import { TeamLabel } from '../../components/TeamLabel';
@@ -185,6 +187,12 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             />
           )}
           <SeedPicker teams={teams} seeds={seeds} onChange={setSeeds} />
+          {/* Le besoin en terrains se dit avant le tirage, pour tout concours —
+              le rapport de contrôle des licences, lui, ne s'ouvre que sur un
+              concours fédéral. */}
+          <BesoinTerrainsHint
+            besoin={besoinTerrains(concours, teams.filter((t) => !t.forfait).length)}
+          />
           {error && <p className="form-error">{error}</p>}
           <button
             className="btn btn-primary"

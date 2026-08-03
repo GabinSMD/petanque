@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Concours, Match, RolePetanque, Team } from '@shared';
 import {
+  besoinTerrains,
   championnatRondes,
   proposerRondeSupplementaire,
   rondeComplete,
@@ -8,6 +9,7 @@ import {
   rondesTirees,
 } from '@shared';
 import { annulerDerniereRonde, setMatchTerrain, tirerRonde, updateConcours } from '../../db/actions';
+import { BesoinTerrainsHint } from '../../components/BesoinTerrains';
 import { useBilanAvantTirage } from '../../db/hooks';
 import { BilanTirageModal } from '../../components/BilanTirageModal';
 import { ScoreForm } from '../../components/ScoreForm';
@@ -152,6 +154,9 @@ export function RondesTab({ concours, teams, matches }: Props) {
               une équipe.
             </p>
           )}
+          {/* Même annonce qu'en poules : le besoin en terrains vaut pour tout
+              concours, fédéral ou non. */}
+          <BesoinTerrainsHint besoin={besoinTerrains(concours, active.length)} />
           {error && <p className="form-error">{error}</p>}
           <button
             className="btn btn-primary"

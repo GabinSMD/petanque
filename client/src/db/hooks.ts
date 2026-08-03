@@ -17,6 +17,7 @@ import {
   aDesCriteresLicence,
   besoinModeFederal,
   bilanAvantTirage,
+  besoinTerrains,
   controlerEquipe,
   criteresDuConcours,
   type BilanAvantTirage,
@@ -171,10 +172,13 @@ export function useBilanAvantTirage(
     if (!concours || !aDesCriteresLicence(concours)) return null;
     const fiches = new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l]));
     const criteres = criteresDuConcours(concours);
+    const engagees = teams.filter((t) => !t.forfait);
     return bilanAvantTirage(
-      teams
-        .filter((t) => !t.forfait)
-        .map((t) => ({ number: t.number, controle: controlerEquipe(t.players, fiches, criteres) })),
+      engagees.map((t) => ({
+        number: t.number,
+        controle: controlerEquipe(t.players, fiches, criteres),
+      })),
+      besoinTerrains(concours, engagees.length),
     );
   }, [concours, teams, licencies]);
 }
