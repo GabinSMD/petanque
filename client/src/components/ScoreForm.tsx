@@ -1,6 +1,13 @@
 import { useRef, useState, type FocusEvent, type FormEvent } from 'react';
 import type { Concours, Match } from '@shared';
-import { clearScore, setMatchVainqueur, setScore } from '../db/actions';
+import { evolutionEnTexte } from '@shared';
+import {
+  ajouterMeneAuMatch,
+  clearScore,
+  retirerMeneDuMatch,
+  setMatchVainqueur,
+  setScore,
+} from '../db/actions';
 
 interface Props {
   concours: Concours;
@@ -27,6 +34,8 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
   const [error, setError] = useState<string | null>(null);
   /** Saisir le score alors que le concours se joue au vainqueur seul. */
   const [scoreQuandMeme, setScoreQuandMeme] = useState(false);
+  /** Panneau des mènes, replié par défaut. */
+  const [menesOuvertes, setMenesOuvertes] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   if (match.byeA || match.byeB) {
@@ -176,6 +185,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
   }
 
   return (
+    <>
     <form ref={formRef} className="score-form" onSubmit={submit} onBlur={onBlur}>
       <input
         type="number"
@@ -225,6 +235,87 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
         </>
       )}
       {error && <span className="score-error">{error}</span>}
+      <button
+        type="button"
+        className="btn-icon"
+        onClick={() => setMenesOuvertes(!menesOuvertes)}
+        title="Saisir la partie mène par mène (manuel : « Evolution du Score »)"
+        aria-expanded={menesOuvertes}
+      >
+        ⊕ mènes
+      </button>
     </form>
+    {menesOuvertes && (
+      <MenesInline concours={concours} match={match} labelA={labelA} labelB={labelB} />
+    )}
+    </>
+  );
+}
+
+/**
+ * Saisie mène par mène — les boutons `+` de l'écran « Voir Scores » du manuel,
+ * plus l'évolution en clair et une annulation.
+ *
+ * Replié par défaut : sur le terrain, la table de marque saisit un score final,
+ * et n'ouvre ceci que pour suivre une partie en cours ou reconstituer une
+ * contestation.
+ */
+function MenesInline({
+  concours,
+  match,
+  labelA,
+  labelB,
+}: {
+  concours: Concours;
+  match: Match;
+  labelA?: string;
+  labelB?: string;
+}) {
+  const [points, setPoints] = useState(1);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const menes = match.menes ?? [];
+
+  const ajouter = async (camp: 'a' | 'b') => {
+    setErreur(null);
+    try {
+      await ajouterMeneAuMatch(concours, match, camp, points);
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : 'Mène refusée');
+    }
+  };
+
+  return (
+    <div className="menes-inline">
+      <span className="menes-evolution" title="Evolution du Score">
+        {evolutionEnTexte(menes)}
+      </span>
+      <label className="menes-points">
+        points
+        <select value={points} onChange={(e) => setPoints(Number(e.target.value))}>
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button type="button" className="btn btn-sm" onClick={() => void ajouter('a')}>
+        + {labelA ?? 'A'}
+      </button>
+      <button type="button" className="btn btn-sm" onClick={() => void ajouter('b')}>
+        + {labelB ?? 'B'}
+      </button>
+      {menes.length > 0 && (
+        <button
+          type="button"
+          className="btn-icon"
+          onClick={() => void retirerMeneDuMatch(concours, match)}
+          title="Annuler la dernière mène"
+        >
+          ↶
+        </button>
+      )}
+      {erreur && <span className="score-error">{erreur}</span>}
+    </div>
   );
 }

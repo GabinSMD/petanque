@@ -442,6 +442,45 @@ input:disabled, select:disabled, input[readonly] {
   font-size: 1rem;
 }
 
+/* Évolution du score sur la page publique : discrète, à côté du score. */
+.public-evolution {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8em;
+  opacity: 0.75;
+  margin-left: 0.3rem;
+}
+
+/* Mènes : le panneau replié sous la saisie du score. */
+.menes-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.3rem;
+  font-size: 0.9em;
+}
+
+.menes-evolution {
+  font-family: ui-monospace, monospace;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  background: var(--surface-2, #f0f0f0);
+}
+
+.menes-points {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+@media print {
+  /* La saisie ne s'imprime pas ; l'évolution figure sur les documents qui la
+     portent (page publique, résultats). */
+  .menes-inline {
+    display: none;
+  }
+}
+
 /* Mises : le sélecteur à trois états et son commentaire, l'un sous l'autre. */
 .mise-select {
   min-width: 7.5rem;

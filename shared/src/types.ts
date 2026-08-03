@@ -13,6 +13,15 @@ export type TeamFormat = 'tete_a_tete' | 'doublette' | 'triplette';
 export type EtatMise = 'non_paye' | 'paye' | 'facturation';
 
 /**
+ * Une mène : le camp qui l'a remportée et ce qu'elle lui a rapporté. Les règles
+ * qui vont avec sont dans `engine/evolutionScore.ts`.
+ */
+export interface Mene {
+  camp: 'a' | 'b';
+  points: number;
+}
+
+/**
  * Formule du concours :
  * - poules : poules de 3/4 puis tableau (le classique FFPJP)
  * - elimination_directe : tableau à la coupe
@@ -413,6 +422,13 @@ export interface Match {
   qualifFromB?: string;
   scoreA: number | null;
   scoreB: number | null;
+  /**
+   * Historique mène par mène (manuel, copie d'écran p.60 : « Evolution du
+   * Score »). Facultatif : le score final reste la référence, ceci n'est qu'un
+   * détail — et il doit toujours redonner ce score. Voir
+   * `engine/evolutionScore.ts`.
+   */
+  menes?: Mene[];
   done: boolean;
   terrain: number | null;
   /**
