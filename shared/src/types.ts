@@ -48,13 +48,33 @@ export type MatchStage = 'poule' | 'principal' | 'consolante' | 'complementaire'
  * et la remontée fédérale.
  */
 export type NiveauConcours =
-  | 'club'
+  /* Les huit valeurs de la liste fédérale (manuel §3.A, copie d'écran p.13). */
+  /** « Concours Départemental » — code de numéro `DEPT`. */
   | 'departemental'
+  /** « Concours Régional ». */
   | 'regional'
+  /** « Championnat Départemental Honorifique ». */
+  | 'championnat_departemental_honorifique'
   | 'national'
   | 'international'
-  | 'championnat'
-  | 'coupe_de_france';
+  /** « Qualificatif Départemental » — code de numéro `QUALIF_CD`. */
+  | 'qualificatif_departemental'
+  /** « Championnat Départemental » — code de numéro `CD`. */
+  | 'championnat_departemental'
+  /** « Championnat Régional ». */
+  | 'championnat_regional'
+  /* Les deux qui sont à nous, absentes de la liste fédérale. */
+  /** Concours interne au club, hors fédération : pas de numéro. */
+  | 'club'
+  /** Coupe de France : le manuel la traite au menu « Championnat – Coupe » (§3.E). */
+  | 'coupe_de_france'
+  /**
+   * **Ancienne valeur**, gardée pour les concours déjà en base : elle
+   * confondait les quatre championnats de la liste fédérale. Plus proposée à la
+   * saisie ; traitée comme un championnat départemental, seul dont le code soit
+   * attesté.
+   */
+  | 'championnat';
 
 /** Discipline fédérale (le jeu diffère, la gestion est identique). */
 export type Discipline = 'petanque' | 'jeu_provencal';

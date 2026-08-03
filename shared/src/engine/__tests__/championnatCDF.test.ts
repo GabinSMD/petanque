@@ -46,7 +46,6 @@ describe('choix CDF : les championnats du manuel (§3.A)', () => {
       critereSexe: 'masculin',
       critereClassification: 'tous',
       homogene: true,
-      niveau: 'championnat',
     });
     expect(parametresCDF('17')!.critereSexe).toBe('feminin');
     // « 18-Tir de Précision Junior Masculin » : Individuel, Junior strict.
@@ -75,7 +74,6 @@ describe('choix CDF : les championnats du manuel (§3.A)', () => {
       critereSexe: 'mixte',
       critereClassification: 'tous',
       homogene: true,
-      niveau: 'championnat',
     });
   });
 
@@ -240,7 +238,6 @@ describe('« Jeu » : le type de championnat (§3.A, copies d\'écran p.14-15)',
       critereSexe: 'tous',
       critereClassification: 'tous',
       homogene: true,
-      niveau: 'championnat',
     });
   });
 

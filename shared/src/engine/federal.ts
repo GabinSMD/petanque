@@ -25,14 +25,63 @@ export function numeroPremiereEquipe(
 }
 
 const NIVEAU_MOTS: Record<NiveauConcours, string> = {
-  club: 'CLUB',
   departemental: 'DEPARTEMENTAL',
   regional: 'REGIONAL',
+  championnat_departemental_honorifique: 'CHAMPIONNAT-DEPARTEMENTAL-HONORIFIQUE',
   national: 'NATIONAL',
   international: 'INTERNATIONAL',
-  championnat: 'CHAMPIONNAT',
+  qualificatif_departemental: 'QUALIFICATIF-DEPARTEMENTAL',
+  championnat_departemental: 'CHAMPIONNAT-DEPARTEMENTAL',
+  championnat_regional: 'CHAMPIONNAT-REGIONAL',
+  club: 'CLUB',
   coupe_de_france: 'COUPE-DE-FRANCE',
+  championnat: 'CHAMPIONNAT',
 };
+
+/**
+ * Les huit niveaux de la liste fédérale, dans l'ordre de la liste déroulante
+ * (manuel §3.A, copie d'écran p.13) : « Concours Départemental », « Concours
+ * Régional », « Championnat Départemental Honorifique », « National »,
+ * « International », « Qualificatif Départemental », « Championnat
+ * Départemental », « Championnat Régional ».
+ *
+ * `club` et `coupe_de_france` n'y sont pas : le premier est à nous — un concours
+ * interne, hors fédération — et le second relève du menu « Championnat – Coupe »
+ * (§3.E), pas de cette liste.
+ */
+export const NIVEAUX_FEDERAUX: NiveauConcours[] = [
+  'departemental',
+  'regional',
+  'championnat_departemental_honorifique',
+  'national',
+  'international',
+  'qualificatif_departemental',
+  'championnat_departemental',
+  'championnat_regional',
+];
+
+/**
+ * Le niveau est-il un championnat ? Quatre le sont dans la liste fédérale, là où
+ * nous n'en avions qu'un — d'où l'impossibilité de dire lequel, et donc de
+ * composer un numéro de concours (#111).
+ *
+ * Sert aussi à décider si la liste « Choix CDF » s'affiche. Le manuel la montre
+ * pour « Championnat Départemental » et « Qualificatif Départemental » ; je
+ * l'étends aux deux autres championnats, ce qui est une inférence — mais
+ * proposer une liste n'impose rien, et un championnat régional se choisit dans
+ * la même liste de dix-sept.
+ */
+export function estNiveauChampionnat(niveau: NiveauConcours | undefined): boolean {
+  if (!niveau) return false;
+  return (
+    niveau === 'championnat_departemental' ||
+    niveau === 'championnat_regional' ||
+    niveau === 'championnat_departemental_honorifique' ||
+    niveau === 'qualificatif_departemental' ||
+    // Ancienne valeur des concours déjà en base.
+    niveau === 'championnat'
+  );
+}
 
 const FORMATION_MOTS: Record<TeamFormat, string> = {
   tete_a_tete: 'TETE-A-TETE',
