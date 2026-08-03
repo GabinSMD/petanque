@@ -4,7 +4,7 @@ import {
   championnatRondes,
   proposerRondeSupplementaire,
   rondeComplete,
-  rondeStandings,
+  classementRondes,
   rondesTirees,
 } from '@shared';
 import { annulerDerniereRonde, setMatchTerrain, tirerRonde, updateConcours } from '../../db/actions';
@@ -47,7 +47,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
       : (concours.nbRondes ?? 4);
   const currentComplete = tirees > 0 && rondeComplete(rondeMatches, tirees - 1);
   const allDone = tirees >= planned && currentComplete && rondeMatches.every((m) => m.done);
-  const standings = rondeStandings(teams, rondeMatches);
+  const standings = classementRondes(concours, teams, rondeMatches);
   const locked = concours.status === 'termine';
 
   /**

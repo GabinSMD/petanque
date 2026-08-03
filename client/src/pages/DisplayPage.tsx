@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
+import { pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
 import { BracketView } from './tabs/BracketTab';
 import { SideLabel } from './tabs/RondesTab';
@@ -159,7 +159,7 @@ function DisplayRondes({
   const current = rondeMs
     .filter((m) => m.round === tirees - 1)
     .sort((a, b) => a.position - b.position);
-  const standings = rondeStandings(teams, rondeMs);
+  const standings = classementRondes(concours, teams, rondeMs);
 
   return (
     <div className="display-rondes">

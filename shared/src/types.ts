@@ -13,6 +13,16 @@ export type TeamFormat = 'tete_a_tete' | 'doublette' | 'triplette';
 export type EtatMise = 'non_paye' | 'paye' | 'facturation';
 
 /**
+ * Deux équipes dont l'organisateur a échangé les places au classement (manuel,
+ * classeur des phases finales : « CHANGEMENT DANS LE CLASSEMENT — suite à une
+ * égalité »). Les règles sont dans `engine/permutationClassement.ts`.
+ */
+export interface PermutationClassement {
+  a: string;
+  b: string;
+}
+
+/**
  * Une mène : le camp qui l'a remportée et ce qu'elle lui a rapporté. Les règles
  * qui vont avec sont dans `engine/evolutionScore.ts`.
  */
@@ -165,6 +175,13 @@ export interface Concours {
   category?: string;
   /** Niveau fédéral du concours. */
   niveau?: NiveauConcours;
+  /**
+   * Interversions décidées par l'organisateur dans le classement des rondes,
+   * quand les départages automatiques laissent une égalité (manuel, classeur des
+   * phases finales). Enregistrées par équipe et non par rang : le classement est
+   * vivant, une place ne désigne pas toujours la même équipe.
+   */
+  permutationsClassement?: PermutationClassement[];
   /** Comité départemental organisateur (ex. « CD 38 Isère »). */
   comiteOrganisateur?: string;
   /** Club organisateur. */

@@ -34,6 +34,7 @@ export * from './engine/licences';
 export * from './engine/licencesImport';
 export * from './engine/mises';
 export * from './engine/evolutionScore';
+export * from './engine/permutationClassement';
 export * from './engine/nouveautes';
 export * from './engine/accompagnement';
 export * from './engine/parcours';

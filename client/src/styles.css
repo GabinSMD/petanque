@@ -442,6 +442,46 @@ input:disabled, select:disabled, input[readonly] {
   font-size: 1rem;
 }
 
+/* Interversion du classement : la commande et la liste des échanges. */
+.permutations-classement {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border, #ddd);
+}
+
+.permutations-classement h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.permutations-liste {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.permutations-liste li {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.1rem 0;
+}
+
+.hint-attention {
+  color: var(--warning, #a15c00);
+}
+
+/* Classement : ligne dont la place a été échangée à la main. */
+.standing-permutee {
+  background: color-mix(in srgb, var(--accent, #1d3d9c) 6%, transparent);
+}
+
+.standing-marque-permutee {
+  margin-left: 0.15rem;
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
 /* Évolution du score sur la page publique : discrète, à côté du score. */
 .public-evolution {
   font-family: ui-monospace, monospace;
