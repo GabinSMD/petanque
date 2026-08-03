@@ -42,6 +42,11 @@ import {
   type Discipline,
   type Formule,
   type NiveauConcours,
+  ajouterMeneBornee,
+  menesPourScore,
+  validerScoreEnCours,
+  retirerDerniereMene,
+  scoreDepuisMenes,
   type Licencie,
   type LicencieEtranger,
   type SaisieFicheEtrangere,
@@ -1122,7 +1127,63 @@ export async function setScore(
   const check = validateScore(scoreA, scoreB, concours.scoreMax);
   if (!check.ok) throw new Error(check.error);
   // Le score prime : on retire le vainqueur désigné pour n'avoir qu'une vérité.
-  await putEntity('match', { ...match, scoreA, scoreB, vainqueur: undefined, done: true });
+  // Les mènes suivent la même règle : un historique qui ne fait plus le score
+  // enregistré est écarté, pas rattrapé.
+  await putEntity('match', {
+    ...match,
+    scoreA,
+    scoreB,
+    menes: menesPourScore(match.menes, scoreA, scoreB),
+    vainqueur: undefined,
+    done: true,
+  });
+  await recomputeAfter(concours, match);
+}
+
+/**
+ * Enregistre une mène de plus, et le score qui en découle.
+ *
+ * C'est l'équivalent des boutons `+` de l'écran « Voir Scores » du manuel. Le
+ * score final reste écrit dans `scoreA`/`scoreB` : tout le reste de
+ * l'application le lit là, et rien n'a à connaître les mènes.
+ */
+export async function ajouterMeneAuMatch(
+  concours: Concours,
+  match: Match,
+  camp: 'a' | 'b',
+  points: number,
+): Promise<void> {
+  const menes = ajouterMeneBornee(match.menes ?? [], camp, points, concours.scoreMax);
+  const total = scoreDepuisMenes(menes);
+  // `validateScore` juge des scores **finaux** : l'appliquer ici interdisait
+  // toute mène, puisqu'un score en cours n'a pas de gagnant à 13.
+  if (!validerScoreEnCours(total.a, total.b, concours.scoreMax)) {
+    throw new Error('Score impossible en cours de partie');
+  }
+  const termine = total.a >= concours.scoreMax || total.b >= concours.scoreMax;
+  await putEntity('match', {
+    ...match,
+    menes,
+    scoreA: total.a,
+    scoreB: total.b,
+    vainqueur: undefined,
+    done: termine,
+  });
+  if (termine) await recomputeAfter(concours, match);
+}
+
+/** Annule la dernière mène — et le score revient avec elle. */
+export async function retirerMeneDuMatch(concours: Concours, match: Match): Promise<void> {
+  const menes = retirerDerniereMene(match.menes ?? []);
+  const total = scoreDepuisMenes(menes);
+  await putEntity('match', {
+    ...match,
+    menes,
+    scoreA: menes.length > 0 ? total.a : null,
+    scoreB: menes.length > 0 ? total.b : null,
+    vainqueur: undefined,
+    done: false,
+  });
   await recomputeAfter(concours, match);
 }
 
@@ -1131,6 +1192,9 @@ export async function clearScore(concours: Concours, match: Match): Promise<void
     ...match,
     scoreA: null,
     scoreB: null,
+    // L'historique s'en va avec le score : garder les mènes d'une partie dont on
+    // vient d'effacer le résultat laisserait un détail sans son total.
+    menes: undefined,
     vainqueur: undefined,
     done: false,
   });

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, PhotoConcours, Poule, Team } from '@shared';
-import { EMPLACEMENTS_PHOTO, photosPubliables, pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
+import { EMPLACEMENTS_PHOTO, evolutionEnTexte, photosPubliables, pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
 import { matchLabel, pendingMatchesForTeam, sideName, teamSideInMatch } from '../lib/matchLabel';
 import { followedTeams, pushSupported, subscribeForTeams } from '../lib/push';
 import { BracketView } from './tabs/BracketTab';
@@ -666,6 +666,14 @@ function ResultsView({
                             <strong className="public-score">
                               {m.done ? `${m.scoreA}–${m.scoreB}` : '·'}
                             </strong>
+                            {/* « Evolution du Score » : la page publiée du manuel
+                                la porte, et c'est ce qui permet de suivre une
+                                partie qui n'est pas finie. */}
+                            {m.menes && m.menes.length > 0 && (
+                              <span className="public-evolution" title="Evolution du score">
+                                {evolutionEnTexte(m.menes)}
+                              </span>
+                            )}
                             <TeamLabel
                               team={m.teamBId ? teamsById.get(m.teamBId) : null}
                               compact
