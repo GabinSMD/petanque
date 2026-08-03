@@ -13,6 +13,7 @@ import type {
 import {
   CATEGORIES_AGE_CONCOURS,
   JEUX_FEDERAUX,
+  categorieDuDessous,
   championnatsDuJeu,
   designationCategorie,
   estConcoursOfficiel,
@@ -754,7 +755,21 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           {categorieAge !== '' && (
             <label className="checkbox-label">
               <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} />
-              Strict : refuser les catégories d'âge inférieures
+              Strict : n'accepter que cette catégorie
+              {/* La fenêtre fédérale renomme ses étiquettes quand Strict est
+                  décoché — « Sénior (Junior) ». Nos étiquettes portent déjà les
+                  bornes d'âge, donc on le dit ici plutôt que d'empiler deux
+                  parenthèses. Sans cette phrase, l'écran laisse croire qu'un
+                  concours sénior n'accepte que des séniors. */}
+              <span className="hint">
+                {strict
+                  ? 'Seuls les licenciés de cette catégorie sont acceptés.'
+                  : categorieDuDessous(categorieAge)
+                    ? `Décoché : les ${CATEGORIE_AGE_LABELS[categorieDuDessous(categorieAge)!]
+                        .split(' (')[0]
+                        ?.toLowerCase()} sont admis aussi — une seule catégorie en dessous, comme dans le logiciel fédéral.`
+                    : 'Aucune catégorie ne s\'ouvre en dessous de celle-ci.'}
+              </span>
             </label>
           )}
           <label className="checkbox-label">

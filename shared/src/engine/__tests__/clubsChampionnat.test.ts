@@ -131,16 +131,23 @@ describe('compétitions de clubs prédéfinies', () => {
 
   it('les jeunes admettent les cadets, et rien de plus jeune', () => {
     // « Juniors (Cadet) » sur le panneau fédéral : une seule catégorie s'ouvre
-    // en dessous. J'avais ouvert toutes les catégories inférieures.
+    // en dessous. On vérifie la règle sur des joueurs, pas la présence d'un
+    // champ : le champ, je l'avais inventé, et il a disparu.
     const c = criteresCompetition('cnc_jeunes', 2026, 0);
     expect(c.categorieAge).toBe('juniors');
     expect(c.strict).toBe(false);
-    expect(c.toleranceCategorie).toBe('une_en_dessous');
+    const cadet = fiche({ licence: 'c', dateNaissance: '2013-06-01' }); // 13 ans
+    const minime = fiche({ licence: 'm', dateNaissance: '2016-06-01' }); // 10 ans
+    const b = new Map([[cadet.licence!, cadet], [minime.licence!, minime]]);
+    expect(controlerEquipe([j('c')], b, c).joueurs[0]!.anomalies).not.toContain('dateNaissance');
+    expect(controlerEquipe([j('m')], b, c).joueurs[0]!.anomalies).toContain('dateNaissance');
   });
 
-  it('toutes les compétitions de clubs n ouvrent qu une catégorie en dessous', () => {
+  it('aucune compétition de clubs n est en catégorie stricte', () => {
+    // La règle « une seule en dessous » est celle de `controlerEquipe` hors mode
+    // strict : il suffit qu'aucune compétition ne demande le mode strict.
     for (const c of COMPETITIONS_CLUB) {
-      expect(criteresCompetition(c.id, 2026, 0).toleranceCategorie, c.id).toBe('une_en_dessous');
+      expect(criteresCompetition(c.id, 2026, 0).strict, c.id).toBe(false);
     }
   });
 

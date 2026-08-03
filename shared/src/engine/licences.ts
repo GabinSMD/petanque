@@ -39,17 +39,6 @@ export type AnomalieEquipe = 'mixte' | 'homogeneite' | 'mutes' | 'horsUE';
 export type CategorieCritere = CategorieAge | 'plus55';
 
 /**
- * Jusqu'où le plancher d'âge s'abaisse hors mode strict.
- *
- *  - absent : toutes les catégories inférieures sont admises. C'est la règle des
- *    concours, et ce champ n'a pas à la changer ;
- *  - `une_en_dessous` : **une seule** catégorie s'ouvre en dessous. C'est ce
- *    qu'écrit le panneau des compétitions de clubs — « Seniors (Junior) »,
- *    « Juniors (Cadet) », « Cadets (Minime) », « Minimes (Ben.) ».
- */
-export type ToleranceCategorie = 'une_en_dessous';
-
-/**
  * Catégories qu'un **concours** peut exiger, dans l'ordre de la fenêtre
  * « Création Nouveau Concours » : Vétéran, Sénior, Junior, Cadet, Minime,
  * Benjamin — et pas de `+55`, qui n'existe que sur le panneau des compétitions
@@ -72,10 +61,13 @@ export interface CriteresLicence {
   /** Date du concours (YYYY-MM-DD) : validité du certificat médical. */
   dateConcours?: string;
   categorieAge?: CategorieCritere;
-  /** Interdit les catégories d'âge inférieures. */
+  /**
+   * Catégorie **stricte** : la case du même nom de la fenêtre fédérale. Cochée,
+   * seule la catégorie demandée joue. Décochée, une seule catégorie s'ouvre en
+   * dessous — la fenêtre le dit dans ses propres étiquettes, qui deviennent
+   * « Sénior (Junior) », « Junior (Cadet) », « Cadet (Min.) », « Minime (Benj.) ».
+   */
   strict?: boolean;
-  /** Hors mode strict, jusqu'où descendre. Voir `ToleranceCategorie`. */
-  toleranceCategorie?: ToleranceCategorie;
   sexe?: 'tous' | 'masculin' | 'feminin' | 'mixte';
   classification?: 'tous' | 'elite' | 'honneur' | 'promotion';
   /** Équipes homogènes exigées (tous les joueurs du même club). */
@@ -185,8 +177,23 @@ const ORDRE: CategorieCritere[] = [
 function plancherUneEnDessous(categorie: CategorieCritere): number | undefined {
   const bornes = BORNES[categorie];
   if (bornes.minimumOnly) return bornes.min;
-  const dessous = ORDRE[ORDRE.indexOf(categorie) + 1];
+  const dessous = categorieDuDessous(categorie);
   return dessous ? BORNES[dessous].min : bornes.min;
+}
+
+/**
+ * La catégorie qui s'ouvre en dessous hors mode strict, ou `undefined` s'il n'y
+ * en a pas : rien sous la plus jeune, et rien sous un plancher — le manuel ne
+ * met pas de parenthèse à « Vétéran », et un sénior n'entre pas dans un concours
+ * vétérans.
+ *
+ * Sert aussi aux écrans, pour dire en clair ce que le mode non strict admet.
+ */
+export function categorieDuDessous(
+  categorie: CategorieCritere,
+): CategorieCritere | undefined {
+  if (BORNES[categorie].minimumOnly) return undefined;
+  return ORDRE[ORDRE.indexOf(categorie) + 1];
 }
 
 /** Âge fédéral : différence des millésimes, sans tenir compte du jour. */
@@ -268,16 +275,13 @@ export function controlerEquipe(
           anomalies.push('dateNaissance');
         } else {
           const age = ageFederal(fiche.dateNaissance, criteres.annee);
-          // Hors mode strict, la directive fédérale admet les catégories
-          // inférieures : le plancher tombe, le plafond reste. Les compétitions
-          // de clubs n'en ouvrent qu'une (§3.E) : le plancher descend d'un cran
-          // au lieu de disparaître.
+          // Hors mode strict, **une seule** catégorie s'ouvre en dessous : le
+          // plancher descend d'un cran, il ne disparaît pas. Le plafond, lui, ne
+          // bouge jamais.
           const plancher =
             criteres.strict || bornes.minimumOnly
               ? bornes.min
-              : criteres.toleranceCategorie === 'une_en_dessous'
-                ? plancherUneEnDessous(criteres.categorieAge)
-                : undefined;
+              : plancherUneEnDessous(criteres.categorieAge);
           const plafond = bornes.max;
           if (
             (plancher !== undefined && age < plancher) ||
