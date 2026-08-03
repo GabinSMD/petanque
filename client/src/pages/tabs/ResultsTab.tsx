@@ -9,11 +9,13 @@ import {
   pouleOutcome,
   qualifiesTableau,
   repartitionIndemnites,
-  rondeStandings,
+  classementRondes,
+  permutationsActives,
   type RankGroup,
 } from '@shared';
 import { updateConcours } from '../../db/actions';
 import { useModeFederalActif } from '../../db/hooks';
+import { PermutationsClassement } from '../../components/PermutationsClassement';
 import { StandingsTable } from '../../components/StandingsTable';
 import { PhotosPodium } from '../../components/PhotosPodium';
 import { TeamLabel } from '../../components/TeamLabel';
@@ -94,7 +96,16 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
             {isIndividualMode(concours.mode) ? ' (individuel)' : ''}
           </h2>
           <StandingsTable
-            standings={rondeStandings(teams, matches)}
+            standings={classementRondes(concours, teams, matches)}
+            teamsById={teamsById}
+            permutations={permutationsActives(
+              classementRondes(concours, teams, matches),
+              concours.permutationsClassement,
+            )}
+          />
+          <PermutationsClassement
+            concours={concours}
+            classement={classementRondes(concours, teams, matches)}
             teamsById={teamsById}
           />
         </section>

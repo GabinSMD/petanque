@@ -1,5 +1,5 @@
 import type { Concours, Match, Poule, Team } from '@shared';
-import { bracketRanking, rondeStandings, tirStandings, type RankGroup } from '@shared';
+import { bracketRanking, classementRondes, tirStandings, type RankGroup } from '@shared';
 import { isRondesMode, isTirMode } from './labels';
 
 /**
@@ -23,7 +23,7 @@ export function finalRanking(
     }));
   }
   if (isRondesMode(concours.mode)) {
-    return rondeStandings(active, matches).map((s, i) => ({
+    return classementRondes(concours, active, matches).map((s, i) => ({
       rank: i + 1,
       label: `${i + 1}${i === 0 ? 'er' : 'e'}`,
       teamIds: [s.id],

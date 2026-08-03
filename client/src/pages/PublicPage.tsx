@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, PhotoConcours, Poule, Team } from '@shared';
-import { EMPLACEMENTS_PHOTO, evolutionEnTexte, photosPubliables, pouleOutcome, rondeStandings, rondesTirees, winnerOf } from '@shared';
+import { EMPLACEMENTS_PHOTO, evolutionEnTexte, photosPubliables, pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
 import { matchLabel, pendingMatchesForTeam, sideName, teamSideInMatch } from '../lib/matchLabel';
 import { followedTeams, pushSupported, subscribeForTeams } from '../lib/push';
 import { BracketView } from './tabs/BracketTab';
@@ -753,7 +753,7 @@ function ResultsView({
           <section className="result-section">
             <h2>Classement</h2>
             <StandingsTable
-              standings={rondeStandings(data.teams, matches)}
+              standings={classementRondes(data.concours, data.teams, matches)}
               teamsById={teamsById}
               compact
             />

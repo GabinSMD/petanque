@@ -1,5 +1,5 @@
-import type { Standing, Team } from '@shared';
-import { libelleClubs } from '@shared';
+import type { PermutationClassement, Standing, Team } from '@shared';
+import { estPermutee, libelleClubs } from '@shared';
 import { teamDisplayName } from './TeamLabel';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -10,13 +10,20 @@ interface Props {
   /** Nombre de lignes affichées (affichage TV). */
   limit?: number;
   compact?: boolean;
+  /**
+   * Interversions décidées à la main : les lignes concernées sont marquées. Un
+   * classement modifié par l'organisateur ne doit pas passer pour un classement
+   * calculé — c'est la seule façon pour un tiers de comprendre pourquoi l'ordre
+   * ne suit pas les colonnes.
+   */
+  permutations?: PermutationClassement[];
 }
 
 /**
  * Classement des formules en rondes : victoires, goal-average, puis
  * confrontation directe entre équipes à égalité (manuel §3.D.15).
  */
-export function StandingsTable({ standings, teamsById, limit, compact }: Props) {
+export function StandingsTable({ standings, teamsById, limit, compact, permutations }: Props) {
   const rows = limit ? standings.slice(0, limit) : standings;
   return (
     <table className={`standings-table${compact ? ' standings-compact' : ''}`}>
@@ -34,8 +41,26 @@ export function StandingsTable({ standings, teamsById, limit, compact }: Props) 
         {rows.map((s, i) => {
           const team = teamsById.get(s.id);
           return (
-            <tr key={s.id} className={i < 3 ? `standing-top standing-${i + 1}` : ''}>
-              <td className="standing-rank">{MEDALS[i] ?? i + 1}</td>
+            <tr
+              key={s.id}
+              className={[
+                i < 3 ? `standing-top standing-${i + 1}` : '',
+                estPermutee(permutations, s.id) ? 'standing-permutee' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <td className="standing-rank">
+                {MEDALS[i] ?? i + 1}
+                {estPermutee(permutations, s.id) && (
+                  <span
+                    className="standing-marque-permutee"
+                    title="Place échangée à la main par l'organisateur, à égalité"
+                  >
+                    ⇅
+                  </span>
+                )}
+              </td>
               <td>
                 {team ? (
                   <>
