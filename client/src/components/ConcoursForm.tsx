@@ -13,6 +13,7 @@ import type {
 import {
   CATEGORIES_AGE_CONCOURS,
   JEUX_FEDERAUX,
+  bornesParties,
   categorieDuDessous,
   championnatsDuJeu,
   NIVEAUX_FEDERAUX,
@@ -173,6 +174,13 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   };
 
   const championnatsProposes = championnatsDuJeu(jeu);
+
+  /**
+   * Bornes du nombre de parties (§3.D.14) : « 3 à 7 Parties GG », « 3 à 10
+   * Parties », « 3 à 5 Parties GG Strict ». Lues du moteur et non écrites ici —
+   * une borne recopiée à côté de sa règle finit par la contredire.
+   */
+  const bornes = bornesParties({ mode, ggStrict });
 
   /* ------------------------------------------------------------------ */
   /* Numéro de concours fédéral (§3.A)                                   */
@@ -397,11 +405,19 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             {isTirMode(mode) ? 'Nombre de séries' : 'Nombre de rondes'}
             <input
               type="number"
-              min={1}
-              max={12}
+              min={bornes?.min ?? 1}
+              max={bornes?.max ?? 12}
               value={nbRondes}
               onChange={(e) => setNbRondes(Number(e.target.value))}
             />
+            {bornes && (
+              <span className="hint">
+                De {bornes.min} à {bornes.max} parties
+                {ggStrict
+                  ? " : au-delà, l'appariement strict n'a plus d'équipes à égalité à opposer."
+                  : ' (manuel §3.D.14).'}
+              </span>
+            )}
           </label>
         )}
         {mode === 'championnat' && (
@@ -409,15 +425,18 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             Rondes du marathon (facultatif)
             <input
               type="number"
-              min={1}
-              max={20}
+              min={bornes?.min ?? 1}
+              max={bornes?.max ?? 20}
               value={marathonRondes}
               placeholder="calendrier complet"
               onChange={(e) =>
                 setMarathonRondes(e.target.value === '' ? '' : Number(e.target.value))
               }
             />
-            <small>Vide : chacun rencontre chacun.</small>
+            <small>
+              Vide : chacun rencontre chacun.
+              {bornes && ` Sinon de ${bornes.min} à ${bornes.max} parties (manuel §3.D.14).`}
+            </small>
           </label>
         )}
         {!isTirMode(mode) && (
@@ -512,7 +531,13 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           <input
             type="checkbox"
             checked={ggStrict}
-            onChange={(e) => setGgStrict(e.target.checked)}
+            onChange={(e) => {
+              setGgStrict(e.target.checked);
+              // Le strict plafonne à cinq parties : sept rondes déjà saisies
+              // deviendraient hors borne sans que rien ne le dise.
+              const nouvelles = bornesParties({ mode, ggStrict: e.target.checked });
+              if (nouvelles && nbRondes > nouvelles.max) setNbRondes(nouvelles.max);
+            }}
           />
           Gagnant contre gagnant strict (manuel §3.D.14.C)
           <span className="hint">
