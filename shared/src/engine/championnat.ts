@@ -118,12 +118,9 @@ export function criteresCompetition(
     dateConcours: dateRencontre,
     sexe: competition.sexe,
     categorieAge: competition.categorieAge,
-    // Jamais strict : une catégorie inférieure joue chez les plus âgés.
+    // Jamais strict : une catégorie s'ouvre en dessous, une seule — c'est la
+    // règle générale, appliquée dans `controlerEquipe`.
     strict: false,
-    // Mais une seule, comme l'écrit le panneau fédéral — « Juniors (Cadet) », et
-    // non « juniors et tout ce qui est plus jeune ». J'avais ouvert toutes les
-    // catégories inférieures.
-    toleranceCategorie: 'une_en_dessous',
     homogene: competition.homogene,
     maxMutes,
     maxHorsUE: PLAFOND_HORS_UE[horsUE],

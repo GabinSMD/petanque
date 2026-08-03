@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CATEGORIES_AGE_CONCOURS,
   categorieAgeDe,
+  categorieDuDessous,
   controlerEquipe,
   type CriteresLicence,
 } from '../licences';
@@ -91,13 +92,20 @@ describe('contrôle : catégorie d âge', () => {
     expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
   });
 
-  it('directive fédérale : hors strict, une catégorie inférieure est admise', () => {
-    const r = controlerEquipe([joueur('c')], base(cadet), {
-      ...BASE,
-      categorieAge: 'seniors',
-      strict: false,
-    });
-    expect(r.joueurs[0]!.anomalies).not.toContain('dateNaissance');
+  it('hors strict, une seule catégorie s\'ouvre en dessous', () => {
+    // La fenêtre de création, Strict **décoché**, réécrit ses propres étiquettes :
+    // « Sénior (Junior) », « Junior (Cadet) », « Cadet (Min.) », « Minime (Benj.) ».
+    // Un concours sénior non strict admet donc les juniors, et eux seuls.
+    const junior = fiche({ licence: 'j', dateNaissance: '2010-06-01' }); // 16 ans
+    const criteres: CriteresLicence = { ...BASE, categorieAge: 'seniors', strict: false };
+    expect(
+      controlerEquipe([joueur('j')], base(junior), criteres).joueurs[0]!.anomalies,
+    ).not.toContain('dateNaissance');
+    // Le cadet est deux crans plus bas : la parenthèse ne dit pas « et tout ce
+    // qui est plus jeune ».
+    expect(
+      controlerEquipe([joueur('c')], base(cadet), criteres).joueurs[0]!.anomalies,
+    ).toContain('dateNaissance');
   });
 
   it('un sénior ne joue jamais un concours vétérans, même hors strict', () => {
@@ -132,7 +140,6 @@ describe('contrôle : la catégorie « et celle du dessous » (§3.E)', () => {
     const r = controlerEquipe([joueur('j')], base(junior), {
       ...BASE,
       categorieAge: 'seniors',
-      toleranceCategorie: 'une_en_dessous',
     });
     expect(r.joueurs[0]!.anomalies).not.toContain('dateNaissance');
   });
@@ -141,7 +148,6 @@ describe('contrôle : la catégorie « et celle du dessous » (§3.E)', () => {
     const r = controlerEquipe([joueur('c')], base(cadet), {
       ...BASE,
       categorieAge: 'seniors',
-      toleranceCategorie: 'une_en_dessous',
     });
     expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
   });
@@ -150,7 +156,6 @@ describe('contrôle : la catégorie « et celle du dessous » (§3.E)', () => {
     const criteres: CriteresLicence = {
       ...BASE,
       categorieAge: 'juniors',
-      toleranceCategorie: 'une_en_dessous',
     };
     expect(
       controlerEquipe([joueur('c')], base(cadet), criteres).joueurs[0]!.anomalies,
@@ -167,20 +172,22 @@ describe('contrôle : la catégorie « et celle du dessous » (§3.E)', () => {
     const r = controlerEquipe([joueur('s')], base(senior), {
       ...BASE,
       categorieAge: 'juniors',
-      toleranceCategorie: 'une_en_dessous',
     });
     expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
   });
 
-  it('sans tolérance déclarée, le comportement des concours ne change pas', () => {
-    // Hors compétition de clubs, la directive fédérale admet toutes les
-    // catégories inférieures : ce test garde cette règle intacte.
+  it('la règle vaut pour tout concours, pas seulement les compétitions de clubs', () => {
+    // C'est la correction du lot #109 : j'avais réservé « une seule en dessous »
+    // aux compétitions de clubs et gardé « toutes les catégories inférieures »
+    // pour les concours, sur la foi d'un test dont le titre disait déjà l'inverse
+    // de ce qu'il vérifiait. La fenêtre de création tranche : les parenthèses y
+    // sont, donc la règle y est.
     const r = controlerEquipe([joueur('m')], base(minime), {
       ...BASE,
       categorieAge: 'seniors',
       strict: false,
     });
-    expect(r.joueurs[0]!.anomalies).not.toContain('dateNaissance');
+    expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
   });
 });
 
@@ -213,7 +220,6 @@ describe('contrôle : la catégorie « +55 » (§3.E)', () => {
     const r = controlerEquipe([joueur('50')], b, {
       ...BASE,
       categorieAge: 'plus55',
-      toleranceCategorie: 'une_en_dessous',
     });
     expect(r.joueurs[0]!.anomalies).toContain('dateNaissance');
   });
@@ -386,5 +392,29 @@ describe('catégories proposées à un concours (§3.A)', () => {
       'benjamins',
     ]);
     expect(CATEGORIES_AGE_CONCOURS).not.toContain('plus55');
+  });
+});
+
+describe('quelle catégorie s\'ouvre en dessous', () => {
+  // Sert aux écrans : la fenêtre fédérale renomme ses étiquettes en
+  // « Sénior (Junior) » quand Strict est décoché. Nos étiquettes portent déjà
+  // les bornes d'âge, donc on l'écrit en clair sous la case plutôt que
+  // d'empiler deux parenthèses.
+  it('descend d\'un cran', () => {
+    expect(categorieDuDessous('seniors')).toBe('juniors');
+    expect(categorieDuDessous('juniors')).toBe('cadets');
+    expect(categorieDuDessous('cadets')).toBe('minimes');
+    expect(categorieDuDessous('minimes')).toBe('benjamins');
+  });
+
+  it('rien sous la plus jeune', () => {
+    expect(categorieDuDessous('benjamins')).toBeUndefined();
+  });
+
+  it('rien sous un plancher : vétérans et +55 n\'ouvrent rien', () => {
+    // Ces deux-là n'ont pas de plafond ; le manuel ne leur met pas de
+    // parenthèse, et un sénior n'entre pas dans un concours vétérans.
+    expect(categorieDuDessous('veterans')).toBeUndefined();
+    expect(categorieDuDessous('plus55')).toBeUndefined();
   });
 });
