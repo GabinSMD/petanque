@@ -15,6 +15,10 @@ import {
   JEUX_FEDERAUX,
   categorieDuDessous,
   championnatsDuJeu,
+  codeNiveauFederal,
+  nomDepuisNumero,
+  numeroConcoursFederal,
+  segmentCategorie,
   designationCategorie,
   estConcoursOfficiel,
   formuleOf,
@@ -87,6 +91,15 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [jeu, setJeu] = useState<JeuFederal>(initial ? jeuDuConcours(initial) : 'petanque');
   const [comiteOrganisateur, setComiteOrganisateur] = useState(initial?.comiteOrganisateur ?? '');
   const [clubOrganisateur, setClubOrganisateur] = useState(initial?.clubOrganisateur ?? '');
+  /**
+   * Codes du numéro de concours fédéral (§3.A). Ils s'ajoutent aux noms
+   * ci-dessus : les documents du comité portent les noms, le numéro porte les
+   * codes. Sans eux, `numeroConcoursFederal` ne peut rien construire — c'est la
+   * raison pour laquelle elle n'était appelée par aucun écran.
+   */
+  const [comiteNumero, setComiteNumero] = useState(initial?.comiteNumero ?? '');
+  const [clubNumero, setClubNumero] = useState(initial?.clubNumero ?? '');
+  const [segmentFederal, setSegmentFederal] = useState(initial?.segmentFederal ?? '');
   const [decalageEquipe, setDecalageEquipe] = useState<number | ''>(initial?.decalageEquipe ?? '');
   const [decalageTerrain, setDecalageTerrain] = useState<number | ''>(
     initial?.decalageTerrain ?? '',
@@ -159,6 +172,35 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
 
   const championnatsProposes = championnatsDuJeu(jeu);
 
+  /* ------------------------------------------------------------------ */
+  /* Numéro de concours fédéral (§3.A)                                   */
+  /* ------------------------------------------------------------------ */
+
+  const segmentDeduit = segmentCategorie({
+    format,
+    categorieAge: categorieAge === '' ? undefined : categorieAge,
+    critereSexe,
+    critereClassification,
+  });
+  /** Le segment saisi prime : c'est lui qui rattrape les cas non documentés. */
+  const segmentRetenu = segmentFederal.trim() || segmentDeduit || '';
+  const codeNiveau = codeNiveauFederal(niveau === '' ? undefined : niveau);
+  const numeroFederal = numeroConcoursFederal({
+    date,
+    codeNiveau: codeNiveau ?? '',
+    jeu,
+    comiteNumero: comiteNumero.trim() || undefined,
+    segment: segmentRetenu,
+    clubNumero: clubNumero.trim() || undefined,
+  });
+  /** Ce qui manque, dit dans l'ordre où l'organisateur peut le corriger. */
+  const manquePourNumero = [
+    codeNiveau ? '' : 'le niveau (seuls « départemental » et « championnat » ont un code connu)',
+    comiteNumero.trim() ? '' : 'le code du comité',
+    clubNumero.trim() ? '' : 'le numéro du club',
+    segmentRetenu ? '' : 'le segment de catégorie',
+  ].filter(Boolean);
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void onSubmit({
@@ -205,6 +247,12 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       niveau: officiel && niveau !== '' ? niveau : undefined,
       comiteOrganisateur: officiel ? comiteOrganisateur.trim() || undefined : undefined,
       clubOrganisateur: officiel ? clubOrganisateur.trim() || undefined : undefined,
+      comiteNumero: officiel ? comiteNumero.trim() || undefined : undefined,
+      clubNumero: officiel ? clubNumero.trim() || undefined : undefined,
+      // Le segment déduit n'est pas enregistré : il se recalcule des critères,
+      // et une copie divergerait le jour où l'un d'eux change. Seule une saisie
+      // manuelle mérite d'être gardée.
+      segmentFederal: officiel ? segmentFederal.trim() || undefined : undefined,
       decalageEquipe: decalageEquipe === '' || decalageEquipe === 0 ? undefined : Number(decalageEquipe),
       decalageTerrain:
         decalageTerrain === '' || decalageTerrain === 0 ? undefined : Number(decalageTerrain),
@@ -618,22 +666,73 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
               ))}
             </datalist>
           </label>
+          <div className="form-row">
+            <label>
+              Code du comité
+              <input
+                value={comiteNumero}
+                onChange={(e) => setComiteNumero(e.target.value)}
+                placeholder="038"
+                maxLength={3}
+                inputMode="numeric"
+              />
+            </label>
+            <label>
+              N° fédéral du club
+              <input
+                value={clubNumero}
+                onChange={(e) => setClubNumero(e.target.value)}
+                placeholder="0380423"
+                maxLength={10}
+                inputMode="numeric"
+              />
+            </label>
+            <label>
+              Segment de catégorie
+              <input
+                value={segmentFederal}
+                onChange={(e) => setSegmentFederal(e.target.value)}
+                placeholder={segmentDeduit ?? 'à saisir'}
+                maxLength={16}
+              />
+              <span className="hint">
+                {segmentDeduit
+                  ? `Déduit des critères : ${segmentDeduit}. À corriger si votre comité l'écrit autrement.`
+                  : 'Le manuel ne documente pas l\'abréviation de ces critères (féminin, cadet, minime, élite, honneur) : saisissez-la.'}
+              </span>
+            </label>
+          </div>
+          {/* Le numéro fédéral, en lecture seule. Rien du tout quand une pièce
+              manque : un numéro tronqué n'est reconnu par personne, et c'est ce
+              que le comité recoupe. */}
+          <p className="hint numero-federal">
+            {numeroFederal ? (
+              <>
+                <strong>Numéro de concours :</strong> <code>{numeroFederal}</code>
+                <br />
+                Nom fédéral : <code>{nomDepuisNumero(numeroFederal)}</code>
+              </>
+            ) : (
+              <>Numéro de concours indisponible : il manque {manquePourNumero.join(', ')}.</>
+            )}
+          </p>
           <button
             type="button"
             className="btn btn-ghost btn-sm"
             onClick={() =>
               setName(
-                nomConcoursFederal({
-                  date,
-                  niveau: niveau === '' ? undefined : niveau,
-                  discipline,
-                  comite: comiteOrganisateur.trim() || undefined,
-                  format,
-                  club: clubOrganisateur.trim() || undefined,
-                }),
+                nomDepuisNumero(numeroFederal) ??
+                  nomConcoursFederal({
+                    date,
+                    niveau: niveau === '' ? undefined : niveau,
+                    discipline,
+                    comite: comiteOrganisateur.trim() || undefined,
+                    format,
+                    club: clubOrganisateur.trim() || undefined,
+                  }),
               )
             }
-            title="Nom construit comme dans le logiciel fédéral"
+            title="Le nom du concours dans le logiciel fédéral est son numéro, écrit avec des espaces"
           >
             ⤒ Reprendre le nom fédéral
           </button>

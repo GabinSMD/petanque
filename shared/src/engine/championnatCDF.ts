@@ -246,6 +246,100 @@ export function jeuDuConcours(c: {
   return 'petanque';
 }
 
+/**
+ * Codes de niveau du numéro de concours. **Trois seulement sont attestés**,
+ * chacun lu sur une copie d'écran où le niveau était sélectionné :
+ *
+ *  - `DEPT` — « Concours Départemental » (p.13) ;
+ *  - `CD` — « Championnat Départemental » (p.14) ;
+ *  - `QUALIF_CD` — « Qualificatif Départemental » (p.15).
+ *
+ * Les cinq autres niveaux de la liste fédérale n'apparaissent sur aucune capture
+ * avec leur code (voir #114, qui doit d'abord distinguer les quatre championnats
+ * que nous confondons en un seul). Un code inventé rendrait le numéro
+ * méconnaissable pour le comité, donc on ne rend rien.
+ *
+ * `championnat` vaut `CD` : c'est le seul championnat dont le code soit attesté,
+ * et c'est celui qu'un club organise. La distinction viendra avec #114.
+ */
+const CODES_NIVEAU: Partial<Record<NiveauConcours, string>> = {
+  departemental: 'DEPT',
+  championnat: 'CD',
+};
+
+export function codeNiveauFederal(niveau: NiveauConcours | undefined): string | undefined {
+  return niveau ? CODES_NIVEAU[niveau] : undefined;
+}
+
+/** Abréviations attestées de chaque critère. Rien d'inféré par symétrie. */
+const FORMATION_SEGMENT: Record<TeamFormat, string> = {
+  triplette: 'T',
+  doublette: 'D',
+  tete_a_tete: 'I',
+};
+const CATEGORIE_SEGMENT: Partial<Record<CategorieAge, string>> = {
+  seniors: 'S',
+  veterans: 'V',
+  juniors: 'Junior',
+};
+const SEXE_SEGMENT: Partial<Record<CritereSexe, string>> = {
+  masculin: 'M',
+  mixte: 'Mixte',
+};
+const CLASSIFICATION_SEGMENT: Partial<Record<CritereClassification, string>> = {
+  promotion: 'Promo',
+};
+
+export interface ParamsSegment {
+  format: TeamFormat;
+  categorieAge?: CategorieAge;
+  critereSexe?: CritereSexe;
+  critereClassification?: CritereClassification;
+}
+
+/**
+ * Segment de catégorie du numéro : formation, puis catégorie, genre et
+ * classification quand ils sont demandés. Les dix exemples relevés sur les
+ * copies d'écran donnent la grammaire — `T`, `D`, `I`, `TV`, `TSMixte`,
+ * `DSMixte`, `TSPromo`, `TPromo`, `ISM`, `IJuniorM`.
+ *
+ * Rend `undefined` dès qu'un critère demandé n'a pas d'abréviation attestée :
+ * aucune capture ne montre un concours féminin, cadet, minime, élite ou honneur
+ * avec son numéro. Deviner `F` par symétrie avec `M` serait exactement le genre
+ * d'invention qui m'a fait écrire `_JP_` là où le manuel écrit `_PROV_`.
+ * L'organisateur saisira le segment à la main, et l'écran le lui dira.
+ */
+export function segmentCategorie(p: ParamsSegment): string | undefined {
+  const morceaux = [FORMATION_SEGMENT[p.format]];
+  if (p.categorieAge) {
+    const code = CATEGORIE_SEGMENT[p.categorieAge];
+    if (!code) return undefined;
+    morceaux.push(code);
+  }
+  if (p.critereSexe && p.critereSexe !== 'tous') {
+    const code = SEXE_SEGMENT[p.critereSexe];
+    if (!code) return undefined;
+    morceaux.push(code);
+  }
+  if (p.critereClassification && p.critereClassification !== 'tous') {
+    const code = CLASSIFICATION_SEGMENT[p.critereClassification];
+    if (!code) return undefined;
+    morceaux.push(code);
+  }
+  return morceaux.join('');
+}
+
+/**
+ * Nom du concours dans le logiciel fédéral : le numéro, avec des espaces à la
+ * place des tirets bas. Le bandeau de la fenêtre de préparation l'écrit tel quel
+ * — « Nom du Concours : 20260107 DEPT PET 038 T 0423 » pour le numéro
+ * `20260107_DEPT_PET_038_T_0423`.
+ */
+export function nomDepuisNumero(numero: string | undefined): string | undefined {
+  if (!numero) return undefined;
+  return numero.replaceAll('_', ' ');
+}
+
 export interface ParamsNumeroFederal {
   /** Date au format YYYY-MM-DD. */
   date: string;
@@ -275,7 +369,12 @@ export interface ParamsNumeroFederal {
  * que de faire croire à un identifiant fédéral.
  */
 export function numeroConcoursFederal(p: ParamsNumeroFederal): string | undefined {
-  if (!p.comiteNumero || !p.clubNumero) return undefined;
+  // Un segment vide donnerait `..._038__0423`, avec le double tiret bas que
+  // l'aperçu du manuel affiche justement quand une pièce manque. Ce n'est pas un
+  // numéro : c'est un numéro incomplet, et il ne doit pas sortir d'ici.
+  if (!p.comiteNumero || !p.clubNumero || !p.segment.trim() || !p.codeNiveau.trim()) {
+    return undefined;
+  }
   const jour = p.date.replaceAll('-', '');
   const jeu = jeuFederal(p.jeu ?? 'petanque')?.code ?? 'PET';
   const club = p.clubNumero.startsWith(p.comiteNumero)
