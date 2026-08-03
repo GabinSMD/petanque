@@ -135,6 +135,26 @@ export interface Concours {
   /** Club organisateur. */
   clubOrganisateur?: string;
   /**
+   * Numéro de concours fédéral (manuel §3.A) : ces trois codes s'ajoutent aux
+   * **noms** ci-dessus, sans les remplacer — les documents remis au comité
+   * portent les noms, le numéro porte les codes.
+   *
+   * `20261217_DEPT_PET_038_T_0423`
+   *            ^^^^      ^^^ ^ ^^^^
+   *          niveau   comité │ club
+   *                      segment
+   */
+  /** Code du comité départemental, à trois chiffres (`038`). */
+  comiteNumero?: string;
+  /** Numéro fédéral du club, préfixe de comité compris (`0380423`). */
+  clubNumero?: string;
+  /**
+   * Segment de catégorie du numéro (`T`, `DSMixte`, `ISM`…). Déduit des critères
+   * quand toutes les abréviations sont attestées, saisi à la main sinon : le
+   * manuel ne documente pas les cas féminin, cadet, minime, élite ni honneur.
+   */
+  segmentFederal?: string;
+  /**
    * Décalages de numérotation, quand un club enchaîne plusieurs concours le
    * même jour : équipes 101.., terrains 51… (manuel §3.A zones 6 et 7).
    */

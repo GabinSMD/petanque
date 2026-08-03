@@ -109,6 +109,10 @@ export interface ConcoursInput {
   niveau?: NiveauConcours;
   comiteOrganisateur?: string;
   clubOrganisateur?: string;
+  /** Codes du numéro de concours fédéral (§3.A). */
+  comiteNumero?: string;
+  clubNumero?: string;
+  segmentFederal?: string;
   decalageEquipe?: number;
   decalageTerrain?: number;
   /** Critères de contrôle des licences. */
