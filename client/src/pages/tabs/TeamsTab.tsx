@@ -4,13 +4,14 @@ import { LicenceEtrangereModal } from '../../components/LicenceEtrangereModal';
 import { LicenceScanModal } from '../../components/LicenceScanModal';
 import { Modal } from '../../components/Modal';
 import { MultisiteModal } from '../../components/MultisiteModal';
-import type { Concours, Player, Poule, RolePetanque, Team } from '@shared';
+import type { Concours, Licencie, Player, Poule, RolePetanque, Team } from '@shared';
 import { addTeam, deleteTeam, importerInscrits, insererEquipe, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
 import {
   ETATS_MISE,
   PAYS_LICENCE_ETRANGERE,
+  comiteDuJoueur,
   aDesCriteresLicence,
   bilanMises,
   etatMise,
@@ -62,6 +63,12 @@ export function TeamsTab({ concours, teams, poules }: Props) {
   const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
   const [licences, setLicences] = useState<string[]>(Array(nbPlayers).fill(''));
   const [clubs, setClubs] = useState<string[]>(Array(nbPlayers).fill(''));
+  /**
+   * Colonne « CD » de la grille fédérale (§3.B.1, zone 15) : le comité du joueur.
+   * Prérempli depuis sa licence, corrigible — la copie d'écran p.25 montre une
+   * équipe à trois comités différents.
+   */
+  const [comites, setComites] = useState<string[]>(Array(nbPlayers).fill(''));
   /**
    * Pays d'une licence étrangère (manuel §3.B.1, zone 21). Saisi à la place du
    * numéro : le joueur a une licence, elle n'est pas française.
@@ -135,6 +142,19 @@ export function TeamsTab({ concours, teams, poules }: Props) {
 
   /** Autocomplétion : un nom du fichier des licenciés remplit licence et club. */
   /** Remplit ce qu'on sait d'un licencié trouvé par son nom. */
+  /**
+   * Comité prérempli depuis la fiche du licencié, ou à défaut des trois premiers
+   * chiffres de son numéro. Valeur par défaut et non vérité : elle reste
+   * corrigible, la copie d'écran p.25 montrant une équipe à trois comités.
+   */
+  const remplirComite = (i: number, found: Licencie): void => {
+    const comite = comiteDuJoueur(
+      { name: found.name, licence: found.licence, comite: found.comite },
+      licencieByLicence,
+    );
+    if (comite) setComites((prev) => prev.map((c, j) => (j === i && !c ? comite : c)));
+  };
+
   const applyLicencie = (i: number, value: string) => {
     const found = licencieByName.get(value.trim().toLowerCase());
     if (!found) return;
@@ -145,6 +165,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       setClubs((prev) => prev.map((c, j) => (j === i && !c ? found.club! : c)));
       if (!club) setClub(found.club);
     }
+    remplirComite(i, found);
   };
 
   /**
@@ -159,6 +180,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       setClubs((prev) => prev.map((c, j) => (j === i && !c ? found.club! : c)));
       if (!club) setClub(found.club);
     }
+    remplirComite(i, found);
   };
 
   // La formation peut changer tant qu'on est aux inscriptions.
@@ -166,6 +188,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
     setNames(Array(nbPlayers).fill(''));
     setLicences(Array(nbPlayers).fill(''));
     setClubs(Array(nbPlayers).fill(''));
+    setComites(Array(nbPlayers).fill(''));
     setRoles(Array(nbPlayers).fill(''));
     setEtrangeres(Array(nbPlayers).fill(''));
   }
@@ -182,6 +205,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
         // À défaut de club propre, celui de l'équipe : un concours de club
         // n'a pas à saisir la même chose trois fois.
         club: clubs[i]?.trim() || club.trim() || undefined,
+        comite: comites[i]?.trim() || undefined,
         role: roles[i] || undefined,
       }))
       .filter((p) => p.name.length > 0);
@@ -198,6 +222,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
     setNames(Array(nbPlayers).fill(''));
     setLicences(Array(nbPlayers).fill(''));
     setClubs(Array(nbPlayers).fill(''));
+    setComites(Array(nbPlayers).fill(''));
     setRoles(Array(nbPlayers).fill(''));
     setEtrangeres(Array(nbPlayers).fill(''));
     firstInput.current?.focus();
@@ -295,6 +320,23 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   placeholder={individual ? 'Nom du joueur' : `Joueur ${i + 1}`}
                   required={i === 0}
                 />
+                {/* Colonne « CD » de la grille fédérale, avant le n° de licence
+                    comme dans le manuel. Réservée aux concours à critères
+                    fédéraux : sur un concours de club, personne ne regarde le
+                    comité, et la ligne de saisie est déjà chargée. */}
+                {criteresFederaux && (
+                  <input
+                    className="comite-input"
+                    value={comites[i] ?? ''}
+                    onChange={(e) =>
+                      setComites(comites.map((c, j) => (j === i ? e.target.value : c)))
+                    }
+                    placeholder="CD"
+                    maxLength={3}
+                    inputMode="numeric"
+                    title="Comité départemental (manuel §3.B.1, zone 15). Prérempli depuis la licence, corrigible : un joueur peut relever d'un autre comité."
+                  />
+                )}
                 <input
                   className="licence-input"
                   value={licences[i] ?? ''}

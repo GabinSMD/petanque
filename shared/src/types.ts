@@ -135,6 +135,14 @@ export interface Player {
    * champ `club` de l'équipe reste la valeur par défaut des concours de club.
    */
   club?: string;
+  /**
+   * Comité départemental — la colonne « CD » de la grille d'inscription (manuel
+   * §3.B.1, zone 15). Code fédéral à trois chiffres (`038`), affiché `CD38`.
+   *
+   * Appartient au joueur et non à l'équipe : la copie d'écran p.25 montre une
+   * même équipe à trois comités différents. Voir `engine/comites.ts`.
+   */
+  comite?: string;
 }
 
 /** Sexe porté par la licence fédérale. */

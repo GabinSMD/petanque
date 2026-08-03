@@ -13,6 +13,7 @@ import type { BilanAvantTirage, Concours, Match, Poule, Team } from '@shared';
 import {
   bilanMises,
   dureeMinutes,
+  libelleComites,
   etatMise,
   libelleClubs,
   partiesLancees,
@@ -66,6 +67,13 @@ export function ListeEngages({
   capitainesSeulement: boolean;
 }) {
   const ordonnees = trierEquipes(teams, tri);
+  /**
+   * Le manuel groupe sa liste de ligue par comité, mais son écran de tri n'offre
+   * que trois options — Numérotation, Nom, Club (p.50). Si la liste de la p.51
+   * paraît groupée, c'est que les **dossards** ont été attribués comité par comité.
+   * On affiche donc la colonne sans inventer un quatrième tri.
+   */
+  const avecComites = ordonnees.some((t) => libelleComites(t.players).length > 0);
   return (
     <div className="print-liste">
       <h2>{capitainesSeulement ? 'Liste des capitaines' : 'Liste des équipes engagées'}</h2>
@@ -73,6 +81,10 @@ export function ListeEngages({
         <thead>
           <tr>
             <th>N°</th>
+            {/* Colonne « CD » de la liste de ligue du manuel (p.51) : `101 CD01`,
+                `113 CD38`. N'apparaît que si des comités sont connus — sur un
+                concours de club, la colonne serait vide sur toutes les lignes. */}
+            {avecComites && <th>CD</th>}
             <th>{capitainesSeulement ? 'Capitaine' : 'Joueurs'}</th>
             <th>Licence{capitainesSeulement ? '' : 's'}</th>
             <th>Club</th>
@@ -85,6 +97,7 @@ export function ListeEngages({
             return (
               <tr key={t.id}>
                 <td className="cell-number">{t.number}</td>
+                {avecComites && <td>{libelleComites(t.players)}</td>}
                 <td>{joueurs.map((p) => maj(p.name)).join(' / ')}</td>
                 <td>{joueurs.map((p) => p.licence ?? '—').join(' / ')}</td>
                 <td>{libelleClubs(t.players, t.club)}</td>
@@ -94,7 +107,7 @@ export function ListeEngages({
           })}
           {ordonnees.length === 0 && (
             <tr>
-              <td colSpan={5}>Aucune équipe inscrite.</td>
+              <td colSpan={avecComites ? 6 : 5}>Aucune équipe inscrite.</td>
             </tr>
           )}
         </tbody>
