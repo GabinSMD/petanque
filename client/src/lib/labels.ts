@@ -276,12 +276,22 @@ export const ANOMALIE_EQUIPE_LABELS: Record<AnomalieEquipe, string> = {
   horsUE: 'plus d\'un joueur hors Union européenne',
 };
 
+/**
+ * Libellés des niveaux, dans les mots de la liste fédérale (manuel §3.A). Le
+ * choix des mots n'est pas cosmétique : « Championnat » tout court ne permettait
+ * pas de dire lequel des quatre, donc pas de composer un numéro de concours.
+ */
 export const NIVEAU_LABELS: Record<NiveauConcours, string> = {
-  club: 'Concours de club',
-  departemental: 'Départemental',
-  regional: 'Régional',
+  departemental: 'Concours départemental',
+  regional: 'Concours régional',
+  championnat_departemental_honorifique: 'Championnat départemental honorifique',
   national: 'National',
   international: 'International',
-  championnat: 'Championnat',
+  qualificatif_departemental: 'Qualificatif départemental',
+  championnat_departemental: 'Championnat départemental',
+  championnat_regional: 'Championnat régional',
+  club: 'Concours de club',
   coupe_de_france: 'Coupe de France',
+  // Ancienne valeur : ne s'affiche que sur les concours qui la portent déjà.
+  championnat: 'Championnat (ancien libellé)',
 };

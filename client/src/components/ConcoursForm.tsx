@@ -15,7 +15,9 @@ import {
   JEUX_FEDERAUX,
   categorieDuDessous,
   championnatsDuJeu,
+  NIVEAUX_FEDERAUX,
   codeNiveauFederal,
+  estNiveauChampionnat,
   nomDepuisNumero,
   numeroConcoursFederal,
   segmentCategorie,
@@ -195,7 +197,13 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   });
   /** Ce qui manque, dit dans l'ordre où l'organisateur peut le corriger. */
   const manquePourNumero = [
-    codeNiveau ? '' : 'le niveau (seuls « départemental » et « championnat » ont un code connu)',
+    // La liste des niveaux à code connu se lit du moteur : l'écrire à la main
+    // ici, c'est se condamner à la laisser périmer — ce qui vient d'arriver.
+    codeNiveau
+      ? ''
+      : `un niveau à code fédéral connu (${NIVEAUX_FEDERAUX.filter((n) => codeNiveauFederal(n))
+          .map((n) => NIVEAU_LABELS[n].toLowerCase())
+          .join(', ')})`,
     comiteNumero.trim() ? '' : 'le code du comité',
     clubNumero.trim() ? '' : 'le numéro du club',
     segmentRetenu ? '' : 'le segment de catégorie',
@@ -601,9 +609,19 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                 onChange={(e) => setNiveau(e.target.value as NiveauConcours | '')}
               >
                 <option value="">Non précisé</option>
-                {Object.entries(NIVEAU_LABELS).map(([value, label]) => (
+                {/* Les huit niveaux de la liste fédérale, dans son ordre, puis
+                    les deux qui sont à nous. L'ancien « championnat » fourre-tout
+                    n'est plus proposé — il reste affiché sur les concours qui le
+                    portent déjà, pour ne pas leur changer leur niveau dans le
+                    dos. */}
+                {[
+                  ...NIVEAUX_FEDERAUX,
+                  'club' as const,
+                  'coupe_de_france' as const,
+                  ...(niveau === 'championnat' ? (['championnat'] as const) : []),
+                ].map((value) => (
                   <option key={value} value={value}>
-                    {label}
+                    {NIVEAU_LABELS[value]}
                   </option>
                 ))}
               </select>
@@ -611,7 +629,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             {/* « Choix CDF » n'apparaît que si le jeu a une liste : sur les
                 copies d'écran PROMOTION et VETERANS, la ligne disparaît de la
                 fenêtre — elle n'est pas grisée. */}
-            {niveau === 'championnat' && championnatsProposes.length > 0 && (
+            {estNiveauChampionnat(niveau === '' ? undefined : niveau) && championnatsProposes.length > 0 && (
               <label>
                 Choix CDF
                 <select
@@ -631,7 +649,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                 </small>
               </label>
             )}
-            {niveau === 'championnat' && championnatsProposes.length === 0 && (
+            {estNiveauChampionnat(niveau === '' ? undefined : niveau) && championnatsProposes.length === 0 && (
               <p className="hint">
                 {jeuFederal(jeu)?.label} n'a pas de liste de championnats : les critères sont
                 imposés par le jeu lui-même.

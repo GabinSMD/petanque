@@ -47,7 +47,6 @@ export interface ParametresCDF {
   critereClassification: CritereClassification;
   /** Homogénéité club, exigée sauf en championnats jeunes (§3.C). */
   homogene: boolean;
-  niveau: NiveauConcours;
 }
 
 export interface ChampionnatCDF {
@@ -70,7 +69,6 @@ const base = (
   // §3.C : « il faut Homogène club pour tous les championnats sauf pour les
   // championnats jeunes ».
   homogene: !['juniors', 'cadets', 'minimes', 'benjamins'].includes(categorieAge),
-  niveau: 'championnat',
 });
 
 /**
@@ -139,7 +137,6 @@ export const JEUX_FEDERAUX: Jeu[] = [
       critereSexe: 'tous',
       critereClassification: 'promotion',
       homogene: true,
-      niveau: 'championnat',
     },
   },
   {
@@ -156,7 +153,6 @@ export const JEUX_FEDERAUX: Jeu[] = [
       critereSexe: 'tous',
       critereClassification: 'tous',
       homogene: true,
-      niveau: 'championnat',
     },
   },
   { id: 'provencal', label: 'PROVENCAL', code: 'PROV', codesCDF: ['14', '15'] },
@@ -264,6 +260,10 @@ export function jeuDuConcours(c: {
  */
 const CODES_NIVEAU: Partial<Record<NiveauConcours, string>> = {
   departemental: 'DEPT',
+  championnat_departemental: 'CD',
+  qualificatif_departemental: 'QUALIF_CD',
+  // Ancienne valeur fourre-tout des concours déjà en base : traitée comme un
+  // championnat départemental, seul dont le code soit attesté.
   championnat: 'CD',
 };
 
