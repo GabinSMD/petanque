@@ -14,6 +14,7 @@
  */
 import type { Player, Team } from '../types';
 import { libelleClubs } from './clubs';
+import { etatMise } from './mises';
 
 /** Échappe une valeur pour un CSV à séparateur point-virgule (tableur FR). */
 function cellule(valeur: string | number | undefined | null): string {
@@ -22,7 +23,7 @@ function cellule(valeur: string | number | undefined | null): string {
   return s;
 }
 
-const ENTETE = ['N°', 'Joueurs', 'Licences', 'Club', 'Forfait', 'Réglé'];
+const ENTETE = ['N°', 'Joueurs', 'Licences', 'Club', 'Forfait', 'Mise'];
 
 /** Les joueurs et leurs licences, appariés position par position. */
 const colonneJoueurs = (players: Player[]): string => players.map((p) => p.name).join(' / ');
@@ -38,7 +39,9 @@ export function csvInscrits(teams: Team[]): string {
       colonneLicences(t.players),
       libelleClubs(t.players, t.club),
       t.forfait ? 'oui' : '',
-      t.paid ? 'oui' : '',
+      // Trois états et non « oui/non » : le tableur du comité doit pouvoir
+      // distinguer une facturation d'un impayé.
+      etatMise(t),
     ]);
   }
   return lignes.map((l) => l.map(cellule).join(';')).join('\r\n');

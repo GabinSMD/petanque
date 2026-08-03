@@ -2,10 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { lireInscritsCsv } from '../inscritsImport';
 
 /** Ce que produit « 📋 Engagés (CSV) » de l'application. */
+/**
+ * Export de la version **précédente** : colonne « Réglé » valant « oui » ou rien.
+ * Gardé tel quel — un organisateur peut réimporter un fichier de l'an dernier.
+ */
 const NOTRE_EXPORT = `N°;Joueurs;Licences;Club;Forfait;Réglé
 1;DUPOND Jean / MARTIN Lina;02600100 / 02600101;Boule de l'Avenir;;oui
 2;BLANC Odette / NOIR Paul;02600102 / ;PC Romans;oui;
 3;SEUL Gerard;02600103;Crest;;`;
+
+/** Export courant : colonne « Mise » à trois états. */
+const EXPORT_COURANT = `N°;Joueurs;Licences;Club;Forfait;Mise
+1;DUPOND Jean;02600100;Crest;;paye
+2;MARTIN Lina;02600101;Crest;;facturation
+3;BLANC Odette;02600102;Crest;;non_paye`;
 
 function lire(texte: string) {
   const res = lireInscritsCsv(texte);
@@ -21,7 +31,7 @@ describe('import d\'une liste d\'inscrits (§3.B.10.B)', () => {
     expect(equipes[0]).toMatchObject({
       number: 1,
       club: 'Boule de l\'Avenir',
-      paid: true,
+      mise: 'paye',
       forfait: false,
     });
     expect(equipes[0]!.players).toEqual([
@@ -51,10 +61,10 @@ describe('import d\'une liste d\'inscrits (§3.B.10.B)', () => {
     ]);
   });
 
-  it('reprend le forfait et le règlement', () => {
+  it('reprend le forfait et la mise', () => {
     const { equipes } = lire(NOTRE_EXPORT);
     expect(equipes[1]!.forfait).toBe(true);
-    expect(equipes[1]!.paid).toBe(false);
+    expect(equipes[1]!.mise).toBe('non_paye');
   });
 
   it('accepte une équipe d\'un seul joueur', () => {
@@ -121,5 +131,25 @@ DUPOND Jean / MARTIN Lina;Crest`;
     const { equipes } = lire(sansNumero);
     expect(equipes[0]!.number).toBeUndefined();
     expect(equipes[0]!.players).toHaveLength(2);
+  });
+});
+
+describe('mises à l\'import (§3.B.1, zone 19)', () => {
+  it('relit les trois états du format courant', () => {
+    const { equipes } = lire(EXPORT_COURANT);
+    expect(equipes.map((e) => e.mise)).toEqual(['paye', 'facturation', 'non_paye']);
+  });
+
+  it('relit un fichier d\'avant les trois états', () => {
+    // Colonne « Réglé » valant « oui » : l'équipe reste payée, pas impayée.
+    const { equipes } = lire(NOTRE_EXPORT);
+    expect(equipes[0]!.mise).toBe('paye');
+  });
+
+  it('sans colonne de mise, personne n\'est déclaré payé', () => {
+    const sansColonne = `N°;Joueurs;Licences;Club;Forfait
+1;DUPOND Jean;02600100;Crest;`;
+    const { equipes } = lire(sansColonne);
+    expect(equipes[0]!.mise).toBe('non_paye');
   });
 });

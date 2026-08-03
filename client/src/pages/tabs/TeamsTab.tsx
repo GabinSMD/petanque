@@ -9,14 +9,19 @@ import { addTeam, deleteTeam, importerInscrits, insererEquipe, updateTeam } from
 import { pouleSummary } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
 import {
+  ETATS_MISE,
   PAYS_LICENCE_ETRANGERE,
   aDesCriteresLicence,
+  bilanMises,
+  etatMise,
+  poserMise,
+  type EtatMise,
   chercherEquipes,
   controlerEquipe,
   libelleClubs,
   type ControleEquipe,
 } from '@shared';
-import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../../lib/labels';
+import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS, ETAT_MISE_LABELS } from '../../lib/labels';
 import { RegistrationsPanel } from '../../components/RegistrationsPanel';
 import { exportListeSpecifique } from '../../lib/export';
 import {
@@ -221,7 +226,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
     concours.mode === 'poules' ? pouleSummary(teams.length, concours.nbTerrains) : null;
   const mise = concours.miseParEquipe ?? 0;
   const trackPaid = mise > 0;
-  const paidCount = teams.filter((t) => t.paid && !t.forfait).length;
+  const bilan = bilanMises(teams, mise);
   const engagements = teams.filter((t) => !t.forfait).length;
 
   return (
@@ -515,7 +520,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
             <th>{individual ? 'Participant' : 'Joueurs'}</th>
             <th>Club</th>
             {controlActif && <th title="Contrôle des licences">Licences</th>}
-            {trackPaid && <th className="cell-paid">Réglé</th>}
+            {trackPaid && <th className="cell-paid">Mise</th>}
             <th className="no-print">Actions</th>
           </tr>
         </thead>
@@ -576,14 +581,31 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                 )}
                 {trackPaid && (
                   <td className="cell-paid">
-                    <label className="paid-toggle" title="Engagement réglé">
-                      <input
-                        type="checkbox"
-                        checked={team.paid ?? false}
-                        onChange={(e) => void updateTeam({ ...team, paid: e.target.checked })}
-                      />
-                      <span>{team.paid ? `${mise.toLocaleString('fr-FR')} €` : '—'}</span>
-                    </label>
+                    {/* Trois états, comme le cadre « Mises » du manuel : une case
+                        à cocher ne pouvait pas dire « facturation ». */}
+                    <select
+                      className="mise-select"
+                      value={etatMise(team)}
+                      onChange={(e) =>
+                        void updateTeam(poserMise(team, e.target.value as EtatMise))
+                      }
+                      title="Mise de l'équipe (manuel §3.B.1, zone 19)"
+                    >
+                      {ETATS_MISE.map((etat) => (
+                        <option key={etat} value={etat}>
+                          {ETAT_MISE_LABELS[etat]}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      className="mise-commentaire"
+                      value={team.commentaireMise ?? ''}
+                      onChange={(e) =>
+                        void updateTeam({ ...team, commentaireMise: e.target.value || undefined })
+                      }
+                      placeholder="Commentaire"
+                      title="Champ « Commentaire » du cadre « Mises »"
+                    />
                   </td>
                 )}
                 <td className="no-print cell-actions">
@@ -661,11 +683,21 @@ export function TeamsTab({ concours, teams, poules }: Props) {
 
       {trackPaid && engagements > 0 && (
         <p className="caisse-summary">
-          💰 Caisse : <strong>{paidCount}/{engagements}</strong> engagement
-          {engagements > 1 ? 's' : ''} réglé{paidCount > 1 ? 's' : ''} ·{' '}
-          <strong>{(paidCount * mise).toLocaleString('fr-FR')} €</strong> encaissés
-          {paidCount < engagements && (
-            <> · reste {((engagements - paidCount) * mise).toLocaleString('fr-FR')} € à percevoir</>
+          💰 Caisse : <strong>{bilan.parEtat.paye}/{engagements}</strong> engagement
+          {engagements > 1 ? 's' : ''} réglé{bilan.parEtat.paye > 1 ? 's' : ''} ·{' '}
+          <strong>{bilan.encaisse.toLocaleString('fr-FR')} €</strong> encaissés
+          {/* Les trois montants restent séparés : mélanger la facturation à
+              l'encaissé fausse le compte de caisse, la mélanger à l'impayé fait
+              courir après un règlement déjà réglé. */}
+          {bilan.aFacturer > 0 && (
+            <>
+              {' '}
+              · <strong>{bilan.aFacturer.toLocaleString('fr-FR')} €</strong> à facturer (
+              {bilan.parEtat.facturation} équipe{bilan.parEtat.facturation > 1 ? 's' : ''})
+            </>
+          )}
+          {bilan.restantDu > 0 && (
+            <> · reste {bilan.restantDu.toLocaleString('fr-FR')} € à percevoir</>
           )}
         </p>
       )}

@@ -17,6 +17,8 @@
  * Comme pour les licenciés, on préfère ignorer une ligne illisible et le dire
  * plutôt que d'inventer une équipe.
  */
+import { etatMiseDepuisTexte } from './mises';
+import type { EtatMise } from '../types';
 
 export interface JoueurInscrit {
   name: string;
@@ -30,7 +32,8 @@ export interface EquipeImportee {
   players: JoueurInscrit[];
   club?: string;
   forfait: boolean;
-  paid: boolean;
+  /** Mise lue dans le fichier : trois états depuis ce lot, « oui/non » avant. */
+  mise: EtatMise;
 }
 
 export type LectureInscrits =
@@ -116,7 +119,8 @@ export function lireInscritsCsv(texte: string): LectureInscrits {
   const iLicences = trouve((h) => h === 'licences');
   const iNumero = trouve((h) => h === 'n°' || h === 'no' || h === 'numero' || h === 'equipe');
   const iForfait = trouve((h) => h.includes('forfait'));
-  const iRegle = trouve((h) => h.includes('regle') || h.includes('paye'));
+  // « Mise » depuis ce lot, « Réglé » dans les exports d'avant.
+  const iMise = trouve((h) => h.includes('mise') || h.includes('regle') || h.includes('paye'));
 
   // Colonnes « Joueur 1 » / « Licence 1 », dans l'ordre où elles apparaissent.
   const colonnesJoueur: { joueur: number; licence: number }[] = [];
@@ -172,7 +176,7 @@ export function lireInscritsCsv(texte: string): LectureInscrits {
       players,
       club: cell(iClub),
       forfait: estVrai(cell(iForfait)),
-      paid: estVrai(cell(iRegle)),
+      mise: etatMiseDepuisTexte(cell(iMise)),
     });
   }
 

@@ -32,6 +32,7 @@ export * from './engine/licenceEtrangere';
 export * from './engine/licenceQr';
 export * from './engine/licences';
 export * from './engine/licencesImport';
+export * from './engine/mises';
 export * from './engine/nouveautes';
 export * from './engine/accompagnement';
 export * from './engine/parcours';
