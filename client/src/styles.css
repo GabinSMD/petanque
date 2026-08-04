@@ -521,6 +521,11 @@ input:disabled, select:disabled, input[readonly] {
   }
 }
 
+/* Colonne « CD » : un code de comité à trois chiffres, rien de plus. */
+.comite-input {
+  max-width: 3.6rem;
+}
+
 /* Mises : le sélecteur à trois états et son commentaire, l'un sous l'autre. */
 .mise-select {
   min-width: 7.5rem;
