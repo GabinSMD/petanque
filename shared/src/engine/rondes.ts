@@ -377,6 +377,25 @@ export interface Standing {
   /** Goal-average : points marqués moins points encaissés. */
   diff: number;
   pointsFor: number;
+  /**
+   * « Résultats Parties » du document fédéral (copies d'écran p.104 et p.106) :
+   * une lettre par partie comptée, `G` ou `P`, **dans l'ordre des tours** —
+   * `GGGG`, `GGGP`, `PGGG`, `PPPP`.
+   *
+   * Deux équipes à trois points sur quatre parties ne se lisent pas de la même
+   * façon selon qu'elles ont fait `GGGP` ou `PGGG` : la première a dominé puis
+   * trébuché, la seconde est montée en puissance. Le total les confond.
+   *
+   * Dérivée des **mêmes** événements que `wins` et `played`, jamais recalculée à
+   * côté : autant de lettres que de parties comptées, autant de `G` que de
+   * victoires. Deux colonnes de la même table qui se contrediraient seraient
+   * pires que l'absence de l'une des deux.
+   *
+   * Un **exempt** y lit donc `G`, puisque notre moteur le crédite d'une victoire
+   * 13-7 (`BYE_SCORE`). Le manuel ne donne aucune notation pour l'exempt : il n'y
+   * a rien à imiter, seulement à rester cohérent.
+   */
+  resultatsParties: string;
 }
 
 /**
@@ -394,17 +413,31 @@ export interface Standing {
  */
 export function rondeStandings(entrants: Team[], matches: Match[]): Standing[] {
   const map = new Map<string, Standing>(
-    entrants.map((t) => [t.id, { id: t.id, played: 0, wins: 0, diff: 0, pointsFor: 0 }]),
+    entrants.map((t) => [
+      t.id,
+      { id: t.id, played: 0, wins: 0, diff: 0, pointsFor: 0, resultatsParties: '' },
+    ]),
   );
   /**
    * `scored`/`conceded` à -1 signalent une partie sans score : la victoire
    * compte, mais rien n'alimente le goal-average ni les points marqués.
    */
-  const credit = (id: string, scored: number, conceded: number): void => {
+  /**
+   * Lettres en attente de tri : le tableau des parties n'est pas ordonné, et
+   * c'est `round` qui fait foi. On collecte, puis on ordonne — plutôt que de
+   * supposer un ordre d'arrivée que rien ne garantit.
+   */
+  const lettres = new Map<string, { round: number; lettre: 'G' | 'P' }[]>();
+
+  const credit = (id: string, scored: number, conceded: number, round: number): void => {
     const s = map.get(id);
     if (!s) return;
     s.played += 1;
-    if (scored > conceded) s.wins += 1;
+    const gagne = scored > conceded;
+    if (gagne) s.wins += 1;
+    const suite = lettres.get(id) ?? [];
+    suite.push({ round, lettre: gagne ? 'G' : 'P' });
+    lettres.set(id, suite);
     if (scored < 0 || conceded < 0) return;
     s.diff += scored - conceded;
     s.pointsFor += scored;
@@ -415,8 +448,8 @@ export function rondeStandings(entrants: Team[], matches: Match[]): Standing[] {
     const sideA = m.playersA ?? (m.teamAId ? [m.teamAId] : []);
     const sideB = m.playersB ?? (m.teamBId ? [m.teamBId] : []);
     if (m.scoreA !== null && m.scoreB !== null) {
-      for (const id of sideA) credit(id, m.scoreA, m.scoreB);
-      for (const id of sideB) credit(id, m.scoreB, m.scoreA);
+      for (const id of sideA) credit(id, m.scoreA, m.scoreB, m.round);
+      for (const id of sideB) credit(id, m.scoreB, m.scoreA, m.round);
       continue;
     }
     // Vainqueur désigné sans score : la victoire compte, le goal-average
@@ -425,8 +458,15 @@ export function rondeStandings(entrants: Team[], matches: Match[]): Standing[] {
     if (!m.vainqueur) continue;
     const gagnants = m.vainqueur === 'A' ? sideA : sideB;
     const perdants = m.vainqueur === 'A' ? sideB : sideA;
-    for (const id of gagnants) credit(id, 0, -1);
-    for (const id of perdants) credit(id, -1, 0);
+    for (const id of gagnants) credit(id, 0, -1, m.round);
+    for (const id of perdants) credit(id, -1, 0, m.round);
+  }
+
+  for (const [id, suite] of lettres) {
+    const s = map.get(id);
+    if (s) s.resultatsParties = [...suite].sort((x, y) => x.round - y.round)
+      .map((e) => e.lettre)
+      .join('');
   }
 
   const classement = [...map.values()].sort(
