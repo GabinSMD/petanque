@@ -21,16 +21,36 @@
  * avant le numéro de licence. Et elle le fait **sans un mot** : un contrôle qui
  * a l'air de fonctionner.
  *
- * ## Le seuil est la saison, pas un nombre de jours
+ * ## Le seuil fédéral est journalier — et nous en choisissons un autre exprès
  *
- * Le manuel ne dit pas à partir de quand son fond passe à l'orange, et aucune
- * capture ne montre les deux états côte à côte pour le déduire. Nous choisissons
- * donc le nôtre, et il n'est pas arbitraire : une licence de l'année N+1 se
- * prend **dès novembre** de l'année N — c'est déjà la règle que `licences.ts`
- * applique à l'année de reprise. La saison fédérale court donc de novembre à
- * octobre, et c'est le seul franchissement qui rende une base *fausse* plutôt
- * que simplement incomplète : passée la saison, **toutes** les années de reprise
- * sont périmées et chaque licence ressort en anomalie.
+ * **Correction d'une affirmation fausse** : la première version de ce commentaire
+ * disait que « le manuel ne dit pas à partir de quand son fond passe à l'orange,
+ * et aucune capture ne montre les deux états côte à côte ». C'était faux, et la
+ * capture existait dans une planche que je n'avais pas lue. La p.8 montre les deux
+ * états l'un sous l'autre :
+ *
+ * | Base datée du | Fond |
+ * |---|---|
+ * | 04/01/2026 | **ORANGE** |
+ * | 06/01/2026 | **VERT** |
+ *
+ * Le manuel est daté du 14/01/2026. Le seuil fédéral est donc de l'ordre du
+ * **jour ou deux**, et non de la saison.
+ *
+ * Nous en prenons délibérément un autre, pour une raison qui tient à la
+ * différence de nos sources : leur logiciel a un bouton « Maj Base » contre un
+ * serveur vivant, et peut donc exiger une base du jour sans rien coûter à
+ * personne. Nous importons un CSV à la main. Signaler « votre fichier a deux
+ * jours » à chaque ouverture serait une alerte quotidienne inévitable, donc une
+ * alerte que l'organisateur apprendrait à ignorer — exactement ce que cette
+ * fonction cherche à éviter.
+ *
+ * Notre seuil est la **saison**, et il n'est pas arbitraire : une licence de
+ * l'année N+1 se prend **dès novembre** de l'année N — c'est déjà la règle que
+ * `licences.ts` applique à l'année de reprise. La saison fédérale court donc de
+ * novembre à octobre, et c'est le seul franchissement qui rende une base *fausse*
+ * plutôt que simplement incomplète : passée la saison, **toutes** les années de
+ * reprise sont périmées et chaque licence ressort en anomalie.
  *
  * Un seuil en jours dirait « vieille de 90 jours » d'un fichier de décembre en
  * février, qui est parfaitement bon.
