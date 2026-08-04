@@ -39,6 +39,7 @@ export * from './engine/permutationClassement';
 export * from './engine/besoinTerrains';
 export * from './engine/bornesParties';
 export * from './engine/comites';
+export * from './engine/bilanArbitrage';
 export * from './engine/nouveautes';
 export * from './engine/accompagnement';
 export * from './engine/parcours';

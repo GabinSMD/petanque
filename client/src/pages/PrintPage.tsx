@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import type { Match, Team } from '@shared';
 import {
   arbitrageReport,
+  bilanArbitrage,
   bracketSizeOf,
   isByeMatch,
   presseSections,
@@ -20,7 +21,14 @@ import {
   PartiesLancees,
   ResultatsPresse,
 } from '../components/PrintDocs';
-import { useBilanAvantTirage, useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
+import {
+  useBilanAvantTirage,
+  useConcours,
+  useLicencies,
+  useMatches,
+  usePoules,
+  useTeams,
+} from '../db/hooks';
 import { teamDisplayName } from '../components/TeamLabel';
 import { FORMAT_LABELS, NIVEAU_LABELS, POULE_SLOT_LABELS, formatDateFr } from '../lib/labels';
 
@@ -43,6 +51,28 @@ function sideText(m: Match, side: 'A' | 'B', teamsById: Map<string, Team>): stri
  * ou tickets de parties à distribuer aux équipes (6 par page).
  * L'impression se lance automatiquement à l'ouverture.
  */
+/**
+ * Une ligne du bilan, au format du document : « libellé : n/total (p%) ». Le
+ * document omet le pourcentage sur trois lignes (Elite, Honneur, Inconnus) —
+ * `sansPct` reproduit cette omission plutôt que de l'uniformiser.
+ */
+function Ligne({
+  libelle,
+  c,
+  sansPct = false,
+}: {
+  libelle: string;
+  c: { n: number; total: number; pourcentage: number };
+  sansPct?: boolean;
+}) {
+  return (
+    <li>
+      {libelle} : {c.n}/{c.total}
+      {!sansPct && <> ({c.pourcentage}%)</>}
+    </li>
+  );
+}
+
 export function PrintPage() {
   const { id, doc } = useParams<{ id: string; doc: string }>();
   const concours = useConcours(id);
@@ -51,6 +81,20 @@ export function PrintPage() {
   const matches = useMatches(id) ?? [];
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const arbitrage = useMemo(() => arbitrageReport(teams, matches), [teams, matches]);
+  const licencies = useLicencies() ?? [];
+  /**
+   * Bilan du champ engagé (manuel §3.D.1.B.4.5) : il demande les fiches, donc
+   * le fichier des licenciés, et il ne dit rien d'utile sans lui.
+   */
+  const bilanChamp = useMemo(() => {
+    const fiches = new Map(
+      licencies.filter((l) => l.licence).map((l) => [l.licence!, l]),
+    );
+    return bilanArbitrage(teams, fiches, {
+      comiteOrganisateur: concours?.comiteNumero,
+      comitesLigue: concours?.comitesLigue,
+    });
+  }, [teams, licencies, concours]);
   // Rapport du délégué (§3.D.15) : les mêmes données, dans l'ordre et avec les
   // colonnes du document fédéral.
   const delegue = useMemo(() => rapportDelegue(teams, matches), [teams, matches]);
@@ -367,14 +411,53 @@ export function PrintPage() {
             <p>Aucun résultat à reporter : le tableau n'est pas encore assez avancé.</p>
           )}
 
+          {/* Bilan du champ engagé, dans l'ordre et sur les deux colonnes du
+              document fédéral (manuel §3.D.1.B.4.5, p.55 et p.78). */}
           <section className="print-arbitrage-bilan">
-            <h3>Bilan des équipes engagées</h3>
-            <ul>
-              <li>Équipes engagées : {arbitrage.stats.equipes}</li>
-              <li>dont forfaits : {arbitrage.stats.forfaits}</li>
-              <li>Joueurs : {arbitrage.stats.joueurs}</li>
-              <li>Joueurs sans n° de licence : {arbitrage.stats.joueursSansLicence}</li>
+            <h3>Bilan des équipes engagées ({bilanChamp.equipes.total})</h3>
+            <div className="print-bilan-cols">
+              <ul>
+                <Ligne libelle="Équipe(s) Non Homogène(s)" c={bilanChamp.equipes.nonHomogenes} />
+                {bilanChamp.equipes.ligue && (
+                  <Ligne libelle="Équipe(s) de la Ligue" c={bilanChamp.equipes.ligue} />
+                )}
+                <Ligne libelle="Équipe(s) du Comité" c={bilanChamp.equipes.comite} />
+                <Ligne libelle="Joueurs Elite" c={bilanChamp.joueurs.elite} sansPct />
+                <Ligne libelle="Joueurs Honneur" c={bilanChamp.joueurs.honneur} sansPct />
+                <Ligne libelle="Joueurs Promotion" c={bilanChamp.joueurs.promotion} />
+              </ul>
+              <ul>
+                {bilanChamp.joueurs.ligue && (
+                  <Ligne libelle="Joueurs de la Ligue" c={bilanChamp.joueurs.ligue} />
+                )}
+                <Ligne libelle="Joueurs du Comité" c={bilanChamp.joueurs.comite} />
+                <Ligne libelle="Joueurs Classés" c={bilanChamp.joueurs.classes} />
+                <Ligne
+                  libelle="Joueurs Inconnus ou Etranger"
+                  c={bilanChamp.joueurs.inconnus}
+                  sansPct
+                />
+                <li>dont forfaits : {arbitrage.stats.forfaits}</li>
+              </ul>
+            </div>
+            <ul className="print-bilan-criteres">
+              <li>Critère Y (% Extérieur CD) = {bilanChamp.critereY}%</li>
+              {bilanChamp.critereZ !== undefined ? (
+                <li>Critère Z (% Extérieur Ligue) = {bilanChamp.critereZ}%</li>
+              ) : (
+                <li className="hint">
+                  Critère Z (% Extérieur Ligue) : déclarez les comités de la ligue pour l'obtenir.
+                </li>
+              )}
             </ul>
+            {/* Le critère X et la table des grilles ne sont pas calculables : les
+                deux exemplaires du manuel se contredisent sur X, et la table n'y
+                est pas. On laisse la place, comme le formulaire fédéral laisse
+                celle de l'arbitre. */}
+            <p className="print-bilan-grille">
+              Critère X (% Joueur Promotion) = <span className="print-rule print-rule-sm" /> ·
+              Manifestation Classée Grille <span className="print-rule print-rule-sm" />
+            </p>
           </section>
 
           <section className="print-arbitrage-sign">
