@@ -68,15 +68,25 @@ describe('codes de niveau du numéro, après la distinction', () => {
   });
 });
 
-describe('nom fédéral : les nouveaux niveaux ont leur mot', () => {
-  it('écrit le niveau en toutes lettres', () => {
-    // Ce nom-là n'est pas le numéro : c'est notre repli quand il manque un code
-    // (voir #111). Il doit rester lisible pour les quatre championnats.
-    const nom = (niveau: (typeof NIVEAUX_FEDERAUX)[number]): string =>
-      nomConcoursFederal({ date: '2026-01-07', niveau, format: 'triplette' });
-    expect(nom('championnat_departemental')).toContain('CHAMPIONNAT-DEPARTEMENTAL');
-    expect(nom('championnat_regional')).toContain('CHAMPIONNAT-REGIONAL');
-    expect(nom('qualificatif_departemental')).toContain('QUALIFICATIF-DEPARTEMENTAL');
-    expect(nom('championnat_departemental_honorifique')).toContain('HONORIFIQUE');
+describe('nom fédéral : chaque niveau fédéral a son code', () => {
+  it('écrit le code du niveau, comme le fait le numéro', () => {
+    // Ce test exigeait autrefois le niveau **en toutes lettres**
+    // (`CHAMPIONNAT-DEPARTEMENTAL`), au motif que ce nom était « notre repli
+    // quand il manque un code ». Les copies d'écran disent l'inverse : le nom
+    // porte les mêmes codes que le numéro. Ce qui compte donc ici, c'est que les
+    // huit niveaux fédéraux **aient** un code — et le moteur seul en décide.
+    // Ma première version de ce test exigeait un code pour **les huit** niveaux
+    // fédéraux. C'était faux : seuls trois en ont un d'attesté (`DEPT`, `CD`,
+    // `QUALIF_CD`) — le manuel ne montre pas les autres, et #111 s'était déjà
+    // trompé en les inventant. On parcourt donc ceux qui en ont, lus du moteur,
+    // et on vérifie qu'il en reste — sans quoi la boucle prouverait le vide.
+    const avecCode = NIVEAUX_FEDERAUX.filter((n) => codeNiveauFederal(n));
+    expect(avecCode.length).toBeGreaterThan(0);
+    for (const niveau of avecCode) {
+      const code = codeNiveauFederal(niveau)!;
+      expect(
+        nomConcoursFederal({ date: '2026-01-07', codeNiveau: code, jeu: 'petanque' }),
+      ).toContain(`_${code}_PET_`);
+    }
   });
 });

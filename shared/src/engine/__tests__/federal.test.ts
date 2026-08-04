@@ -77,37 +77,15 @@ describe('décalage de numérotation des équipes', () => {
   });
 });
 
-describe('nom fédéral du concours', () => {
-  it('assemble date, niveau, jeu, comité, formation et club', () => {
-    expect(
-      nomConcoursFederal({
-        date: '2026-12-17',
-        niveau: 'departemental',
-        discipline: 'petanque',
-        comite: 'CD 38 Isère',
-        format: 'triplette',
-        club: 'PC Pierre Sémard',
-      }),
-    ).toBe('2026-12-17_DEPARTEMENTAL_PETANQUE_CD-38-ISERE_TRIPLETTE_PC-PIERRE-SEMARD');
-  });
-
-  it('omet ce qui n est pas renseigné', () => {
-    expect(nomConcoursFederal({ date: '2026-07-27', format: 'doublette' })).toBe(
-      '2026-07-27_DOUBLETTE',
-    );
-  });
-
-  it('rend le jeu provençal et la coupe de France', () => {
-    expect(
-      nomConcoursFederal({
-        date: '2026-05-01',
-        niveau: 'coupe_de_france',
-        discipline: 'jeu_provencal',
-        format: 'triplette',
-      }),
-    ).toBe('2026-05-01_COUPE-DE-FRANCE_JEU-PROVENCAL_TRIPLETTE');
-  });
-});
+/*
+ * Le nom fédéral a ses propres tests, dans `nomConcoursFederal.test.ts`, écrits
+ * depuis les neuf noms complets que les copies d'écran donnent.
+ *
+ * Les trois tests qui vivaient ici verrouillaient la forme en **mots longs**
+ * (`2026-12-17_DEPARTEMENTAL_PETANQUE_CD-38-ISERE_TRIPLETTE_PC-PIERRE-SEMARD`),
+ * que le manuel n'écrit nulle part. Ce sont eux qui ont maintenu l'erreur : ils
+ * ne l'ont pas seulement laissée passer, ils l'ont défendue. Retirés avec elle.
+ */
 
 describe('désignation de la catégorie', () => {
   it('âge seul : rend le libellé court', () => {
