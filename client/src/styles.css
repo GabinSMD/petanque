@@ -4247,6 +4247,23 @@ form label select {
   font-weight: 600;
 }
 
+/* Date du fichier des licenciés. Le « Fond ORANGE » du manuel §2.1 quand la
+   base est d'une saison révolue. */
+.base-licencies {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.base-licencies-perimee {
+  opacity: 1;
+  border: 1px solid var(--warn, #d08700);
+  border-left-width: 4px;
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  background: color-mix(in srgb, var(--warn, #d08700) 10%, transparent);
+}
+
 /* « Pas inscrit ! » — le bandeau rouge de l'écran fédéral (p.38). */
 .depot-pas-inscrit {
   border: 2px solid var(--danger);

@@ -4,6 +4,7 @@ import { deleteAllLicencies, deleteLicencie, importLicencies } from '../db/actio
 import { useLicencies } from '../db/hooks';
 import { parseLicenciesCsv } from '../lib/csv';
 import { formatDateFr } from '../lib/labels';
+import { FraicheurBase } from '../components/FraicheurBase';
 
 const TEMPLATE =
   'data:text/csv;charset=utf-8,' +
@@ -68,6 +69,8 @@ export function LicenciesPage() {
           ← Retour aux concours
         </Link>
       </div>
+
+      <FraicheurBase />
 
       <div className="draw-panel licencies-import no-print">
         <h2>Importer un fichier CSV</h2>

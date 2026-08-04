@@ -16,6 +16,7 @@ import {
   updateTeam,
 } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
+import { FraicheurBase } from '../../components/FraicheurBase';
 import {
   ANOMALIE_EQUIPE_LABELS,
   ANOMALIE_LABELS,
@@ -161,6 +162,7 @@ export function LicencesTab({ concours, teams }: Props) {
 
   return (
     <div className="tab-content">
+      <FraicheurBase />
       <div className="depot-stats">
         <div className="depot-jauge" role="img" aria-label={`${stats.pourcentage}% déposées`}>
           <div className="depot-jauge-remplie" style={{ width: `${stats.pourcentage}%` }} />
