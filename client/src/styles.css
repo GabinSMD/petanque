@@ -3906,6 +3906,29 @@ form label select {
   padding-left: 1.1rem;
 }
 
+/* Le bilan du champ, sur les deux colonnes du document fédéral (§3.D.1.B.4.5). */
+.print-bilan-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.5rem;
+}
+
+.print-bilan-criteres {
+  margin-top: 0.5rem !important;
+  font-weight: 600;
+}
+
+.print-bilan-grille {
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .print-bilan-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
 .print-arbitrage-sign {
   margin-top: 1.2rem;
   break-inside: avoid;

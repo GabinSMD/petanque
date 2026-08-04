@@ -206,6 +206,14 @@ export interface Concours {
    */
   /** Code du comité départemental, à trois chiffres (`038`). */
   comiteNumero?: string;
+  /**
+   * Comités de la **ligue** organisatrice, pour le bilan du rapport d'arbitrage
+   * (§3.D.1.B.4.5, où la ligue s'appelle `CT`). **Déclarés et non déduits** : la
+   * table comité → ligue n'est nulle part dans le manuel, et l'inventer de
+   * mémoire serait la faute qui a produit `_JP_` au lieu de `_PROV_`. Absents,
+   * les grandeurs de ligue et le critère Z ne sont pas rendus.
+   */
+  comitesLigue?: string[];
   /** Numéro fédéral du club, préfixe de comité compris (`0380423`). */
   clubNumero?: string;
   /**
