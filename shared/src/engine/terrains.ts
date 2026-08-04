@@ -99,6 +99,68 @@ export function freeTerrains(
   );
 }
 
+/**
+ * Terrains libres, classés selon que les deux équipes y ont déjà joué ou non
+ * (manuel §3.D, écran « Match à lancer », copie d'écran p.45).
+ */
+export interface TerrainsClasses {
+  /** Aucune des deux équipes n'y a joué : à servir en premier. */
+  neufs: number[];
+  /** Au moins une des deux y a déjà joué : second recours. */
+  dejaJoues: number[];
+}
+
+/**
+ * Terrains sur lesquels une équipe a déjà été envoyée — **cette** équipe et
+ * aucune autre. Le sabotage a montré que c'est le point fragile : sans ce
+ * contrôle, la règle se dégrade en « ne jamais réutiliser un terrain que
+ * quiconque a joué », plus un seul terrain n'est neuf après un tour, et elle
+ * devient un no-op silencieux.
+ *
+ * Toute partie qui a porté un numéro de terrain compte, terminée ou en cours :
+ * une équipe qui est sur le terrain 3 en ce moment l'a bien joué. Le `!m.terrain`
+ * ne garde rien de réel — un terrain n'est jamais 0 — il rétrécit le type ; le
+ * sabotage confirme que son retrait ne change aucun comportement.
+ */
+function terrainsJoues(matches: Match[], teamId: string | null | undefined): Set<number> {
+  const out = new Set<number>();
+  if (!teamId) return out;
+  for (const m of matches) {
+    if (!m.terrain) continue;
+    if (m.teamAId === teamId || m.teamBId === teamId) out.add(m.terrain);
+  }
+  return out;
+}
+
+/**
+ * Classe des terrains libres pour une partie donnée.
+ *
+ * L'écran fédéral « Match à lancer » ne propose pas les terrains dans une seule
+ * liste : ceux qu'une des deux équipes a déjà joués sortent de la liste
+ * sélectionnable et vont dans un encadré à part, titré **« Libres mais utilisés
+ * par l'un des 2 »**. Le logiciel détourne donc la partie d'un terrain déjà
+ * fréquenté, et ne l'offre qu'en dernier recours.
+ *
+ * La règle est de fond, pas de confort : un terrain n'est pas l'autre — longueur,
+ * pente, gravier, lumière — et rejouer une équipe là où elle vient de gagner lui
+ * donne un avantage que le tirage n'a pas prévu.
+ *
+ * L'ordre des terrains est conservé dans chaque groupe : c'est celui de
+ * `freeTerrains`, et l'organisateur lit une liste croissante.
+ */
+export function classerTerrainsLibres(
+  libres: number[],
+  matches: Match[],
+  teamAId: string | null | undefined,
+  teamBId: string | null | undefined,
+): TerrainsClasses {
+  const vus = new Set([...terrainsJoues(matches, teamAId), ...terrainsJoues(matches, teamBId)]);
+  return {
+    neufs: libres.filter((n) => !vus.has(n)),
+    dejaJoues: libres.filter((n) => vus.has(n)),
+  };
+}
+
 export interface TerrainAssignment {
   matchId: string;
   terrain: number;
@@ -108,6 +170,16 @@ export interface TerrainAssignment {
  * Affecte automatiquement les parties en attente aux terrains libres,
  * dans l'ordre (poules d'abord, puis tableau), sans dépasser nbTerrains.
  * Retourne la liste des affectations à appliquer.
+ *
+ * À terrains égaux, une partie va sur un jeu qu'aucune de ses deux équipes n'a
+ * encore joué — la règle de l'écran « Match à lancer » (p.45). Le repli sur un
+ * terrain déjà fréquenté est **toujours** consenti quand il n'y a rien d'autre :
+ * mieux vaut une équipe qui rejoue son terrain qu'une partie qui attend. Sans ce
+ * repli, huit parties pour huit terrains finiraient par se bloquer.
+ *
+ * L'attribution se fait partie par partie, dans l'ordre d'attente, sans chercher
+ * l'optimum d'ensemble : c'est ce que fait l'organisateur qui lance ses parties
+ * une à une, et un optimum global déplacerait des parties déjà annoncées.
  */
 export function autoAssignTerrains(
   matches: Match[],
@@ -115,11 +187,14 @@ export function autoAssignTerrains(
   decalage = 0,
   bloques: number[] = [],
 ): TerrainAssignment[] {
-  const free = freeTerrains(matches, nbTerrains, decalage, bloques);
-  const waiting = waitingMatches(matches);
+  const restants = freeTerrains(matches, nbTerrains, decalage, bloques);
   const out: TerrainAssignment[] = [];
-  for (let i = 0; i < Math.min(free.length, waiting.length); i++) {
-    out.push({ matchId: waiting[i]!.id, terrain: free[i]! });
+  for (const m of waitingMatches(matches)) {
+    if (restants.length === 0) break;
+    const { neufs } = classerTerrainsLibres(restants, matches, m.teamAId, m.teamBId);
+    const terrain = neufs[0] ?? restants[0]!;
+    restants.splice(restants.indexOf(terrain), 1);
+    out.push({ matchId: m.id, terrain });
   }
   return out;
 }

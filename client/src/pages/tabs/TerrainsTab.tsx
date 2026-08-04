@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
-import { dureeMinutes, partiesEnRetard, terrainBoard, waitingMatches } from '@shared';
+import {
+  classerTerrainsLibres,
+  dureeMinutes,
+  partiesEnRetard,
+  terrainBoard,
+  waitingMatches,
+} from '@shared';
 import {
   autoAssignTerrainsAction,
   setMatchRetard,
@@ -49,6 +55,53 @@ function HeureAnnonce({ match, maintenant }: { match: Match; maintenant: string 
   );
 }
 
+/**
+ * Terrains proposés pour lancer une partie, en deux groupes comme l'écran
+ * fédéral « Match à lancer » (manuel §3.D, copie d'écran p.45) : ceux
+ * qu'aucune des deux équipes n'a joués, puis — à part, et dit tel quel — les
+ * « libres mais utilisés par l'un des 2 ».
+ *
+ * Les seconds restent cliquables : l'organisateur qui n'a plus le choix doit
+ * pouvoir lancer, il doit seulement savoir ce qu'il fait.
+ */
+function BoutonsTerrain({
+  match,
+  libres,
+  matches,
+}: {
+  match: Match;
+  libres: number[];
+  matches: Match[];
+}) {
+  const { neufs, dejaJoues } = classerTerrainsLibres(
+    libres,
+    matches,
+    match.teamAId,
+    match.teamBId,
+  );
+  const bouton = (n: number, deja: boolean) => (
+    <button
+      key={n}
+      className={`btn btn-sm${deja ? ' btn-terrain-deja' : ''}`}
+      onClick={() => void setMatchTerrain(match, n)}
+      title={deja ? 'Libre, mais une des deux équipes y a déjà joué' : undefined}
+    >
+      T{n}
+    </button>
+  );
+  return (
+    <span className="waiting-assign no-print">
+      {neufs.slice(0, 6).map((n) => bouton(n, false))}
+      {dejaJoues.length > 0 && (
+        <span className="waiting-deja" title="Libres mais utilisés par l'un des 2">
+          {neufs.length > 0 && <em>déjà joués :</em>}
+          {dejaJoues.slice(0, 6).map((n) => bouton(n, true))}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function TerrainsTab({ concours, teams, poules, matches }: Props) {
   const [busy, setBusy] = useState(false);
   const maintenant = useMaintenant();
@@ -63,7 +116,8 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
   );
   const waiting = waitingMatches(matches);
   const occupied = board.filter((t) => t.match).length;
-  const free = board.filter((t) => !t.match && !t.bloque).length;
+  const libres = board.filter((t) => !t.match && !t.bloque).map((t) => t.number);
+  const free = libres.length;
 
   const label = (m: Match) => matchLabel(m, poules, matches);
 
@@ -213,22 +267,7 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
                 <span className="waiting-teams">
                   {sideName(m, 'A', teamsById)} <em>–</em> {sideName(m, 'B', teamsById)}
                 </span>
-                {free > 0 && (
-                  <span className="waiting-assign no-print">
-                    {board
-                      .filter((t) => !t.match && !t.bloque)
-                      .slice(0, 6)
-                      .map((t) => (
-                        <button
-                          key={t.number}
-                          className="btn btn-sm"
-                          onClick={() => void setMatchTerrain(m, t.number)}
-                        >
-                          T{t.number}
-                        </button>
-                      ))}
-                  </span>
-                )}
+                {free > 0 && <BoutonsTerrain match={m} libres={libres} matches={matches} />}
               </li>
             ))}
           </ul>
