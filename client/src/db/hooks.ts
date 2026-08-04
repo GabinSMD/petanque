@@ -20,7 +20,10 @@ import {
   besoinTerrains,
   controlerEquipe,
   criteresDuConcours,
+  dateDeLaBase,
+  fraicheurLicencies,
   type BilanAvantTirage,
+  type FraicheurLicencies,
 } from '@shared';
 import { useModeFederal } from '../lib/modeFederal';
 import {
@@ -118,6 +121,33 @@ export function useLicenciesCount(): number {
       [],
       0,
     ) ?? 0
+  );
+}
+
+/**
+ * Fraîcheur du fichier des licenciés (manuel §2.1) — **sans monter le fichier
+ * en mémoire**. Un seul passage sur l'index `[type+concoursId]`, sans tableau de
+ * fiches ni tri : ce qui coûte dans `useLicencies` n'est pas la lecture mais les
+ * dizaines de milliers d'objets construits puis triés au `localeCompare`.
+ *
+ * Le `deleted === 0` n'est pas décoratif : un `count()` d'index compterait les
+ * **pierres tombales** d'une purge précédente, et l'écran annoncerait plus de
+ * fiches qu'il n'y en a. Trouvé en vérifiant dans l'application, où dix lignes
+ * répondaient pour deux licenciés.
+ */
+export function useFraicheurLicencies(): FraicheurLicencies {
+  const vide = fraicheurLicencies(undefined, 0, new Date().toISOString());
+  return (
+    useLiveQuery(async () => {
+      const dates: { updatedAt: string }[] = [];
+      await db.entities
+        .where('[type+concoursId]')
+        .equals(['licencie', ''])
+        .each((r) => {
+          if (r.deleted === 0) dates.push({ updatedAt: r.updatedAt });
+        });
+      return fraicheurLicencies(dateDeLaBase(dates), dates.length, new Date().toISOString());
+    }, []) ?? vide
   );
 }
 

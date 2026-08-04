@@ -1,6 +1,7 @@
 import type { BilanAvantTirage } from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../lib/labels';
 import { BesoinTerrainsHint } from './BesoinTerrains';
+import { FraicheurBase } from './FraicheurBase';
 import { Modal } from './Modal';
 
 /**
@@ -39,6 +40,9 @@ export function BilanTirageModal({ bilan, concoursId, onTirer, onCorriger }: Pro
       </p>
       {/* Le rapport fédéral annonce les terrains dans la même fenêtre que le
           contrôle des inscriptions : on fait pareil. */}
+      {/* Une base d'une saison révolue explique à elle seule les licences
+          « introuvables » annoncées juste au-dessus. */}
+      <FraicheurBase compact />
       <BesoinTerrainsHint besoin={bilan.terrains} />
       <ul className="liste-bilan">
         {bilan.lignes.map((ligne) => (
