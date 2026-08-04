@@ -10,6 +10,7 @@ import type {
   NiveauConcours,
   TeamFormat,
 } from '../types';
+import { jeuFederal, type JeuFederal } from './championnatCDF';
 
 /**
  * Numéro de la prochaine équipe. Le décalage sert quand un club enchaîne
@@ -102,30 +103,76 @@ function motFederal(valeur: string): string {
 export interface ParamsNomFederal {
   /** Date au format YYYY-MM-DD. */
   date: string;
-  niveau?: NiveauConcours;
-  discipline?: Discipline;
-  /** Comité départemental organisateur. */
-  comite?: string;
-  format: TeamFormat;
-  /** Club organisateur. */
-  club?: string;
+  /** Code de niveau, comme dans le numéro : `DEPT`, `CD`, `QUALIF_CD`… */
+  codeNiveau: string;
+  /**
+   * Jeu fédéral, par son **identifiant** — `petanque`, `promotion`… — et non par
+   * son code. C'est ce que `numeroConcoursFederal` reçoit, et les deux fonctions
+   * doivent prendre les mêmes entrées : la vérification dans l'application a
+   * montré ce qu'il arrive sinon, l'écran affichant `_petanque_` au lieu de
+   * `_PET_` parce que mes tests, eux, passaient déjà un code.
+   */
+  jeu?: JeuFederal;
+  /** Code du comité, à trois chiffres (`038`). */
+  comiteNumero?: string;
+  /** Segment de catégorie : `T`, `DSMixte`, `TPromo`, `ISM`… */
+  segment?: string;
+  /** **Nom** du club organisateur, en clair — pas son numéro. */
+  clubNom?: string;
 }
 
 /**
- * Nom du concours tel que le construit le logiciel fédéral :
- * date_niveau_jeu_comité_formation_club. Ce qui n'est pas renseigné est
- * simplement omis.
+ * Nom du concours, tel que le logiciel fédéral l'écrit dans le champ du bas de
+ * sa fenêtre de création (copies d'écran p.12 à p.15) :
+ *
+ * ```
+ * 20261217_DEPT_PET_038_T_"P C PIERRE SEMARD"
+ * ```
+ *
+ * ## Le nom, c'est le numéro avec le club en clair
+ *
+ * Les **cinq premiers segments sont exactement ceux du numéro** — codes de
+ * niveau et de jeu, code de comité, segment de catégorie. Seul le sixième
+ * diffère : le numéro porte le **code** du club (`0423`), le nom porte son
+ * **nom**, entre guillemets et avec ses espaces.
+ *
+ * Neuf noms complets l'attestent, chacun sur un code différent : `DEPT_PET_038_T`,
+ * `DEPT_PROMO_038_TPromo`, `CD_PET_038_DSMixte`, `CD_PROMO_038_TSPromo`,
+ * `CD_VET_038_TV`, `CD_PROV_038_T`, `CD_TDP_038_I`, `QUALIF_CD_TDP_038_ISM`,
+ * `QUALIF_CD_TDP_038_IJuniorM`.
+ *
+ * **Ce n'est pas ce que cette fonction faisait.** Elle écrivait les mots longs —
+ * `DEPARTEMENTAL_PETANQUE_ISERE_TRIPLETTE` — et le **nom** du comité au lieu de
+ * son code, alors que les codes étaient déjà dans le projet et que
+ * `numeroConcoursFederal` s'en servait. Deux tests verrouillaient cette forme :
+ * ce sont eux qui l'ont maintenue.
+ *
+ * ## Les séparateurs des segments manquants sont conservés
+ *
+ * L'aperçu du manuel montre le nom **se construire**, séparateurs compris :
+ * `20261217___038_T_` après le choix du seul comité, et
+ * `20261217_CD_PET_038__"P C PIERRE SEMARD"` quand le segment manque. Le double
+ * tiret bas **est** l'information — il dit ce qui reste à renseigner — là où
+ * notre ancien `filter(Boolean)` l'effaçait.
+ *
+ * ## Ce que le nom n'est pas
+ *
+ * Le **bandeau de la fenêtre de préparation** écrit autre chose encore :
+ * `Nom du Concours : 20260107 DEPT PET 038 D 0103`, soit le numéro avec des
+ * espaces (voir `nomDepuisNumero`). La fédération appelle donc « nom » deux
+ * chaînes différentes selon l'écran ; les deux existent, et aucune ne remplace
+ * l'autre.
  */
 export function nomConcoursFederal(p: ParamsNomFederal): string {
-  const parties = [
-    p.date,
-    p.niveau ? NIVEAU_MOTS[p.niveau] : '',
-    p.discipline === 'jeu_provencal' ? 'JEU-PROVENCAL' : p.discipline ? 'PETANQUE' : '',
-    p.comite ? motFederal(p.comite) : '',
-    FORMATION_MOTS[p.format],
-    p.club ? motFederal(p.club) : '',
-  ];
-  return parties.filter(Boolean).join('_');
+  const club = p.clubNom?.trim();
+  return [
+    p.date.replaceAll('-', ''),
+    p.codeNiveau,
+    p.jeu ? (jeuFederal(p.jeu)?.code ?? '') : '',
+    p.comiteNumero ?? '',
+    p.segment ?? '',
+    club ? `"${club}"` : '',
+  ].join('_');
 }
 
 /** Libellés courts de la catégorie d'âge, pour composer la désignation d'un concours. */

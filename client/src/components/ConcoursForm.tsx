@@ -203,6 +203,19 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
     segment: segmentRetenu,
     clubNumero: clubNumero.trim() || undefined,
   });
+  /**
+   * Nom de la fenêtre de création fédérale : les codes du numéro, et le club en
+   * clair. Contrairement au numéro, il s'affiche **en construction** — les
+   * séparateurs des pièces manquantes restent visibles, comme dans le manuel.
+   */
+  const nomFederalCreation = nomConcoursFederal({
+    date,
+    codeNiveau: codeNiveau ?? '',
+    jeu,
+    comiteNumero: comiteNumero.trim() || undefined,
+    segment: segmentRetenu,
+    clubNom: clubOrganisateur.trim() || undefined,
+  });
   /** Ce qui manque, dit dans l'ordre où l'organisateur peut le corriger. */
   const manquePourNumero = [
     // La liste des niveaux à code connu se lit du moteur : l'écrire à la main
@@ -748,15 +761,25 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           {/* Le numéro fédéral, en lecture seule. Rien du tout quand une pièce
               manque : un numéro tronqué n'est reconnu par personne, et c'est ce
               que le comité recoupe. */}
+          {/* La fédération appelle « nom » deux chaînes différentes selon
+              l'écran : celle de la fenêtre de création (codes + club en clair) et
+              celle du bandeau de préparation (le numéro avec des espaces). On
+              montre les deux en les nommant, plutôt que d'en élire une. */}
           <p className="hint numero-federal">
             {numeroFederal ? (
               <>
                 <strong>Numéro de concours :</strong> <code>{numeroFederal}</code>
                 <br />
-                Nom fédéral : <code>{nomDepuisNumero(numeroFederal)}</code>
+                Nom de la fenêtre de création : <code>{nomFederalCreation}</code>
+                <br />
+                Bandeau de préparation : <code>{nomDepuisNumero(numeroFederal)}</code>
               </>
             ) : (
-              <>Numéro de concours indisponible : il manque {manquePourNumero.join(', ')}.</>
+              <>
+                Numéro de concours indisponible : il manque {manquePourNumero.join(', ')}.
+                <br />
+                Nom en construction : <code>{nomFederalCreation}</code>
+              </>
             )}
           </p>
           <button
@@ -764,18 +787,21 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             className="btn btn-ghost btn-sm"
             onClick={() =>
               setName(
-                nomDepuisNumero(numeroFederal) ??
-                  nomConcoursFederal({
-                    date,
-                    niveau: niveau === '' ? undefined : niveau,
-                    discipline,
-                    comite: comiteOrganisateur.trim() || undefined,
-                    format,
-                    club: clubOrganisateur.trim() || undefined,
-                  }),
+                /*
+                 * Le nom de la fenêtre de création : les codes du numéro, et le
+                 * club **en clair**. Le numéro exige tous ses codes et se refuse
+                 * incomplet ; le nom, lui, s'affiche en construction chez la
+                 * fédération, séparateurs vides compris — il sert donc aussi
+                 * quand il manque une pièce.
+                 */
+                nomFederalCreation,
               )
             }
-            title="Le nom du concours dans le logiciel fédéral est son numéro, écrit avec des espaces"
+            title={
+              'Le nom de la fenêtre de création fédérale : les codes du numéro, ' +
+              'et le nom du club entre guillemets. Le bandeau de préparation, lui, ' +
+              'écrit le numéro avec des espaces — la fédération appelle « nom » les deux.'
+            }
           >
             ⤒ Reprendre le nom fédéral
           </button>
