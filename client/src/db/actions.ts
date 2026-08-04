@@ -24,6 +24,7 @@ import {
   propagate,
   qualifiesManquants,
   recomputePoule,
+  remplacerJoueur,
   renommerIdentifiants,
   autoAssignTerrains,
   rondeComplete,
@@ -1392,6 +1393,21 @@ export async function setLicencesDeposees(team: Team, depose: boolean): Promise<
     ...team,
     licencesDeposees: depose ? monotonicNow() : undefined,
   });
+}
+
+/**
+ * Remplacement d'un joueur au dépôt (manuel §3.C, bouton « Remplacer ») : le
+ * remplaçant se présente avec sa licence, on choisit qui cède sa place, et sa
+ * fiche remplit la ligne. La trace part avec l'équipe.
+ */
+export async function remplacerJoueurAuDepot(
+  team: Team,
+  index: number,
+  fiche: Licencie,
+): Promise<void> {
+  const apres = remplacerJoueur(team, index, fiche, monotonicNow());
+  if (apres === team) return;
+  await putEntity('team', apres);
 }
 
 /**

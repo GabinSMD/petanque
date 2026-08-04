@@ -346,6 +346,23 @@ export interface Concours {
   updatedAt: string;
 }
 
+/**
+ * Un joueur remplacé au dépôt des licences (manuel §3.C, bouton
+ * « Remplacer » des copies d'écran p.38-39).
+ *
+ * On garde **qui est parti et qui est arrivé**, pas la fiche entière : la
+ * composition courante est dans `players`, et cette trace ne sert qu'à
+ * répondre, le lendemain, à « mais qui a joué ? ».
+ */
+export interface Remplacement {
+  /** Rang du joueur dans l'équipe, à partir de 0. */
+  index: number;
+  avant: { name: string; licence?: string };
+  apres: { name: string; licence?: string };
+  /** Horodatage du remplacement. */
+  at: string;
+}
+
 export interface Team {
   id: string;
   concoursId: string;
@@ -376,6 +393,12 @@ export interface Team {
    * licences à la table de marque. Absent = pas encore passée.
    */
   licencesDeposees?: string;
+  /**
+   * Joueurs remplacés au dépôt, dans l'ordre où ils l'ont été. Voir
+   * `engine/depot.ts` : une composition qui change après l'inscription doit se
+   * lire quelque part, sinon personne ne peut dire le lendemain qui a joué.
+   */
+  remplacements?: Remplacement[];
   /**
    * Retenue dans la « Liste Spécifique » (manuel §3.D.1.B.5.1) : sélection
    * cochée à la main pendant le concours, exportée pour amorcer le suivant.
