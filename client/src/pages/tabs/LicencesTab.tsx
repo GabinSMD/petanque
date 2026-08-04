@@ -1,15 +1,20 @@
 import { useMemo, useRef, useState } from 'react';
 import type { Concours, Licencie, Team } from '@shared';
 import {
-  chercherEquipeParLicence,
   controlerEquipe,
   depotStats,
+  lireLicenceAuDepot,
   parseLicenceQr,
   type ChampLicence,
   type ControleEquipe,
   type CriteresLicence,
 } from '@shared';
-import { setCertificatValide, setLicencesDeposees, updateTeam } from '../../db/actions';
+import {
+  remplacerJoueurAuDepot,
+  setCertificatValide,
+  setLicencesDeposees,
+  updateTeam,
+} from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
 import {
   ANOMALIE_EQUIPE_LABELS,
@@ -91,6 +96,14 @@ export function LicencesTab({ concours, teams }: Props) {
   const [ouverte, setOuverte] = useState<string | null>(null);
   const [saisie, setSaisie] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  /**
+   * Licence scannée qui n'appartient à personne : l'équivalent du bandeau
+   * rouge « Pas inscrit ! ». Tant qu'elle est là, le dépôt de l'équipe
+   * ouverte est bloqué, comme le « Valider » fédéral qui devient « Annuler ».
+   */
+  const [enAttente, setEnAttente] = useState<{ licence: string; fiche?: Licencie } | null>(
+    null,
+  );
   const champScan = useRef<HTMLInputElement>(null);
 
   const attendues = teams.filter((t) => !t.forfait);
@@ -100,7 +113,11 @@ export function LicencesTab({ concours, teams }: Props) {
     return true;
   });
 
-  /** Scanner une licence ouvre l'équipe qui la porte. */
+  /**
+   * Scanner une licence. Trois issues, comme sur l'écran fédéral (p.38-39) :
+   * c'est un joueur de l'équipe ouverte, c'est un joueur d'une autre équipe, ou
+   * **« Pas inscrit ! »** — et ce dernier cas seul ouvre le remplacement.
+   */
   const scanner = (contenu: string): void => {
     const decode = parseLicenceQr(contenu);
     const licence = decode?.licence;
@@ -108,14 +125,38 @@ export function LicencesTab({ concours, teams }: Props) {
       setMessage(`Contenu non reconnu : « ${contenu.slice(0, 40)} ».`);
       return;
     }
-    const equipe = chercherEquipeParLicence(teams, licence);
-    if (!equipe) {
-      setMessage(`Licence ${licence} : aucune équipe inscrite ne la porte.`);
+    const lu = lireLicenceAuDepot(licence, teams, ouverte, fiches);
+    if (lu.type === 'equipe_ouverte') {
+      setEnAttente(null);
+      setMessage(`Licence ${licence} : joueur ${lu.index + 1} de cette équipe. ✓`);
       return;
     }
-    setOuverte(equipe.id);
-    setFiltre('toutes');
-    setMessage(`Équipe n°${equipe.number} — licence ${licence}.`);
+    if (lu.type === 'autre_equipe') {
+      // Sans équipe ouverte, le scan sert à trouver l'équipe : c'est le geste
+      // utile du scan à froid, et il ne doit pas se perdre.
+      if (!ouverte) {
+        setEnAttente(null);
+        setOuverte(lu.team.id);
+        setFiltre('toutes');
+        setMessage(`Équipe n°${lu.team.number} — licence ${licence}.`);
+        return;
+      }
+      setEnAttente(null);
+      setMessage(
+        `Licence ${licence} : inscrite dans l'équipe n°${lu.team.number}, pas dans celle-ci. ` +
+          `Un joueur inscrit deux fois est une erreur d'inscription, pas un remplacement.`,
+      );
+      return;
+    }
+    if (!ouverte) {
+      setMessage(
+        `Licence ${licence} : aucune équipe inscrite ne la porte. Ouvrez l'équipe qui reçoit ` +
+          `le remplaçant pour l'y installer.`,
+      );
+      return;
+    }
+    setEnAttente({ licence, fiche: lu.fiche });
+    setMessage(null);
   };
 
   return (
@@ -201,6 +242,47 @@ export function LicencesTab({ concours, teams }: Props) {
 
               {ouvert && (
                 <div className="depot-detail">
+                  {enAttente && (
+                    <div className="depot-pas-inscrit">
+                      <p>
+                        <strong>Pas inscrit !</strong> La licence {enAttente.licence}
+                        {enAttente.fiche ? <> — {enAttente.fiche.name}</> : null} n'appartient à
+                        aucune équipe de ce concours.
+                      </p>
+                      {enAttente.fiche ? (
+                        <>
+                          <p className="hint">Qui lui cède sa place ?</p>
+                          <span className="depot-remplacer">
+                            {team.players.map((p, i) => (
+                              <button
+                                key={i}
+                                className="btn btn-sm"
+                                onClick={() => {
+                                  void remplacerJoueurAuDepot(team, i, enAttente.fiche!);
+                                  setEnAttente(null);
+                                  setMessage(
+                                    `${p.name} remplacé par ${enAttente.fiche!.name}.`,
+                                  );
+                                  champScan.current?.focus();
+                                }}
+                              >
+                                Remplacer {p.name}
+                              </button>
+                            ))}
+                          </span>
+                        </>
+                      ) : (
+                        <p className="hint">
+                          Cette licence est absente du fichier des licenciés : rien à recopier
+                          automatiquement. Corrigez le nom et le numéro à la main ci-dessous.
+                        </p>
+                      )}
+                      <button className="btn btn-ghost btn-sm" onClick={() => setEnAttente(null)}>
+                        Annuler
+                      </button>
+                    </div>
+                  )}
+
                   {controle.anomaliesEquipe.length > 0 && (
                     <p className="depot-alerte">
                       ⚠{' '}
@@ -349,6 +431,20 @@ export function LicencesTab({ concours, teams }: Props) {
                     );
                   })}
 
+                  {team.remplacements && team.remplacements.length > 0 && (
+                    <ul className="depot-remplacements">
+                      {team.remplacements.map((r, i) => (
+                        <li key={i}>
+                          ↔ {r.avant.name}
+                          {r.avant.licence ? ` (${r.avant.licence})` : ''} remplacé par{' '}
+                          {r.apres.name}
+                          {r.apres.licence ? ` (${r.apres.licence})` : ''} —{' '}
+                          {new Date(r.at).toLocaleString('fr-FR')}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
                   <div className="form-actions">
                     {team.licencesDeposees ? (
                       <>
@@ -365,6 +461,15 @@ export function LicencesTab({ concours, teams }: Props) {
                     ) : (
                       <button
                         className="btn btn-primary"
+                        /* Le « Valider » fédéral devient « Annuler » tant qu'un
+                           joueur est « pas inscrit » : le dépôt ne se clôt pas
+                           sur une composition en suspens. */
+                        disabled={Boolean(enAttente)}
+                        title={
+                          enAttente
+                            ? 'Tranchez d’abord la licence non inscrite'
+                            : undefined
+                        }
                         onClick={() => void setLicencesDeposees(team, true)}
                       >
                         ✓ Valider le dépôt
