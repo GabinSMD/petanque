@@ -19,7 +19,8 @@
  * D'où trois montants distincts dans le bilan, et aucun total « recette » qui
  * mélangerait les trois.
  */
-import type { Concours, EtatMise, Team } from '../types';
+import type { Concours, EtatMise, Licencie, Team } from '../types';
+import { clubDuJoueur } from './clubs';
 import { TAILLE_FORMATION } from './formations';
 
 export type { EtatMise };
@@ -115,6 +116,129 @@ export interface BilanMises {
   restantDu: number;
   /** Équipes forfait, comptées à part : elles ne jouent pas. */
   forfaits: number;
+}
+
+/** Une ligne de la « Synthèse Non Payé » : un club et ce qu'il doit. */
+export interface LigneSyntheseNonPaye {
+  /** « 0380423/P C PIERRE SEMARD », « BOULE JOYEUSE », « N.H. ». */
+  libelle: string;
+  /** Numéro de club fédéral, quand il est connu. Sert au tri. */
+  clubNumero?: string;
+  /**
+   * Nombre d'équipes **impayées** de ce club.
+   *
+   * Le libellé fédéral dit « Nbre d'équipe inscrite(s) », mais l'arithmétique de
+   * la planche le dément : le club `0380423` y a deux équipes inscrites (n°2 et
+   * n°16) dont une seule impayée, et la Synthèse annonce « 1 » ; `N.H.` y a huit
+   * équipes et la Synthèse annonce « 1 ». On suit le calcul, pas l'étiquette.
+   */
+  equipes: number;
+  /** Ce que ce club doit : `equipes × mise d'équipe`. */
+  montant: number;
+}
+
+export interface SyntheseNonPaye {
+  lignes: LigneSyntheseNonPaye[];
+  /** Total des équipes impayées — le `Nbre Equipe : 4` de la planche. */
+  equipes: number;
+  /** Total dû — le `= 48 €` de la planche. */
+  montant: number;
+}
+
+/** Groupe des équipes dont les joueurs ne viennent pas tous du même club. */
+const GROUPE_NON_HOMOGENE = 'N.H.';
+/**
+ * Groupe des équipes dont on ne connaît aucun club. Distinct de `N.H.` : celui-ci
+ * affirme des clubs différents, celui-là n'affirme rien. `estHomogene` ne conclut
+ * pas sans club renseigné, et il faut pourtant bien relancer quelqu'un.
+ */
+const GROUPE_SANS_CLUB = 'Club non renseigné';
+
+/**
+ * « Synthèse Non Payé » (manuel §3.B.9.D, planche p.33) : les impayés groupés
+ * par club, avec le compte, le montant dû et un total.
+ *
+ * On ne relance pas une équipe, on relance un club. Six lignes éparpillées dans
+ * une liste triée par dossard sont un travail de recoupement ; ici c'est un
+ * appel téléphonique et une somme.
+ *
+ * Le tri suit la planche : par **numéro** de club croissant. Par nom, son ordre
+ * serait AMICALE / APL / P C — ce n'est pas celui qu'elle montre. Les clubs sans
+ * numéro viennent ensuite, par nom ; `N.H.` et « club non renseigné » ferment la
+ * liste, n'étant pas des clubs.
+ *
+ * Les forfaits sont écartés, comme dans `bilanMises` : on ne relance pas une
+ * équipe qui ne joue pas, et ce qu'il advient de son engagement est une décision
+ * d'organisateur.
+ */
+export function syntheseNonPaye(
+  teams: Team[],
+  fiches: Map<string, Licencie>,
+  totalParEquipe: number,
+): SyntheseNonPaye {
+  const groupes = new Map<string, { libelle: string; numero?: string; equipes: number }>();
+
+  for (const equipe of teams) {
+    if (equipe.forfait) continue;
+    if (etatMise(equipe) !== 'non_paye') continue;
+
+    const clubs = equipe.players.map((p) => clubDuJoueur(p, fiches)).filter((c) => c.cle);
+    const distincts = new Map(clubs.map((c) => [c.cle!, c]));
+
+    let cle: string;
+    let libelle: string;
+    let numero: string | undefined;
+    if (distincts.size === 0) {
+      cle = GROUPE_SANS_CLUB;
+      libelle = GROUPE_SANS_CLUB;
+    } else if (distincts.size > 1) {
+      cle = GROUPE_NON_HOMOGENE;
+      libelle = GROUPE_NON_HOMOGENE;
+    } else {
+      const club = [...distincts.values()][0]!;
+      cle = club.cle!;
+      numero = club.numero;
+      // « 0380423/P C PIERRE SEMARD » quand le numéro est connu ; sinon le seul
+      // nom — inventer un numéro serait pire que de s'en passer.
+      libelle = club.nom
+        ? numero
+          ? `${numero}/${club.nom}`
+          : club.nom
+        : (numero ?? cle);
+    }
+
+    const dejaVu = groupes.get(cle);
+    if (dejaVu) dejaVu.equipes += 1;
+    // La première graphie rencontrée fait le libellé : « boule joyeuse » et
+    // « Boule Joyeuse » sont un seul club à relancer.
+    else groupes.set(cle, { libelle, ...(numero ? { numero } : {}), equipes: 1 });
+  }
+
+  const rang = (g: { libelle: string; numero?: string }): number => {
+    if (g.libelle === GROUPE_NON_HOMOGENE || g.libelle === GROUPE_SANS_CLUB) return 2;
+    return g.numero ? 0 : 1;
+  };
+
+  const lignes = [...groupes.values()]
+    .sort((a, b) => {
+      const ra = rang(a);
+      const rb = rang(b);
+      if (ra !== rb) return ra - rb;
+      if (ra === 0) return a.numero!.localeCompare(b.numero!);
+      return a.libelle.localeCompare(b.libelle, 'fr');
+    })
+    .map((g) => ({
+      libelle: g.libelle,
+      ...(g.numero ? { clubNumero: g.numero } : {}),
+      equipes: g.equipes,
+      montant: g.equipes * totalParEquipe,
+    }));
+
+  return {
+    lignes,
+    equipes: lignes.reduce((n, l) => n + l.equipes, 0),
+    montant: lignes.reduce((n, l) => n + l.montant, 0),
+  };
 }
 
 /**

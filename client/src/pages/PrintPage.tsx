@@ -15,6 +15,7 @@ import {
 import {
   BilanLicences,
   BilanPaiements,
+  SyntheseNonPayeDoc,
   GraphiqueTableau,
   ListeAbsents,
   ListeEngages,
@@ -284,6 +285,12 @@ export function PrintPage() {
       )}
 
       {doc === 'paiements' && <BilanPaiements concours={concours} teams={teams} tri={tri} />}
+
+      {/* La synthèse a son ordre propre — par numéro de club, comme la planche
+          p.33 — donc pas d'option de tri : elle n'aurait aucun sens ici. */}
+      {doc === 'synthese-non-paye' && (
+        <SyntheseNonPayeDoc concours={concours} teams={teams} licencies={licencies} />
+      )}
 
       {doc === 'absents' && <ListeAbsents teams={teams} />}
       {doc === 'bilan-licences' && bilan && <BilanLicences bilan={bilan} />}

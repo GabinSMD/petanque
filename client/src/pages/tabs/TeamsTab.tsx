@@ -521,6 +521,17 @@ export function TeamsTab({ concours, teams, poules }: Props) {
               💶 Bilan des paiements
             </Link>
           )}
+          {/* Document distinct, comme à la fédération : on ne relance pas une
+              équipe mais un club. N'apparaît que s'il y a quelque chose à
+              relancer. */}
+          {trackPaid && bilan.parEtat.non_paye > 0 && (
+            <Link
+              className="btn btn-ghost btn-sm"
+              to={`/concours/${concours.id}/imprimer/synthese-non-paye`}
+            >
+              📮 Synthèse non payé
+            </Link>
+          )}
           {teams.some((t) => t.forfait) && (
             <Link className="btn btn-ghost btn-sm" to={`/concours/${concours.id}/imprimer/absents`}>
               🚫 Équipes absentes
