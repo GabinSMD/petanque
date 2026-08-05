@@ -4,10 +4,32 @@ import { evolutionEnTexte } from '@shared';
 import {
   ajouterMeneAuMatch,
   clearScore,
+  inverserResultatDuMatch,
   retirerMeneDuMatch,
   setMatchVainqueur,
   setScore,
 } from '../db/actions';
+
+/**
+ * « Inverser Résultat » (planche p.97, à côté de `Modifier Score` et `Gommer`,
+ * et texte p.101). La flèche circulaire est l'icône du manuel.
+ *
+ * Défini **hors** de `ScoreForm` : à l'intérieur, React verrait un type de
+ * composant neuf à chaque rendu et le remonterait.
+ */
+function BoutonInverser({ concours, match }: { concours: Concours; match: Match }) {
+  return (
+    <button
+      type="button"
+      className="btn-icon"
+      onClick={() => void inverserResultatDuMatch(concours, match)}
+      title="Inverser Résultat : le mauvais camp a été désigné"
+      aria-label="Inverser Résultat"
+    >
+      ↻
+    </button>
+  );
+}
 
 interface Props {
   concours: Concours;
@@ -94,9 +116,12 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
     if (editOnly) {
       if (disabled) return null;
       return (
-        <button type="button" className="btn-icon" onClick={startEdit} title="Corriger le score">
-          ✎ corriger
-        </button>
+        <span className="score-view score-done">
+          <button type="button" className="btn-icon" onClick={startEdit} title="Corriger le score">
+            ✎ corriger
+          </button>
+          <BoutonInverser concours={concours} match={match} />
+        </span>
       );
     }
     if (match.scoreA === null || match.scoreB === null) {
@@ -116,6 +141,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
               ✎
             </button>
           )}
+          {!disabled && <BoutonInverser concours={concours} match={match} />}
         </span>
       );
     }
@@ -138,6 +164,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
             ✎
           </button>
         )}
+        {!disabled && <BoutonInverser concours={concours} match={match} />}
       </span>
     );
   }
@@ -184,9 +211,49 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
     );
   }
 
+  /**
+   * Le geste du manuel : « un écran pour indiquer le score de la partie apparaît,
+   * avec 13 automatiquement pour l'équipe gagnante. Vous mettez le score de
+   * l'équipe perdante » (p.46, dialogue montré p.97). On désigne le vainqueur,
+   * son score est prérempli à `scoreMax`, et il ne reste qu'un nombre à taper.
+   *
+   * Le champ reste modifiable : une partie peut se gagner à un autre score.
+   */
+  const designerVainqueur = (camp: 'a' | 'b'): void => {
+    const gagnant = String(concours.scoreMax);
+    setA(camp === 'a' ? gagnant : '');
+    setB(camp === 'b' ? gagnant : '');
+    setError(null);
+    // Le focus part sur le perdant : c'est le seul nombre qui reste à saisir.
+    const perdant = formRef.current?.querySelectorAll('input')[camp === 'a' ? 1 : 0];
+    (perdant as HTMLInputElement | undefined)?.focus();
+  };
+
   return (
     <>
     <form ref={formRef} className="score-form" onSubmit={submit} onBlur={onBlur}>
+      {/* Seulement en saisie neuve : pendant une correction, les deux scores
+          sont déjà là et ces boutons les effaceraient. */}
+      {a.trim() === '' && b.trim() === '' && (
+        <span className="score-vainqueur">
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => designerVainqueur('a')}
+            title={`${labelA ?? 'A'} gagne — score prérempli à ${concours.scoreMax}`}
+          >
+            {labelA ?? 'A'} gagne {concours.scoreMax}
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => designerVainqueur('b')}
+            title={`${labelB ?? 'B'} gagne — score prérempli à ${concours.scoreMax}`}
+          >
+            {labelB ?? 'B'} gagne {concours.scoreMax}
+          </button>
+        </span>
+      )}
       <input
         type="number"
         inputMode="numeric"
