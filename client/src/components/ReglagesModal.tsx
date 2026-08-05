@@ -21,17 +21,37 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
         {/* Trois boutons radio plutôt qu'une liste déroulante : les trois
             niveaux se lisent d'un coup, et on voit lequel est actif sans
             ouvrir quoi que ce soit. */}
-        {NIVEAUX_INTERFACE.map((n) => (
-          <label key={n} className="checkbox-label">
-            <input
-              type="radio"
-              name="niveauInterface"
-              checked={niveau === n}
-              onChange={() => choisir(n)}
-            />
-            {LIBELLE_NIVEAU[n]}
-          </label>
-        ))}
+        {NIVEAUX_INTERFACE.map((n) => {
+          /*
+           * `checked` suit le niveau **effectif** : sans préférence, c'est celui
+           * de l'heuristique qui apparaît coché. `onChange` seul ne suffirait
+           * donc pas — cliquer ce radio-là ne change aucune valeur, le
+           * navigateur n'émet aucun `change`, et figer le niveau automatique
+           * serait impossible. Or c'est le geste le plus utile du réglage : le
+           * club à qui l'heuristique dit « Mon club » doit pouvoir verrouiller
+           * ce niveau, sinon un import de licenciés le fera basculer en
+           * « Officiel » sans qu'il l'ait demandé.
+           *
+           * `click`, lui, est émis dans tous les cas — à la souris comme aux
+           * flèches du clavier, le navigateur cliquant le radio qu'il
+           * sélectionne. Les deux gestionnaires appellent le même `choisir`, qui
+           * est idempotent : sur un vrai changement il s'exécute deux fois avec
+           * la même valeur, ce qui ne coûte rien.
+           */
+          const fixer = (): void => choisir(n);
+          return (
+            <label key={n} className="checkbox-label">
+              <input
+                type="radio"
+                name="niveauInterface"
+                checked={niveau === n}
+                onChange={fixer}
+                onClick={fixer}
+              />
+              {LIBELLE_NIVEAU[n]}
+            </label>
+          );
+        })}
 
         <p className="hint">
           Au niveau « Entre amis », l'application s'en tient à ce qu'il faut pour un concours de
