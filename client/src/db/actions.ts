@@ -23,6 +23,7 @@ import {
   propagate,
   qualifiesManquants,
   recomputePoule,
+  ajouterJoueur,
   remplacerJoueur,
   renommerIdentifiants,
   autoAssignTerrains,
@@ -1402,6 +1403,22 @@ export async function remplacerJoueurAuDepot(
   fiche: Licencie,
 ): Promise<void> {
   const apres = remplacerJoueur(team, index, fiche, monotonicNow());
+  if (apres === team) return;
+  await putEntity('team', apres);
+}
+
+/**
+ * Ajoute un joueur au dépôt sur une équipe incomplète (manuel §3.C).
+ *
+ * `taillePrevue` vient de l'écran, qui connaît le mode : en mêlée et au tir,
+ * chacun s'inscrit seul et un participant est complet à un joueur.
+ */
+export async function ajouterJoueurAuDepot(
+  team: Team,
+  fiche: Licencie,
+  taillePrevue: number,
+): Promise<void> {
+  const apres = ajouterJoueur(team, fiche, monotonicNow(), taillePrevue);
   if (apres === team) return;
   await putEntity('team', apres);
 }

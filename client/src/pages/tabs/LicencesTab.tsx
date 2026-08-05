@@ -1,15 +1,18 @@
 import { useMemo, useRef, useState } from 'react';
 import type { Concours, Licencie, Team } from '@shared';
 import {
+  TAILLE_FORMATION,
   controlerEquipe,
   depotStats,
   lireLicenceAuDepot,
   parseLicenceQr,
+  placesLibres,
   type ChampLicence,
   type ControleEquipe,
   type CriteresLicence,
 } from '@shared';
 import {
+  ajouterJoueurAuDepot,
   remplacerJoueurAuDepot,
   setCertificatValide,
   setLicencesDeposees,
@@ -22,6 +25,7 @@ import {
   ANOMALIE_LABELS,
   CATEGORIE_AGE_LABELS,
   formatDateFr,
+  isIndividualMode,
 } from '../../lib/labels';
 
 interface Props {
@@ -67,6 +71,13 @@ export function LicencesTab({ concours, teams }: Props) {
     () => new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l])),
     [licencies],
   );
+
+  /**
+   * Effectif attendu d'une équipe. En mêlée et au tir, chacun s'inscrit seul et
+   * les équipes se tirent à chaque ronde : un participant est complet à un
+   * joueur, quoi que dise la formation du concours.
+   */
+  const taillePrevue = isIndividualMode(concours.mode) ? 1 : TAILLE_FORMATION[concours.format];
 
   const criteres: CriteresLicence = useMemo(
     () => ({
@@ -253,7 +264,33 @@ export function LicencesTab({ concours, teams }: Props) {
                       </p>
                       {enAttente.fiche ? (
                         <>
-                          <p className="hint">Qui lui cède sa place ?</p>
+                          {/* L'ajout d'abord : il ne prend la place de personne,
+                              et c'est le geste attendu quand l'équipe a été
+                              inscrite incomplète le matin (manuel §3.C). */}
+                          {placesLibres(team, taillePrevue) > 0 && (
+                            <p className="depot-ajouter">
+                              Cette équipe est incomplète —{' '}
+                              {placesLibres(team, taillePrevue)} place
+                              {placesLibres(team, taillePrevue) > 1 ? 's' : ''} libre
+                              {placesLibres(team, taillePrevue) > 1 ? 's' : ''}.{' '}
+                              <button
+                                className="btn btn-sm"
+                                onClick={() => {
+                                  void ajouterJoueurAuDepot(team, enAttente.fiche!, taillePrevue);
+                                  setEnAttente(null);
+                                  setMessage(`${enAttente.fiche!.name} ajouté à l'équipe.`);
+                                  champScan.current?.focus();
+                                }}
+                              >
+                                Ajouter {enAttente.fiche.name}
+                              </button>
+                            </p>
+                          )}
+                          <p className="hint">
+                            {placesLibres(team, taillePrevue) > 0
+                              ? 'Ou qui lui cède sa place ?'
+                              : 'Qui lui cède sa place ?'}
+                          </p>
                           <span className="depot-remplacer">
                             {team.players.map((p, i) => (
                               <button
@@ -433,19 +470,31 @@ export function LicencesTab({ concours, teams }: Props) {
                     );
                   })}
 
-                  {team.remplacements && team.remplacements.length > 0 && (
-                    <ul className="depot-remplacements">
-                      {team.remplacements.map((r, i) => (
-                        <li key={i}>
-                          ↔ {r.avant.name}
-                          {r.avant.licence ? ` (${r.avant.licence})` : ''} remplacé par{' '}
-                          {r.apres.name}
-                          {r.apres.licence ? ` (${r.apres.licence})` : ''} —{' '}
-                          {new Date(r.at).toLocaleString('fr-FR')}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  {/* Remplacements et ajouts dans un seul fil, à l'heure : ce
+                      qu'on veut lire le lendemain, c'est l'histoire de la
+                      composition, pas deux listes à recouper. */}
+                  {(() => {
+                    const histoire = [
+                      ...(team.remplacements ?? []).map((r) => ({
+                        at: r.at,
+                        texte: `↔ ${r.avant.name}${r.avant.licence ? ` (${r.avant.licence})` : ''} remplacé par ${r.apres.name}${r.apres.licence ? ` (${r.apres.licence})` : ''}`,
+                      })),
+                      ...(team.ajouts ?? []).map((a) => ({
+                        at: a.at,
+                        texte: `＋ ${a.joueur.name}${a.joueur.licence ? ` (${a.joueur.licence})` : ''} ajouté à l'équipe`,
+                      })),
+                    ].sort((x, y) => (x.at < y.at ? -1 : x.at > y.at ? 1 : 0));
+                    if (histoire.length === 0) return null;
+                    return (
+                      <ul className="depot-remplacements">
+                        {histoire.map((e, i) => (
+                          <li key={i}>
+                            {e.texte} — {new Date(e.at).toLocaleString('fr-FR')}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
 
                   <div className="form-actions">
                     {team.licencesDeposees ? (

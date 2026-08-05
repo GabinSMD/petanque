@@ -395,6 +395,26 @@ export interface Remplacement {
   at: string;
 }
 
+/**
+ * Joueur **ajouté** au dépôt sur une équipe incomplète (manuel §3.C : « ou
+ * d'ajouter un joueur lors du dépôt de licence »).
+ *
+ * Liste distincte de `remplacements`, et non une entrée au `avant` vide : un
+ * ajout n'a pas de sortant, et le seul écran qui lit les remplacements fait
+ * `r.avant.name` **sans garde**. Une entrée sans `avant` ferait donc tomber
+ * l'écran de dépôt d'un appareil resté sur la version précédente ; un `avant`
+ * factice lui ferait afficher un remplacement qui n'a pas eu lieu. Dans un champ
+ * à part, l'ajout est simplement invisible pour lui — ce qui est l'état actuel,
+ * donc sans régression.
+ */
+export interface AjoutJoueur {
+  /** Rang qu'occupe le nouveau venu, à partir de 0. */
+  index: number;
+  joueur: { name: string; licence?: string };
+  /** Horodatage de l'ajout. */
+  at: string;
+}
+
 export interface Team {
   id: string;
   concoursId: string;
@@ -431,6 +451,12 @@ export interface Team {
    * lire quelque part, sinon personne ne peut dire le lendemain qui a joué.
    */
   remplacements?: Remplacement[];
+  /**
+   * Joueurs ajoutés au dépôt, dans l'ordre où ils l'ont été. Même raison que
+   * `remplacements` : une composition qui change après l'inscription doit se
+   * lire quelque part.
+   */
+  ajouts?: AjoutJoueur[];
   /**
    * Retenue dans la « Liste Spécifique » (manuel §3.D.1.B.5.1) : sélection
    * cochée à la main pendant le concours, exportée pour amorcer le suivant.
