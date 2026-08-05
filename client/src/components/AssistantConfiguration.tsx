@@ -34,7 +34,7 @@ import {
   preferenceNiveau,
   setPreferenceNiveau,
 } from '../lib/niveauInterface';
-import { setDefauts } from '../lib/defauts';
+import { getDefauts, setDefauts } from '../lib/defauts';
 import { FORMAT_LABELS, LIBELLE_NIVEAU } from '../lib/labels';
 import { BouleLogo } from './BouleLogo';
 
@@ -123,7 +123,22 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
   const [format, setFormat] = useState<TeamFormat>('doublette');
   const [scoreMax, setScoreMax] = useState(13);
   const [consolante, setConsolante] = useState(true);
-  const [miseParEquipe, setMiseParEquipe] = useState<number | ''>('');
+  /**
+   * La mise par défaut déjà enregistrée, lue une fois au montage.
+   * `defautsDuProfil` n'en propose jamais — la chiffrer serait inventer un
+   * tarif — donc le niveau passé à `getDefauts` est indifférent pour ce seul
+   * champ, et le lire au montage évite que le champ apparaisse ou disparaisse
+   * au fil de la saisie.
+   *
+   * Elle sert à deux choses, et sans elle relancer l'assistant depuis les
+   * réglages effaçait en silence la mise qu'on venait d'y saisir : l'écran 1 la
+   * réinitialisait depuis le profil, qui n'en a pas, et le champ masqué en
+   * « Entre amis » ne montrait rien de cette perte.
+   */
+  const [miseEnregistree] = useState<number | undefined>(
+    () => getDefauts('amical').miseParEquipe,
+  );
+  const [miseParEquipe, setMiseParEquipe] = useState<number | ''>(miseEnregistree ?? '');
 
   /**
    * Sortir sans rien écrire d'autre que « c'est vu ». Utilisé par « Plus tard »
@@ -146,7 +161,10 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
     setFormat(d.format);
     setScoreMax(d.scoreMax);
     setConsolante(d.consolante);
-    setMiseParEquipe(d.miseParEquipe ?? '');
+    // Le profil recouvre les autres champs, tous visibles à l'écran suivant.
+    // La mise, elle, n'a pas de valeur de profil : la « réinitialiser » ne
+    // ferait que perdre celle qui était enregistrée.
+    setMiseParEquipe(d.miseParEquipe ?? miseEnregistree ?? '');
     setStep(1);
   };
 
@@ -269,8 +287,21 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
                   />
                 </label>
                 {/* La mise n'a de sens qu'à partir du niveau `club` : en
-                    « Entre amis », l'argent est justement ce qu'on masque. */}
-                {montrer('argent', { niveau }) && (
+                    « Entre amis », l'argent est justement ce qu'on masque.
+
+                    Sauf pour qui en a déjà posé une. Les défauts enregistrés
+                    sont une trace d'usage au même titre qu'un concours, mais
+                    personne ne les passait à `montrer` : il n'y a pas de
+                    concours en contexte sur cet écran, donc pas de clause de
+                    sûreté, donc un champ masqué qui écrase en silence ce que
+                    l'utilisateur avait demandé. On passe donc la mise
+                    enregistrée comme usage. `domaineEnUsage` traite `undefined`
+                    et `0` comme « pas d'usage » : rien n'apparaît à qui n'a
+                    rien demandé. */}
+                {montrer('argent', {
+                  niveau,
+                  concours: { miseParEquipe: miseEnregistree },
+                }) && (
                   <label>
                     Mise par équipe (€, facultatif)
                     <input

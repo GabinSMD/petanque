@@ -42,8 +42,9 @@ const FORMAT_EMOJI: Record<TeamFormat, string> = {
  */
 export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const today = new Date().toISOString().slice(0, 10);
-  // Pas de concours en contexte : c'est une création, donc pas de clause de
-  // sûreté possible ici (rien n'a encore été enregistré).
+  // Pas de concours en contexte : c'est une création. La clause de sûreté de
+  // `montrer` n'a donc rien à lire… sauf les valeurs par défaut, qui sont bien
+  // une trace de ce dont l'organisateur se sert (voir le champ de mise).
   const niveau = useNiveauInterfaceActif();
   // `useDefauts` relit le stockage à chaque rendu ; les `useState` ci-dessous
   // ne consomment `defauts` que dans leur valeur initiale (le premier appel
@@ -352,7 +353,18 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 />
               </label>
             )}
-            {montrer('argent', { niveau }) && (
+            {/* Les défauts enregistrés sont une trace d'usage de l'argent au
+                même titre qu'un concours qui porte une mise — la seule que
+                personne ne passait à `montrer`. Sans elle, un organisateur en
+                « Entre amis » qui a posé une mise par défaut dans les réglages
+                voyait chacun de ses concours en hériter sans jamais que le
+                champ lui soit montré : la valeur était reprise, pas affichée.
+                `domaineEnUsage` traite `undefined` et `0` comme « pas
+                d'usage », donc rien n'apparaît à qui n'a rien demandé. */}
+            {montrer('argent', {
+              niveau,
+              concours: { miseParEquipe: defauts.miseParEquipe },
+            }) && (
               <label>
                 Mise par équipe (€, facultatif)
                 <input
