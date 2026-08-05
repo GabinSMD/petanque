@@ -22,6 +22,7 @@ import type {
   Player,
 } from '../types';
 import { estHorsUE } from './championnat';
+import { clubDuJoueur } from './clubs';
 
 /** Champs susceptibles d'être en anomalie, tels que le manuel les surligne. */
 export type ChampLicence =
@@ -409,18 +410,8 @@ export function controlerEquipe(
     if (horsUEFiches + horsUEEtrangers > criteres.maxHorsUE) anomaliesEquipe.push('horsUE');
   }
 
-  /**
-   * Club d'un joueur, normalisé. La fiche fédérale fait foi quand elle existe,
-   * sinon ce qui a été saisi à l'inscription — un joueur hors fichier n'échappe
-   * pas au contrôle. À défaut de nom, le numéro de club : il distingue deux
-   * clubs entre eux, même s'il ne se compare pas à un nom.
-   */
-  const clubDe = (p: Player): string | undefined => {
-    const fiche = p.licence ? fiches.get(p.licence) : undefined;
-    const nom = fiche?.club ?? p.club;
-    if (nom) return nom.trim().toLowerCase();
-    return fiche?.clubNumero?.trim().toLowerCase();
-  };
+  /** Club d'un joueur, normalisé — la fiche fédérale faisant foi. */
+  const clubDe = (p: Player): string | undefined => clubDuJoueur(p, fiches).cle;
 
   // Homogénéité : tous les joueurs du même club.
   if (criteres.homogene) {

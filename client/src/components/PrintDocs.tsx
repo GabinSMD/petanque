@@ -8,11 +8,12 @@
  * `PrintPage` porte l'enveloppe (en-tête, barre d'outils, lancement de
  * l'impression) ; ici on ne fait que la mise en page de chaque document.
  */
-import { Fragment } from 'react';
-import type { BilanAvantTirage, Concours, Match, Poule, Team } from '@shared';
+import { Fragment, useMemo } from 'react';
+import type { BilanAvantTirage, Concours, Licencie, Match, Poule, Team } from '@shared';
 import {
   bilanMises,
   miseEquipe,
+  syntheseNonPaye,
   dureeMinutes,
   libelleComites,
   etatMise,
@@ -199,6 +200,82 @@ export function BilanPaiements({
         <p className="hint">
           Aucune mise renseignée sur ce concours : seuls les règlements sont listés.
         </p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Synthèse Non Payé (§3.B.9.D, planche p.33)                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Les impayés groupés par club — une feuille qu'on emporte pour relancer.
+ *
+ * Document distinct du bilan, comme à la fédération : on ne relance pas une
+ * équipe mais un club, et six lignes éparpillées dans une liste triée par
+ * dossard sont un travail de recoupement.
+ */
+export function SyntheseNonPayeDoc({
+  concours,
+  teams,
+  licencies,
+}: {
+  concours: Concours;
+  teams: Team[];
+  licencies: Licencie[];
+}) {
+  const mise = miseEquipe(concours) ?? 0;
+  const fiches = useMemo(
+    () => new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l])),
+    [licencies],
+  );
+  const synthese = useMemo(
+    () => syntheseNonPaye(teams, fiches, mise),
+    [teams, fiches, mise],
+  );
+  const euros = (n: number) => `${n.toLocaleString('fr-FR')} €`;
+
+  return (
+    <div className="print-liste">
+      <h2>Synthèse Non Payé</h2>
+      {synthese.lignes.length === 0 ? (
+        <p className="hint">Toutes les équipes engagées sont réglées.</p>
+      ) : (
+        <>
+          <table className="print-table">
+            <thead>
+              <tr>
+                <th>Club</th>
+                <th>Équipes</th>
+                <th>Non payé</th>
+              </tr>
+            </thead>
+            <tbody>
+              {synthese.lignes.map((l) => (
+                <tr key={l.libelle}>
+                  <td>{l.libelle}</td>
+                  <td>{l.equipes}</td>
+                  <td>{mise > 0 ? euros(l.montant) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <ul className="print-bilan">
+            <li>
+              <strong>
+                {synthese.equipes} équipe{synthese.equipes > 1 ? 's' : ''} non réglée
+                {synthese.equipes > 1 ? 's' : ''}
+                {mise > 0 && ` — ${euros(synthese.montant)}`}
+              </strong>
+            </li>
+          </ul>
+          {mise === 0 && (
+            <p className="hint">
+              Aucune mise renseignée sur ce concours : les montants ne peuvent pas être calculés.
+            </p>
+          )}
+        </>
       )}
     </div>
   );
