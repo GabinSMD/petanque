@@ -6,19 +6,35 @@ Application web de gestion de concours de pétanque inspirée du logiciel
 fonctionne intégralement sans connexion au boulodrome (tirages, saisie des
 scores, tableaux) et se synchronise dès que le réseau revient.
 
-## Deux usages, une application
+## Trois usages, une application
 
-Un club qui organise des concours amicaux n'a que faire du fichier des
-licenciés, du championnat des clubs ou des documents remis au comité. Le
-**mode fédéral** (⚙ Réglages) masque tout cela ; décoché, l'application s'en
-tient aux inscriptions, au tirage, aux poules, aux tableaux, aux scores et aux
-indemnités.
+L'application couvre tout le manuel FFPJP, et cette complétude est un mur pour
+qui organise un concours entre amis. Un **niveau d'interface** règle donc ce
+qu'elle affiche :
 
-Ce réglage ne change **que l'affichage**, jamais le comportement : un concours
-déjà déclaré officiel continue de contrôler ses licences, et ses écrans restent
-visibles sur lui. Il s'active de lui-même si un concours officiel existe ou si
-un fichier de licenciés a été importé — on ne cache pas à un organisateur une
-fonction dont il se sert.
+- 🎉 **Entre amis** — concours du dimanche entre copains : inscriptions,
+  tirage, poules, tableaux, scores. Masque les mises et indemnités, les
+  formules du manuel, les groupes de protection et le multisite.
+- 🏆 **Mon club** — concours du club, avec mises, indemnités, clubs des équipes
+  et protections au tirage. Masque le fichier des licenciés, le championnat des
+  clubs, les critères officiels et les documents du comité.
+- 📋 **Concours officiels** — licences, critères officiels, championnat des
+  clubs, documents remis au comité. Tout est affiché.
+
+À la première ouverture, un **assistant de configuration** en trois écrans
+demande le profil, les habitudes du club (terrains, formation, points, mise)
+qui pré-rempliront chaque nouveau concours, puis propose la visite guidée ou un
+concours d'exemple. « Plus tard » ne dégrade rien : rien n'est écrit, et le
+niveau se déduit du contenu déjà présent — un concours officiel ou un fichier de
+licenciés donnent « Concours officiels », une mise ou un club sur une équipe
+donnent « Mon club ».
+
+Le niveau se change à tout moment par le bouton ⚙ du tableau de bord, qui porte
+le nom du niveau courant. Il ne change **que l'affichage**, jamais le
+comportement : un concours déjà déclaré officiel continue de contrôler ses
+licences, et ses écrans restent visibles sur lui. On ne masque jamais ce dont un
+concours porte déjà la trace — on ne cache pas à un organisateur une fonction
+dont il se sert.
 
 ## Fonctionnalités
 
@@ -117,7 +133,7 @@ fonction dont il se sert.
 - **Têtes de série** : au tirage, désigner les meilleures équipes pour les
   répartir dans des poules / moitiés de tableau différentes.
 
-### Championnat des clubs (mode fédéral)
+### Championnat des clubs (niveau « Concours officiels »)
 - **Contrôle des compositions** (manuel §3.E) : les cinq compétitions de clubs
   ont leur filtre prédéfini — Coupe de France, CNC/CRC/CDC Open, Féminin,
   Jeunes, Vétérans — avec les contingents de mutés et de joueurs hors Union

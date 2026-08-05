@@ -36,7 +36,6 @@ import {
 import type { ConcoursInput } from '../db/actions';
 import { useLicencies, useNiveauInterfaceActif } from '../db/hooks';
 import { BlocFormulesAvancees } from './BlocFormulesAvancees';
-import { BlocMises } from './BlocMises';
 import {
   CATEGORIE_AGE_LABELS,
   CATEGORY_SUGGESTIONS,
@@ -473,15 +472,52 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           </label>
         )}
       </div>
-      {montrer('argent', { niveau: niveauInterface, concours: initial }) && (
-        <BlocMises
-          miseParEquipe={miseParEquipe}
-          setMiseParEquipe={setMiseParEquipe}
-          nbQualifies={nbQualifies}
-          setNbQualifies={setNbQualifies}
-          avecQualifies={!isRondesMode(mode) && !isTirMode(mode)}
-        />
-      )}
+      {/* Ces deux champs partagent une ligne, jamais une condition. La mise est
+          de l'argent et se masque avec lui ; le nombre de qualifiés n'en est
+          pas — c'est le réglage qui tronque le tableau. Il ne figure pas dans
+          `ParamsUsage`, donc aucune clause de sûreté ne le ramènerait : masqué,
+          un concours qualificatif déjà réglé continuerait d'afficher son
+          bandeau « 🎫 N qualifiés » et d'arrêter le tableau avant la finale,
+          sans que rien ne permette de le comprendre ni de l'annuler. */}
+      <div className="form-row">
+        {montrer('argent', { niveau: niveauInterface, concours: initial }) && (
+          <label>
+            Mise par équipe (€, facultatif)
+            <input
+              type="number"
+              min={0}
+              max={1000}
+              step={0.5}
+              value={miseParEquipe}
+              placeholder="—"
+              onChange={(e) =>
+                setMiseParEquipe(e.target.value === '' ? '' : Number(e.target.value))
+              }
+            />
+          </label>
+        )}
+        {!isRondesMode(mode) && !isTirMode(mode) && (
+          <label>
+            Concours qualificatif : nombre de qualifiés
+            <select
+              value={nbQualifies}
+              onChange={(e) => setNbQualifies(e.target.value === '' ? '' : Number(e.target.value))}
+            >
+              <option value="">Non — jouer jusqu'au vainqueur</option>
+              {[2, 4, 8, 16, 32, 64].map((n) => (
+                <option key={n} value={n}>
+                  {n} équipes qualifiées
+                </option>
+              ))}
+            </select>
+            <span className="hint">
+              Le tableau s'arrête dès que ce nombre est atteint, et la liste des qualifiés
+              s'exporte pour la phase finale. Puissances de deux uniquement : un autre nombre
+              demanderait un tour partiel que l'application ne construit pas encore.
+            </span>
+          </label>
+        )}
+      </div>
       {mode === 'elimination_directe' && (
         <label>
           Tableaux et repêchages

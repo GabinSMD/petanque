@@ -88,9 +88,13 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
   const majMise = (v: string): void => {
     setMise(v);
     // Une mise effacée n'est pas une mise à zéro : le champ redevient absent,
-    // comme il l'est dans `defautsDuProfil`. Sans quoi tout concours créé
-    // porterait une mise de 0 € — une trace d'usage de l'argent qui suffirait à
-    // faire basculer l'heuristique.
+    // comme il l'est dans `defautsDuProfil`. Ce n'est pas l'heuristique qui est
+    // en jeu — `domaineEnUsage('argent')` fait `Boolean(c.miseParEquipe || …)`,
+    // donc un zéro n'est pas une trace d'usage et ne promeut personne. C'est le
+    // pré-remplissage : un `0` enregistré s'écrirait dans le champ de chaque
+    // nouveau concours à la place du « — », et chaque concours créé porterait
+    // `miseParEquipe: 0` en base. Un champ facultatif qu'on vide doit redevenir
+    // vide, pas valoir zéro.
     if (v === '') {
       enregistrer(sansMise());
       return;
@@ -172,9 +176,15 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
             désactive pas en silence une règle sur laquelle vous comptez.
           </p>
 
+          {/* « vos données » et non « vos concours » : `besoinNiveau` lit aussi
+              le fichier des licenciés et le club porté par les équipes.
+              Importer des licenciés sans avoir créé le moindre concours suffit
+              à promouvoir en « Concours officiels » — et l'organisateur dans ce
+              cas lirait une explication qui ne correspond pas à ce qu'il a
+              fait, sur l'écran même qui doit répondre à « où est passé X ». */}
           {preference === null && (
             <p className="hint">
-              Choisi automatiquement d'après vos concours : « {LIBELLE_NIVEAU[besoin]} ».
+              Choisi automatiquement d'après vos données : « {LIBELLE_NIVEAU[besoin]} ».
             </p>
           )}
 

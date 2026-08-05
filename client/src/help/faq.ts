@@ -452,6 +452,8 @@ export const FAQ: FaqEntry[] = [
       'À l\'inscription des équipes, tapez les premières lettres d\'un nom : licence et club se remplissent automatiquement.',
       'Réimportez le fichier à jour quand vous voulez : les fiches existantes sont mises à jour, pas dupliquées.',
     ],
+    note:
+      'Pas de bouton « 📇 Licenciés » sur le tableau de bord ? Il n\'apparaît qu\'au niveau « Concours officiels » : cliquez sur le bouton ⚙ à côté (il porte le nom de votre niveau) et choisissez « Concours officiels ».',
   },
   {
     id: 'inviter-club',
@@ -474,6 +476,8 @@ export const FAQ: FaqEntry[] = [
       'Saisissez la mise par équipe et les frais d\'organisation (%).',
       'La répartition est suggérée par groupe de classement (le vainqueur touche le double du finaliste, etc.), arrondie à 0,10 €, et s\'imprime avec les résultats.',
     ],
+    note:
+      'Pas de section « 💶 Indemnités » dans vos résultats ? L\'argent n\'est affiché qu\'à partir du niveau « Mon club » : cliquez sur le bouton ⚙ du tableau de bord (il porte le nom de votre niveau) et choisissez « Mon club ». Rien n\'était perdu, seulement masqué — un concours qui porte déjà une mise garde sa section quel que soit le niveau.',
   },
 
   /* --------------------------- Hors ligne & SaaS ------------------------ */
@@ -605,6 +609,8 @@ export const FAQ: FaqEntry[] = [
       'Une « mise par équipe » active le suivi de caisse : cochez « réglé » pour chaque équipe dans l\'onglet Inscriptions, le total encaissé s\'affiche.',
       'Un nombre de « qualifiés » met en évidence les mieux classés (bandeau et badges dans les résultats) pour une phase suivante.',
     ],
+    note:
+      'Pas de champ « Mise par équipe » ? L\'argent n\'est affiché qu\'à partir du niveau « Mon club » : bouton ⚙ du tableau de bord, puis « Mon club ». La discipline et le nombre de qualifiés, eux, sont proposés à tous les niveaux.',
   },
   {
     id: 'tutoriel',
@@ -633,7 +639,8 @@ export const FAQ: FaqEntry[] = [
       'Les deux clubs peuvent échanger leurs compositions par QR code, sans réseau.',
       'Faites signer les deux capitaines, puis imprimez ou exportez la feuille en fichier.',
     ],
-    note: 'La feuille se synchronise entre les appareils du club, comme un concours.',
+    note:
+      'La feuille se synchronise entre les appareils du club, comme un concours. Pas de bouton « 🏅 Championnat des clubs » sur le tableau de bord ? Il n\'apparaît qu\'au niveau « Concours officiels » : bouton ⚙ du tableau de bord, puis « Concours officiels ».',
     action: { label: 'Ouvrir les feuilles de match', path: '/championnat-clubs' },
   },
   {
