@@ -274,7 +274,7 @@ Les nouveaux domaines ajoutent un appel à `montrer()` dans :
 | Domaine | Fichiers |
 |---|---|
 | `argent` | `CreateConcoursWizard`, `ConcoursForm`, `TeamsTab`, `ResultsTab` |
-| `formulesAvancees` | `ConcoursForm`, `RondesTab`, `BracketTab`, `PoulesTab` |
+| `formulesAvancees` | `ConcoursForm`, `BracketTab`, `PoulesTab` |
 | `protections` | `PoulesTab`, `BracketTab` |
 | `multisite` | `ConcoursForm`, `ConcoursPage`, `TeamsTab` |
 
@@ -309,7 +309,11 @@ Le raisonnement étant pur, les tests portent sur `shared/engine/profil.ts` —
 - `montrer` : pour les huit domaines, le niveau minimum **et** la clause de
   sûreté — le domaine s'affiche quand le concours en porte la trace.
 - `defautsDuProfil` : les trois profils.
-- Migration : les trois cas du tableau, dont l'absence de clé.
+- Migration : les trois cas du tableau, dont l'absence de clé. La **décision** de
+  migration est une fonction pure de `profil.ts` (`niveauDepuisAncienneCle`) pour
+  qu'elle soit testable : `shared` est le seul paquet qui porte un lanceur de
+  tests (`vitest`), `client` n'en a pas. Seule la plomberie `localStorage` reste
+  non testée, comme l'est déjà celle de `modeFederal.ts`.
 
 La conformité du portage est vérifiée par les tests existants de
 `federal.test.ts`, que `besoinNiveau` ne doit pas faire tomber.
