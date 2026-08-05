@@ -106,6 +106,17 @@ describe('désignation de la catégorie', () => {
     );
   });
 
+  it('« Non Classé » a son libellé court, et « Promotion » garde le sien', () => {
+    // La cinquième position de la fenêtre fédérale doit nommer la catégorie,
+    // sinon la désignation l'escamote en silence.
+    expect(designationCategorie({ critereClassification: 'nonClasse' })).toBe('Non classé');
+    // `promotion` porte l'étiquette `Promotion/NC` dans le **filtre**, où la
+    // nuance décide qui entre. Ici c'est un **nom de catégorie** : « Féminin
+    // Vétérans Promotion ou non classé » serait illisible, et renommer
+    // rétroactivement regrouperait autrement tout le palmarès.
+    expect(designationCategorie({ critereClassification: 'promotion' })).toBe('Promotion');
+  });
+
   it('les critères neutres (tous) sont omis', () => {
     expect(
       designationCategorie({

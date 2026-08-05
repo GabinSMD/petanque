@@ -166,8 +166,20 @@ export type CategorieAge =
 /** Critère de sexe d'un concours ; `mixte` exige au moins 1 M et 1 F par équipe. */
 export type CritereSexe = 'tous' | 'masculin' | 'feminin' | 'mixte';
 
-/** Critère de classification d'un concours. */
-export type CritereClassification = 'tous' | 'elite' | 'honneur' | 'promotion';
+/**
+ * Critère de classification d'un concours — les cinq positions de la fenêtre
+ * fédérale (planche p.13) : `Tous / Elite / Honneur / Promotion/NC / Non Classé`.
+ *
+ * `promotion` porte l'étiquette fédérale `Promotion/NC` : il accepte Promotion
+ * **ou** non classé. `nonClasse` est le filtre plus strict des deux — il
+ * n'accepte aucune lettre.
+ */
+export type CritereClassification =
+  | 'tous'
+  | 'elite'
+  | 'honneur'
+  | 'promotion'
+  | 'nonClasse';
 
 export interface Concours {
   id: string;

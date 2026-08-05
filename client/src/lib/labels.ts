@@ -262,7 +262,10 @@ export const CRITERE_CLASSIFICATION_LABELS: Record<CritereClassification, string
   tous: 'Toutes classifications',
   elite: 'Élite',
   honneur: 'Honneur',
-  promotion: 'Promotion',
+  // L'étiquette fédérale est bien « Promotion/NC » : ce critère accepte les
+  // non-classés, là où « Non Classé » les exige.
+  promotion: 'Promotion ou non classé',
+  nonClasse: 'Non classé seulement',
 };
 
 /** Champ en anomalie → formulation lisible à la table de marque. */
