@@ -36,6 +36,32 @@ export function isByeMatch(m: Match): boolean {
 }
 
 /**
+ * Écart de points de la partie, vu d'un camp — « Différence de points de la
+ * partie indiquée à coté de l'équipe » (manuel §3.D.14 ; l'orthographe sans
+ * accent est la sienne).
+ *
+ * Les cases du graphique fédéral portent le dossard puis cet écart entre
+ * parenthèses : `15 (7)` a gagné de 7, `16 (-7)` a perdu de 7. Sur la planche,
+ * les huit colonnes sont opposées deux à deux, ce qui confirme qu'il s'agit bien
+ * de l'écart de *cette* partie et non d'un cumul.
+ *
+ * **Zéro quand aucun score n'est connu**, comme le manuel, qui écrit `(0)` sur
+ * les tours à venir plutôt qu'un tiret. Zéro aussi sur un vainqueur désigné sans
+ * score : `rondeStandings` n'y crédite aucun goal-average — « un 13-0 fictif
+ * fausserait le départage de tout le monde » — et l'affichage doit dire la même
+ * chose que le classement.
+ *
+ * L'écart d'office d'un **exempt** (13-7) est en revanche rendu tel quel, parce
+ * qu'il compte, lui, au goal-average. L'escamoter romprait l'invariant qui fait
+ * tout l'intérêt du chiffre : la somme des écarts d'une équipe fait le `+/-` de
+ * son classement.
+ */
+export function ecartPartie(m: Match, camp: 'A' | 'B'): number {
+  if (m.scoreA === null || m.scoreB === null) return 0;
+  return camp === 'A' ? m.scoreA - m.scoreB : m.scoreB - m.scoreA;
+}
+
+/**
  * « Inverser Résultat » — le troisième outil de rectification du manuel, nommé
  * sur la planche p.97 à côté de `Modifier Score` et `Gommer`, et confirmé par le
  * texte p.101 (« Pour Changer le Score / Inverser le Résultat / Voir la

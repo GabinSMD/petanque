@@ -1632,6 +1632,20 @@ form label select {
   font-size: 0.78rem;
 }
 
+/*
+ * « Différence de points de la partie indiquée à coté de l'équipe » (manuel
+ * §3.D.14) : le dossard, puis l'écart signé de cette partie entre parenthèses.
+ *
+ * Chiffres tabulaires pour que les colonnes d'un tour restent alignées malgré
+ * les signes, et discret : notre tableau montre déjà les deux scores, l'écart
+ * n'est là que pour se lire d'un coup d'œil et expliquer le `+/-` du classement.
+ */
+.team-ecart {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .team-bye, .team-tbd {
   color: var(--muted);
   font-style: italic;

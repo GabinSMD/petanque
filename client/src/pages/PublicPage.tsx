@@ -738,11 +738,11 @@ function ResultsView({
                 .map((m) => (
                   <li key={m.id}>
                     <span className="public-match">
-                      <SideLabel match={m} side="A" teamsById={teamsById} />
+                      <SideLabel match={m} side="A" teamsById={teamsById} avecEcart />
                       <strong className="public-score">
                         {m.done ? `${m.scoreA}–${m.scoreB}` : 'vs'}
                       </strong>
-                      <SideLabel match={m} side="B" teamsById={teamsById} />
+                      <SideLabel match={m} side="B" teamsById={teamsById} avecEcart />
                     </span>
                     {m.terrain && <span className="public-slot">T{m.terrain}</span>}
                   </li>
