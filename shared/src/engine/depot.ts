@@ -6,9 +6,9 @@
  * statistiques du logiciel fédéral sert à répondre à une seule question —
  * quelles équipes n'ont pas encore présenté leurs licences.
  */
-import type { Licencie, Player, Remplacement, Team } from '../types';
+import type { AjoutJoueur, Licencie, Player, Remplacement, Team } from '../types';
 
-export type { Remplacement };
+export type { AjoutJoueur, Remplacement };
 
 /** Conformité d'une équipe, telle que la rend `controlerEquipe`. */
 export interface EtatDepot {
@@ -120,6 +120,60 @@ export function remplacerJoueur(
     ...team,
     players: team.players.map((p, i) => (i === index ? entrant : p)),
     remplacements: [...(team.remplacements ?? []), trace],
+  };
+}
+
+/**
+ * Places restantes dans l'équipe, jamais négatives.
+ *
+ * `taillePrevue` est **donnée par l'appelant** et non déduite du concours : en
+ * mêlée et au tir, chacun s'inscrit seul et les équipes se tirent à chaque
+ * ronde, si bien qu'un participant est déjà complet à un joueur alors que la
+ * formation du concours en annonce trois. C'est l'écran qui connaît le mode ; le
+ * moteur ne le devine pas.
+ *
+ * Le plancher à zéro n'est pas décoratif : une équipe en surnombre — donnée
+ * abîmée ou reçue d'un appareil plus ancien — rendrait un nombre négatif, et
+ * l'écran proposerait « ajouter » en croyant à une place libre.
+ */
+export function placesLibres(team: Team, taillePrevue: number): number {
+  return Math.max(0, taillePrevue - team.players.length);
+}
+
+/**
+ * Ajoute un joueur en fin d'équipe, au dépôt (manuel §3.C : « ou d'ajouter un
+ * joueur lors du dépôt de licence »).
+ *
+ * Comme `remplacerJoueur`, le joueur est **construit depuis la fiche** : ce que
+ * la fiche ne dit pas reste vide plutôt que d'être inventé. Un rôle deviné
+ * ferait mentir le tirage des mêlées, un comité deviné la colonne CD.
+ *
+ * Sur une équipe complète, rien ne change et rien n'est tracé : seul le
+ * remplacement a alors un sens. Même principe que le rang hors équipe de
+ * `remplacerJoueur` — mieux vaut ne rien faire qu'agir au hasard.
+ */
+export function ajouterJoueur(
+  team: Team,
+  fiche: Licencie,
+  at: string,
+  taillePrevue: number,
+): Team {
+  if (placesLibres(team, taillePrevue) === 0) return team;
+  const entrant: Player = {
+    name: fiche.name,
+    ...(fiche.licence ? { licence: fiche.licence } : {}),
+    ...(fiche.club ? { club: fiche.club } : {}),
+    ...(fiche.comite ? { comite: fiche.comite } : {}),
+  };
+  const trace: AjoutJoueur = {
+    index: team.players.length,
+    joueur: { name: entrant.name, ...(entrant.licence ? { licence: entrant.licence } : {}) },
+    at,
+  };
+  return {
+    ...team,
+    players: [...team.players, entrant],
+    ajouts: [...(team.ajouts ?? []), trace],
   };
 }
 

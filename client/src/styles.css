@@ -4334,7 +4334,22 @@ form label select {
   margin-bottom: 0.5rem;
 }
 
-/* La trace : qui a cédé sa place, et quand. */
+/*
+ * Ajout d'un joueur sur une équipe incomplète (manuel §3.C). Détaché du rouge
+ * du bandeau « Pas inscrit ! » : ce n'est pas une anomalie à trancher mais le
+ * geste normal quand le troisième joueur arrive au dépôt.
+ */
+.depot-ajouter {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.55rem;
+  margin: 0 0 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* La trace : qui a cédé sa place ou rejoint l'équipe, et quand. */
 .depot-remplacements {
   list-style: none;
   padding: 0;
