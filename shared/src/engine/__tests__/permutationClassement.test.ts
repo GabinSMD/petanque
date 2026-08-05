@@ -18,6 +18,10 @@ const st = (id: string, wins: number, diff = 0): Standing => ({
   wins,
   diff,
   pointsFor: 20,
+  // La suite des résultats n'entre pas dans la permutation : ces fixtures ne
+  // décrivent qu'un rang. On la renseigne pour satisfaire le type, sans lui
+  // faire dire quelque chose que le test ne vérifie pas.
+  resultatsParties: 'G'.repeat(wins).padEnd(3, 'P'),
 });
 
 /**

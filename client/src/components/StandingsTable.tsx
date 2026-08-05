@@ -22,6 +22,10 @@ interface Props {
 /**
  * Classement des formules en rondes : victoires, goal-average, puis
  * confrontation directe entre équipes à égalité (manuel §3.D.15).
+ *
+ * La colonne « Résultats » est le `Résultats Parties` du document fédéral : deux
+ * équipes à trois points ne se lisent pas de la même façon selon qu'elles ont
+ * fait `GGGP` ou `PGGG`.
  */
 export function StandingsTable({ standings, teamsById, limit, compact, permutations }: Props) {
   const rows = limit ? standings.slice(0, limit) : standings;
@@ -35,6 +39,14 @@ export function StandingsTable({ standings, teamsById, limit, compact, permutati
           <th title="Victoires">V</th>
           <th title="Goal-average (points marqués − encaissés)">+/−</th>
           {!compact && <th title="Points marqués">Pts</th>}
+          {/* « Résultats Parties » du document fédéral (p.106), montrée **aussi**
+              en mode compact : le panneau étroit du logiciel fédéral affiche
+              précisément cette colonne et renonce, lui, aux points marqués. La
+              brièveté favorise donc la suite, pas l'inverse — et trois à sept
+              lettres tiennent dans moins de place qu'un nom de club. */}
+          <th title="Résultats Parties : la suite des victoires (G) et défaites (P), tour par tour">
+            Résultats
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -79,6 +91,9 @@ export function StandingsTable({ standings, teamsById, limit, compact, permutati
               <td className="standing-wins">{s.wins}</td>
               <td>{s.diff > 0 ? `+${s.diff}` : s.diff}</td>
               {!compact && <td>{s.pointsFor}</td>}
+              <td className="standing-resultats" title={`${s.wins} victoire(s) sur ${s.played}`}>
+                {s.resultatsParties || '—'}
+              </td>
             </tr>
           );
         })}

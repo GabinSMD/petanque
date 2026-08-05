@@ -2787,6 +2787,13 @@ form label select {
   font-weight: 600;
 }
 
+/* « Résultats Parties » : une suite de G et de P, qui se lit lettre à lettre. */
+.standing-resultats {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
 .standings-table {
   width: 100%;
   border-collapse: collapse;

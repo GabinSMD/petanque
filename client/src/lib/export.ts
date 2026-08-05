@@ -1,7 +1,20 @@
 import type { Concours, FeuilleMatch, Match, Poule, Team } from '@shared';
-import { arbitrageReport, csvInscrits, designationCategorie, ecrireFeuilleFichier, libelleClubs } from '@shared';
+import {
+  arbitrageReport,
+  classementRondes,
+  csvInscrits,
+  designationCategorie,
+  ecrireFeuilleFichier,
+  libelleClubs,
+} from '@shared';
 import { teamDisplayName } from '../components/TeamLabel';
-import { DISCIPLINE_LABELS, FORMAT_LABELS, MODE_LABELS, NIVEAU_LABELS } from './labels';
+import {
+  DISCIPLINE_LABELS,
+  FORMAT_LABELS,
+  MODE_LABELS,
+  NIVEAU_LABELS,
+  isRondesMode,
+} from './labels';
 import { finalRanking } from './results';
 
 /** Déclenche le téléchargement d'un fichier texte dans le navigateur. */
@@ -72,13 +85,26 @@ export function classementCSV(
   matches: Match[],
 ): string {
   const byId = new Map(teams.map((t) => [t.id, t]));
+  /**
+   * Colonnes du classement fédéral exporté (« Exporter Clst Vers Excel », copie
+   * d'écran p.106) : `Pts`, `+/-` et **`Résultats Parties`**.
+   *
+   * Les trois arrivent ensemble parce que la suite seule n'aurait rien à quoi se
+   * comparer : `GGGP` ne dit son intérêt qu'à côté du total qu'il détaille. Elles
+   * restent vides hors formules en rondes — un tableau à élimination directe n'a
+   * pas de classement par victoires, et une colonne vide le dit mieux qu'un zéro.
+   */
+  const parRondes = isRondesMode(concours.mode)
+    ? new Map(classementRondes(concours, teams, matches).map((s) => [s.id, s]))
+    : undefined;
   const rows: (string | number | null)[][] = [
-    ['Rang', 'Catégorie', 'Équipe', 'Joueurs', 'Licences', 'Club'],
+    ['Rang', 'Catégorie', 'Équipe', 'Joueurs', 'Licences', 'Club', 'Pts', '+/-', 'Résultats Parties'],
   ];
   for (const g of finalRanking(concours, teams, poules, matches)) {
     for (const id of g.teamIds) {
       const t = byId.get(id);
       if (!t) continue;
+      const s = parRondes?.get(id);
       rows.push([
         g.rank,
         g.label,
@@ -86,6 +112,9 @@ export function classementCSV(
         t.players.map((p) => p.name).join(' / '),
         t.players.map((p) => p.licence ?? '').join(' / '),
         libelleClubs(t.players, t.club),
+        s ? s.wins : '',
+        s ? s.diff : '',
+        s ? s.resultatsParties : '',
       ]);
     }
   }

@@ -109,6 +109,12 @@ export function PhasesFinalesPanel({ concours, teams, matches }: Props) {
             <th title="Victoires">V</th>
             <th title="Goal-average">+/−</th>
             <th title="Points marqués">Pts</th>
+            {/* La suite des résultats sert surtout ici : c'est le tableau où l'on
+                départage les égalités, et deux équipes à égalité de victoires et
+                de goal-average n'ont pas forcément eu le même parcours. */}
+            <th title="Résultats Parties : la suite des victoires (G) et défaites (P), tour par tour">
+              Résultats
+            </th>
             <th>Tableau</th>
             <th className="no-print"></th>
           </tr>
@@ -143,6 +149,9 @@ export function PhasesFinalesPanel({ concours, teams, matches }: Props) {
                 <td className="standing-wins">{l.wins}</td>
                 <td>{l.diff > 0 ? `+${l.diff}` : l.diff}</td>
                 <td>{l.pointsFor}</td>
+                <td className="standing-resultats" title={`${l.wins} victoire(s) sur ${l.played}`}>
+                  {l.resultatsParties || '—'}
+                </td>
                 <td>{bloc ?? <span className="hint">non qualifiée</span>}</td>
                 <td className="no-print">
                   {echangeable && (
