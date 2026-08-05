@@ -38,6 +38,9 @@ interface Props {
 
 export function ResultsTab({ concours, teams, poules, matches }: Props) {
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  // Appelé avant tout retour anticipé (tir, rondes…) pour respecter les
+  // règles des hooks : IndemnitesSection en a besoin plus bas.
+  const niveau = useNiveauInterfaceActif();
 
   if (isTirMode(concours.mode)) {
     const played = matches.some((m) => m.stage === 'ronde' && m.done);
@@ -178,7 +181,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
         </section>
       )}
 
-      {principalGroups.length > 0 && (
+      {principalGroups.length > 0 && montrer('argent', { niveau, concours }) && (
         <IndemnitesSection concours={concours} teams={teams} groups={principalGroups} />
       )}
 

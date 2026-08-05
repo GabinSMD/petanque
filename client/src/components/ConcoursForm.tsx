@@ -35,6 +35,7 @@ import {
 } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import { useLicencies, useNiveauInterfaceActif } from '../db/hooks';
+import { BlocMises } from './BlocMises';
 import {
   CATEGORIE_AGE_LABELS,
   CATEGORY_SUGGESTIONS,
@@ -471,45 +472,15 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           </label>
         )}
       </div>
-      <div className="form-row">
-        <label>
-          Mise par équipe (€, facultatif)
-          <input
-            type="number"
-            min={0}
-            max={1000}
-            step={0.5}
-            value={miseParEquipe}
-            placeholder="—"
-            onChange={(e) =>
-              setMiseParEquipe(e.target.value === '' ? '' : Number(e.target.value))
-            }
-          />
-        </label>
-        {!isRondesMode(mode) && !isTirMode(mode) && (
-          <label>
-            Concours qualificatif : nombre de qualifiés
-            <select
-              value={nbQualifies}
-              onChange={(e) =>
-                setNbQualifies(e.target.value === '' ? '' : Number(e.target.value))
-              }
-            >
-              <option value="">Non — jouer jusqu'au vainqueur</option>
-              {[2, 4, 8, 16, 32, 64].map((n) => (
-                <option key={n} value={n}>
-                  {n} équipes qualifiées
-                </option>
-              ))}
-            </select>
-            <span className="hint">
-              Le tableau s'arrête dès que ce nombre est atteint, et la liste des qualifiés
-              s'exporte pour la phase finale. Puissances de deux uniquement : un autre nombre
-              demanderait un tour partiel que l'application ne construit pas encore.
-            </span>
-          </label>
-        )}
-      </div>
+      {montrer('argent', { niveau: niveauInterface, concours: initial }) && (
+        <BlocMises
+          miseParEquipe={miseParEquipe}
+          setMiseParEquipe={setMiseParEquipe}
+          nbQualifies={nbQualifies}
+          setNbQualifies={setNbQualifies}
+          avecQualifies={!isRondesMode(mode) && !isTirMode(mode)}
+        />
+      )}
       {mode === 'elimination_directe' && (
         <label>
           Tableaux et repêchages

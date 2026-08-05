@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import type { ConcoursMode, Discipline, TeamFormat } from '@shared';
-import { bornesParties } from '@shared';
+import { bornesParties, montrer } from '@shared';
 import type { ConcoursInput } from '../db/actions';
+import { useNiveauInterfaceActif } from '../db/hooks';
 import {
   CATEGORY_SUGGESTIONS,
   DISCIPLINE_LABELS,
@@ -40,6 +41,9 @@ const FORMAT_EMOJI: Record<TeamFormat, string> = {
  */
 export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const today = new Date().toISOString().slice(0, 10);
+  // Pas de concours en contexte : c'est une création, donc pas de clause de
+  // sûreté possible ici (rien n'a encore été enregistré).
+  const niveau = useNiveauInterfaceActif();
   const [step, setStep] = useState(0);
   const [mode, setMode] = useState<ConcoursMode | null>(null);
   const [format, setFormat] = useState<TeamFormat | null>(null);
@@ -313,20 +317,22 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 />
               </label>
             )}
-            <label>
-              Mise par équipe (€, facultatif)
-              <input
-                type="number"
-                min={0}
-                max={1000}
-                step={0.5}
-                value={miseParEquipe}
-                placeholder="—"
-                onChange={(e) =>
-                  setMiseParEquipe(e.target.value === '' ? '' : Number(e.target.value))
-                }
-              />
-            </label>
+            {montrer('argent', { niveau }) && (
+              <label>
+                Mise par équipe (€, facultatif)
+                <input
+                  type="number"
+                  min={0}
+                  max={1000}
+                  step={0.5}
+                  value={miseParEquipe}
+                  placeholder="—"
+                  onChange={(e) =>
+                    setMiseParEquipe(e.target.value === '' ? '' : Number(e.target.value))
+                  }
+                />
+              </label>
+            )}
           </div>
           {MODE_INFO[mode].consolante && (
             <label className="checkbox-label">
