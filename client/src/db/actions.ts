@@ -45,6 +45,7 @@ import {
   type Formule,
   type NiveauConcours,
   ajouterMeneBornee,
+  inverserResultat,
   menesPourScore,
   validerScoreEnCours,
   retirerDerniereMene,
@@ -1136,6 +1137,25 @@ export async function setScore(
     done: true,
   });
   await recomputeAfter(concours, match);
+}
+
+/**
+ * « Inverser Résultat » (manuel §3.D.14.B) : échange les deux scores d'une
+ * partie déjà saisie, et laisse la propagation faire le reste.
+ *
+ * On ne recalcule rien à la main : `recomputeAfter` reclasse la poule et
+ * repropage le tableau, exactement comme après une ressaisie. C'est aussi ce qui
+ * rend le geste sûr sur une partie dont le vainqueur est déjà passé au tour
+ * suivant — il en redescend.
+ */
+export async function inverserResultatDuMatch(
+  concours: Concours,
+  match: Match,
+): Promise<void> {
+  const apres = inverserResultat(match);
+  if (apres === match) return;
+  await putEntity('match', apres);
+  await recomputeAfter(concours, apres);
 }
 
 /**

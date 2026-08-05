@@ -35,6 +35,40 @@ export function isByeMatch(m: Match): boolean {
   return Boolean(m.byeA || m.byeB);
 }
 
+/**
+ * « Inverser Résultat » — le troisième outil de rectification du manuel, nommé
+ * sur la planche p.97 à côté de `Modifier Score` et `Gommer`, et confirmé par le
+ * texte p.101 (« Pour Changer le Score / Inverser le Résultat / Voir la
+ * Composition de l'équipe : Clic Droit sur l'équipe ou match »).
+ *
+ * L'erreur la plus courante à la table de marque est d'avoir cliqué le mauvais
+ * camp. La corriger demandait de ressaisir le score à l'envers, alors que c'est
+ * un échange de deux nombres déjà là.
+ *
+ * On inverse le **résultat**, jamais les équipes : `vainqueurDeA` et
+ * `vainqueurDeB` désignent des *places* du tour suivant, et échanger
+ * `teamAId`/`teamBId` y enverrait les équipes dans les mauvaises cases.
+ *
+ * Les mènes sont **reflétées** plutôt que jetées : échanger le camp de chacune
+ * produit exactement le score miroir, donc l'historique reste vrai. C'est ce qui
+ * distingue ce geste d'une ressaisie, où `menesPourScore` écarte un historique
+ * devenu faux.
+ *
+ * Rien ne change sur une partie exempte — inverser affirmerait qu'un adversaire
+ * absent a gagné — ni sur une partie sans résultat : il n'y a rien à inverser.
+ */
+export function inverserResultat(m: Match): Match {
+  if (isByeMatch(m)) return m;
+  const aUnScore = m.scoreA !== null && m.scoreB !== null;
+  if (!aUnScore && !m.vainqueur) return m;
+  return {
+    ...m,
+    ...(aUnScore ? { scoreA: m.scoreB, scoreB: m.scoreA } : {}),
+    ...(m.menes ? { menes: m.menes.map((x) => ({ ...x, camp: x.camp === 'a' ? 'b' : 'a' })) } : {}),
+    ...(m.vainqueur ? { vainqueur: m.vainqueur === 'A' ? ('B' as const) : ('A' as const) } : {}),
+  };
+}
+
 export interface ScoreValidation {
   ok: boolean;
   error?: string;
