@@ -14,6 +14,7 @@ import {
   comiteDuJoueur,
   aDesCriteresLicence,
   bilanMises,
+  miseEquipe,
   etatMise,
   poserMise,
   type EtatMise,
@@ -284,7 +285,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
 
   const summary =
     concours.mode === 'poules' ? pouleSummary(teams.length, concours.nbTerrains) : null;
-  const mise = concours.miseParEquipe ?? 0;
+  const mise = miseEquipe(concours) ?? 0;
   const trackPaid = mise > 0;
   const bilan = bilanMises(teams, mise);
   const engagements = teams.filter((t) => !t.forfait).length;

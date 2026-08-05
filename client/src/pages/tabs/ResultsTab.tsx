@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Concours, Match, MatchStage, Poule, Team } from '@shared';
 import {
+  TAILLE_FORMATION,
   bracketRanking,
   estConcoursOfficiel,
   nomDuBloc,
   estQualificatif,
   pouleOutcome,
   qualifiesTableau,
+  miseEquipe,
   repartitionIndemnites,
   classementRondes,
   permutationsActives,
@@ -239,7 +241,18 @@ function IndemnitesSection({
 }) {
   const [open, setOpen] = useState(false);
   const nb = teams.filter((t) => !t.forfait).length;
-  const mise = concours.miseParEquipe ?? 10;
+  const taille = TAILLE_FORMATION[concours.format];
+  /**
+   * Ancienne mise par équipe, quand ce concours n'a pas encore de mise par
+   * joueur. On ne la divise pas pour remplir le champ : 10 € / 3 donnerait
+   * 3,33 €, et on ne sait pas ce que l'organisateur avait voulu dire.
+   */
+  const miseHeritee = concours.miseParJoueur === undefined ? concours.miseParEquipe : undefined;
+  // Faute de toute mise, on part du barème donné en exemple par le manuel
+  // (4 €/joueur) plutôt que de l'ancien forfait de 10 € par équipe : le champ
+  // est éditable et sous les yeux de l'organisateur avant tout calcul.
+  const parJoueur = concours.miseParJoueur ?? (miseHeritee === undefined ? 4 : undefined);
+  const mise = miseEquipe(concours) ?? parJoueur! * taille;
   const frais = concours.fraisPct ?? 0;
   const pot = Math.max(0, mise * nb * (1 - frais / 100));
   const dernierRang = groups.length > 0 ? Math.max(...groups.map((g) => g.rank)) : 0;
@@ -258,16 +271,29 @@ function IndemnitesSection({
         <>
           <div className="indemnites-params no-print">
             <label>
-              Mise par équipe (€)
+              Mise par joueur (€)
               <input
                 type="number"
                 min={0}
                 step={0.5}
-                value={mise}
+                value={parJoueur ?? ''}
+                placeholder="—"
                 onChange={(e) =>
-                  void updateConcours({ ...concours, miseParEquipe: Number(e.target.value) })
+                  // On écrit la mise par joueur et on retire l'ancien champ :
+                  // le laisser en place ferait cohabiter deux vérités, et
+                  // `miseEquipe` l'occulterait — la saisie semblerait sans effet.
+                  void updateConcours({
+                    ...concours,
+                    miseParJoueur: Number(e.target.value),
+                    miseParEquipe: undefined,
+                  })
                 }
               />
+              <small className="form-hint">
+                {miseHeritee !== undefined
+                  ? `Ancienne mise : ${miseHeritee.toLocaleString('fr-FR')} € par équipe, appliquée tant que ce champ est vide.`
+                  : `soit ${mise.toLocaleString('fr-FR')} € par équipe`}
+              </small>
             </label>
             <label>
               Frais d'organisation (%)

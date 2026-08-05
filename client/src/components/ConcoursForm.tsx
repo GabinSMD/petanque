@@ -17,6 +17,7 @@ import {
   categorieDuDessous,
   championnatsDuJeu,
   NIVEAUX_FEDERAUX,
+  TAILLE_FORMATION,
   codeNiveauFederal,
   estNiveauChampionnat,
   nomDepuisNumero,
@@ -118,7 +119,14 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
     initial ? estConcoursOfficiel(initial) : false,
   );
   const [nbQualifies, setNbQualifies] = useState<number | ''>(initial?.nbQualifies ?? '');
-  const [miseParEquipe, setMiseParEquipe] = useState<number | ''>(initial?.miseParEquipe ?? '');
+  const [miseParJoueur, setMiseParJoueur] = useState<number | ''>(initial?.miseParJoueur ?? '');
+  /**
+   * Ancienne mise **par équipe** d'un concours déjà enregistré. On ne la
+   * convertit pas : diviser 10 € par 3 donnerait 3,33 €, et surtout on ne sait
+   * pas si l'organisateur avait saisi un total ou recopié un barème par joueur.
+   * On la montre, et il tranche.
+   */
+  const miseHeritee = initial?.miseParJoueur === undefined ? initial?.miseParEquipe : undefined;
   const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
   const [nbTerrains, setNbTerrains] = useState(initial?.nbTerrains ?? 8);
   const [planTerrains, setPlanTerrains] = useState(initial?.planTerrains ?? true);
@@ -272,7 +280,10 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       tempsLimite: tempsLimite === '' ? undefined : Number(tempsLimite),
       // En rondes, le classement se fait au goal-average : le score est requis.
       vainqueurSeul: !isRondesMode(mode) && !isTirMode(mode) && vainqueurSeul ? true : undefined,
-      miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
+      miseParJoueur: miseParJoueur === '' ? undefined : Number(miseParJoueur),
+      // L'ancien champ ne survit que tant qu'aucune mise par joueur n'est
+      // saisie : garder les deux ferait cohabiter deux vérités.
+      miseParEquipe: miseParJoueur === '' ? miseHeritee : undefined,
       niveau: officiel && niveau !== '' ? niveau : undefined,
       comiteOrganisateur: officiel ? comiteOrganisateur.trim() || undefined : undefined,
       clubOrganisateur: officiel ? clubOrganisateur.trim() || undefined : undefined,
@@ -470,18 +481,32 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       </div>
       <div className="form-row">
         <label>
-          Mise par équipe (€, facultatif)
+          Mise par joueur (€, facultatif)
           <input
             type="number"
             min={0}
             max={1000}
             step={0.5}
-            value={miseParEquipe}
+            value={miseParJoueur}
             placeholder="—"
             onChange={(e) =>
-              setMiseParEquipe(e.target.value === '' ? '' : Number(e.target.value))
+              setMiseParJoueur(e.target.value === '' ? '' : Number(e.target.value))
             }
           />
+          {/* L'unité fédérale est par joueur ; le total d'équipe se lit à côté,
+              pour qu'un barème recopié se vérifie à la saisie. */}
+          {miseParJoueur !== '' && (
+            <small className="form-hint">
+              soit {(Number(miseParJoueur) * TAILLE_FORMATION[format]).toLocaleString('fr-FR')} € par
+              équipe en {FORMAT_LABELS[format].toLowerCase()}
+            </small>
+          )}
+          {miseParJoueur === '' && miseHeritee !== undefined && (
+            <small className="form-hint">
+              Ancienne mise : {miseHeritee.toLocaleString('fr-FR')} € par <strong>équipe</strong>.
+              Elle reste appliquée tant que ce champ est vide.
+            </small>
+          )}
         </label>
         {!isRondesMode(mode) && !isTirMode(mode) && (
           <label>

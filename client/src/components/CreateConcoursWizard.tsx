@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { ConcoursMode, Discipline, TeamFormat } from '@shared';
-import { bornesParties } from '@shared';
+import { TAILLE_FORMATION, bornesParties } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
   CATEGORY_SUGGESTIONS,
@@ -62,7 +62,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   // Marathon : championnat tronqué. Vide = calendrier complet.
   const [marathonRondes, setMarathonRondes] = useState<number | ''>('');
   const [tempsLimite, setTempsLimite] = useState<number | ''>('');
-  const [miseParEquipe, setMiseParEquipe] = useState<number | ''>('');
+  const [miseParJoueur, setMiseParJoueur] = useState<number | ''>('');
   const [consolante, setConsolante] = useState(true);
 
   const pickMode = (m: ConcoursMode) => {
@@ -109,7 +109,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
             : undefined,
       tempsLimite:
         tempsLimite === '' || isTirMode(mode) ? undefined : Number(tempsLimite),
-      miseParEquipe: miseParEquipe === '' ? undefined : Number(miseParEquipe),
+      miseParJoueur: miseParJoueur === '' ? undefined : Number(miseParJoueur),
     });
   };
 
@@ -314,18 +314,26 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
               </label>
             )}
             <label>
-              Mise par équipe (€, facultatif)
+              Mise par joueur (€, facultatif)
               <input
                 type="number"
                 min={0}
                 max={1000}
                 step={0.5}
-                value={miseParEquipe}
+                value={miseParJoueur}
                 placeholder="—"
                 onChange={(e) =>
-                  setMiseParEquipe(e.target.value === '' ? '' : Number(e.target.value))
+                  setMiseParJoueur(e.target.value === '' ? '' : Number(e.target.value))
                 }
               />
+              {/* Le total d'équipe se lit à la saisie : c'est l'unité que le
+                  barème fédéral donne, et celle qu'un organisateur recopie. */}
+              {miseParJoueur !== '' && format && (
+                <small className="form-hint">
+                  soit {(Number(miseParJoueur) * TAILLE_FORMATION[format]).toLocaleString('fr-FR')} €
+                  par équipe en {FORMAT_LABELS[format].toLowerCase()}
+                </small>
+              )}
             </label>
           </div>
           {MODE_INFO[mode].consolante && (

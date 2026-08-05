@@ -19,9 +19,42 @@
  * D'où trois montants distincts dans le bilan, et aucun total « recette » qui
  * mélangerait les trois.
  */
-import type { EtatMise, Team } from '../types';
+import type { Concours, EtatMise, TeamFormat, Team } from '../types';
 
 export type { EtatMise };
+
+/** Nombre de joueurs par équipe selon la formation. */
+export const TAILLE_FORMATION: Record<TeamFormat, number> = {
+  tete_a_tete: 1,
+  doublette: 2,
+  triplette: 3,
+};
+
+/**
+ * Ce que l'équipe doit, en euros — ou `undefined` si aucune mise n'est fixée.
+ *
+ * La mise fédérale est **par joueur** : le champ de la fenêtre de création
+ * s'appelle `Mise/Joueur` et vaut `4.00 €` (planche p.12). Le total d'équipe est
+ * ce montant multiplié par la **formation**, et non par les joueurs présents —
+ * le bilan de la p.33 écrit `Nbre Equipe : 16 = 192 €`, un prix unitaire
+ * constant qu'il ne pourrait pas afficher comme un produit s'il comptait les
+ * joueurs équipe par équipe. Un engagement ne baisse pas parce qu'un joueur
+ * manque à l'appel.
+ *
+ * `miseParEquipe` est l'ancien champ, qui portait déjà un total d'équipe : on le
+ * relit **tel quel**, sans le multiplier. Le multiplier ferait payer 36 € à des
+ * équipes inscrites pour 12 — c'est le genre de réinterprétation silencieuse
+ * qu'un changement d'unité rend possible, et qu'il faut refuser.
+ *
+ * Le `!== undefined` n'est pas décoratif : avec un `||`, un concours gratuit
+ * (`miseParJoueur: 0`) retomberait sur son ancien total.
+ */
+export function miseEquipe(
+  c: Pick<Concours, 'format' | 'miseParJoueur' | 'miseParEquipe'>,
+): number | undefined {
+  if (c.miseParJoueur !== undefined) return c.miseParJoueur * TAILLE_FORMATION[c.format];
+  return c.miseParEquipe;
+}
 
 /** Les trois positions du cadre « Mises », dans son ordre. */
 export const ETATS_MISE: EtatMise[] = ['non_paye', 'paye', 'facturation'];
@@ -95,7 +128,7 @@ export interface BilanMises {
  * montant : ce qu'il advient de leur engagement — remboursé ou gardé — est une
  * décision d'organisateur, pas une règle que le logiciel puisse deviner.
  */
-export function bilanMises(teams: Team[], miseParEquipe: number): BilanMises {
+export function bilanMises(teams: Team[], totalParEquipe: number): BilanMises {
   const parEtat: Record<EtatMise, number> = { non_paye: 0, paye: 0, facturation: 0 };
   let forfaits = 0;
   for (const equipe of teams) {
@@ -107,9 +140,9 @@ export function bilanMises(teams: Team[], miseParEquipe: number): BilanMises {
   }
   return {
     parEtat,
-    encaisse: parEtat.paye * miseParEquipe,
-    aFacturer: parEtat.facturation * miseParEquipe,
-    restantDu: parEtat.non_paye * miseParEquipe,
+    encaisse: parEtat.paye * totalParEquipe,
+    aFacturer: parEtat.facturation * totalParEquipe,
+    restantDu: parEtat.non_paye * totalParEquipe,
     forfaits,
   };
 }

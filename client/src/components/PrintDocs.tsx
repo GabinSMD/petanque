@@ -12,6 +12,7 @@ import { Fragment } from 'react';
 import type { BilanAvantTirage, Concours, Match, Poule, Team } from '@shared';
 import {
   bilanMises,
+  miseEquipe,
   dureeMinutes,
   libelleComites,
   etatMise,
@@ -133,7 +134,7 @@ export function BilanPaiements({
   teams: Team[];
   tri: TriEquipes;
 }) {
-  const mise = concours.miseParEquipe ?? 0;
+  const mise = miseEquipe(concours) ?? 0;
   const ordonnees = trierEquipes(teams, tri);
   const bilan = bilanMises(ordonnees, mise);
   const euros = (n: number) => `${n.toLocaleString('fr-FR')} €`;
@@ -177,7 +178,13 @@ export function BilanPaiements({
         )}
         {mise > 0 && (
           <>
-            <li>Mise par équipe : {euros(mise)}</li>
+            {/* L'unité est écrite noir sur blanc : c'est la confusion que ce
+                lot corrige, et un compte signé doit pouvoir se recalculer. */}
+            <li>
+              {concours.miseParJoueur !== undefined
+                ? `Mise : ${euros(concours.miseParJoueur)} par joueur, soit ${euros(mise)} par équipe`
+                : `Mise par équipe : ${euros(mise)}`}
+            </li>
             {/* Trois lignes et non une : le trésorier signe un compte de caisse,
                 pas une addition qui mélange l'encaissé et le facturé. */}
             <li>
