@@ -44,6 +44,17 @@ export function BilanTirageModal({ bilan, concoursId, onTirer, onCorriger }: Pro
           « introuvables » annoncées juste au-dessus. */}
       <FraicheurBase compact />
       <BesoinTerrainsHint besoin={bilan.terrains} />
+      {/* Composition du champ par classification, comme le rapport fédéral la
+          donne en fin de liste (§3.B.6). Vu **avant** le tirage, c'est encore le
+          moment d'en parler : un concours annoncé « promotion » qui a attiré sept
+          élites se lit ici. */}
+      {bilan.classification && (
+        <p className="bilan-classification">
+          Joueurs Elites : <strong>{bilan.classification.elite}</strong> · Honneurs :{' '}
+          <strong>{bilan.classification.honneur}</strong> · Promotions :{' '}
+          <strong>{bilan.classification.promotion}</strong>
+        </p>
+      )}
       <ul className="liste-bilan">
         {bilan.lignes.map((ligne) => (
           <li key={ligne.number}>

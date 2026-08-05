@@ -18,6 +18,7 @@ import {
   besoinModeFederal,
   bilanAvantTirage,
   besoinTerrains,
+  comptesClassification,
   controlerEquipe,
   criteresDuConcours,
   dateDeLaBase,
@@ -209,6 +210,15 @@ export function useBilanAvantTirage(
         controle: controlerEquipe(t.players, fiches, criteres),
       })),
       besoinTerrains(concours, engagees.length),
+      // Les comptes par classification n'ont de sens qu'avec un fichier des
+      // licenciés : sans lui, on ne peut pas classer, et c'est l'absence qui le
+      // dit plutôt que trois zéros.
+      fiches.size > 0
+        ? comptesClassification(
+            engagees.flatMap((t) => t.players),
+            fiches,
+          )
+        : undefined,
     );
   }, [concours, teams, licencies]);
 }

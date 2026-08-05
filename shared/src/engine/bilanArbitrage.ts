@@ -76,6 +76,43 @@ export function pourcentageFederal(n: number, total: number): number {
   return bas % 2 === 0 ? bas : bas + 1;
 }
 
+/** Joueurs par classification fédérale. */
+export interface ComptesClassification {
+  elite: number;
+  honneur: number;
+  promotion: number;
+}
+
+/**
+ * Compte les joueurs par classification fédérale.
+ *
+ * Extraite parce que **deux** documents la demandent : le bilan du rapport
+ * d'arbitrage (§3.D.1.B.4.5) et le rapport de validité avant tirage
+ * (§3.B.6, « Nombre de Joueurs Elites / Honneurs / Promotions »). Deux écrans
+ * qui compteraient chacun à leur façon finiraient par ne plus dire la même
+ * chose du même champ.
+ *
+ * `Classification` est une **lettre** — `E`, `H`, `P` — et non un mot : c'est la
+ * faute que le typecheck a rattrapée au lot #132, et c'est pour cela que le
+ * paramètre est typé plutôt que laissé en `string`.
+ *
+ * Un joueur sans fiche, ou dont la fiche ne porte pas de classification, ne
+ * compte nulle part — on ne le range pas d'office en promotion.
+ */
+export function comptesClassification(
+  players: Player[],
+  fiches: Map<string, Licencie>,
+): ComptesClassification {
+  const parLettre = (attendue: Classification): number =>
+    players.filter((p) => (p.licence ? fiches.get(p.licence)?.classification : undefined) === attendue)
+      .length;
+  return {
+    elite: parLettre('E'),
+    honneur: parLettre('H'),
+    promotion: parLettre('P'),
+  };
+}
+
 /** Un compte du document : un effectif, son total, et son pourcentage. */
 export interface CompteBilan {
   n: number;
@@ -166,18 +203,9 @@ export function bilanArbitrage(
     return Boolean(c) && ligue.has(c!);
   };
 
-  /**
-   * `Classification` est une **lettre** fédérale — `E`, `H`, `P` — et non un mot.
-   * Ma première version comparait à `'elite'` : elle n'aurait jamais rien compté,
-   * et les tests l'ont laissée passer parce que leurs fixtures portaient la même
-   * erreur. C'est le typecheck qui l'a arrêtée.
-   */
-  const parClassification = (attendue: Classification): number =>
-    players.filter((p) => ficheDe(p)?.classification === attendue).length;
-
-  const elite = parClassification('E');
-  const honneur = parClassification('H');
-  const promotion = parClassification('P');
+  // Une seule définition du comptage par classification, partagée avec le
+  // rapport de validité avant tirage : voir `comptesClassification`.
+  const { elite, honneur, promotion } = comptesClassification(players, fiches);
   const joueursComite = players.filter(duComite).length;
   const joueursLigue = players.filter(deLaLigue).length;
 

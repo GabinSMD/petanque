@@ -4279,6 +4279,12 @@ form label select {
 
 /* Date du fichier des licenciés. Le « Fond ORANGE » du manuel §2.1 quand la
    base est d'une saison révolue. */
+/* Composition du champ par classification, au contrôle avant tirage. */
+.bilan-classification {
+  margin: 0.4rem 0;
+  font-size: 0.9rem;
+}
+
 .base-licencies {
   margin: 0 0 0.75rem;
   font-size: 0.85rem;

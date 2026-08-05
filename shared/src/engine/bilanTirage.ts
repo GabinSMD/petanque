@@ -19,6 +19,7 @@
  * mais il a vu.
  */
 import type { BesoinTerrains } from './besoinTerrains';
+import type { ComptesClassification } from './bilanArbitrage';
 import type { AnomalieEquipe, ChampLicence, ControleEquipe } from './licences';
 
 export interface JoueurEnAnomalie {
@@ -56,11 +57,25 @@ export interface BilanAvantTirage {
    * n'a pas de sens — tir de précision, effectif que les poules refusent.
    */
   terrains?: BesoinTerrains;
+  /**
+   * Joueurs par classification, comme le rapport fédéral les compte (§3.B.6 :
+   * « Nombre de Joueurs Elites / Honneurs / Promotions »).
+   *
+   * C'est ce que le délégué lit pour juger la **composition du champ** avant de
+   * lancer, quand il est encore temps d'en parler : un concours annoncé
+   * « promotion » qui a attiré sept élites se voit là.
+   *
+   * **Absent** quand il n'y a pas de fichier des licenciés — l'absence dit « on
+   * ne peut pas classer », alors que trois zéros diraient « personne n'est
+   * classé ». Ce ne sont pas les mêmes renseignements.
+   */
+  classification?: ComptesClassification;
 }
 
 export function bilanAvantTirage(
   equipes: { number: number; controle: ControleEquipe }[],
   terrains?: BesoinTerrains,
+  classification?: ComptesClassification,
 ): BilanAvantTirage {
   const lignes: LigneBilanTirage[] = [];
   let conformes = 0;
@@ -88,6 +103,7 @@ export function bilanAvantTirage(
     conformes,
     inconnues,
     lignes: lignes.sort((a, b) => a.number - b.number),
+    ...(classification ? { classification } : {}),
     terrains,
   };
 }
