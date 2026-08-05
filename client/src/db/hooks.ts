@@ -207,7 +207,7 @@ export function useBilanAvantTirage(
     return bilanAvantTirage(
       engagees.map((t) => ({
         number: t.number,
-        controle: controlerEquipe(t.players, fiches, criteres),
+        controle: controlerEquipe(t.players, fiches, criteres, t.club),
       })),
       besoinTerrains(concours, engagees.length),
       // Les comptes par classification n'ont de sens qu'avec un fichier des

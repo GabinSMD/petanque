@@ -26,7 +26,23 @@ export type ChampLicence =
   | 'certificatMedical'
   | 'club';
 
-export type AnomalieEquipe = 'mixte' | 'homogeneite' | 'mutes' | 'horsUE';
+export type AnomalieEquipe =
+  | 'mixte'
+  | 'homogeneite'
+  | 'mutes'
+  | 'horsUE'
+  /**
+   * Le club déclaré pour l'équipe est incorrect : elle n'est pas homogène, donc
+   * il devrait valoir **N.H.** (manuel §3.B.6, rapport p.28 : « Equipe 3 : Club
+   * Equipe Incorrect : devrait être NH »).
+   */
+  | 'clubEquipeNonHomogene'
+  /**
+   * Le club déclaré n'est pas celui des joueurs, qui sont tous du même. Variante
+   * que le manuel ne montre pas — mais c'est la même contradiction, et elle a
+   * les mêmes conséquences.
+   */
+  | 'clubEquipeErrone';
 
 /**
  * Catégorie qu'un concours peut **exiger**. C'est presque la catégorie d'un
@@ -245,6 +261,12 @@ export function controlerEquipe(
   players: Player[],
   fiches: Map<string, Licencie>,
   criteres: CriteresLicence,
+  /**
+   * Club déclaré pour l'équipe (`Team.club`). Facultatif : les appelants qui
+   * n'ont que des joueurs — la feuille de match — ne peuvent pas le fournir, et
+   * ne perdent rien de ce qu'ils contrôlaient.
+   */
+  clubEquipe?: string,
 ): ControleEquipe {
   const joueurs: ControleJoueur[] = players.map((p) => {
     const anomalies: ChampLicence[] = [];
@@ -356,21 +378,58 @@ export function controlerEquipe(
     if (horsUEFiches + horsUEEtrangers > criteres.maxHorsUE) anomaliesEquipe.push('horsUE');
   }
 
-  // Homogénéité : tous les joueurs du même club. Le club vient de la fiche
-  // fédérale quand elle existe, sinon de ce qui a été saisi à l'inscription —
-  // un joueur hors fichier n'échappe pas au contrôle. On compare des noms
-  // normalisés : le numéro de club ne se compare pas à un nom.
+  /**
+   * Club d'un joueur, normalisé. La fiche fédérale fait foi quand elle existe,
+   * sinon ce qui a été saisi à l'inscription — un joueur hors fichier n'échappe
+   * pas au contrôle. À défaut de nom, le numéro de club : il distingue deux
+   * clubs entre eux, même s'il ne se compare pas à un nom.
+   */
+  const clubDe = (p: Player): string | undefined => {
+    const fiche = p.licence ? fiches.get(p.licence) : undefined;
+    const nom = fiche?.club ?? p.club;
+    if (nom) return nom.trim().toLowerCase();
+    return fiche?.clubNumero?.trim().toLowerCase();
+  };
+
+  // Homogénéité : tous les joueurs du même club.
   if (criteres.homogene) {
-    const clubDe = (p: Player): string | undefined => {
-      const fiche = p.licence ? fiches.get(p.licence) : undefined;
-      const nom = fiche?.club ?? p.club;
-      if (nom) return nom.trim().toLowerCase();
-      return fiche?.clubNumero?.trim().toLowerCase();
-    };
     const clubs = new Set(players.map(clubDe).filter((c): c is string => Boolean(c)));
     if (clubs.size > 1) {
       anomaliesEquipe.push('homogeneite');
       for (const j of joueurs) if (!j.anomalies.includes('club')) j.anomalies.push('club');
+    }
+  }
+
+  /*
+   * Cohérence du club déclaré pour l'équipe — **indépendante du critère
+   * d'homogénéité**, et c'est tout l'enjeu : l'homogénéité est une exigence du
+   * concours, la cohérence du club d'équipe est une **erreur de saisie**, fausse
+   * même sur un concours ouvert à tous.
+   *
+   * Elle compte parce que quatre endroits lisent `Team.club` **directement**,
+   * sans passer par `clubsEquipe` : le rapport d'arbitrage et le rapport du
+   * délégué l'impriment, le tri « par club » des listes s'en sert, et la
+   * répartition multisite groupe les équipes dessus — une équipe mal étiquetée
+   * part sur le mauvais site.
+   *
+   * On ne compare que des **noms** : le club d'équipe est un nom, et un joueur
+   * dont on ne connaît que le numéro fédéral ne peut ni le confirmer ni le
+   * démentir. L'ignorer vaut mieux qu'une fausse anomalie.
+   */
+  const declare = clubEquipe?.trim().toLowerCase();
+  if (declare) {
+    const nomsJoueurs = new Set(
+      players
+        .map((p) => {
+          const fiche = p.licence ? fiches.get(p.licence) : undefined;
+          const nom = fiche?.club ?? p.club;
+          return nom?.trim().toLowerCase();
+        })
+        .filter((c): c is string => Boolean(c)),
+    );
+    if (nomsJoueurs.size > 1) anomaliesEquipe.push('clubEquipeNonHomogene');
+    else if (nomsJoueurs.size === 1 && !nomsJoueurs.has(declare)) {
+      anomaliesEquipe.push('clubEquipeErrone');
     }
   }
 

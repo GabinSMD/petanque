@@ -281,6 +281,9 @@ export const ANOMALIE_EQUIPE_LABELS: Record<AnomalieEquipe, string> = {
   homogeneite: 'équipe non homogène',
   mutes: 'trop de joueurs mutés',
   horsUE: 'plus d\'un joueur hors Union européenne',
+  // Le libellé du manuel dit ce qu'il faut faire, pas seulement ce qui est faux.
+  clubEquipeNonHomogene: 'club d\'équipe incorrect : devrait être N.H.',
+  clubEquipeErrone: 'club d\'équipe incorrect : les joueurs ne sont pas de ce club',
 };
 
 /**

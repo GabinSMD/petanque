@@ -84,7 +84,7 @@ export function LicencesTab({ concours, teams }: Props) {
 
   const controles = useMemo(() => {
     const map = new Map<string, ControleEquipe>();
-    for (const t of teams) map.set(t.id, controlerEquipe(t.players, fiches, criteres));
+    for (const t of teams) map.set(t.id, controlerEquipe(t.players, fiches, criteres, t.club));
     return map;
   }, [teams, fiches, criteres]);
 
