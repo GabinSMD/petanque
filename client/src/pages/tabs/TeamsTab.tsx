@@ -15,6 +15,7 @@ import {
   aDesCriteresLicence,
   bilanMises,
   miseEquipe,
+  TAILLE_FORMATION,
   etatMise,
   poserMise,
   type EtatMise,
@@ -28,7 +29,6 @@ import { RegistrationsPanel } from '../../components/RegistrationsPanel';
 import { exportListeSpecifique } from '../../lib/export';
 import {
   FORMAT_LABELS,
-  PLAYERS_PER_TEAM,
   ROLE_ABREGE,
   ROLE_LABELS,
   isIndividualMode,
@@ -52,7 +52,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
   const [erreurModif, setErreurModif] = useState<string | null>(null);
   const [bilanImport, setBilanImport] = useState<string | null>(null);
   const individual = isIndividualMode(concours.mode);
-  const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
+  const nbPlayers = individual ? 1 : TAILLE_FORMATION[concours.format];
   const locked = concours.status !== 'inscriptions';
   /**
    * Le rôle de jeu ne sert qu'au tirage des mêlées : il n'a pas de sens quand

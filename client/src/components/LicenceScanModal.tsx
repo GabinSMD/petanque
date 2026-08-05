@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Concours, Licencie, Player, Team } from '@shared';
-import { parseLicenceQr } from '@shared';
+import { TAILLE_FORMATION, parseLicenceQr } from '@shared';
 import { addTeam } from '../db/actions';
 import { useLicencies } from '../db/hooks';
 import { Modal } from './Modal';
-import { PLAYERS_PER_TEAM } from '../lib/labels';
 
 interface Props {
   concours: Concours;
@@ -29,7 +28,7 @@ interface Scanne extends Player {
  * passe à la suivante.
  */
 export function LicenceScanModal({ concours, teams, onClose }: Props) {
-  const parEquipe = PLAYERS_PER_TEAM[concours.format];
+  const parEquipe = TAILLE_FORMATION[concours.format];
   const licencies = useLicencies() ?? [];
   const parLicence = useMemo(
     () => new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l])),

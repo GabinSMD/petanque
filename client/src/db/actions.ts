@@ -14,7 +14,6 @@ import {
   drawSwissRonde,
   firstRoundSources,
   formuleOf,
-  isByeMatch,
   nbToursQualification,
   numeroPremiereEquipe,
   pouleGroupOutcome,
@@ -38,6 +37,7 @@ import {
   type Concours,
   type CategorieAge,
   type ConcoursMode,
+  TAILLE_FORMATION,
   type CritereClassification,
   type CritereSexe,
   type Discipline,
@@ -843,12 +843,6 @@ export async function cancelTableau(concours: Concours): Promise<void> {
 /* Rondes (mêlée, système suisse, championnat)                         */
 /* ------------------------------------------------------------------ */
 
-const TEAM_SIZE: Record<TeamFormat, number> = {
-  tete_a_tete: 1,
-  doublette: 2,
-  triplette: 3,
-};
-
 /**
  * Tire la ronde suivante (mêlée / suisse) ou génère le calendrier
  * complet (championnat).
@@ -867,7 +861,7 @@ export async function tirerRonde(concours: Concours): Promise<void> {
     if (round > 0 && !rondeComplete(matches, round - 1)) {
       throw new Error('Terminez la ronde en cours avant d\'en tirer une nouvelle');
     }
-    created = drawMeleeRonde(concours.id, entrants, round, TEAM_SIZE[concours.format], ctx());
+    created = drawMeleeRonde(concours.id, entrants, round, TAILLE_FORMATION[concours.format], ctx());
   } else if (concours.mode === 'suisse') {
     if (round > 0 && !rondeComplete(matches, round - 1)) {
       throw new Error('Terminez la ronde en cours avant d\'en tirer une nouvelle');

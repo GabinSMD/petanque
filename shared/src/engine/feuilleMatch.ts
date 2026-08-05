@@ -17,6 +17,7 @@
  */
 
 import type { CompetitionClubId, ContingentHorsUE } from './championnat';
+import { TAILLE_FORMATION } from './formations';
 
 /** Les trois positions admises, pour ne rien reprendre d'autre d'une feuille lue. */
 const CONTINGENTS: ContingentHorsUE[] = ['tous', 'un_externe', 'aucun'];
@@ -310,13 +311,6 @@ export interface FeuilleMatch {
   signatures: { a: SignatureFeuille | null; b: SignatureFeuille | null };
   updatedAt: string;
 }
-
-/** Nombre de joueurs par camp selon la formation. */
-const TAILLE_FORMATION: Record<TypePartie, number> = {
-  tete_a_tete: 1,
-  doublette: 2,
-  triplette: 3,
-};
 
 /** Places vides, une par partie, dimensionnées selon la formation. */
 export function placesVides(bareme: BaremeRencontre = BAREME_CDC): { a: string[]; b: string[] }[] {

@@ -19,16 +19,10 @@
  * D'où trois montants distincts dans le bilan, et aucun total « recette » qui
  * mélangerait les trois.
  */
-import type { Concours, EtatMise, TeamFormat, Team } from '../types';
+import type { Concours, EtatMise, Team } from '../types';
+import { TAILLE_FORMATION } from './formations';
 
 export type { EtatMise };
-
-/** Nombre de joueurs par équipe selon la formation. */
-export const TAILLE_FORMATION: Record<TeamFormat, number> = {
-  tete_a_tete: 1,
-  doublette: 2,
-  triplette: 3,
-};
 
 /**
  * Ce que l'équipe doit, en euros — ou `undefined` si aucune mise n'est fixée.

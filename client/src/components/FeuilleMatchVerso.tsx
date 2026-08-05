@@ -1,5 +1,5 @@
-import type { BaremeRencontre, PartieRencontre, TypePartie } from '@shared';
-import { LIBELLE_TYPE_PARTIE, bilanRencontre, pointsEnJeu } from '@shared';
+import type { BaremeRencontre, PartieRencontre } from '@shared';
+import { LIBELLE_TYPE_PARTIE, TAILLE_FORMATION, bilanRencontre, pointsEnJeu } from '@shared';
 
 /** Un joueur tel qu'il apparaît sur la feuille : nom et numéro de licence. */
 export interface JoueurFeuille {
@@ -33,13 +33,6 @@ interface Props {
   clubA: string;
   clubB: string;
 }
-
-/** Nombre de joueurs par camp selon la formation. */
-const TAILLE: Record<TypePartie, number> = {
-  tete_a_tete: 1,
-  doublette: 2,
-  triplette: 3,
-};
 
 /**
  * Verso de la feuille de match : « ORDRE des RENCONTRES & FEUILLE DE RÉSULTAT ».
@@ -184,7 +177,7 @@ export function FeuilleMatchVerso({
                         {(['a', 'b'] as const).map((cote) => {
                           const cellules = (
                             <td key={`${cote}-noms`} className="feuille-noms">
-                              {Array.from({ length: TAILLE[bloc.type] }, (_, slot) => (
+                              {Array.from({ length: TAILLE_FORMATION[bloc.type] }, (_, slot) => (
                                 <select
                                   key={slot}
                                   value={places[i]?.[cote][slot] ?? ''}

@@ -1,4 +1,4 @@
-import type { CategorieAge, CategorieCritere, ConcoursMode, ConcoursStatus, EtatMise, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
+import type { CategorieCritere, ConcoursMode, ConcoursStatus, EtatMise, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
 import type { AnomalieEquipe, ChampLicence } from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
@@ -10,12 +10,6 @@ export const FORMAT_LABELS: Record<TeamFormat, string> = {
   tete_a_tete: 'Tête-à-tête',
   doublette: 'Doublette',
   triplette: 'Triplette',
-};
-
-export const PLAYERS_PER_TEAM: Record<TeamFormat, number> = {
-  tete_a_tete: 1,
-  doublette: 2,
-  triplette: 3,
 };
 
 /**
