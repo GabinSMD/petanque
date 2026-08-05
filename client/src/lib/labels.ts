@@ -1,5 +1,5 @@
 import type { CategorieAge, CategorieCritere, ConcoursMode, ConcoursStatus, EtatMise, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
-import type { AnomalieEquipe, ChampLicence } from '@shared';
+import type { AnomalieEquipe, ChampLicence, NiveauInterface } from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
   petanque: 'Pétanque',
@@ -304,4 +304,11 @@ export const NIVEAU_LABELS: Record<NiveauConcours, string> = {
   coupe_de_france: 'Coupe de France',
   // Ancienne valeur : ne s'affiche que sur les concours qui la portent déjà.
   championnat: 'Championnat (ancien libellé)',
+};
+
+/** Libellé court du niveau d'interface, pour le bouton des réglages. */
+export const LIBELLE_NIVEAU: Record<NiveauInterface, string> = {
+  amical: 'Entre amis',
+  club: 'Mon club',
+  federal: 'Officiel',
 };

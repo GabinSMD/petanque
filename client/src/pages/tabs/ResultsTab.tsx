@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import type { Concours, Match, MatchStage, Poule, Team } from '@shared';
 import {
   bracketRanking,
-  estConcoursOfficiel,
+  montrer,
   nomDuBloc,
   estQualificatif,
   pouleOutcome,
@@ -14,7 +14,7 @@ import {
   type RankGroup,
 } from '@shared';
 import { updateConcours } from '../../db/actions';
-import { useModeFederalActif } from '../../db/hooks';
+import { useNiveauInterfaceActif } from '../../db/hooks';
 import { PermutationsClassement } from '../../components/PermutationsClassement';
 import { StandingsTable } from '../../components/StandingsTable';
 import { PhotosPodium } from '../../components/PhotosPodium';
@@ -357,9 +357,11 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
   // Le rapport d'arbitrage se lit dans le tableau principal : il n'a de sens
   // que pour les formules à tableau.
   const hasBracket = matches.some((m) => m.stage === 'principal');
-  // Les documents du comité restent visibles sur un concours officiel, même si
-  // le club a masqué le mode fédéral.
-  const federal = useModeFederalActif() || estConcoursOfficiel(concours);
+  // Les documents du comité restent visibles sur un concours officiel, même en
+  // dessous du niveau fédéral : c'est la clause de sûreté de `montrer`, qui lit
+  // le concours plutôt que le seul réglage.
+  const niveau = useNiveauInterfaceActif();
+  const federal = montrer('documentsComite', { niveau, concours });
   // Concours qualificatif : la liste des qualifiés s'exporte pour servir
   // d'inscriptions à la phase finale.
   const idsQualifies = estQualificatif(matches, 'principal')

@@ -3,6 +3,7 @@ import type { Concours, Match, Poule, Team } from '@shared';
 import {
   besoinTerrains,
   dureeMinutes,
+  montrer,
   pouleGroupOutcome,
   pouleOutcome,
   pouleRemaining,
@@ -25,7 +26,7 @@ import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
 import { ProtectionsModal } from '../../components/ProtectionsModal';
 import { BesoinTerrainsHint } from '../../components/BesoinTerrains';
-import { useBilanAvantTirage, useModeFederalActif } from '../../db/hooks';
+import { useBilanAvantTirage, useNiveauInterfaceActif } from '../../db/hooks';
 import { BilanTirageModal } from '../../components/BilanTirageModal';
 import { TeamLabel } from '../../components/TeamLabel';
 import { POULE_SLOT_LABELS } from '../../lib/labels';
@@ -38,7 +39,7 @@ interface Props {
 }
 
 export function PoulesTab({ concours, teams, poules, matches }: Props) {
-  const modeFederal = useModeFederalActif();
+  const niveau = useNiveauInterfaceActif();
   // Protection club appliquée par défaut, comme dans le logiciel fédéral.
   const [protection, setProtection] = useState(true);
   const [groupesOuverts, setGroupesOuverts] = useState(false);
@@ -168,7 +169,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
           </label>
           {/* La protection club s'applique toujours ; les groupes de clubs
               sont un raffinement fédéral (manuel §3.B.5 niveau 2). */}
-          {(modeFederal || concours.protections?.length) && (
+          {montrer('protections', { niveau, concours }) && (
             <button
               type="button"
               className="btn btn-ghost btn-sm"

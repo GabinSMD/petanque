@@ -1,30 +1,43 @@
-import { besoinModeFederal } from '@shared';
-import { useConcoursList, useLicenciesCount } from '../db/hooks';
-import { useModeFederal } from '../lib/modeFederal';
+import { NIVEAUX_INTERFACE, besoinNiveau } from '@shared';
+import { useClubsSurEquipes, useConcoursList, useLicenciesCount } from '../db/hooks';
+import { useNiveauInterface } from '../lib/niveauInterface';
+import { LIBELLE_NIVEAU } from '../lib/labels';
 import { Modal } from './Modal';
 
 /**
- * Réglages de l'appareil. Le seul pour l'instant : le mode fédéral, qui décide
- * de ce que l'application montre — pas de ce qu'elle fait.
+ * Réglages de l'appareil. Le seul pour l'instant : le niveau d'interface, qui
+ * décide de ce que l'application montre — pas de ce qu'elle fait.
  */
 export function ReglagesModal({ onClose }: { onClose: () => void }) {
   const concours = useConcoursList() ?? [];
   const licencies = useLicenciesCount();
-  const besoin = besoinModeFederal({ concours, licencies });
-  const { actif, preference, choisir, oublier } = useModeFederal(besoin);
+  const clubsSurEquipes = useClubsSurEquipes();
+  const besoin = besoinNiveau({ concours, licencies, clubsSurEquipes });
+  const { niveau, preference, choisir, oublier } = useNiveauInterface(besoin);
 
   return (
     <Modal title="⚙ Réglages" onClose={onClose}>
       <div className="reglages-modal">
-        <label className="checkbox-label">
-          <input type="checkbox" checked={actif} onChange={(e) => choisir(e.target.checked)} />
-          Mode fédéral : concours officiels, licences et documents du comité
-        </label>
+        {/* Trois boutons radio plutôt qu'une liste déroulante : les trois
+            niveaux se lisent d'un coup, et on voit lequel est actif sans
+            ouvrir quoi que ce soit. */}
+        {NIVEAUX_INTERFACE.map((n) => (
+          <label key={n} className="checkbox-label">
+            <input
+              type="radio"
+              name="niveauInterface"
+              checked={niveau === n}
+              onChange={() => choisir(n)}
+            />
+            {LIBELLE_NIVEAU[n]}
+          </label>
+        ))}
 
         <p className="hint">
-          Décoché, l'application s'en tient à ce qu'il faut pour un concours de club : inscriptions,
-          tirage, poules, tableaux, scores et indemnités. Le fichier des licenciés, le championnat
-          des clubs, les critères officiels et les documents remis au comité sont masqués.
+          Au niveau « Entre amis », l'application s'en tient à ce qu'il faut pour un concours de
+          club : inscriptions, tirage, poules, tableaux, scores et indemnités. Le fichier des
+          licenciés, le championnat des clubs, les critères officiels et les documents remis au
+          comité sont masqués.
         </p>
 
         <p className="hint">
@@ -35,9 +48,7 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
 
         {preference === null && (
           <p className="hint">
-            {besoin
-              ? 'Activé automatiquement : vous avez déjà un concours officiel ou un fichier de licenciés.'
-              : 'Masqué par défaut : rien dans vos concours ne réclame le mode fédéral.'}
+            Choisi automatiquement d'après vos concours : « {LIBELLE_NIVEAU[besoin]} ».
           </p>
         )}
 

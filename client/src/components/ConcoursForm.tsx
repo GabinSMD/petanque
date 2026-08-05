@@ -27,13 +27,14 @@ import {
   formuleOf,
   jeuDuConcours,
   jeuFederal,
+  montrer,
   nomConcoursFederal,
   parametresCDF,
   type JeuFederal,
   type ParametresCDF,
 } from '@shared';
 import type { ConcoursInput } from '../db/actions';
-import { useLicencies, useModeFederalActif } from '../db/hooks';
+import { useLicencies, useNiveauInterfaceActif } from '../db/hooks';
 import {
   CATEGORIE_AGE_LABELS,
   CATEGORY_SUGGESTIONS,
@@ -130,9 +131,11 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const [ggStrict, setGgStrict] = useState(initial?.ggStrict ?? false);
   const [tempsLimite, setTempsLimite] = useState<number | ''>(initial?.tempsLimite ?? '');
 
+  // `niveauInterface` et non `niveau` : ce dernier est déjà le niveau fédéral du
+  // concours en cours de saisie, et ce sont deux choses sans rapport.
+  const niveauInterface = useNiveauInterfaceActif();
   // Sur un concours fédéral, la catégorie découle des critères normalisés
   // (sexe, âge, classification) — le texte libre ne s'y substitue plus (#33).
-  const modeFederal = useModeFederalActif();
   const critereFederalPose =
     officiel &&
     (categorieAge !== '' || critereSexe !== 'tous' || critereClassification !== 'tous');
@@ -606,9 +609,13 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           Onglet « Plan des terrains » (décochez si vous gérez les terrains dans les poules)
         </label>
       )}
-      {/* Hors mode fédéral, la partie officielle est masquée — sauf si ce
-          concours est déjà officiel : on ne cache pas une règle en vigueur. */}
-      {(modeFederal || officiel) && (
+      {/* En dessous du niveau fédéral, la partie officielle est masquée — sauf
+          si ce concours est déjà officiel : on ne cache pas une règle en
+          vigueur. Le `|| officiel` est indispensable en plus de la clause de
+          sûreté de `montrer` : celle-ci lit le concours enregistré, alors que
+          cocher la case doit ouvrir le bloc sur-le-champ. */}
+      {(montrer('criteresOfficiels', { niveau: niveauInterface, concours: initial }) ||
+        officiel) && (
         <label className="checkbox-label">
           <input
             type="checkbox"

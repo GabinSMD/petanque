@@ -15,7 +15,7 @@ import type {
 import { db } from './local';
 import {
   aDesCriteresLicence,
-  besoinModeFederal,
+  besoinNiveau,
   bilanAvantTirage,
   besoinTerrains,
   comptesClassification,
@@ -25,8 +25,9 @@ import {
   fraicheurLicencies,
   type BilanAvantTirage,
   type FraicheurLicencies,
+  type NiveauInterface,
 } from '@shared';
-import { useModeFederal } from '../lib/modeFederal';
+import { useNiveauInterface } from '../lib/niveauInterface';
 import {
   getDonneesEcartees,
   getLastSyncAt,
@@ -172,14 +173,33 @@ export function useFeuilleMatch(id: string | undefined): FeuilleMatch | undefine
 }
 
 /**
- * Le mode fédéral est-il actif ? Préférence explicite de l'utilisateur si elle
+ * Au moins une équipe inscrite porte-t-elle un club ? C'est ce qui distingue un
+ * concours de club d'un concours entre amis, et donc ce qui promeut
+ * l'heuristique du niveau `amical` vers `club`.
+ */
+export function useClubsSurEquipes(): boolean {
+  return (
+    useLiveQuery(async () => {
+      // Toutes les équipes, tous concours confondus : le niveau d'interface est
+      // un réglage d'appareil, il ne dépend pas du concours ouvert.
+      const rows = await db.entities.where('type').equals('team').toArray();
+      return rows.some(
+        (r) => r.deleted === 0 && r.data && Boolean((r.data as Team).club?.trim()),
+      );
+    }, []) ?? false
+  );
+}
+
+/**
+ * Le niveau d'interface effectif : préférence explicite de l'utilisateur si elle
  * existe, sinon ce que le contenu du club suggère (manuel : rien — c'est un
  * confort d'affichage, pas une règle fédérale).
  */
-export function useModeFederalActif(): boolean {
+export function useNiveauInterfaceActif(): NiveauInterface {
   const concours = useConcoursList() ?? [];
   const licencies = useLicenciesCount();
-  return useModeFederal(besoinModeFederal({ concours, licencies })).actif;
+  const clubsSurEquipes = useClubsSurEquipes();
+  return useNiveauInterface(besoinNiveau({ concours, licencies, clubsSurEquipes })).niveau;
 }
 
 export function usePendingCount(): number {

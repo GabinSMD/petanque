@@ -8,7 +8,7 @@ import {
   desarchiverConcours,
 } from '../db/actions';
 import { db } from '../db/local';
-import { useConcoursList, useModeFederalActif } from '../db/hooks';
+import { useConcoursList, useNiveauInterfaceActif } from '../db/hooks';
 import { ClubModal } from '../components/ClubModal';
 import { ReglagesModal } from '../components/ReglagesModal';
 import { CreateConcoursWizard } from '../components/CreateConcoursWizard';
@@ -19,6 +19,7 @@ import { annoncerNouveautes } from '../help/nouveautesState';
 import { useSession } from '../db/hooks';
 import {
   FORMAT_LABELS,
+  LIBELLE_NIVEAU,
   MODE_INFO,
   MODE_LABELS,
   dateLongFr,
@@ -28,7 +29,7 @@ import {
   statusLabel,
 } from '../lib/labels';
 import type { Concours } from '@shared';
-import { designationCategorie, partitionArchives } from '@shared';
+import { designationCategorie, montrer, partitionArchives } from '@shared';
 
 function useTeamCounts(): Map<string, number> {
   return (
@@ -52,8 +53,8 @@ export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [club, setClub] = useState(false);
   const [reglages, setReglages] = useState(false);
-  // Mode fédéral : masque ce dont un concours de club n'a que faire.
-  const federal = useModeFederalActif();
+  // Niveau d'interface : masque ce dont un concours de club n'a que faire.
+  const niveau = useNiveauInterfaceActif();
 
   // Raccourci PWA « Nouveau concours » (?nouveau=1) : ouvre l'assistant.
   useEffect(() => {
@@ -129,7 +130,7 @@ export function DashboardPage() {
               👥 Mon club
             </button>
           )}
-          {federal && (
+          {montrer('licencies', { niveau }) && (
             <Link className="btn btn-sm" to="/licencies">
               📇 Licenciés
             </Link>
@@ -137,7 +138,7 @@ export function DashboardPage() {
           <Link className="btn btn-sm" to="/palmares">
             🏆 Palmarès
           </Link>
-          {federal && (
+          {montrer('championnatClubs', { niveau }) && (
             <Link
               className="btn btn-sm"
               to="/championnat-clubs"
@@ -147,8 +148,14 @@ export function DashboardPage() {
             </Link>
           )}
           <ImportSauvegarde />
-          <button className="btn btn-sm" title="Réglages" onClick={() => setReglages(true)}>
-            ⚙
+          {/* Le bouton porte le niveau courant : c'est la porte de sortie
+              visible, la réponse à « où est passé X » en un clic. */}
+          <button
+            className="btn btn-sm"
+            title="Réglages et niveau d'interface"
+            onClick={() => setReglages(true)}
+          >
+            ⚙ {LIBELLE_NIVEAU[niveau]}
           </button>
           <button
             className="btn btn-primary"
