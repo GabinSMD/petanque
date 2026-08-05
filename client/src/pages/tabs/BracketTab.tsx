@@ -6,6 +6,7 @@ import {
   formeCadrage,
   vainqueursManquants,
   isByeMatch,
+  montrer,
   pouleOutcome,
   roundLabel,
   toursCadragePossibles,
@@ -25,7 +26,7 @@ import { ProtectionsModal } from '../../components/ProtectionsModal';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
 import { isRondesMode } from '../../lib/labels';
 import { BilanTirageModal } from '../../components/BilanTirageModal';
-import { useBilanAvantTirage } from '../../db/hooks';
+import { useBilanAvantTirage, useNiveauInterfaceActif } from '../../db/hooks';
 
 interface Props {
   concours: Concours;
@@ -35,6 +36,7 @@ interface Props {
 }
 
 export function BracketTab({ concours, teams, matches, poules }: Props) {
+  const niveau = useNiveauInterfaceActif();
   /** Contrôle des inscriptions au tirage (manuel §3.B.6). */
   const bilan = useBilanAvantTirage(concours, teams);
   const [bilanOuvert, setBilanOuvert] = useState(false);
@@ -117,24 +119,26 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               🛡 Groupes de protection
               {concours.protections?.length ? ` (${concours.protections.length})` : ''}
             </button>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={concours.retirageParTour ?? false}
-                onChange={(e) =>
-                  void updateConcours({
-                    ...concours,
-                    retirageParTour: e.target.checked || undefined,
-                  })
-                }
-              />
-              Retirage à chaque tour (manuel §3.D.1.A)
-              <span className="hint">
-                Les vainqueurs sont tirés au sort dans le tour suivant, comme le logiciel fédéral :
-                aucun chemin n'est connu d'avance. Décoché, le tableau est un arbre figé au tirage et
-                chaque équipe sait qui elle peut rencontrer.
-              </span>
-            </label>
+            {montrer('formulesAvancees', { niveau, concours }) && (
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={concours.retirageParTour ?? false}
+                  onChange={(e) =>
+                    void updateConcours({
+                      ...concours,
+                      retirageParTour: e.target.checked || undefined,
+                    })
+                  }
+                />
+                Retirage à chaque tour (manuel §3.D.1.A)
+                <span className="hint">
+                  Les vainqueurs sont tirés au sort dans le tour suivant, comme le logiciel fédéral :
+                  aucun chemin n'est connu d'avance. Décoché, le tableau est un arbre figé au tirage
+                  et chaque équipe sait qui elle peut rencontrer.
+                </span>
+              </label>
+            )}
             {toursCadragePossibles(activeTeams.length).length > 1 && (
               <label>
                 Cadrage

@@ -35,6 +35,7 @@ import {
 } from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import { useLicencies, useNiveauInterfaceActif } from '../db/hooks';
+import { BlocFormulesAvancees } from './BlocFormulesAvancees';
 import { BlocMises } from './BlocMises';
 import {
   CATEGORIE_AGE_LABELS,
@@ -498,77 +499,37 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           <span className="hint">{FORMULE_HINTS[formule]}</span>
         </label>
       )}
-      {mode === 'poules' && (
+      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && !parGroupes && (
         <label className="checkbox-label">
           <input
             type="checkbox"
-            checked={parGroupes}
-            onChange={(e) => setParGroupes(e.target.checked)}
+            checked={consolante}
+            onChange={(e) => setConsolante(e.target.checked)}
             disabled={lockStructure}
           />
-          Formule par groupes A-B-C (manuel §3.D.5) : tout le monde continue
-          <span className="hint">
-            Groupes de 4 sans barrage. L'équipe à 2 victoires va au concours A, les deux à 1 victoire
-            au B, celle à 2 défaites au C — personne ne rentre après deux parties.
-          </span>
+          Consolante (repêchage des éliminés)
         </label>
       )}
-      {mode === 'suisse' && (
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={ggStrict}
-            onChange={(e) => {
-              setGgStrict(e.target.checked);
-              // Le strict plafonne à cinq parties : sept rondes déjà saisies
-              // deviendraient hors borne sans que rien ne le dise.
-              const nouvelles = bornesParties({ mode, ggStrict: e.target.checked });
-              if (nouvelles && nbRondes > nouvelles.max) setNbRondes(nouvelles.max);
-            }}
-          />
-          Gagnant contre gagnant strict (manuel §3.D.14.C)
-          <span className="hint">
-            N'oppose que des équipes à égalité stricte de victoires. Un groupe impair laisse une
-            équipe exempte, créditée d'un 13-7 comme un forfait. Sans l'option, l'appariement suit
-            le classement et un gagnant peut rencontrer un perdant.
-          </span>
-        </label>
-      )}
-      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && !parGroupes && (
-        <>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={consolante}
-              onChange={(e) => setConsolante(e.target.checked)}
-              disabled={lockStructure}
-            />
-            Consolante (repêchage des éliminés)
-          </label>
-          {consolante && (
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={complementaire}
-                onChange={(e) => setComplementaire(e.target.checked)}
-                disabled={lockStructure}
-              />
-              Complémentaire (2ᵉ repêchage : perdants de la consolante)
-            </label>
-          )}
-          {consolante && mode === 'poules' && (
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={recupCadrage}
-                onChange={(e) => setRecupCadrage(e.target.checked)}
-                disabled={lockStructure}
-              />
-              Repêchage au cadrage : les perdants du 1<sup>er</sup> tour du tableau rejoignent la
-              2ᵉ partie de la consolante
-            </label>
-          )}
-        </>
+      {montrer('formulesAvancees', { niveau: niveauInterface, concours: initial }) && (
+        <BlocFormulesAvancees
+          mode={mode}
+          parGroupes={parGroupes}
+          setParGroupes={setParGroupes}
+          ggStrict={ggStrict}
+          onGgStrictChange={(actif) => {
+            setGgStrict(actif);
+            // Le strict plafonne à cinq parties : sept rondes déjà saisies
+            // deviendraient hors borne sans que rien ne le dise.
+            const nouvelles = bornesParties({ mode, ggStrict: actif });
+            if (nouvelles && nbRondes > nouvelles.max) setNbRondes(nouvelles.max);
+          }}
+          consolante={consolante}
+          complementaire={complementaire}
+          setComplementaire={setComplementaire}
+          recupCadrage={recupCadrage}
+          setRecupCadrage={setRecupCadrage}
+          lockStructure={lockStructure}
+        />
       )}
       {!isTirMode(mode) && (
         <label className="checkbox-label">

@@ -228,7 +228,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
         </span>
         {error && <span className="form-error">{error}</span>}
         <span className="toolbar-actions">
-          {!scoresLocked && (
+          {!scoresLocked && montrer('formulesAvancees', { niveau, concours }) && (
             <label
               className="checkbox-label checkbox-inline"
               title="Manuel §3.D.1.A : les qualifiés attendent que vous tiriez, au lieu d'entrer au tableau au fil des poules"
