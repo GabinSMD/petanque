@@ -342,8 +342,20 @@ export interface Concours {
    * false = masqué (les terrains restent gérables dans les poules).
    */
   planTerrains?: boolean;
-  /** Indemnités : mise par équipe (€) et frais d'organisation (%). */
+  /**
+   * Mise **par joueur** (€) — l'unité fédérale, dont le champ s'appelle
+   * `Mise/Joueur`. Le total d'équipe s'obtient par `miseEquipe()`, qui multiplie
+   * par la formation.
+   */
+  miseParJoueur?: number;
+  /**
+   * @deprecated Ancien champ, en **euros par équipe**. Conservé pour les
+   * concours déjà enregistrés : le relire comme une mise par joueur
+   * multiplierait leur engagement par 2 ou 3. Ne plus écrire — `miseEquipe()`
+   * lui donne la priorité la plus basse.
+   */
   miseParEquipe?: number;
+  /** Frais d'organisation (%). */
   fraisPct?: number;
   /**
    * Indemnités versées jusqu'à ce rang inclus ; au-delà, les équipes

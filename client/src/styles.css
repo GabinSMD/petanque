@@ -793,6 +793,20 @@ input:disabled, select:disabled, input[readonly] {
   font-size: 0.9rem;
 }
 
+/*
+ * Mention sous un champ de saisie — la valeur qui se déduit de ce qu'on tape
+ * (« soit 12 € par équipe en triplette »). Le `block` n'est pas décoratif :
+ * `<small>` est en ligne par défaut, et la mention se collait à l'étiquette du
+ * champ, où elle se lisait comme la fin du libellé.
+ */
+.form-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .form-error {
   color: var(--danger);
   font-size: 0.9rem;

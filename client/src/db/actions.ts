@@ -134,6 +134,8 @@ export interface ConcoursInput {
   tirageDiffere?: boolean;
   retirageParTour?: boolean;
   tempsLimite?: number;
+  miseParJoueur?: number;
+  /** @deprecated conservé pour les concours déjà enregistrés. */
   miseParEquipe?: number;
   planTerrains?: boolean;
 }
