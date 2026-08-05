@@ -73,7 +73,13 @@ export const PROFILS: Record<
     emoji: '🏆',
     titre: 'Mon club',
     montre: 'Concours du club, avec mises, indemnités, clubs des équipes et protections au tirage.',
-    masque: 'Masque le fichier des licenciés, le championnat des clubs et les documents du comité.',
+    // Les quatre domaines que `NIVEAU_MINIMUM` réserve au niveau `federal`, et
+    // pas trois : les critères officiels en font partie. Formulation reprise
+    // mot pour mot du `ReglagesModal`, qui les cite tous depuis l'origine —
+    // deux descriptions divergentes du même masquage seraient deux occasions
+    // de croire une fonction perdue.
+    masque:
+      'Masque le fichier des licenciés, le championnat des clubs, les critères officiels et les documents du comité.',
   },
   federal: {
     emoji: '📋',
@@ -117,10 +123,9 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
 
   /**
    * Sortir sans rien écrire d'autre que « c'est vu ». Utilisé par « Plus tard »
-   * sur les trois écrans, et par le clic hors de la fenêtre. Sur l'écran 0, il
-   * ne laisse donc aucune préférence derrière lui ; sur les suivants, le niveau
-   * a bien été choisi et reste écrit — l'utilisateur renonce au détail, pas à
-   * son profil.
+   * sur les trois écrans, et par lui seul. Sur l'écran 0, il ne laisse donc
+   * aucune préférence derrière lui ; sur les suivants, le niveau a bien été
+   * choisi et reste écrit — l'utilisateur renonce au détail, pas à son profil.
    */
   const plusTard = () => {
     marquerFaite();
@@ -177,8 +182,23 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={plusTard}>
-      <div className="modal welcome-modal" onClick={(e) => e.stopPropagation()}>
+    /* Le fond ne ferme pas, et c'est un écart assumé avec le reste des modales.
+       L'ancien écran de bienvenue tenait sur une page : cliquer à côté après
+       l'avoir lu ne coûtait rien. Ici, un clic mal placé pendant l'écran 0 ou 1
+       supprimerait la configuration initiale — la seule occasion qu'a
+       l'utilisateur de choisir son profil — sans qu'aucune trace dans
+       l'interface ne rappelle qu'elle a existé.
+
+       Des deux remèdes possibles, celui-ci plutôt qu'une fermeture qui ne
+       marque pas la clé : un assistant qui reviendrait tout seul au prochain
+       démarrage, après qu'on l'a manifestement écarté, serait sa propre
+       mauvaise surprise. La sortie reste ouverte et nommée — « Plus tard » est
+       sur les trois écrans.
+
+       Échap n'est pas câblé non plus, volontairement : deux voies de sortie qui
+       ne feraient pas la même chose vaudraient moins que pas de voie du tout. */
+    <div className="modal-backdrop">
+      <div className="modal welcome-modal">
         <div className="wizard">
           <div className="wizard-progress" aria-hidden>
             {ETAPES.map((label, i) => (
