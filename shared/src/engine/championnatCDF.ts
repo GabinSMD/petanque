@@ -304,8 +304,8 @@ export interface ParamsSegment {
  * `DSMixte`, `TSPromo`, `TPromo`, `ISM`, `IJuniorM`.
  *
  * Rend `undefined` dès qu'un critère demandé n'a pas d'abréviation attestée :
- * aucune capture ne montre un concours féminin, cadet, minime, élite ou honneur
- * avec son numéro. Deviner `F` par symétrie avec `M` serait exactement le genre
+ * aucune capture ne montre un concours féminin, cadet, minime, élite, honneur
+ * ou non classé avec son numéro. Deviner `F` par symétrie avec `M` serait exactement le genre
  * d'invention qui m'a fait écrire `_JP_` là où le manuel écrit `_PROV_`.
  * L'organisateur saisira le segment à la main, et l'écran le lui dira.
  */

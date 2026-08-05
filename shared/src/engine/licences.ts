@@ -13,7 +13,14 @@
  * demandé et que la donnée nécessaire manque, c'est une anomalie — on ne peut
  * pas certifier ce qu'on ne sait pas.
  */
-import type { CategorieAge, CritereClassification, CritereSexe, Licencie, Player } from '../types';
+import type {
+  CategorieAge,
+  Classification,
+  CritereClassification,
+  CritereSexe,
+  Licencie,
+  Player,
+} from '../types';
 import { estHorsUE } from './championnat';
 
 /** Champs susceptibles d'être en anomalie, tels que le manuel les surligne. */
@@ -85,7 +92,7 @@ export interface CriteresLicence {
    */
   strict?: boolean;
   sexe?: 'tous' | 'masculin' | 'feminin' | 'mixte';
-  classification?: 'tous' | 'elite' | 'honneur' | 'promotion';
+  classification?: 'tous' | 'elite' | 'honneur' | 'promotion' | 'nonClasse';
   /** Équipes homogènes exigées (tous les joueurs du même club). */
   homogene?: boolean;
   /**
@@ -247,10 +254,27 @@ const SEXE_ATTENDU: Record<string, 'M' | 'F' | undefined> = {
   feminin: 'F',
 };
 
-const CLASSIFICATION_ATTENDUE: Record<string, 'E' | 'H' | 'P' | undefined> = {
-  elite: 'E',
-  honneur: 'H',
-  promotion: 'P',
+/**
+ * Les cinq positions de classification de la fenêtre fédérale (planche p.13,
+ * confirmée p.14) : `Tous / Elite / Honneur / Promotion/NC / Non Classé`.
+ *
+ * Chaque critère se lit comme un ensemble de niveaux admis. Le classement
+ * fédéral en a **quatre** — E, H, P et non classé : le rapport d'arbitrage le
+ * prouve (`Joueurs Classés : 30/64` avec `Elite : 13` et `Honneur : 17`, donc
+ * 13 + 17 = 30 et Promotion n'est pas « classé »).
+ *
+ * `nonClasse` n'accepte **aucune** lettre : c'est ce qui le distingue de
+ * `promotion`, dont l'étiquette fédérale est `Promotion/NC` et qui accepte
+ * donc Promotion **ou** non classé.
+ */
+const CLASSIFICATION_ADMISE: Record<
+  string,
+  { lettres: readonly Classification[]; nonClasse: boolean } | undefined
+> = {
+  elite: { lettres: ['E'], nonClasse: false },
+  honneur: { lettres: ['H'], nonClasse: false },
+  promotion: { lettres: ['P'], nonClasse: true },
+  nonClasse: { lettres: [], nonClasse: true },
 };
 
 /**
@@ -319,13 +343,20 @@ export function controlerEquipe(
         if (!fiche.sexe || fiche.sexe !== sexeAttendu) anomalies.push('sexe');
       }
 
-      const classAttendue = criteres.classification
-        ? CLASSIFICATION_ATTENDUE[criteres.classification]
+      const admise = criteres.classification
+        ? CLASSIFICATION_ADMISE[criteres.classification]
         : undefined;
-      if (classAttendue) {
-        if (!fiche.classification || fiche.classification !== classAttendue) {
-          anomalies.push('classification');
-        }
+      if (admise) {
+        // Notre colonne d'import confond un non-classé (cellule vide) avec une
+        // classification inconnue (valeur illisible, ou colonne absente). D'où
+        // l'asymétrie, qui n'est pourtant qu'une seule règle : une fiche muette
+        // passe quand le critère accepte les non-classés, et se fait refuser
+        // quand il exige une lettre — un concours réservé à l'élite demande la
+        // preuve d'être élite, qu'un silence ne donne pas.
+        const conforme = fiche.classification
+          ? admise.lettres.includes(fiche.classification)
+          : admise.nonClasse;
+        if (!conforme) anomalies.push('classification');
       }
 
       // Certificat médical : jeunes uniquement, sauf validation manuelle.

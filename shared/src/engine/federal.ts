@@ -191,10 +191,17 @@ const SEXE_COURT: Record<Exclude<CritereSexe, 'tous'>, string> = {
   mixte: 'Mixte',
 };
 
+/**
+ * Libellés **courts**, pour nommer la catégorie d'un concours. `promotion`
+ * garde « Promotion » et non « Promotion/NC » : la nuance compte dans le
+ * *filtre* du contrôle des licences, pas dans un nom de catégorie — et la
+ * renommer regrouperait autrement tout le palmarès déjà enregistré.
+ */
 const CLASSIFICATION_COURT: Record<Exclude<CritereClassification, 'tous'>, string> = {
   elite: 'Élite',
   honneur: 'Honneur',
   promotion: 'Promotion',
+  nonClasse: 'Non classé',
 };
 
 export interface ParamsCategorie {
