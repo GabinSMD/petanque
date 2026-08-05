@@ -38,6 +38,7 @@ export * from './engine/evolutionScore';
 export * from './engine/permutationClassement';
 export * from './engine/besoinTerrains';
 export * from './engine/bornesParties';
+export * from './engine/profil';
 export * from './engine/comites';
 export * from './engine/bilanArbitrage';
 export * from './engine/nouveautes';

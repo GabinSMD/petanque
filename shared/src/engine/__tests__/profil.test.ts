@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { domaineEnUsage, montrer, type DomaineInterface, type ParamsUsage } from '../profil';
+import {
+  besoinNiveau,
+  defautsDuProfil,
+  domaineEnUsage,
+  estNiveauInterface,
+  montrer,
+  niveauDepuisAncienneCle,
+  type DomaineInterface,
+  type ParamsUsage,
+} from '../profil';
 
 /** Les quatre domaines que le niveau « amical » masque. */
 const DOMAINES_CLUB: DomaineInterface[] = [
@@ -125,5 +134,108 @@ describe('domaineEnUsage', () => {
     for (const d of [...DOMAINES_CLUB, ...DOMAINES_FEDERAL]) {
       expect(domaineEnUsage(d, VIERGE)).toBe(false);
     }
+  });
+});
+
+describe('besoinNiveau — ce que le contenu du club suggère', () => {
+  const RIEN = { concours: [], licencies: 0, clubsSurEquipes: false };
+
+  it('amical quand rien ne réclame plus', () => {
+    expect(besoinNiveau(RIEN)).toBe('amical');
+    expect(besoinNiveau({ ...RIEN, concours: [{}, {}] })).toBe('amical');
+  });
+
+  it('federal dès qu\'un fichier de licenciés est importé', () => {
+    expect(besoinNiveau({ ...RIEN, licencies: 1200 })).toBe('federal');
+  });
+
+  it('federal dès qu\'un concours est officiel', () => {
+    expect(besoinNiveau({ ...RIEN, concours: [{}, { niveau: 'departemental' }] })).toBe('federal');
+    expect(besoinNiveau({ ...RIEN, concours: [{ clubOrganisateur: 'Boule du Fort' }] })).toBe(
+      'federal',
+    );
+  });
+
+  it('club dès qu\'une équipe porte un club', () => {
+    expect(besoinNiveau({ ...RIEN, clubsSurEquipes: true })).toBe('club');
+  });
+
+  it('le club d\'une équipe ne promeut pas en federal', () => {
+    // Le piège du dépôt : estConcoursOfficiel teste `clubOrganisateur` — le
+    // club organisateur du concours, un champ fédéral — et non `team.club`.
+    // Confondre les deux ferait basculer en fédéral un simple club de village.
+    expect(besoinNiveau({ ...RIEN, clubsSurEquipes: true })).not.toBe('federal');
+  });
+
+  it('club dès qu\'un concours porte l\'un des quatre domaines de club', () => {
+    for (const c of [
+      { miseParEquipe: 5 },
+      { protections: [['A', 'B']] },
+      { parGroupes: true },
+      { decalageEquipe: 100 },
+    ] satisfies ParamsUsage[]) {
+      expect(besoinNiveau({ ...RIEN, concours: [c] })).toBe('club');
+    }
+  });
+
+  it('federal l\'emporte sur club quand les deux sont réunis', () => {
+    expect(
+      besoinNiveau({ concours: [{ miseParEquipe: 5 }], licencies: 900, clubsSurEquipes: true }),
+    ).toBe('federal');
+  });
+});
+
+describe('defautsDuProfil', () => {
+  it('amical part de quatre terrains, les deux autres de huit', () => {
+    expect(defautsDuProfil('amical').nbTerrains).toBe(4);
+    expect(defautsDuProfil('club').nbTerrains).toBe(8);
+    expect(defautsDuProfil('federal').nbTerrains).toBe(8);
+  });
+
+  it('les autres valeurs ne dépendent pas du profil', () => {
+    for (const n of ['amical', 'club', 'federal'] as const) {
+      expect(defautsDuProfil(n)).toMatchObject({
+        scoreMax: 13,
+        format: 'doublette',
+        consolante: true,
+      });
+    }
+  });
+
+  it('la mise n\'est jamais devinée', () => {
+    // Proposer un tarif chiffré serait l'inventer. C'est un champ à saisir.
+    for (const n of ['amical', 'club', 'federal'] as const) {
+      expect(defautsDuProfil(n).miseParEquipe).toBeUndefined();
+    }
+  });
+});
+
+describe('niveauDepuisAncienneCle — migration de petanque.modeFederal', () => {
+  it('« 1 » devient federal : l\'utilisateur avait demandé le mode fédéral', () => {
+    expect(niveauDepuisAncienneCle('1')).toBe('federal');
+  });
+
+  it('« 0 » devient club : il avait refusé le fédéral, pas l\'argent ni les clubs', () => {
+    expect(niveauDepuisAncienneCle('0')).toBe('club');
+  });
+
+  it('l\'absence de clé ne produit aucune préférence', () => {
+    expect(niveauDepuisAncienneCle(null)).toBeNull();
+  });
+
+  it('une valeur inattendue ne produit aucune préférence', () => {
+    expect(niveauDepuisAncienneCle('')).toBeNull();
+    expect(niveauDepuisAncienneCle('oui')).toBeNull();
+  });
+});
+
+describe('estNiveauInterface', () => {
+  it('reconnaît les trois niveaux et rejette le reste', () => {
+    expect(estNiveauInterface('amical')).toBe(true);
+    expect(estNiveauInterface('club')).toBe(true);
+    expect(estNiveauInterface('federal')).toBe(true);
+    expect(estNiveauInterface('simple')).toBe(false);
+    expect(estNiveauInterface(null)).toBe(false);
+    expect(estNiveauInterface(1)).toBe(false);
   });
 });

@@ -11,7 +11,8 @@
  * jamais ce dont le concours porte déjà la trace. Cacher une fonction dont
  * quelqu'un se sert est plus grave que lui montrer un écran de trop.
  */
-import { estConcoursOfficiel, type ParamsOfficiel } from './federal';
+import { besoinModeFederal, estConcoursOfficiel, type ParamsOfficiel } from './federal';
+import type { TeamFormat } from '../types';
 
 export type NiveauInterface = 'amical' | 'club' | 'federal';
 
@@ -116,4 +117,89 @@ export function montrer(
 ): boolean {
   if (RANG[ctx.niveau] >= RANG[NIVEAU_MINIMUM[domaine]]) return true;
   return ctx.concours ? domaineEnUsage(domaine, ctx.concours) : false;
+}
+
+/* ------------------------------------------------------------------ */
+/* L'heuristique                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Quel niveau le contenu du club suggère-t-il ? Généralise
+ * `besoinModeFederal` : il ne sert qu'à proposer le bon niveau de lui-même
+ * plutôt qu'à laisser un organisateur chercher où sont passées ses fonctions.
+ * Un choix explicite de l'utilisateur le remplace.
+ *
+ * `clubsSurEquipes` est passé en booléen plutôt que la liste des équipes : le
+ * calcul n'a besoin que de cela, et la liste complète des équipes de tous les
+ * concours n'a pas à traverser une frontière de module pour être réduite ici.
+ */
+export function besoinNiveau(p: {
+  concours: ParamsUsage[];
+  licencies: number;
+  /** Au moins une équipe inscrite porte un club. */
+  clubsSurEquipes: boolean;
+}): NiveauInterface {
+  if (besoinModeFederal({ concours: p.concours, licencies: p.licencies })) return 'federal';
+  if (p.clubsSurEquipes) return 'club';
+  const domainesClub: DomaineInterface[] = [
+    'argent',
+    'formulesAvancees',
+    'protections',
+    'multisite',
+  ];
+  if (p.concours.some((c) => domainesClub.some((d) => domaineEnUsage(d, c)))) return 'club';
+  return 'amical';
+}
+
+/* ------------------------------------------------------------------ */
+/* Les valeurs par défaut des nouveaux concours                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Ce que l'organisateur retape aujourd'hui à chaque création et dont la réponse
+ * ne change jamais d'un concours à l'autre. Rien de plus : la date, le nom, le
+ * lieu et la formule sont propres à chaque concours.
+ */
+export interface DefautsConcours {
+  nbTerrains: number;
+  scoreMax: number;
+  format: TeamFormat;
+  consolante: boolean;
+  miseParEquipe?: number;
+}
+
+/** Le point de départ que le profil suggère, avant toute saisie. */
+export function defautsDuProfil(niveau: NiveauInterface): DefautsConcours {
+  return {
+    // Un concours entre amis se joue sur le terrain du village, pas au boulodrome.
+    nbTerrains: niveau === 'amical' ? 4 : 8,
+    scoreMax: 13,
+    format: 'doublette',
+    consolante: true,
+    // La mise reste absente même en club : la proposer chiffrée serait inventer
+    // un tarif. C'est un champ à saisir, pas une valeur à deviner.
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Migration depuis le booléen `modeFederal`                           */
+/* ------------------------------------------------------------------ */
+
+export function estNiveauInterface(v: unknown): v is NiveauInterface {
+  return typeof v === 'string' && (NIVEAUX_INTERFACE as string[]).includes(v);
+}
+
+/**
+ * Traduit l'ancienne clé `petanque.modeFederal` en niveau. Le `'0'` devient
+ * `club` et non `amical` : l'utilisateur avait refusé le fédéral, il n'avait
+ * rien dit de l'argent ni des clubs, et lui retirer en silence des fonctions
+ * qu'il voyait serait exactement la faute que ce système cherche à éviter.
+ *
+ * La décision est ici plutôt que dans le client parce que c'est le seul endroit
+ * où elle peut être testée : `shared` porte vitest, `client` non.
+ */
+export function niveauDepuisAncienneCle(brut: string | null): NiveauInterface | null {
+  if (brut === '1') return 'federal';
+  if (brut === '0') return 'club';
+  return null;
 }
