@@ -134,7 +134,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
             homogene: concours.homogene,
             // Hors concours officiel, on ne reproche pas une licence non saisie.
             ignorerLicencesManquantes: !criteresFederaux,
-          }),
+          }, t.club),
         ])
       : [],
   );
@@ -155,6 +155,35 @@ export function TeamsTab({ concours, teams, poules }: Props) {
     if (comite) setComites((prev) => prev.map((c, j) => (j === i && !c ? comite : c)));
   };
 
+  /**
+   * Tient le club d'équipe d'accord avec les clubs des joueurs.
+   *
+   * Le champ « club de l'équipe » ne vaut que pour une équipe qui en a **un**.
+   * L'autocomplétion le remplissait depuis le premier joueur trouvé et l'y
+   * laissait : une équipe de deux clubs se retrouvait donc à déclarer celui du
+   * premier — ce que le manuel appelle « Club Equipe Incorrect : devrait être
+   * NH » (§3.B.6), et ce que quatre documents lisent directement.
+   *
+   * Trois cas, et le dernier est le seul qui efface :
+   *  - aucun club de joueur connu : on ne touche à rien, le champ sert de valeur
+   *    par défaut à tout le monde ;
+   *  - un seul club : on le propose s'il n'y a rien de saisi ;
+   *  - deux clubs ou plus : **on vide**, parce qu'aucune valeur n'est vraie. Le
+   *    libellé affichera « CLUB A / CLUB B », qui est la vérité.
+   */
+  const accorderClubEquipe = (clubsJoueurs: string[]): void => {
+    const distincts = [
+      ...new Set(clubsJoueurs.map((c) => c.trim()).filter(Boolean).map((c) => c.toLowerCase())),
+    ];
+    if (distincts.length === 0) return;
+    if (distincts.length > 1) {
+      setClub('');
+      return;
+    }
+    const seul = clubsJoueurs.map((c) => c.trim()).find(Boolean)!;
+    setClub((prev) => (prev.trim() ? prev : seul));
+  };
+
   const applyLicencie = (i: number, value: string) => {
     const found = licencieByName.get(value.trim().toLowerCase());
     if (!found) return;
@@ -162,8 +191,11 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       setLicences((prev) => prev.map((l, j) => (j === i && !l ? found.licence! : l)));
     }
     if (found.club) {
-      setClubs((prev) => prev.map((c, j) => (j === i && !c ? found.club! : c)));
-      if (!club) setClub(found.club);
+      setClubs((prev) => {
+        const suivant = prev.map((c, j) => (j === i && !c ? found.club! : c));
+        accorderClubEquipe(suivant);
+        return suivant;
+      });
     }
     remplirComite(i, found);
   };
@@ -177,8 +209,11 @@ export function TeamsTab({ concours, teams, poules }: Props) {
     if (!found) return;
     setNames((prev) => prev.map((n, j) => (j === i && !n.trim() ? found.name : n)));
     if (found.club) {
-      setClubs((prev) => prev.map((c, j) => (j === i && !c ? found.club! : c)));
-      if (!club) setClub(found.club);
+      setClubs((prev) => {
+        const suivant = prev.map((c, j) => (j === i && !c ? found.club! : c));
+        accorderClubEquipe(suivant);
+        return suivant;
+      });
     }
     remplirComite(i, found);
   };
