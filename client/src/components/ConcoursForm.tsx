@@ -760,50 +760,57 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           </span>
         </label>
       )}
-      <details className="form-details">
-        <summary>Numérotation — plusieurs concours le même jour</summary>
-        <p className="hint">
-          Décale les numéros pour qu'il n'y ait jamais deux « équipe 1 » ni deux « terrain 1 »
-          à la table de marque. 0 = numérotation normale.
-        </p>
-        <div className="form-row">
-          <label>
-            Décalage n° d'équipe
-            <input
-              type="number"
-              min={0}
-              max={9000}
-              step={100}
-              value={decalageEquipe}
-              placeholder="0"
-              onChange={(e) =>
-                setDecalageEquipe(e.target.value === '' ? '' : Number(e.target.value))
-              }
-            />
-            <span className="hint">
-              1<sup>re</sup> équipe : n°{(decalageEquipe === '' ? 0 : Number(decalageEquipe)) + 1}
-            </span>
-          </label>
-          <label>
-            Décalage n° de terrain
-            <input
-              type="number"
-              min={0}
-              max={9000}
-              step={50}
-              value={decalageTerrain}
-              placeholder="0"
-              onChange={(e) =>
-                setDecalageTerrain(e.target.value === '' ? '' : Number(e.target.value))
-              }
-            />
-            <span className="hint">
-              Terrains {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + 1} à{' '}
-              {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + nbTerrains}
-            </span>
-          </label>
-        </div>
-      </details>
+      {/* Décalages de numérotation : ils ne servent qu'à recouper la table de
+          marque entre plusieurs concours du même jour, donc au fractionnement
+          multisite (manuel §3.B.10.D). Masqués en dessous du niveau club, sauf
+          clause de sûreté (concours déjà décalé). */}
+      {montrer('multisite', { niveau: niveauInterface, concours: initial }) && (
+        <details className="form-details">
+          <summary>Numérotation — plusieurs concours le même jour</summary>
+          <p className="hint">
+            Décale les numéros pour qu'il n'y ait jamais deux « équipe 1 » ni deux « terrain 1 »
+            à la table de marque. 0 = numérotation normale.
+          </p>
+          <div className="form-row">
+            <label>
+              Décalage n° d'équipe
+              <input
+                type="number"
+                min={0}
+                max={9000}
+                step={100}
+                value={decalageEquipe}
+                placeholder="0"
+                onChange={(e) =>
+                  setDecalageEquipe(e.target.value === '' ? '' : Number(e.target.value))
+                }
+              />
+              <span className="hint">
+                1<sup>re</sup> équipe : n°
+                {(decalageEquipe === '' ? 0 : Number(decalageEquipe)) + 1}
+              </span>
+            </label>
+            <label>
+              Décalage n° de terrain
+              <input
+                type="number"
+                min={0}
+                max={9000}
+                step={50}
+                value={decalageTerrain}
+                placeholder="0"
+                onChange={(e) =>
+                  setDecalageTerrain(e.target.value === '' ? '' : Number(e.target.value))
+                }
+              />
+              <span className="hint">
+                Terrains {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + 1} à{' '}
+                {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + nbTerrains}
+              </span>
+            </label>
+          </div>
+        </details>
+      )}
       {officiel && (
         <fieldset className="form-fieldset">
           <legend>Critères fédéraux</legend>

@@ -4,6 +4,7 @@ import type { Concours, ConcoursStatus, Match, Poule, Team } from '@shared';
 import {
   aDesCriteresLicence,
   designationCategorie,
+  montrer,
   pouleOutcome,
   pouleSizes,
   rondesTirees,
@@ -11,7 +12,7 @@ import {
   winnerOf,
 } from '@shared';
 import { updateConcours } from '../db/actions';
-import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
+import { useConcours, useMatches, useNiveauInterfaceActif, usePoules, useTeams } from '../db/hooks';
 import { ConcoursForm } from '../components/ConcoursForm';
 import { LienMultisite } from '../components/LienMultisite';
 import { DeclarationsWatch } from '../components/DeclarationsWatch';
@@ -52,6 +53,7 @@ const DEFAULT_TAB: Record<ConcoursStatus, string> = {
 export function ConcoursPage() {
   const { id, tab } = useParams<{ id: string; tab?: string }>();
   const navigate = useNavigate();
+  const niveau = useNiveauInterfaceActif();
   const concours = useConcours(id);
   const teams = useTeams(id);
   const poules = usePoules(id);
@@ -122,7 +124,7 @@ export function ConcoursPage() {
             {!tirMode && ` · Parties en ${concours.scoreMax} pts`}
             {concours.tempsLimite ? ` · Temps limité ${concours.tempsLimite} min` : ''}
           </p>
-          <LienMultisite concours={concours} />
+          {montrer('multisite', { niveau, concours }) && <LienMultisite concours={concours} />}
         </div>
         <div className="concours-actions">
           <span className={`status-chip status-${concours.status}`}>

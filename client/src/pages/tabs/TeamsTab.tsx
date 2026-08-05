@@ -7,7 +7,7 @@ import { MultisiteModal } from '../../components/MultisiteModal';
 import type { Concours, Licencie, Player, Poule, RolePetanque, Team } from '@shared';
 import { addTeam, deleteTeam, importerInscrits, insererEquipe, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
-import { useLicencies } from '../../db/hooks';
+import { useLicencies, useNiveauInterfaceActif } from '../../db/hooks';
 import {
   ETATS_MISE,
   PAYS_LICENCE_ETRANGERE,
@@ -20,6 +20,7 @@ import {
   chercherEquipes,
   controlerEquipe,
   libelleClubs,
+  montrer,
   type ControleEquipe,
 } from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS, ETAT_MISE_LABELS } from '../../lib/labels';
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export function TeamsTab({ concours, teams, poules }: Props) {
+  const niveau = useNiveauInterfaceActif();
   const [scanning, setScanning] = useState(false);
   const [multisite, setMultisite] = useState(false);
   /**
@@ -319,17 +321,19 @@ export function TeamsTab({ concours, teams, poules }: Props) {
 
       {/* Fractionnement multisite (manuel §3.B.10.D) : avant le tirage, et
           seulement si l'effectif permet de donner 2 équipes à chaque site. */}
-      {!locked && teams.filter((t) => !t.forfait).length >= 4 && (
-        <div className="export-bar no-print">
-          <span className="export-bar-label">Plusieurs sites :</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setMultisite(true)}>
-            🏟 Fractionner en plusieurs sites
-          </button>
-          <span className="hint">
-            Un concours par site, quand un seul boulodrome n'a pas assez de terrains.
-          </span>
-        </div>
-      )}
+      {!locked &&
+        teams.filter((t) => !t.forfait).length >= 4 &&
+        montrer('multisite', { niveau, concours }) && (
+          <div className="export-bar no-print">
+            <span className="export-bar-label">Plusieurs sites :</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => setMultisite(true)}>
+              🏟 Fractionner en plusieurs sites
+            </button>
+            <span className="hint">
+              Un concours par site, quand un seul boulodrome n'a pas assez de terrains.
+            </span>
+          </div>
+        )}
 
       {multisite && (
         <MultisiteModal concours={concours} teams={teams} onClose={() => setMultisite(false)} />
