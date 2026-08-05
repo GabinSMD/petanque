@@ -110,15 +110,20 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               />
               Protection : séparer les équipes d'un même club au premier tour
             </label>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setGroupesOuverts(true)}
-              title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
-            >
-              🛡 Groupes de protection
-              {concours.protections?.length ? ` (${concours.protections.length})` : ''}
-            </button>
+            {/* Groupes de clubs protégés ensemble : raffinement fédéral (manuel
+                §3.B.5 niveau 2), masqué en amical sauf si déjà utilisé
+                (clause de sûreté de `montrer`). */}
+            {montrer('protections', { niveau, concours }) && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setGroupesOuverts(true)}
+                title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
+              >
+                🛡 Groupes de protection
+                {concours.protections?.length ? ` (${concours.protections.length})` : ''}
+              </button>
+            )}
             {montrer('formulesAvancees', { niveau, concours }) && (
               <label className="checkbox-label">
                 <input
