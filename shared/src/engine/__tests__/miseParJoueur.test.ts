@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { TAILLE_FORMATION, bilanMises, miseEquipe } from '../mises';
+import { bilanMises, miseEquipe } from '../mises';
+import { TAILLE_FORMATION } from '../formations';
 import type { Concours, Team } from '../../types';
 
 /**

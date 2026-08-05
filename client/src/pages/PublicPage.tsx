@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, PhotoConcours, Poule, Team } from '@shared';
-import { EMPLACEMENTS_PHOTO, evolutionEnTexte, photosPubliables, pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
+import { TAILLE_FORMATION, EMPLACEMENTS_PHOTO, evolutionEnTexte, photosPubliables, pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
 import { matchLabel, pendingMatchesForTeam, sideName, teamSideInMatch } from '../lib/matchLabel';
 import { followedTeams, pushSupported, subscribeForTeams } from '../lib/push';
 import { BracketView } from './tabs/BracketTab';
@@ -12,7 +12,6 @@ import { TirRanking } from '../components/TirRanking';
 import {
   FORMAT_LABELS,
   MODE_LABELS,
-  PLAYERS_PER_TEAM,
   POULE_SLOT_LABELS,
   formatDateFr,
   isIndividualMode,
@@ -221,7 +220,7 @@ export function PublicPage() {
 
 function RegisterCard({ concours, token }: { concours: Concours; token: string }) {
   const individual = isIndividualMode(concours.mode);
-  const nbPlayers = individual ? 1 : PLAYERS_PER_TEAM[concours.format];
+  const nbPlayers = individual ? 1 : TAILLE_FORMATION[concours.format];
   const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
   const [licences, setLicences] = useState<string[]>(Array(nbPlayers).fill(''));
   const [club, setClub] = useState('');
