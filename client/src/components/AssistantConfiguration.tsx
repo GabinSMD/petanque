@@ -35,7 +35,7 @@ import {
   setPreferenceNiveau,
 } from '../lib/niveauInterface';
 import { setDefauts } from '../lib/defauts';
-import { FORMAT_LABELS } from '../lib/labels';
+import { FORMAT_LABELS, LIBELLE_NIVEAU } from '../lib/labels';
 import { BouleLogo } from './BouleLogo';
 
 /**
@@ -58,6 +58,10 @@ function marquerFaite(): void {
  * Les trois profils tels qu'ils sont présentés à l'utilisateur. Exporté parce
  * que les réglages réaffichent les mêmes cartes en format réduit : deux
  * descriptions divergentes du même choix seraient deux occasions de se tromper.
+ *
+ * Les titres viennent de `LIBELLE_NIVEAU` et ne sont pas recopiés : le bouton ⚙
+ * du tableau de bord et la carte de l'assistant doivent nommer le même niveau
+ * des mêmes mots, sans quoi l'un des deux finit par dériver.
  */
 export const PROFILS: Record<
   NiveauInterface,
@@ -65,13 +69,13 @@ export const PROFILS: Record<
 > = {
   amical: {
     emoji: '🎉',
-    titre: 'Entre amis',
+    titre: LIBELLE_NIVEAU.amical,
     montre: 'Concours du dimanche entre copains : inscriptions, tirage, poules, tableaux, scores.',
     masque: 'Masque les mises et indemnités, les formules du manuel, les groupes de protection et le multisite.',
   },
   club: {
     emoji: '🏆',
-    titre: 'Mon club',
+    titre: LIBELLE_NIVEAU.club,
     montre: 'Concours du club, avec mises, indemnités, clubs des équipes et protections au tirage.',
     // Les quatre domaines que `NIVEAU_MINIMUM` réserve au niveau `federal`, et
     // pas trois : les critères officiels en font partie. Formulation reprise
@@ -83,7 +87,7 @@ export const PROFILS: Record<
   },
   federal: {
     emoji: '📋',
-    titre: 'Concours officiels',
+    titre: LIBELLE_NIVEAU.federal,
     montre: 'Licences, critères officiels, championnat des clubs, documents remis au comité.',
     masque: 'Tout est affiché.',
   },

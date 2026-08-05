@@ -4723,6 +4723,47 @@ form label select {
   margin: 0.5rem 0;
 }
 
+/* Trois sujets distincts dans une même modale — le niveau, les valeurs par
+   défaut, l'assistant. Le filet les sépare sans ajouter de cadres emboîtés :
+   la modale en est déjà un. */
+.reglages-section + .reglages-section {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.reglages-section h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem;
+}
+
+.reglages-section form label:last-of-type {
+  margin-bottom: 0;
+}
+
+/* Les cartes de profil réaffichées dans les réglages : mêmes textes que
+   l'assistant, moins d'air, et pas de soulèvement au survol — on n'est plus
+   dans un écran de choix initial mais dans une liste de réglages. */
+.mode-card-reduite {
+  padding: 0.55rem 0.7rem;
+  gap: 0.6rem;
+}
+
+.mode-card-reduite .mode-card-emoji {
+  font-size: 1.3rem;
+}
+
+.mode-card-reduite:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Cliquer une carte n'avance pas d'écran ici : le niveau actif doit se voir. */
+.mode-card-reduite.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
 /* Feuille de match d'une rencontre de championnat des clubs. */
 .feuille-verso h2,
 .feuille-adverse h2 {

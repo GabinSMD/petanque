@@ -1,85 +1,291 @@
-import { NIVEAUX_INTERFACE, besoinNiveau } from '@shared';
+/**
+ * Réglages de l'appareil : la porte de sortie de l'assistant de configuration.
+ *
+ * Tout ce que l'assistant a décidé pour l'utilisateur se reprend ici — le
+ * niveau d'interface, les valeurs par défaut des nouveaux concours — et
+ * l'assistant lui-même se relance. C'est la réponse à « où est passé X ? », et
+ * c'est pour cela que le bouton du tableau de bord porte le niveau courant.
+ *
+ * ⚠️ **Cet écran ne masque rien, mise comprise, quel que soit le niveau.** Il
+ * est le seul de l'application où un champ échappe à `montrer`, et c'est
+ * délibéré : un utilisateur en « Entre amis » qui veut poser une mise par
+ * défaut doit pouvoir le faire, sinon l'heuristique — qui promeut en « Mon
+ * club » dès qu'un concours porte une mise — ne le promouvrait jamais. Ne pas
+ * « corriger » ce point en important `montrer` ici : ce serait rétablir le
+ * cercle vicieux que la conception résout. L'alternative écartée était un
+ * interrupteur par domaine, soit un second système capable de contredire le
+ * premier.
+ */
+import { useEffect, useState } from 'react';
+import {
+  NIVEAUX_INTERFACE,
+  besoinNiveau,
+  defautsDuProfil,
+  type DefautsConcours,
+  type TeamFormat,
+} from '@shared';
 import { useClubsSurEquipes, useConcoursList, useLicenciesCount } from '../db/hooks';
 import { useNiveauInterface } from '../lib/niveauInterface';
-import { LIBELLE_NIVEAU } from '../lib/labels';
+import { useDefauts } from '../lib/defauts';
+import { FORMAT_LABELS, LIBELLE_NIVEAU } from '../lib/labels';
+import { AssistantConfiguration, PROFILS } from './AssistantConfiguration';
 import { Modal } from './Modal';
 
+const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
+
 /**
- * Réglages de l'appareil. Le seul pour l'instant : le niveau d'interface, qui
- * décide de ce que l'application montre — pas de ce qu'elle fait.
+ * Un champ numérique dont la valeur de référence vit dans le stockage, mais qui
+ * doit rester saisissable. Retaper un nombre passe forcément par des états
+ * intermédiaires invalides — le champ vide, le temps d'effacer — qu'on ne veut
+ * pas enregistrer : `Number('')` vaut zéro, et zéro terrain n'est pas un
+ * réglage. On garde donc la frappe en local et on n'écrit que ce qui est
+ * valide, tout en se resynchronisant quand la valeur change ailleurs :
+ * « Revenir aux valeurs du profil », ou un autre onglet.
  */
+function useChampNombre(valeur: string): [string, (v: string) => void] {
+  const [saisi, setSaisi] = useState(valeur);
+  useEffect(() => setSaisi(valeur), [valeur]);
+  return [saisi, setSaisi];
+}
+
 export function ReglagesModal({ onClose }: { onClose: () => void }) {
   const concours = useConcoursList() ?? [];
   const licencies = useLicenciesCount();
   const clubsSurEquipes = useClubsSurEquipes();
   const besoin = besoinNiveau({ concours, licencies, clubsSurEquipes });
   const { niveau, preference, choisir, oublier } = useNiveauInterface(besoin);
+  const { defauts, personnalises, enregistrer, oublier: oublierDefauts } = useDefauts(niveau);
+  const [assistant, setAssistant] = useState(false);
+
+  const [terrains, setTerrains] = useChampNombre(String(defauts.nbTerrains));
+  const [scoreMax, setScoreMax] = useChampNombre(String(defauts.scoreMax));
+  const [mise, setMise] = useChampNombre(defauts.miseParEquipe?.toString() ?? '');
+
+  /** Les quatre champs toujours présents, sans la mise — qui, elle, s'absente. */
+  const sansMise = (): DefautsConcours => ({
+    nbTerrains: defauts.nbTerrains,
+    scoreMax: defauts.scoreMax,
+    format: defauts.format,
+    consolante: defauts.consolante,
+  });
+
+  const majTerrains = (v: string): void => {
+    setTerrains(v);
+    const n = Number(v);
+    if (v !== '' && Number.isInteger(n) && n >= 1 && n <= 200) {
+      enregistrer({ ...defauts, nbTerrains: n });
+    }
+  };
+
+  const majScoreMax = (v: string): void => {
+    setScoreMax(v);
+    const n = Number(v);
+    if (v !== '' && Number.isInteger(n) && n >= 1 && n <= 100) {
+      enregistrer({ ...defauts, scoreMax: n });
+    }
+  };
+
+  const majMise = (v: string): void => {
+    setMise(v);
+    // Une mise effacée n'est pas une mise à zéro : le champ redevient absent,
+    // comme il l'est dans `defautsDuProfil`. Sans quoi tout concours créé
+    // porterait une mise de 0 € — une trace d'usage de l'argent qui suffirait à
+    // faire basculer l'heuristique.
+    if (v === '') {
+      enregistrer(sansMise());
+      return;
+    }
+    const n = Number(v);
+    if (Number.isFinite(n) && n >= 0 && n <= 1000) {
+      enregistrer({ ...sansMise(), miseParEquipe: n });
+    }
+  };
+
+  /*
+   * L'assistant relancé remplace la modale plutôt que de s'empiler dessus : il
+   * porte son propre fond, et deux fonds superposés assombriraient l'écran deux
+   * fois. Sa fermeture ferme aussi les réglages, parce que son dernier écran
+   * peut lancer la visite guidée — que la modale des réglages, restée montée,
+   * masquerait. Il ne touche pas à `petanque.welcomeDone` : la clé est déjà à
+   * `1`, l'assistant se referme normalement et ne reviendra pas de lui-même.
+   */
+  if (assistant) {
+    return (
+      <AssistantConfiguration
+        onClose={() => {
+          setAssistant(false);
+          onClose();
+        }}
+      />
+    );
+  }
 
   return (
     <Modal title="⚙ Réglages" onClose={onClose}>
       <div className="reglages-modal">
-        {/* Trois boutons radio plutôt qu'une liste déroulante : les trois
-            niveaux se lisent d'un coup, et on voit lequel est actif sans
-            ouvrir quoi que ce soit. */}
-        {NIVEAUX_INTERFACE.map((n) => {
-          /*
-           * `checked` suit le niveau **effectif** : sans préférence, c'est celui
-           * de l'heuristique qui apparaît coché. `onChange` seul ne suffirait
-           * donc pas — cliquer ce radio-là ne change aucune valeur, le
-           * navigateur n'émet aucun `change`, et figer le niveau automatique
-           * serait impossible. Or c'est le geste le plus utile du réglage : le
-           * club à qui l'heuristique dit « Mon club » doit pouvoir verrouiller
-           * ce niveau, sinon un import de licenciés le fera basculer en
-           * « Officiel » sans qu'il l'ait demandé.
-           *
-           * `click`, lui, est émis dans tous les cas — à la souris comme aux
-           * flèches du clavier, le navigateur cliquant le radio qu'il
-           * sélectionne. Les deux gestionnaires appellent le même `choisir`, qui
-           * est idempotent : sur un vrai changement il s'exécute deux fois avec
-           * la même valeur, ce qui ne coûte rien.
-           */
-          const fixer = (): void => choisir(n);
-          return (
-            <label key={n} className="checkbox-label">
+        <section className="reglages-section">
+          <h3>Niveau d'interface</h3>
+
+          {/* Les mêmes cartes que l'assistant, en format réduit : les textes
+              viennent de `PROFILS`, jamais recopiés. Deux descriptions du même
+              choix sur deux écrans que l'utilisateur enchaîne finiraient par
+              diverger, et c'est exactement ce qui était arrivé au paragraphe
+              qui tenait cette place — il annonçait encore les indemnités
+              visibles en « Entre amis », plusieurs versions après leur
+              masquage. */}
+          <div className="mode-cards">
+            {NIVEAUX_INTERFACE.map((n) => (
+              /*
+               * Un bouton plutôt qu'un radio, et ce n'est pas un détail de
+               * présentation. `checked` suivrait le niveau **effectif** : sans
+               * préférence enregistrée, c'est celui de l'heuristique qui
+               * apparaîtrait déjà coché, si bien que le cliquer ne changerait
+               * aucune valeur et n'émettrait aucun `change`. Figer le niveau
+               * automatique serait alors impossible — or c'est le geste le plus
+               * utile du réglage : le club à qui l'heuristique dit « Mon club »
+               * doit pouvoir verrouiller ce niveau, sinon un import de
+               * licenciés le fera basculer en « Officiel » sans qu'il l'ait
+               * demandé. Un `click` sur un bouton, lui, est émis dans tous les
+               * cas, y compris sur la carte déjà active. `choisir` est
+               * idempotent : le recliquer ne coûte rien.
+               */
+              <button
+                key={n}
+                type="button"
+                className={`mode-card mode-card-reduite${niveau === n ? ' selected' : ''}`}
+                aria-pressed={niveau === n}
+                onClick={() => choisir(n)}
+              >
+                <span className="mode-card-emoji">{PROFILS[n].emoji}</span>
+                <span className="mode-card-body">
+                  <strong>{PROFILS[n].titre}</strong>
+                  <span className="mode-card-tagline">{PROFILS[n].montre}</span>
+                  <span className="mode-card-desc">{PROFILS[n].masque}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <p className="hint">
+            Ce réglage ne change <strong>que l'affichage</strong>. Un concours déjà déclaré officiel
+            continue de contrôler ses licences, et ses écrans restent visibles sur lui — on ne
+            désactive pas en silence une règle sur laquelle vous comptez.
+          </p>
+
+          {preference === null && (
+            <p className="hint">
+              Choisi automatiquement d'après vos concours : « {LIBELLE_NIVEAU[besoin]} ».
+            </p>
+          )}
+
+          {preference !== null && (
+            <p className="hint">
+              Réglé à la main.{' '}
+              <button className="btn-lien" onClick={oublier}>
+                Revenir au choix automatique
+              </button>
+            </p>
+          )}
+        </section>
+
+        <section className="reglages-section">
+          <h3>Valeurs par défaut des nouveaux concours</h3>
+          <p className="hint">
+            Elles pré-remplissent chaque nouveau concours et restent modifiables concours par
+            concours.
+          </p>
+
+          {/* Un `form` pour la seule mise en page : les champs s'enregistrent à
+              la frappe, il n'y a rien à soumettre. */}
+          <form onSubmit={(e) => e.preventDefault()}>
+            <div className="form-row">
+              <label>
+                Terrains habituels
+                <input
+                  type="number"
+                  min={1}
+                  max={200}
+                  value={terrains}
+                  onChange={(e) => majTerrains(e.target.value)}
+                />
+              </label>
+              <label>
+                Partie en
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={scoreMax}
+                  onChange={(e) => majScoreMax(e.target.value)}
+                />
+              </label>
+            </div>
+            <div className="form-row">
+              <label>
+                Formation habituelle
+                <select
+                  value={defauts.format}
+                  onChange={(e) =>
+                    enregistrer({ ...defauts, format: e.target.value as TeamFormat })
+                  }
+                >
+                  {FORMATS.map((f) => (
+                    <option key={f} value={f}>
+                      {FORMAT_LABELS[f]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {/* Ce champ est affiché à tous les niveaux, « Entre amis »
+                  compris — voir l'avertissement en tête de fichier. */}
+              <label>
+                Mise par équipe (€, facultatif)
+                <input
+                  type="number"
+                  min={0}
+                  max={1000}
+                  step={0.5}
+                  value={mise}
+                  placeholder="—"
+                  onChange={(e) => majMise(e.target.value)}
+                />
+              </label>
+            </div>
+            <label className="checkbox-label">
               <input
-                type="radio"
-                name="niveauInterface"
-                checked={niveau === n}
-                onChange={fixer}
-                onClick={fixer}
+                type="checkbox"
+                checked={defauts.consolante}
+                onChange={(e) => enregistrer({ ...defauts, consolante: e.target.checked })}
               />
-              {LIBELLE_NIVEAU[n]}
+              Consolante par défaut
             </label>
-          );
-        })}
+          </form>
 
-        <p className="hint">
-          Au niveau « Entre amis », l'application s'en tient à ce qu'il faut pour un concours de
-          club : inscriptions, tirage, poules, tableaux, scores et indemnités. Le fichier des
-          licenciés, le championnat des clubs, les critères officiels et les documents remis au
-          comité sont masqués.
-        </p>
+          {personnalises ? (
+            <p className="hint">
+              Réglées à la main.{' '}
+              <button className="btn-lien" onClick={oublierDefauts}>
+                Revenir aux valeurs du profil
+              </button>
+            </p>
+          ) : (
+            <p className="hint">
+              Ce sont les valeurs du profil « {LIBELLE_NIVEAU[niveau]} » :{' '}
+              {defautsDuProfil(niveau).nbTerrains} terrains, en{' '}
+              {FORMAT_LABELS[defautsDuProfil(niveau).format].toLowerCase()}.
+            </p>
+          )}
+        </section>
 
-        <p className="hint">
-          Ce réglage ne change <strong>que l'affichage</strong>. Un concours déjà déclaré officiel
-          continue de contrôler ses licences, et ses écrans restent visibles sur lui — on ne
-          désactive pas en silence une règle sur laquelle vous comptez.
-        </p>
-
-        {preference === null && (
+        <section className="reglages-section">
+          <h3>Assistant de configuration</h3>
           <p className="hint">
-            Choisi automatiquement d'après vos concours : « {LIBELLE_NIVEAU[besoin]} ».
+            Les trois écrans du premier démarrage : le profil, vos habitudes, la prise en main.
           </p>
-        )}
-
-        {preference !== null && (
-          <p className="hint">
-            Réglé à la main.{' '}
-            <button className="btn-lien" onClick={oublier}>
-              Revenir au choix automatique
-            </button>
-          </p>
-        )}
+          <button className="btn" onClick={() => setAssistant(true)}>
+            🧭 Relancer l'assistant de configuration
+          </button>
+        </section>
 
         <div className="form-actions">
           <button className="btn btn-primary" onClick={onClose}>

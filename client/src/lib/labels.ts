@@ -306,9 +306,16 @@ export const NIVEAU_LABELS: Record<NiveauConcours, string> = {
   championnat: 'Championnat (ancien libellé)',
 };
 
-/** Libellé court du niveau d'interface, pour le bouton des réglages. */
+/**
+ * Libellé du niveau d'interface : le bouton ⚙ du tableau de bord, les réglages
+ * et les cartes de profil de l'assistant le partagent. Un seul jeu de mots pour
+ * les trois — le bouton disait « Officiel » là où l'assistant disait « Concours
+ * officiels », deux écrans que l'utilisateur enchaîne pourtant en un clic.
+ * C'est la formulation longue qui l'emporte : « Officiel » seul se lit comme un
+ * état du concours affiché plutôt que comme le niveau de l'application.
+ */
 export const LIBELLE_NIVEAU: Record<NiveauInterface, string> = {
   amical: 'Entre amis',
   club: 'Mon club',
-  federal: 'Officiel',
+  federal: 'Concours officiels',
 };
