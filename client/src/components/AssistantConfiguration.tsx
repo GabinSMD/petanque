@@ -154,17 +154,38 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
   const choisirProfil = (n: NiveauInterface) => {
     setPreferenceNiveau(n);
     setNiveau(n);
-    // Le profil donne le point de départ des questions suivantes : 4 terrains
-    // sur le terrain du village, 8 au boulodrome.
-    const d = defautsDuProfil(n);
-    setNbTerrains(d.nbTerrains);
-    setFormat(d.format);
-    setScoreMax(d.scoreMax);
-    setConsolante(d.consolante);
-    // Le profil recouvre les autres champs, tous visibles à l'écran suivant.
-    // La mise, elle, n'a pas de valeur de profil : la « réinitialiser » ne
-    // ferait que perdre celle qui était enregistrée.
-    setMiseParEquipe(d.miseParEquipe ?? miseEnregistree ?? '');
+    // Ce que le profil suggère, et ce qui est déjà enregistré (le profil
+    // recouvert, champ par champ, par les valeurs de l'utilisateur).
+    const profil = defautsDuProfil(n);
+    const enregistres = getDefauts(n);
+
+    // Le profil donne le point de départ des terrains : 4 sur le terrain du
+    // village, 8 au boulodrome. C'est le sens du geste, et l'écran suivant
+    // ouvre sur ce champ — l'utilisateur voit la valeur changer et la corrige.
+    setNbTerrains(profil.nbTerrains);
+
+    // Les champs que l'écran suivant **n'affiche pas** repartent de
+    // l'enregistrement, jamais du profil. Sans cela, relancer l'assistant
+    // depuis les réglages pour changer de niveau ramenait en silence les
+    // parties en 13 et la consolante : ces deux-là ne se règlent que dans ⚙,
+    // rien à l'écran n'aurait montré la perte. Même faute que sur la mise
+    // ci-dessus, même remède.
+    setScoreMax(enregistres.scoreMax);
+    setConsolante(enregistres.consolante);
+
+    // La formation est affichée, et elle part pourtant de l'enregistrement
+    // elle aussi. Décidé ainsi parce que `defautsDuProfil` répond
+    // « doublette » aux trois profils : la reprendre du profil n'apprend rien
+    // du niveau choisi, elle ne peut qu'écraser une triplette enregistrée. Et
+    // ses cartes sont en bas de l'écran, sous la ligne de flottaison d'une
+    // tablette : la perte serait aussi discrète que celle des points. Le seul
+    // champ dont le profil dit vraiment quelque chose est le nombre de
+    // terrains, et c'est le seul qu'on réinitialise.
+    setFormat(enregistres.format);
+
+    // La mise n'a pas de valeur de profil : la « réinitialiser » ne ferait que
+    // perdre celle qui était enregistrée.
+    setMiseParEquipe(enregistres.miseParEquipe ?? '');
     setStep(1);
   };
 

@@ -22,7 +22,7 @@ qu'elle affiche :
   clubs, documents remis au comité. Tout est affiché.
 
 À la première ouverture, un **assistant de configuration** en trois écrans
-demande le profil, les habitudes du club (terrains, formation, points, mise)
+demande le profil, les habitudes du club (terrains, formation, mise)
 qui pré-rempliront chaque nouveau concours, puis propose la visite guidée ou un
 concours d'exemple. « Plus tard » ne dégrade rien : rien n'est écrit, et le
 niveau se déduit du contenu déjà présent — un concours officiel ou un fichier de

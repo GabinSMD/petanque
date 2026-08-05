@@ -182,10 +182,24 @@ export function useClubsSurEquipes(): boolean {
     useLiveQuery(async () => {
       // Toutes les équipes, tous concours confondus : le niveau d'interface est
       // un réglage d'appareil, il ne dépend pas du concours ouvert.
-      const rows = await db.entities.where('type').equals('team').toArray();
-      return rows.some(
-        (r) => r.deleted === 0 && r.data && Boolean((r.data as Team).club?.trim()),
-      );
+      //
+      // Mais sans monter la table en mémoire, comme `useFraicheurLicencies`
+      // plus haut : la question est un booléen, et un `toArray()` construisait
+      // un objet par équipe de tous les concours jamais créés pour y répondre.
+      // Une dizaine de composants lisent ce hook par `useNiveauInterfaceActif`,
+      // dont plusieurs montés ensemble sur un concours, et chaque inscription
+      // d'équipe invalide la plage et les relance tous d'un coup — c'est
+      // exactement la saisie des inscriptions, sur la tablette du boulodrome,
+      // qu'on allège. Le `first()` arrête le curseur au premier club trouvé.
+      //
+      // Le garde `r.data` n'est pas cosmétique : la base contient des lignes
+      // `team` dont `data` est `null`, et y accéder lèverait une `TypeError`.
+      const premier = await db.entities
+        .where('type')
+        .equals('team')
+        .filter((r) => r.deleted === 0 && !!r.data && Boolean((r.data as Team).club?.trim()))
+        .first();
+      return premier !== undefined;
     }, []) ?? false
   );
 }
