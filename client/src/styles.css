@@ -2117,8 +2117,10 @@ form label select {
 
 /* ------------------------ Bienvenue (1ère fois) ------------------------ */
 
+/* Porte désormais l'assistant de configuration en entier : trois écrans, dont
+   des cartes de profil à deux lignes de texte que 480px serrait trop. */
 .welcome-modal {
-  max-width: 480px;
+  max-width: 560px;
   text-align: left;
 }
 
@@ -2646,6 +2648,15 @@ form label select {
   margin: 0 0 0.7rem;
 }
 
+/* Intitulé d'un groupe de choix qui n'est pas un champ de formulaire — les
+   cartes de formation de l'assistant de configuration. Même poids visuel qu'un
+   `label`, pour que la ligne se lise comme les autres questions du formulaire. */
+.wizard-sous-titre {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+
 .wizard-recap {
   background: var(--accent-soft);
   border-radius: 8px;
@@ -2716,6 +2727,13 @@ form label select {
   border-radius: 12px;
   padding: 0.9rem 0.5rem;
   transition: border-color 0.12s, transform 0.08s, box-shadow 0.12s;
+}
+
+/* Dans l'assistant de configuration, cliquer une carte de formation ne fait pas
+   avancer d'un écran : le choix retenu doit donc se voir. */
+.format-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .format-card:hover {

@@ -14,7 +14,10 @@ import { ReglagesModal } from '../components/ReglagesModal';
 import { CreateConcoursWizard } from '../components/CreateConcoursWizard';
 import { ImportSauvegarde } from '../components/ImportSauvegarde';
 import { Modal } from '../components/Modal';
-import { WelcomeModal, isWelcomeDone } from '../components/WelcomeModal';
+import {
+  AssistantConfiguration,
+  isConfigurationFaite,
+} from '../components/AssistantConfiguration';
 import { annoncerNouveautes } from '../help/nouveautesState';
 import { useSession } from '../db/hooks';
 import {
@@ -64,13 +67,16 @@ export function DashboardPage() {
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
-  const [welcome, setWelcome] = useState(() => !isWelcomeDone());
+  // Première ouverture : l'assistant de configuration, avant tout le reste.
+  const [assistant, setAssistant] = useState(() => !isConfigurationFaite());
 
   // Nouveautés après une mise à jour automatique. Annoncées ici et nulle part
   // ailleurs : sur un concours, la pop-up couperait un tirage ou une saisie —
   // elle attendra le prochain passage par le tableau de bord.
   useEffect(() => {
-    annoncerNouveautes(!isWelcomeDone());
+    // À la première ouverture, l'assistant de configuration occupe déjà
+    // l'écran : les nouveautés ne doivent pas s'empiler par-dessus.
+    annoncerNouveautes(!isConfigurationFaite());
   }, []);
 
   const [categoryFilter, setCategoryFilter] = useState<string>('');
@@ -340,7 +346,7 @@ export function DashboardPage() {
 
       {club && <ClubModal onClose={() => setClub(false)} />}
       {reglages && <ReglagesModal onClose={() => setReglages(false)} />}
-      {welcome && <WelcomeModal onClose={() => setWelcome(false)} />}
+      {assistant && <AssistantConfiguration onClose={() => setAssistant(false)} />}
     </div>
   );
 }
