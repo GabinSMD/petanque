@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { declarableMatches, matchLabel, pendingMatchesForTeam } from '../lib/matchLabel';
+import { formateurTerrain } from '../lib/terrain';
 import { ScoreForm } from './ScoreForm';
 import { TeamLabel } from './TeamLabel';
 
@@ -105,11 +106,12 @@ function QuickScoreRow({
   teamsById: Map<string, Team>;
   onSaved: () => void;
 }) {
+  const terrain = formateurTerrain(concours);
   return (
     <div className="quick-score-row">
       <span className="quick-score-label">
         {label}
-        {match.terrain ? ` · Terrain ${match.terrain}` : ''}
+        {match.terrain ? ` · Terrain ${terrain(match.terrain)}` : ''}
       </span>
       <span className="quick-score-teams">
         <TeamLabel team={match.teamAId ? teamsById.get(match.teamAId) : null} compact />

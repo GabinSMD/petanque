@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
 import { useConcours, useMatches, usePoules, useTeams } from '../db/hooks';
+import { formateurTerrain, type LibelleTerrain } from '../lib/terrain';
 import { BracketView } from './tabs/BracketTab';
 import { SideLabel } from './tabs/RondesTab';
 import { StandingsTable } from '../components/StandingsTable';
@@ -27,6 +28,9 @@ export function DisplayPage() {
   const poules = usePoules(id) ?? [];
   const matches = useMatches(id) ?? [];
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  // Un seul formateur pour tout l'écran : les jeux se désignent comme le
+  // concours le demande, par numéro ou par lettre peinte au sol.
+  const terrain = formateurTerrain(concours ?? {});
 
   if (!concours) {
     return (
@@ -94,7 +98,7 @@ export function DisplayPage() {
       )}
 
       {concours.status === 'poules' && (
-        <DisplayPoules poules={poules} matches={matches} teamsById={teamsById} />
+        <DisplayPoules poules={poules} matches={matches} teamsById={teamsById} terrain={terrain} />
       )}
 
       {isRondesMode(concours.mode) &&
@@ -160,6 +164,7 @@ function DisplayRondes({
     .filter((m) => m.round === tirees - 1)
     .sort((a, b) => a.position - b.position);
   const standings = classementRondes(concours, teams, rondeMs);
+  const terrain = formateurTerrain(concours);
 
   return (
     <div className="display-rondes">
@@ -175,7 +180,7 @@ function DisplayRondes({
             {current.map((m) => (
               <li key={m.id}>
                 <span className="display-slot">
-                  {m.terrain ? `Terrain ${m.terrain}` : `Partie ${m.position + 1}`}
+                  {m.terrain ? `Terrain ${terrain(m.terrain)}` : `Partie ${m.position + 1}`}
                 </span>
                 <span className="display-match">
                   <span className={m.done && (m.scoreA ?? 0) > (m.scoreB ?? 0) ? 'winner' : ''}>
@@ -205,10 +210,13 @@ function DisplayPoules({
   poules,
   matches,
   teamsById,
+  terrain,
 }: {
   poules: Poule[];
   matches: Match[];
   teamsById: Map<string, Team>;
+  /** Désigne un terrain comme le concours le demande — « 5 » ou « D ». */
+  terrain: LibelleTerrain;
 }) {
   return (
     <div className="display-poules">
@@ -221,7 +229,7 @@ function DisplayPoules({
           <section key={poule.id} className="display-poule">
             <h3>
               Poule {poule.index}
-              {poule.terrain ? ` — T${poule.terrain}` : ''}
+              {poule.terrain ? ` — T${terrain(poule.terrain)}` : ''}
               {outcome.complete && ' ✔'}
             </h3>
             <ul>
@@ -232,7 +240,7 @@ function DisplayPoules({
                   <li key={m.id}>
                     <span className="display-slot">
                       {POULE_SLOT_LABELS[m.pouleSlot ?? ''] ?? ''}
-                      {m.terrain ? ` · T${m.terrain}` : ''}
+                      {m.terrain ? ` · T${terrain(m.terrain)}` : ''}
                     </span>
                     <span className="display-match">
                       <span className={m.done && winnerOf(m) === m.teamAId ? 'winner' : ''}>

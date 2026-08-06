@@ -17,6 +17,7 @@ import { ScoreForm } from '../../components/ScoreForm';
 import { StandingsTable } from '../../components/StandingsTable';
 import { PhasesFinalesPanel } from '../../components/PhasesFinalesPanel';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
+import { formateurTerrain } from '../../lib/terrain';
 import {
   MODE_INFO,
   ROLE_ABREGE,
@@ -51,6 +52,8 @@ export function RondesTab({ concours, teams, matches }: Props) {
   const currentComplete = tirees > 0 && rondeComplete(rondeMatches, tirees - 1);
   const allDone = tirees >= planned && currentComplete && rondeMatches.every((m) => m.done);
   const standings = classementRondes(concours, teams, rondeMatches);
+  // Numéro ou lettre peinte au sol : l'attribution compte toujours en numéros.
+  const terrain = formateurTerrain(concours);
   const locked = concours.status === 'termine';
 
   /**
@@ -307,19 +310,30 @@ export function RondesTab({ concours, teams, matches }: Props) {
                         </td>
                         <td className="match-terrain no-print">
                           {!m.byeB && (
-                            <input
-                              type="number"
-                              min={1}
-                              value={m.terrain ?? ''}
-                              placeholder="T"
-                              title="Terrain"
-                              onChange={(e) =>
-                                void setMatchTerrain(
-                                  m,
-                                  e.target.value ? Number(e.target.value) : null,
-                                )
-                              }
-                            />
+                            <>
+                              <input
+                                type="number"
+                                min={1}
+                                value={m.terrain ?? ''}
+                                placeholder="T"
+                                title="Terrain"
+                                onChange={(e) =>
+                                  void setMatchTerrain(
+                                    m,
+                                    e.target.value ? Number(e.target.value) : null,
+                                  )
+                                }
+                              />
+                              {/* La saisie reste numérique — un `input[type=number]`
+                                  ne peut pas recevoir « D ». On montre donc la
+                                  lettre à côté, pour que l'organisateur annonce le
+                                  jeu tel qu'il est peint au sol sans traduire. */}
+                              {concours.libelleTerrains === 'lettre' && m.terrain != null && (
+                                <span className="team-ecart" title="Lettre peinte au sol">
+                                  {terrain(m.terrain)}
+                                </span>
+                              )}
+                            </>
                           )}
                         </td>
                       </tr>

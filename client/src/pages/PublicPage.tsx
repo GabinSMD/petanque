@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, PhotoConcours, Poule, Team } from '@shared';
-import { TAILLE_FORMATION, EMPLACEMENTS_PHOTO, evolutionEnTexte, photosPubliables, pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
+import { TAILLE_FORMATION, libelleTerrain, EMPLACEMENTS_PHOTO, evolutionEnTexte, photosPubliables, pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
+import { formateurTerrain } from '../lib/terrain';
 import { matchLabel, pendingMatchesForTeam, sideName, teamSideInMatch } from '../lib/matchLabel';
 import { followedTeams, pushSupported, subscribeForTeams } from '../lib/push';
 import { BracketView } from './tabs/BracketTab';
@@ -475,6 +476,7 @@ function MyMatchDeclare({
   teamsById: Map<string, Team>;
   onDeclared: () => void | Promise<void>;
 }) {
+  const terrain = formateurTerrain(data.concours);
   const side = teamSideInMatch(match, team.id)!;
   const [sa, setSa] = useState('');
   const [sb, setSb] = useState('');
@@ -518,7 +520,7 @@ function MyMatchDeclare({
       <h2>📣 Votre partie</h2>
       <p className="declare-picked">
         <strong>{matchLabel(match, data.poules, data.matches)}</strong>
-        {match.terrain ? ` · Terrain ${match.terrain}` : ''}
+        {match.terrain ? ` · Terrain ${terrain(match.terrain)}` : ''}
         <br />
         {sideName(match, 'A', teamsById)} <em>contre</em> {sideName(match, 'B', teamsById)}
       </p>
@@ -591,6 +593,7 @@ function ResultsView({
   const principal = matches.filter((m) => m.stage === 'principal');
   const consolante = matches.filter((m) => m.stage === 'consolante');
   const rondes = isRondesMode(concours.mode);
+  const terrain = formateurTerrain(concours);
 
   /**
    * Photos du podium : le serveur ne renvoie que celles dont l'accord est
@@ -648,7 +651,7 @@ function ResultsView({
                   <div key={poule.id} className="public-poule">
                     <h3>
                       Poule {poule.index}
-                      {poule.terrain ? ` · T${poule.terrain}` : ''}
+                      {poule.terrain ? ` · T${terrain(poule.terrain)}` : ''}
                       {outcome.complete && ' ✓'}
                     </h3>
                     <ul>
@@ -744,7 +747,11 @@ function ResultsView({
                       </strong>
                       <SideLabel match={m} side="B" teamsById={teamsById} avecEcart />
                     </span>
-                    {m.terrain && <span className="public-slot">T{m.terrain}</span>}
+                    {m.terrain && (
+                      <span className="public-slot">
+                        T{libelleTerrain(m.terrain, concours.libelleTerrains, concours.decalageTerrain)}
+                      </span>
+                    )}
                   </li>
                 ))}
             </ul>

@@ -16,6 +16,7 @@ import {
 } from '../../db/actions';
 import { Link } from 'react-router-dom';
 import { matchLabel, sideName } from '../../lib/matchLabel';
+import { formateurTerrain, type LibelleTerrain } from '../../lib/terrain';
 
 interface Props {
   concours: Concours;
@@ -68,10 +69,13 @@ function BoutonsTerrain({
   match,
   libres,
   matches,
+  terrain,
 }: {
   match: Match;
   libres: number[];
   matches: Match[];
+  /** Désigne un terrain comme le concours le demande — « 5 » ou « D ». */
+  terrain: LibelleTerrain;
 }) {
   const { neufs, dejaJoues } = classerTerrainsLibres(
     libres,
@@ -86,7 +90,7 @@ function BoutonsTerrain({
       onClick={() => void setMatchTerrain(match, n)}
       title={deja ? 'Libre, mais une des deux équipes y a déjà joué' : undefined}
     >
-      T{n}
+      T{terrain(n)}
     </button>
   );
   return (
@@ -115,6 +119,9 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
     bloques,
   );
   const waiting = waitingMatches(matches);
+  // Numéro ou lettre peinte au sol : l'attribution continue de compter en
+  // numéros, seul l'affichage change.
+  const terrain = formateurTerrain(concours);
   const occupied = board.filter((t) => t.match).length;
   const libres = board.filter((t) => !t.match && !t.bloque).map((t) => t.number);
   const free = libres.length;
@@ -209,7 +216,7 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
             }`}
           >
             <div className="terrain-num">
-              Terrain {t.number}
+              Terrain {terrain(t.number)}
               <button
                 className="btn-icon no-print"
                 title={t.bloque ? 'Remettre ce terrain en service' : 'Bloquer ce terrain'}
@@ -267,7 +274,7 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
                 <span className="waiting-teams">
                   {sideName(m, 'A', teamsById)} <em>–</em> {sideName(m, 'B', teamsById)}
                 </span>
-                {free > 0 && <BoutonsTerrain match={m} libres={libres} matches={matches} />}
+                {free > 0 && <BoutonsTerrain match={m} libres={libres} matches={matches} terrain={terrain} />}
               </li>
             ))}
           </ul>

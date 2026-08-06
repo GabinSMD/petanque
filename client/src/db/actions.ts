@@ -40,6 +40,7 @@ import {
   type ConcoursMode,
   TAILLE_FORMATION,
   type CritereClassification,
+  type ModeLibelleTerrain,
   type CritereSexe,
   type Discipline,
   type Formule,
@@ -136,6 +137,8 @@ export interface ConcoursInput {
   tirageDiffere?: boolean;
   retirageParTour?: boolean;
   tempsLimite?: number;
+  /** Numéro (défaut) ou lettre peinte au sol — voir `libelleTerrain`. */
+  libelleTerrains?: ModeLibelleTerrain;
   miseParJoueur?: number;
   /** @deprecated conservé pour les concours déjà enregistrés. */
   miseParEquipe?: number;
