@@ -4723,6 +4723,16 @@ form label select {
   margin: 0.5rem 0;
 }
 
+/* `.form-error` est écrit pour le `<p>` qu'emploie le reste du dépôt, où une
+   marge verticale sépare le message du champ. Ici, il est rendu en `<span>`
+   dans le `<label>` — inline, pour rester sous le champ sans casser la mise en
+   page du formulaire — et une marge verticale sur un élément inline n'a aucun
+   effet : le message collait à l'input. `display: block` lui rend la marge
+   sans toucher `.form-error` ni son usage en `<p>` ailleurs. */
+.reglages-modal .form-error {
+  display: block;
+}
+
 /* Trois sujets distincts dans une même modale — le niveau, les valeurs par
    défaut, l'assistant. Le filet les sépare sans ajouter de cadres emboîtés :
    la modale en est déjà un. */
@@ -4762,9 +4772,14 @@ form label select {
    ici, elle marque le niveau actif (voir `.selected` ci-dessous). La laisser
    donnait au survol d'une carte **non** sélectionnée l'aspect de la carte
    sélectionnée, sur l'écran dont l'objet est justement de montrer laquelle
-   l'est. Le survol de la carte active, lui, garde son accent. */
+   l'est. Le survol de la carte active, lui, garde son accent.
+   Retomber à `var(--line)`, la bordure de repos, effaçait aussi le retour au
+   survol : plus rien ne distinguait alors « survolée » de « inactive ». La
+   teinte intermédiaire ci-dessous reste lisible comme un survol sans jamais
+   se confondre avec `--accent` / `--accent-soft`, réservés à la sélection. */
 .mode-card-reduite:not(.selected):hover {
-  border-color: var(--line);
+  border-color: var(--muted);
+  background: rgba(91, 101, 121, 0.08);
 }
 
 /* Cliquer une carte n'avance pas d'écran ici : le niveau actif doit se voir. */

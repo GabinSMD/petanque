@@ -62,10 +62,9 @@ function enregistrementUtile(brut: string | null): Partial<DefautsConcours> | nu
 
 /**
  * Les deux réponses que le stockage porte, pour une seule lecture. `getDefauts`
- * et `aDesDefauts` sont deux questions sur le même enregistrement : les poser
- * l'une après l'autre — ce que fait `useDefauts` à chaque rendu — le relisait et
- * le reparsait deux fois. Elles restent exportées séparément, trois composants
- * s'appuyant sur l'une ou l'autre.
+ * et `aDesDefauts` étaient deux questions sur le même enregistrement : les
+ * poser l'une après l'autre — ce que faisait `useDefauts` à chaque rendu — le
+ * relisait et le reparsait deux fois.
  */
 function lireDefauts(niveau: NiveauInterface): {
   defauts: DefautsConcours;
@@ -82,7 +81,12 @@ function lireDefauts(niveau: NiveauInterface): {
   return { defauts: utile ? { ...base, ...utile } : base, personnalises: utile !== null };
 }
 
-/** L'utilisateur a-t-il enregistré des valeurs à lui ? */
+/**
+ * L'utilisateur a-t-il enregistré des valeurs à lui ?
+ *
+ * N'a plus aucun appelant depuis que `useDefauts` passe par `lireDefauts` :
+ * gardée exportée quand même, pour ne pas entamer le contrat de ce module.
+ */
 export function aDesDefauts(): boolean {
   try {
     return enregistrementUtile(localStorage.getItem(CLE)) !== null;

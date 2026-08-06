@@ -16,7 +16,7 @@
  * interrupteur par domaine, soit un second système capable de contredire le
  * premier.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import {
   NIVEAUX_INTERFACE,
   besoinNiveau,
@@ -36,6 +36,8 @@ interface ChampNombre {
   /** Pourquoi la dernière frappe n'a pas été enregistrée, ou `''`. */
   refus: string;
   saisir: (v: string, refus?: string) => void;
+  /** Identifiant du message de refus, pour le relier au champ par `aria-describedby`. */
+  idRefus: string;
 }
 
 /**
@@ -56,6 +58,7 @@ interface ChampNombre {
 function useChampNombre(valeur: string): ChampNombre {
   const [saisi, setSaisi] = useState(valeur);
   const [refus, setRefus] = useState('');
+  const idRefus = useId();
   useEffect(() => {
     setSaisi(valeur);
     setRefus('');
@@ -63,6 +66,7 @@ function useChampNombre(valeur: string): ChampNombre {
   return {
     saisi,
     refus,
+    idRefus,
     saisir: (v, r = '') => {
       setSaisi(v);
       setRefus(r);
@@ -260,9 +264,14 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
                   max={200}
                   value={terrains.saisi}
                   aria-invalid={terrains.refus !== ''}
+                  aria-describedby={terrains.refus ? terrains.idRefus : undefined}
                   onChange={(e) => majTerrains(e.target.value)}
                 />
-                {terrains.refus && <span className="form-error">{terrains.refus}</span>}
+                {terrains.refus && (
+                  <span id={terrains.idRefus} className="form-error">
+                    {terrains.refus}
+                  </span>
+                )}
               </label>
               <label>
                 Partie en
@@ -272,9 +281,14 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
                   max={100}
                   value={scoreMax.saisi}
                   aria-invalid={scoreMax.refus !== ''}
+                  aria-describedby={scoreMax.refus ? scoreMax.idRefus : undefined}
                   onChange={(e) => majScoreMax(e.target.value)}
                 />
-                {scoreMax.refus && <span className="form-error">{scoreMax.refus}</span>}
+                {scoreMax.refus && (
+                  <span id={scoreMax.idRefus} className="form-error">
+                    {scoreMax.refus}
+                  </span>
+                )}
               </label>
             </div>
             <div className="form-row">
@@ -305,9 +319,14 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
                   value={mise.saisi}
                   placeholder="—"
                   aria-invalid={mise.refus !== ''}
+                  aria-describedby={mise.refus ? mise.idRefus : undefined}
                   onChange={(e) => majMise(e.target.value)}
                 />
-                {mise.refus && <span className="form-error">{mise.refus}</span>}
+                {mise.refus && (
+                  <span id={mise.idRefus} className="form-error">
+                    {mise.refus}
+                  </span>
+                )}
               </label>
             </div>
             <label className="checkbox-label">
