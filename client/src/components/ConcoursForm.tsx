@@ -186,6 +186,18 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
    */
   const bornes = bornesParties({ mode, ggStrict });
 
+  /**
+   * La consolante a-t-elle un sens ici ? En élimination directe, c'est la
+   * formule qui la porte ; la formule par groupes fait continuer tout le monde,
+   * il n'y a personne à repêcher.
+   *
+   * Calculée une fois et passée au bloc des formules avancées, qui décide des
+   * deux cases filles (complémentaire, repêchage au cadrage) : la même
+   * condition écrite ici et là-bas était deux occasions d'en corriger une seule.
+   */
+  const consolantePossible =
+    mode !== 'elimination_directe' && MODE_INFO[mode].consolante === true && !parGroupes;
+
   /* ------------------------------------------------------------------ */
   /* Numéro de concours fédéral (§3.A)                                   */
   /* ------------------------------------------------------------------ */
@@ -535,7 +547,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           <span className="hint">{FORMULE_HINTS[formule]}</span>
         </label>
       )}
-      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && !parGroupes && (
+      {consolantePossible && (
         <label className="checkbox-label">
           <input
             type="checkbox"
@@ -560,6 +572,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             if (nouvelles && nbRondes > nouvelles.max) setNbRondes(nouvelles.max);
           }}
           consolante={consolante}
+          consolantePossible={consolantePossible}
           complementaire={complementaire}
           setComplementaire={setComplementaire}
           recupCadrage={recupCadrage}

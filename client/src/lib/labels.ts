@@ -19,6 +19,32 @@ export const PLAYERS_PER_TEAM: Record<TeamFormat, number> = {
 };
 
 /**
+ * Les trois formations, dans l'ordre où on les propose. `TeamFormat` n'a pas
+ * d'équivalent runtime dans `@shared` : cette liste tient ce rôle pour tout le
+ * client — les cartes de l'assistant de configuration, celles de l'assistant de
+ * création, la liste déroulante des réglages, et la validation d'un format relu
+ * du stockage. Elle vivait en quatre exemplaires, dont un se disait local.
+ */
+export const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
+
+/** Silhouettes des cartes de formation : le nombre se lit avant le libellé. */
+export const FORMAT_EMOJI: Record<TeamFormat, string> = {
+  tete_a_tete: '🧍',
+  doublette: '🧍🧍',
+  triplette: '🧍🧍🧍',
+};
+
+/**
+ * « 1 joueur », « 2 joueurs » : la précision qui accompagne chaque carte de
+ * formation. Déduite de `PLAYERS_PER_TEAM` plutôt que réécrite en ternaire —
+ * une table et un ternaire qui disent la même chose finissent par diverger.
+ */
+export function libelleJoueurs(format: TeamFormat): string {
+  const n = PLAYERS_PER_TEAM[format];
+  return `${n} joueur${n > 1 ? 's' : ''}`;
+}
+
+/**
  * Rôles de jeu. Absents du manuel fédéral : ils ne servent qu'au tirage des
  * mêlées, pour éviter une équipe de trois pointeurs.
  */
@@ -307,14 +333,19 @@ export const NIVEAU_LABELS: Record<NiveauConcours, string> = {
 };
 
 /**
- * Libellé du niveau d'interface : le bouton ⚙ du tableau de bord, les réglages
- * et les cartes de profil de l'assistant le partagent. Un seul jeu de mots pour
- * les trois — le bouton disait « Officiel » là où l'assistant disait « Concours
- * officiels », deux écrans que l'utilisateur enchaîne pourtant en un clic.
+ * Libellé du niveau d'**interface** — à ne pas confondre avec `NIVEAU_LABELS`
+ * juste au-dessus, qui nomme le niveau fédéral d'un concours (départemental,
+ * régional, national). Deux notions sans rapport : le nom le dit, faute de quoi
+ * l'une s'importe pour l'autre.
+ *
+ * Le bouton ⚙ du tableau de bord, les réglages et les cartes de profil de
+ * l'assistant le partagent. Un seul jeu de mots pour les trois — le bouton
+ * disait « Officiel » là où l'assistant disait « Concours officiels », deux
+ * écrans que l'utilisateur enchaîne pourtant en un clic.
  * C'est la formulation longue qui l'emporte : « Officiel » seul se lit comme un
  * état du concours affiché plutôt que comme le niveau de l'application.
  */
-export const LIBELLE_NIVEAU: Record<NiveauInterface, string> = {
+export const NIVEAU_INTERFACE_LABELS: Record<NiveauInterface, string> = {
   amical: 'Entre amis',
   club: 'Mon club',
   federal: 'Concours officiels',

@@ -37,7 +37,18 @@ function migrer(): void {
   }
 }
 
-/** Choix explicite de l'utilisateur, ou `null` s'il n'a jamais choisi. */
+/**
+ * Choix explicite de l'utilisateur, ou `null` s'il n'a jamais choisi.
+ *
+ * ⚠️ Malgré son nom, cette lecture **écrit** : elle appelle `migrer()`, qui
+ * peut poser la nouvelle clé et retirer l'ancienne. Et comme elle sert
+ * d'initialiseur à un `useState`, cette écriture a lieu pendant un rendu. C'est
+ * sans dommage — `migrer` est idempotente et ne fait rien dès la clé posée,
+ * donc au plus une écriture dans la vie de l'installation — mais mieux vaut le
+ * savoir avant de la croire pure : la migration doit avoir lieu avant la
+ * première lecture, sans quoi un utilisateur venu de `modeFederal` verrait son
+ * niveau retomber sur l'heuristique le temps d'un rendu.
+ */
 export function preferenceNiveau(): NiveauInterface | null {
   try {
     migrer();
@@ -54,7 +65,13 @@ export function setPreferenceNiveau(niveau: NiveauInterface): void {
   try {
     localStorage.setItem(CLE, niveau);
   } catch {
-    /* stockage indisponible : le réglage vaudra pour cette session seulement */
+    /* Stockage indisponible : le réglage est perdu dans l'instant, pas
+       seulement au prochain démarrage. `prevenir()` ci-dessous fait relire le
+       stockage à tous les abonnés, qui n'y trouveront rien et reviendront au
+       niveau de l'heuristique. On ne garde pas de repli en mémoire : deux
+       sources de vérité pour un même réglage se contrediraient dès le premier
+       onglet ouvert à côté, et le cas — stockage refusé — masque de toute
+       façon aussi les valeurs par défaut et la clé de l'assistant. */
   }
   prevenir();
 }

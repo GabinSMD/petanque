@@ -633,7 +633,9 @@ export const FAQ: FaqEntry[] = [
     intro:
       'Pour le championnat des clubs et la Coupe de France, la feuille se remplit dans l\'application :',
     steps: [
-      'Depuis le tableau de bord, ouvrez « 🏅 Feuilles de match ».',
+      // Le nom réel du bouton du tableau de bord, et celui que la note de cette
+      // fiche cite déjà : une même fiche ne peut pas le nommer de deux façons.
+      'Depuis le tableau de bord, ouvrez « 🏅 Championnat des clubs ».',
       '« + Nouvelle feuille » : renseignez les deux clubs et la date.',
       'Composez les équipes, puis saisissez les résultats des rencontres.',
       'Les deux clubs peuvent échanger leurs compositions par QR code, sans réseau.',

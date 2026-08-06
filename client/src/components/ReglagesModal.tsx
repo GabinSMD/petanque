@@ -27,11 +27,16 @@ import {
 import { useClubsSurEquipes, useConcoursList, useLicenciesCount } from '../db/hooks';
 import { useNiveauInterface } from '../lib/niveauInterface';
 import { useDefauts } from '../lib/defauts';
-import { FORMAT_LABELS, LIBELLE_NIVEAU } from '../lib/labels';
+import { FORMAT_LABELS, FORMATS, NIVEAU_INTERFACE_LABELS } from '../lib/labels';
 import { AssistantConfiguration, PROFILS } from './AssistantConfiguration';
 import { Modal } from './Modal';
 
-const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
+interface ChampNombre {
+  saisi: string;
+  /** Pourquoi la dernière frappe n'a pas été enregistrée, ou `''`. */
+  refus: string;
+  saisir: (v: string, refus?: string) => void;
+}
 
 /**
  * Un champ numérique dont la valeur de référence vit dans le stockage, mais qui
@@ -41,11 +46,28 @@ const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
  * réglage. On garde donc la frappe en local et on n'écrit que ce qui est
  * valide, tout en se resynchronisant quand la valeur change ailleurs :
  * « Revenir aux valeurs du profil », ou un autre onglet.
+ *
+ * Ce qui est refusé doit se voir. Sans `refus`, taper « 8,5 » terrains — le cas
+ * réaliste, bien plus qu'un 500 — laissait le champ afficher 8,5 pendant que le
+ * stockage gardait 8, et rien à l'écran ne disait lequel des deux valait. Le
+ * message s'efface dès que la frappe redevient valide, et à toute
+ * resynchronisation : il parle de la saisie en cours, pas d'un état durable.
  */
-function useChampNombre(valeur: string): [string, (v: string) => void] {
+function useChampNombre(valeur: string): ChampNombre {
   const [saisi, setSaisi] = useState(valeur);
-  useEffect(() => setSaisi(valeur), [valeur]);
-  return [saisi, setSaisi];
+  const [refus, setRefus] = useState('');
+  useEffect(() => {
+    setSaisi(valeur);
+    setRefus('');
+  }, [valeur]);
+  return {
+    saisi,
+    refus,
+    saisir: (v, r = '') => {
+      setSaisi(v);
+      setRefus(r);
+    },
+  };
 }
 
 export function ReglagesModal({ onClose }: { onClose: () => void }) {
@@ -57,9 +79,9 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
   const { defauts, personnalises, enregistrer, oublier: oublierDefauts } = useDefauts(niveau);
   const [assistant, setAssistant] = useState(false);
 
-  const [terrains, setTerrains] = useChampNombre(String(defauts.nbTerrains));
-  const [scoreMax, setScoreMax] = useChampNombre(String(defauts.scoreMax));
-  const [mise, setMise] = useChampNombre(defauts.miseParEquipe?.toString() ?? '');
+  const terrains = useChampNombre(String(defauts.nbTerrains));
+  const scoreMax = useChampNombre(String(defauts.scoreMax));
+  const mise = useChampNombre(defauts.miseParEquipe?.toString() ?? '');
 
   /** Les quatre champs toujours présents, sans la mise — qui, elle, s'absente. */
   const sansMise = (): DefautsConcours => ({
@@ -70,23 +92,36 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
   });
 
   const majTerrains = (v: string): void => {
-    setTerrains(v);
     const n = Number(v);
-    if (v !== '' && Number.isInteger(n) && n >= 1 && n <= 200) {
-      enregistrer({ ...defauts, nbTerrains: n });
+    // Le champ vidé n'est pas une erreur : c'est le passage obligé de qui
+    // retape un nombre. On attend la suite sans rien dire ni rien écrire.
+    if (v === '') {
+      terrains.saisir(v);
+      return;
     }
+    if (Number.isInteger(n) && n >= 1 && n <= 200) {
+      terrains.saisir(v);
+      enregistrer({ ...defauts, nbTerrains: n });
+      return;
+    }
+    terrains.saisir(v, 'Non enregistré : un nombre entier de terrains, de 1 à 200.');
   };
 
   const majScoreMax = (v: string): void => {
-    setScoreMax(v);
     const n = Number(v);
-    if (v !== '' && Number.isInteger(n) && n >= 1 && n <= 100) {
-      enregistrer({ ...defauts, scoreMax: n });
+    if (v === '') {
+      scoreMax.saisir(v);
+      return;
     }
+    if (Number.isInteger(n) && n >= 1 && n <= 100) {
+      scoreMax.saisir(v);
+      enregistrer({ ...defauts, scoreMax: n });
+      return;
+    }
+    scoreMax.saisir(v, 'Non enregistré : un nombre entier de points, de 1 à 100.');
   };
 
   const majMise = (v: string): void => {
-    setMise(v);
     // Une mise effacée n'est pas une mise à zéro : le champ redevient absent,
     // comme il l'est dans `defautsDuProfil`. Ce n'est pas l'heuristique qui est
     // en jeu — `domaineEnUsage('argent')` fait `Boolean(c.miseParEquipe || …)`,
@@ -96,13 +131,21 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
     // `miseParEquipe: 0` en base. Un champ facultatif qu'on vide doit redevenir
     // vide, pas valoir zéro.
     if (v === '') {
+      mise.saisir(v);
       enregistrer(sansMise());
       return;
     }
     const n = Number(v);
     if (Number.isFinite(n) && n >= 0 && n <= 1000) {
-      enregistrer({ ...sansMise(), miseParEquipe: n });
+      mise.saisir(v);
+      // `defauts` et non `sansMise()` : la mise est réécrite juste après, donc
+      // le retrait ne retirait rien. Il n'avait de sens que dans la branche
+      // ci-dessus, et il écarterait en silence tout champ facultatif qu'une
+      // version future ajouterait à `DefautsConcours`.
+      enregistrer({ ...defauts, miseParEquipe: n });
+      return;
     }
+    mise.saisir(v, 'Non enregistré : une mise de 0 à 1000 €.');
   };
 
   /*
@@ -184,7 +227,7 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
               fait, sur l'écran même qui doit répondre à « où est passé X ». */}
           {preference === null && (
             <p className="hint">
-              Choisi automatiquement d'après vos données : « {LIBELLE_NIVEAU[besoin]} ».
+              Choisi automatiquement d'après vos données : « {NIVEAU_INTERFACE_LABELS[besoin]} ».
             </p>
           )}
 
@@ -215,9 +258,11 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
                   type="number"
                   min={1}
                   max={200}
-                  value={terrains}
+                  value={terrains.saisi}
+                  aria-invalid={terrains.refus !== ''}
                   onChange={(e) => majTerrains(e.target.value)}
                 />
+                {terrains.refus && <span className="form-error">{terrains.refus}</span>}
               </label>
               <label>
                 Partie en
@@ -225,9 +270,11 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
                   type="number"
                   min={1}
                   max={100}
-                  value={scoreMax}
+                  value={scoreMax.saisi}
+                  aria-invalid={scoreMax.refus !== ''}
                   onChange={(e) => majScoreMax(e.target.value)}
                 />
+                {scoreMax.refus && <span className="form-error">{scoreMax.refus}</span>}
               </label>
             </div>
             <div className="form-row">
@@ -255,10 +302,12 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
                   min={0}
                   max={1000}
                   step={0.5}
-                  value={mise}
+                  value={mise.saisi}
                   placeholder="—"
+                  aria-invalid={mise.refus !== ''}
                   onChange={(e) => majMise(e.target.value)}
                 />
+                {mise.refus && <span className="form-error">{mise.refus}</span>}
               </label>
             </div>
             <label className="checkbox-label">
@@ -280,7 +329,7 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
             </p>
           ) : (
             <p className="hint">
-              Ce sont les valeurs du profil « {LIBELLE_NIVEAU[niveau]} » :{' '}
+              Ce sont les valeurs du profil « {NIVEAU_INTERFACE_LABELS[niveau]} » :{' '}
               {defautsDuProfil(niveau).nbTerrains} terrains, en{' '}
               {FORMAT_LABELS[defautsDuProfil(niveau).format].toLowerCase()}.
             </p>

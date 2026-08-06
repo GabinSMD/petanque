@@ -22,9 +22,9 @@ import { annoncerNouveautes } from '../help/nouveautesState';
 import { useSession } from '../db/hooks';
 import {
   FORMAT_LABELS,
-  LIBELLE_NIVEAU,
   MODE_INFO,
   MODE_LABELS,
+  NIVEAU_INTERFACE_LABELS,
   dateLongFr,
   entrantWord,
   formatDateFr,
@@ -161,7 +161,7 @@ export function DashboardPage() {
             title="Réglages et niveau d'interface"
             onClick={() => setReglages(true)}
           >
-            ⚙ {LIBELLE_NIVEAU[niveau]}
+            ⚙ {NIVEAU_INTERFACE_LABELS[niveau]}
           </button>
           <button
             className="btn btn-primary"

@@ -16,18 +16,12 @@ import {
   type NiveauInterface,
   type TeamFormat,
 } from '@shared';
+import { FORMATS } from './labels';
 
 const CLE = 'petanque.defauts';
 
-/**
- * `TeamFormat` n'a pas d'équivalent runtime exporté par `@shared` : la liste
- * n'a de sens qu'ici, pour valider un enregistrement, donc elle vit ici plutôt
- * que d'être ajoutée à `shared` pour ce seul usage.
- */
-const FORMATS_VALIDES: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
-
 function estFormatValide(v: unknown): v is TeamFormat {
-  return typeof v === 'string' && (FORMATS_VALIDES as string[]).includes(v);
+  return typeof v === 'string' && (FORMATS as string[]).includes(v);
 }
 
 const auditeurs = new Set<() => void>();
@@ -66,6 +60,28 @@ function enregistrementUtile(brut: string | null): Partial<DefautsConcours> | nu
   return Object.keys(utile).length > 0 ? utile : null;
 }
 
+/**
+ * Les deux réponses que le stockage porte, pour une seule lecture. `getDefauts`
+ * et `aDesDefauts` sont deux questions sur le même enregistrement : les poser
+ * l'une après l'autre — ce que fait `useDefauts` à chaque rendu — le relisait et
+ * le reparsait deux fois. Elles restent exportées séparément, trois composants
+ * s'appuyant sur l'une ou l'autre.
+ */
+function lireDefauts(niveau: NiveauInterface): {
+  defauts: DefautsConcours;
+  personnalises: boolean;
+} {
+  const base = defautsDuProfil(niveau);
+  let utile: Partial<DefautsConcours> | null;
+  try {
+    utile = enregistrementUtile(localStorage.getItem(CLE));
+  } catch {
+    // Enregistrement illisible : le profil vaut mieux qu'un écran cassé.
+    return { defauts: base, personnalises: false };
+  }
+  return { defauts: utile ? { ...base, ...utile } : base, personnalises: utile !== null };
+}
+
 /** L'utilisateur a-t-il enregistré des valeurs à lui ? */
 export function aDesDefauts(): boolean {
   try {
@@ -76,21 +92,18 @@ export function aDesDefauts(): boolean {
 }
 
 export function getDefauts(niveau: NiveauInterface): DefautsConcours {
-  const base = defautsDuProfil(niveau);
-  try {
-    const utile = enregistrementUtile(localStorage.getItem(CLE));
-    return utile ? { ...base, ...utile } : base;
-  } catch {
-    // Enregistrement illisible : le profil vaut mieux qu'un écran cassé.
-    return base;
-  }
+  return lireDefauts(niveau).defauts;
 }
 
 export function setDefauts(d: DefautsConcours): void {
   try {
     localStorage.setItem(CLE, JSON.stringify(d));
   } catch {
-    /* stockage indisponible : les valeurs vaudront pour cette session */
+    /* Stockage indisponible : les valeurs sont perdues dans l'instant, pas
+       seulement au prochain démarrage — `prevenir()` fait relire le stockage,
+       où il n'y a rien, et les écrans retombent sur le profil. Même parti pris
+       que `setPreferenceNiveau` : pas de repli en mémoire, qui serait une
+       seconde source de vérité. */
   }
   prevenir();
 }
@@ -127,9 +140,12 @@ export function useDefauts(niveau: NiveauInterface): {
   // état React, pour rester cohérentes entre deux composants montés.
   void version;
 
+  // Une seule lecture pour les deux réponses : voir `lireDefauts`.
+  const { defauts, personnalises } = lireDefauts(niveau);
+
   return {
-    defauts: getDefauts(niveau),
-    personnalises: aDesDefauts(),
+    defauts,
+    personnalises,
     enregistrer: setDefauts,
     oublier: oublierDefauts,
   };

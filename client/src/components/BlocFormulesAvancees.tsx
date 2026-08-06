@@ -1,5 +1,4 @@
 import type { ConcoursMode } from '@shared';
-import { MODE_INFO } from '../lib/labels';
 
 // Quatre cases que personne ne comprend sans le manuel FFPJP : formule par
 // groupes A-B-C (§3.D.5), gagnant contre gagnant strict (§3.D.14.C),
@@ -22,6 +21,12 @@ interface PropsBlocFormulesAvancees {
    */
   onGgStrictChange: (actif: boolean) => void;
   consolante: boolean;
+  /**
+   * La consolante a-t-elle un sens pour cette formule ? Décidé par le parent —
+   * c'est la condition même qui lui fait afficher la case « Consolante », et la
+   * réécrire ici serait la maintenir à deux endroits.
+   */
+  consolantePossible: boolean;
   complementaire: boolean;
   setComplementaire: (v: boolean) => void;
   recupCadrage: boolean;
@@ -37,6 +42,7 @@ export function BlocFormulesAvancees({
   ggStrict,
   onGgStrictChange,
   consolante,
+  consolantePossible,
   complementaire,
   setComplementaire,
   recupCadrage,
@@ -76,10 +82,11 @@ export function BlocFormulesAvancees({
         </label>
       )}
       {/* Même garde que celle qui affiche la case « consolante » dans le
-          parent : sans elle, un `parGroupes` ou un changement de mode
-          laisserait ces cases filles apparaître sur la valeur figée d'un
-          `consolante` désormais sans rapport. */}
-      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && !parGroupes && consolante && (
+          parent — d'où `consolantePossible`, qu'il calcule : sans elle, un
+          `parGroupes` ou un changement de mode laisserait ces cases filles
+          apparaître sur la valeur figée d'un `consolante` désormais sans
+          rapport. */}
+      {consolantePossible && consolante && (
         <>
           <label className="checkbox-label">
             <input

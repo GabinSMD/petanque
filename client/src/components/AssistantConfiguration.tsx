@@ -34,8 +34,14 @@ import {
   preferenceNiveau,
   setPreferenceNiveau,
 } from '../lib/niveauInterface';
-import { getDefauts, setDefauts } from '../lib/defauts';
-import { FORMAT_LABELS, LIBELLE_NIVEAU } from '../lib/labels';
+import { getDefauts, oublierDefauts, setDefauts } from '../lib/defauts';
+import {
+  FORMAT_EMOJI,
+  FORMAT_LABELS,
+  FORMATS,
+  NIVEAU_INTERFACE_LABELS,
+  libelleJoueurs,
+} from '../lib/labels';
 import { BouleLogo } from './BouleLogo';
 
 /**
@@ -59,9 +65,9 @@ function marquerFaite(): void {
  * que les réglages réaffichent les mêmes cartes en format réduit : deux
  * descriptions divergentes du même choix seraient deux occasions de se tromper.
  *
- * Les titres viennent de `LIBELLE_NIVEAU` et ne sont pas recopiés : le bouton ⚙
- * du tableau de bord et la carte de l'assistant doivent nommer le même niveau
- * des mêmes mots, sans quoi l'un des deux finit par dériver.
+ * Les titres viennent de `NIVEAU_INTERFACE_LABELS` et ne sont pas recopiés : le
+ * bouton ⚙ du tableau de bord et la carte de l'assistant doivent nommer le même
+ * niveau des mêmes mots, sans quoi l'un des deux finit par dériver.
  */
 export const PROFILS: Record<
   NiveauInterface,
@@ -69,13 +75,13 @@ export const PROFILS: Record<
 > = {
   amical: {
     emoji: '🎉',
-    titre: LIBELLE_NIVEAU.amical,
+    titre: NIVEAU_INTERFACE_LABELS.amical,
     montre: 'Concours du dimanche entre copains : inscriptions, tirage, poules, tableaux, scores.',
     masque: 'Masque les mises et indemnités, les formules du manuel, les groupes de protection et le multisite.',
   },
   club: {
     emoji: '🏆',
-    titre: LIBELLE_NIVEAU.club,
+    titre: NIVEAU_INTERFACE_LABELS.club,
     montre: 'Concours du club, avec mises, indemnités, clubs des équipes et protections au tirage.',
     // Les quatre domaines que `NIVEAU_MINIMUM` réserve au niveau `federal`, et
     // pas trois : les critères officiels en font partie. Formulation reprise
@@ -87,17 +93,10 @@ export const PROFILS: Record<
   },
   federal: {
     emoji: '📋',
-    titre: LIBELLE_NIVEAU.federal,
+    titre: NIVEAU_INTERFACE_LABELS.federal,
     montre: 'Licences, critères officiels, championnat des clubs, documents remis au comité.',
     masque: 'Tout est affiché.',
   },
-};
-
-const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
-const FORMAT_EMOJI: Record<TeamFormat, string> = {
-  tete_a_tete: '🧍',
-  doublette: '🧍🧍',
-  triplette: '🧍🧍🧍',
 };
 
 const ETAPES = ['Profil', 'Habitudes', 'Prise en main'];
@@ -196,7 +195,24 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
     setStep(0);
   };
 
-  const enregistrerHabitudes = (e: FormEvent) => {
+  /**
+   * Écrit les habitudes — **si elles disent autre chose que le profil**.
+   *
+   * L'écran écrit ses quatre champs quoi qu'il arrive, y compris les deux qu'il
+   * n'affiche pas. Traverser l'assistant en cliquant « Continuer » suffisait
+   * donc à poser un enregistrement, et `aDesDefauts()` répondait « oui » : les
+   * réglages annonçaient « Réglées à la main » avec un bouton « Revenir aux
+   * valeurs du profil » à quelqu'un qui n'avait rien réglé.
+   *
+   * Le remède retenu est le tout ou rien plutôt que l'écriture champ par champ
+   * des seuls écarts. Les deux réparent l'étiquette ; celui-ci ne touche pas au
+   * contrat de `defauts.ts` (`setDefauts` prend un enregistrement complet) et
+   * garde la règle simple à dire : *un enregistrement qui ne répéterait que le
+   * profil n'est pas une personnalisation*. Qui personnalise un seul champ voit
+   * bien les quatre enregistrés — c'est le comportement d'aujourd'hui, et il
+   * fige ses habitudes même s'il change de profil ensuite.
+   */
+  const enregistrerHabitudes = (e: FormEvent, niveauChoisi: NiveauInterface) => {
     e.preventDefault();
     const d: DefautsConcours = {
       nbTerrains,
@@ -206,7 +222,16 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
       // Une mise vide reste absente : proposer un tarif serait l'inventer.
       ...(miseParEquipe === '' ? {} : { miseParEquipe: Number(miseParEquipe) }),
     };
-    setDefauts(d);
+    const profil = defautsDuProfil(niveauChoisi);
+    // La mise n'est jamais dans le profil : en poser une est toujours un écart.
+    const commeLeProfil =
+      d.miseParEquipe === undefined &&
+      d.nbTerrains === profil.nbTerrains &&
+      d.scoreMax === profil.scoreMax &&
+      d.format === profil.format &&
+      d.consolante === profil.consolante;
+    if (commeLeProfil) oublierDefauts();
+    else setDefauts(d);
     setStep(2);
   };
 
@@ -287,7 +312,7 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
           )}
 
           {step === 1 && niveau && (
-            <form onSubmit={enregistrerHabitudes}>
+            <form onSubmit={(e) => enregistrerHabitudes(e, niveau)}>
               <p className="wizard-recap">
                 {PROFILS[niveau].emoji} {PROFILS[niveau].titre}
               </p>
@@ -351,9 +376,7 @@ export function AssistantConfiguration({ onClose }: { onClose: () => void }) {
                   >
                     <span className="format-card-emoji">{FORMAT_EMOJI[f]}</span>
                     <strong>{FORMAT_LABELS[f]}</strong>
-                    <span className="mode-card-tagline">
-                      {f === 'tete_a_tete' ? '1 joueur' : f === 'doublette' ? '2 joueurs' : '3 joueurs'}
-                    </span>
+                    <span className="mode-card-tagline">{libelleJoueurs(f)}</span>
                   </button>
                 ))}
               </div>

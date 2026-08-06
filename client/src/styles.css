@@ -4758,6 +4758,15 @@ form label select {
   box-shadow: none;
 }
 
+/* La bordure d'accent héritée de `.mode-card:hover` ne passe pas non plus :
+   ici, elle marque le niveau actif (voir `.selected` ci-dessous). La laisser
+   donnait au survol d'une carte **non** sélectionnée l'aspect de la carte
+   sélectionnée, sur l'écran dont l'objet est justement de montrer laquelle
+   l'est. Le survol de la carte active, lui, garde son accent. */
+.mode-card-reduite:not(.selected):hover {
+  border-color: var(--line);
+}
+
 /* Cliquer une carte n'avance pas d'écran ici : le niveau actif doit se voir. */
 .mode-card-reduite.selected {
   border-color: var(--accent);

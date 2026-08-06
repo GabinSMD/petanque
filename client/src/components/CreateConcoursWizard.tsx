@@ -7,12 +7,15 @@ import { useDefauts } from '../lib/defauts';
 import {
   CATEGORY_SUGGESTIONS,
   DISCIPLINE_LABELS,
+  FORMAT_EMOJI,
   FORMAT_LABELS,
+  FORMATS,
   MODE_INFO,
   MODE_LABELS,
   isIndividualMode,
   isRondesMode,
   isTirMode,
+  libelleJoueurs,
   suggestedName,
 } from '../lib/labels';
 
@@ -29,12 +32,6 @@ const MODES_COURANTS: ConcoursMode[] = ['poules', 'elimination_directe', 'melee'
  * domaines que `montrer()` masque.
  */
 const MODES_AVANCES: ConcoursMode[] = ['suisse', 'championnat', 'tir_precision'];
-const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
-const FORMAT_EMOJI: Record<TeamFormat, string> = {
-  tete_a_tete: '🧍',
-  doublette: '🧍🧍',
-  triplette: '🧍🧍🧍',
-};
 
 /**
  * Création de concours en 3 étapes pensées pour les novices :
@@ -199,7 +196,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 <span className="format-card-emoji">{FORMAT_EMOJI[f]}</span>
                 <strong>{FORMAT_LABELS[f]}</strong>
                 <span className="mode-card-tagline">
-                  {f === 'tete_a_tete' ? '1 joueur' : f === 'doublette' ? '2 joueurs' : '3 joueurs'}
+                  {libelleJoueurs(f)}
                   {isIndividualMode(mode) && f !== 'tete_a_tete' ? ' tirés au sort' : ''}
                 </span>
               </button>
