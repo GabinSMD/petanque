@@ -32,6 +32,7 @@ import {
 } from '../db/hooks';
 import { teamDisplayName } from '../components/TeamLabel';
 import { FORMAT_LABELS, NIVEAU_LABELS, POULE_SLOT_LABELS, formatDateFr } from '../lib/labels';
+import { formateurTerrain } from '../lib/terrain';
 
 function sideText(m: Match, side: 'A' | 'B', teamsById: Map<string, Team>): string {
   const players = side === 'A' ? m.playersA : m.playersB;
@@ -103,6 +104,8 @@ export function PrintPage() {
   // Bilan des licences (§3.B.6) : le même calcul que la modale avant tirage.
   const bilan = useBilanAvantTirage(concours, teams);
   const [tri, setTri] = useState<TriEquipes>('numero');
+  // Désignation des jeux : numéro, ou lettre peinte au sol (§ « Gestion des Terrains »).
+  const terrainLabel = formateurTerrain(concours ?? {});
   const [toursMasques, setToursMasques] = useState<Set<number>>(new Set());
   const printed = useRef(false);
 
@@ -241,7 +244,7 @@ export function PrintPage() {
               <section key={poule.id} className="print-poule">
                 <h2>
                   Poule {poule.index}
-                  {poule.terrain ? ` — Terrain ${poule.terrain}` : ''}
+                  {poule.terrain ? ` — Terrain ${terrainLabel(poule.terrain)}` : ''}
                 </h2>
                 <ul className="print-poule-teams">
                   {poule.teamIds.map((tid) => {
@@ -301,6 +304,7 @@ export function PrintPage() {
           poules={poules}
           matches={matches}
           maintenant={new Date().toISOString()}
+          terrain={terrainLabel}
         />
       )}
 
@@ -313,18 +317,21 @@ export function PrintPage() {
             matches={matches}
             stage="principal"
             titre="Graphique — tableau principal"
+            terrain={terrainLabel}
           />
           <GraphiqueTableau
             teams={teams}
             matches={matches}
             stage="consolante"
             titre="Graphique — consolante"
+            terrain={terrainLabel}
           />
           <GraphiqueTableau
             teams={teams}
             matches={matches}
             stage="complementaire"
             titre="Graphique — complémentaire"
+            terrain={terrainLabel}
           />
         </>
       )}
@@ -490,7 +497,7 @@ export function PrintPage() {
               <p className="print-ticket-vs">contre</p>
               <p className="print-ticket-team">{t.b}</p>
               <p className="print-ticket-foot">
-                <span>Terrain : {t.terrain ?? '⬜'}</span>
+                <span>Terrain : {t.terrain ? terrainLabel(t.terrain) : '⬜'}</span>
                 <span>
                   Score : <em className="print-box" /> – <em className="print-box" />
                 </span>

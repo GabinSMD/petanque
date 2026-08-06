@@ -1,4 +1,4 @@
-import type { Match } from '../types';
+import type { Match, ModeLibelleTerrain } from '../types';
 import { isByeMatch } from './match';
 
 /**
@@ -35,6 +35,42 @@ export function terrainNumeros(nbTerrains: number, decalage = 0): number[] {
   const out: number[] = [];
   for (let i = 1; i <= nbTerrains; i++) out.push(decalage + i);
   return out;
+}
+
+/**
+ * Les seize lettres de la liste rose de la fenêtre « Gestion des Terrains »
+ * (planche p.58-59) : `Terrain A` … `Terrain P`. Elle s'arrête à P.
+ */
+export const LETTRES_TERRAIN: readonly string[] = [...'ABCDEFGHIJKLMNOP'];
+
+/**
+ * Désignation d'un terrain à l'affichage — le « 5 » de « Terrain 5 », ou le « D »
+ * de « Terrain D ».
+ *
+ * Beaucoup de boulodromes peignent des lettres au sol sur des jeux que le
+ * logiciel numérote. Sans cela, l'organisateur traduit « terrain 9 » en « jeu D »
+ * à chaque annonce, et l'application ne lui sert plus à annoncer.
+ *
+ * C'est un **libellé**, pas un identifiant : `Match.terrain` reste un nombre. La
+ * fenêtre fédérale le suggère elle-même — sa liste lettrée n'a aucune case à
+ * cocher, elle est exclue du compte `TERRAINS DISPONIBLES`, et aucune capture n'y
+ * montre un terrain occupé. Elle ne décrit donc pas un second jeu de terrains en
+ * service, et rendre `Match.terrain` opaque aurait touché 73 sites et
+ * l'arithmétique de `freeTerrains`, `classerTerrainsLibres`, `autoAssignTerrains`
+ * et `terrainsPoule` pour un gain que le manuel n'établit pas.
+ *
+ * Le numéro reprend la main dès qu'aucune lettre ne correspond — au-delà du
+ * seizième jeu, ou en deçà du décalage du concours. Inventer un « Q » donnerait
+ * une désignation que l'organisateur ne trouverait nulle part au sol.
+ */
+export function libelleTerrain(
+  numero: number,
+  mode: ModeLibelleTerrain | undefined,
+  decalage = 0,
+): string {
+  if (mode !== 'lettre') return String(numero);
+  const rang = numero - decalage - 1;
+  return LETTRES_TERRAIN[rang] ?? String(numero);
 }
 
 /** État des `nbTerrains` terrains : la partie live occupant chacun, ou null. */

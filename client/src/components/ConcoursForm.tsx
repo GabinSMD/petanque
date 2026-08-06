@@ -16,6 +16,7 @@ import {
   bornesParties,
   categorieDuDessous,
   championnatsDuJeu,
+  LETTRES_TERRAIN,
   NIVEAUX_FEDERAUX,
   TAILLE_FORMATION,
   codeNiveauFederal,
@@ -31,6 +32,7 @@ import {
   nomConcoursFederal,
   parametresCDF,
   type JeuFederal,
+  type ModeLibelleTerrain,
   type ParametresCDF,
 } from '@shared';
 import type { ConcoursInput } from '../db/actions';
@@ -129,6 +131,10 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
   const miseHeritee = initial?.miseParJoueur === undefined ? initial?.miseParEquipe : undefined;
   const [scoreMax, setScoreMax] = useState(initial?.scoreMax ?? 13);
   const [nbTerrains, setNbTerrains] = useState(initial?.nbTerrains ?? 8);
+  /** Numéro (défaut, et l'état de tous les concours déjà enregistrés) ou lettre. */
+  const [libelleTerrains, setLibelleTerrains] = useState<ModeLibelleTerrain>(
+    initial?.libelleTerrains ?? 'numero',
+  );
   const [planTerrains, setPlanTerrains] = useState(initial?.planTerrains ?? true);
   const [nbRondes, setNbRondes] = useState(initial?.nbRondes ?? 4);
   // Marathon : un championnat tronqué à N rondes. Vide = calendrier complet.
@@ -267,6 +273,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           }),
       scoreMax,
       nbTerrains,
+      // Absent quand c'est le défaut : rien à écrire sur les concours numérotés.
+      libelleTerrains: libelleTerrains === 'numero' ? undefined : libelleTerrains,
       planTerrains,
       nbRondes:
         mode === 'championnat'
@@ -411,6 +419,27 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             value={nbTerrains}
             onChange={(e) => setNbTerrains(Number(e.target.value))}
           />
+        </label>
+        <label>
+          Désignation des jeux
+          <select
+            value={libelleTerrains}
+            onChange={(e) => setLibelleTerrains(e.target.value as ModeLibelleTerrain)}
+          >
+            <option value="numero">Par numéro — Terrain 1, 2, 3…</option>
+            <option value="lettre">Par lettre — Terrain A, B, C…</option>
+          </select>
+          {/* Beaucoup de boulodromes peignent des lettres au sol sur des jeux
+              que le logiciel numérote. La liste fédérale s'arrête à P : au-delà
+              du seizième jeu, le numéro reprend la main plutôt qu'inventer un Q
+              que l'organisateur ne trouverait nulle part. */}
+          {libelleTerrains === 'lettre' && (
+            <small className="form-hint">
+              {nbTerrains > LETTRES_TERRAIN.length
+                ? `Les ${LETTRES_TERRAIN.length} premiers jeux portent A à P ; au-delà, leur numéro.`
+                : `Jeux A à ${LETTRES_TERRAIN[nbTerrains - 1] ?? 'P'}. L'attribution compte toujours en numéros.`}
+            </small>
+          )}
         </label>
         <label>
           Parties en

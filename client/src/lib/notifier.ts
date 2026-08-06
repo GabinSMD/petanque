@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { libelleTerrain } from '@shared';
 import type { Concours, Match, Team } from '@shared';
 import { postJson } from './api';
 import { getSession } from './session';
@@ -51,7 +52,11 @@ export function useCallNotifier(
       matchId: m.id,
       teamNumbers: matchTeamNumbers(m, teamsById),
       title: '🔔 Votre équipe est appelée',
-      body: `${matchLabel(m, poules, matches)}${m.terrain ? ` · Terrain ${m.terrain}` : ''}`,
+      body: `${matchLabel(m, poules, matches)}${
+        m.terrain
+          ? ` · Terrain ${libelleTerrain(m.terrain, concours.libelleTerrains, concours.decalageTerrain)}`
+          : ''
+      }`,
     }));
 
     // Le serveur déduplique : sans abonné, l'appel est simplement ignoré.

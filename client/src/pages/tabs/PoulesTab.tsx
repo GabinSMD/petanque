@@ -21,6 +21,7 @@ import {
   setMatchTerrain,
   updateConcours,
 } from '../../db/actions';
+import { formateurTerrain, type LibelleTerrain } from '../../lib/terrain';
 import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
 import { ProtectionsModal } from '../../components/ProtectionsModal';
@@ -427,16 +428,19 @@ function PouleMatchTerrain({
   locked,
   nbTerrains,
   decalageTerrain,
+  terrain,
 }: {
   match: Match;
   locked: boolean;
   nbTerrains: number;
   decalageTerrain?: number;
+  /** Désigne un terrain comme le concours le demande — « 5 » ou « D ». */
+  terrain: LibelleTerrain;
 }) {
   // Clôturé : affichage seul (pas de modification).
   if (locked) {
     return match.terrain != null ? (
-      <span className="pmatch-terrain pmatch-terrain-set">🟦 Terrain {match.terrain}</span>
+      <span className="pmatch-terrain pmatch-terrain-set">🟦 Terrain {terrain(match.terrain!)}</span>
     ) : null;
   }
 
@@ -463,7 +467,9 @@ function PouleMatchTerrain({
         <option value="">Terrain libre</option>
         {options.map((n) => (
           <option key={n} value={n}>
-            Terrain {n}
+            {/* La valeur reste le **numéro** : c'est lui qu'on enregistre. Seule
+                l'étiquette porte la lettre. */}
+            Terrain {terrain(n)}
           </option>
         ))}
       </select>
@@ -571,6 +577,7 @@ function PouleCard({
                 locked={locked}
                 nbTerrains={concours.nbTerrains}
                 decalageTerrain={concours.decalageTerrain}
+                terrain={formateurTerrain(concours)}
               />
               <MatchRetard match={m} locked={locked} />
             </div>

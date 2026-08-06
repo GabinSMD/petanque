@@ -181,6 +181,13 @@ export type CritereClassification =
   | 'promotion'
   | 'nonClasse';
 
+/**
+ * Comment un concours désigne ses jeux à l'affichage : par leur numéro, ou par
+ * la lettre peinte au sol (`Terrain A` … `Terrain P`, la liste de la fenêtre
+ * fédérale « Gestion des Terrains »).
+ */
+export type ModeLibelleTerrain = 'numero' | 'lettre';
+
 export interface Concours {
   id: string;
   name: string;
@@ -240,6 +247,15 @@ export interface Concours {
    */
   decalageEquipe?: number;
   decalageTerrain?: number;
+  /**
+   * Comment les jeux se désignent à l'affichage : par leur numéro (défaut) ou
+   * par la lettre peinte au sol, `Terrain A` … `Terrain P` comme la liste de la
+   * fenêtre fédérale « Gestion des Terrains ».
+   *
+   * C'est un **libellé** : `Match.terrain` reste un numéro, et l'attribution
+   * comme le tri continuent de compter. Voir `libelleTerrain`.
+   */
+  libelleTerrains?: ModeLibelleTerrain;
   /**
    * Terrains retirés du jeu pendant le concours (manuel §3.D.1.B.5.2) :
    * flaque d'eau, jeu réservé… Ils restent affichés mais ne sont plus

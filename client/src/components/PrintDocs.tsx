@@ -26,6 +26,7 @@ import {
 } from '@shared';
 import { matchLabel, sideName } from '../lib/matchLabel';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS, ETAT_MISE_LABELS } from '../lib/labels';
+import type { LibelleTerrain } from '../lib/terrain';
 
 const maj = (s: string): string => s.toLocaleUpperCase('fr-FR');
 
@@ -431,11 +432,14 @@ export function GraphiqueTableau({
   matches,
   titre,
   stage,
+  terrain,
 }: {
   teams: Team[];
   matches: Match[];
   titre: string;
   stage: 'principal' | 'consolante' | 'complementaire';
+  /** Désigne un terrain comme le concours le demande — « 5 » ou « D ». */
+  terrain: LibelleTerrain;
 }) {
   const sections = presseSections(teams, matches, stage);
   const parTour = new Map(sections.map((s) => [s.round, s]));
@@ -463,7 +467,7 @@ export function GraphiqueTableau({
                       {m.scoreA} – {m.scoreB}
                     </td>
                     <td className={m.gagnant === 'B' ? 'presse-gagnant' : ''}>{nom(m.teamB)}</td>
-                    <td>{m.terrain ? `Terrain ${m.terrain}` : ''}</td>
+                    <td>{m.terrain ? `Terrain ${terrain(m.terrain)}` : ''}</td>
                   </tr>
                 ))}
                 {(section?.matches ?? []).length === 0 && (
@@ -495,11 +499,14 @@ export function PartiesLancees({
   poules,
   matches,
   maintenant,
+  terrain,
 }: {
   teams: Team[];
   poules: Poule[];
   matches: Match[];
   maintenant: string;
+  /** Désigne un terrain comme le concours le demande — « 5 » ou « D ». */
+  terrain: LibelleTerrain;
 }) {
   const teamsById = new Map(teams.map((t) => [t.id, t]));
   const lancees = partiesLancees(matches);
@@ -534,7 +541,7 @@ export function PartiesLancees({
                 <td>
                   {sideName(m, 'A', teamsById)} – {sideName(m, 'B', teamsById)}
                 </td>
-                <td>{m.terrain ?? ''}</td>
+                <td>{m.terrain ? terrain(m.terrain) : ''}</td>
                 <td>{dureeMinutes(m.lanceeA!, maintenant)} min</td>
                 <td>
                   {m.done
