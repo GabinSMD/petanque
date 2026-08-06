@@ -3,6 +3,7 @@ import type { Concours, Match, RolePetanque, Team } from '@shared';
 import {
   besoinTerrains,
   championnatRondes,
+  ecartPartie,
   proposerRondeSupplementaire,
   rondeComplete,
   classementRondes,
@@ -291,7 +292,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
                     {ms.map((m) => (
                       <tr key={m.id}>
                         <td className="match-team">
-                          <SideLabel match={m} side="A" teamsById={teamsById} />
+                          <SideLabel match={m} side="A" teamsById={teamsById} avecEcart />
                         </td>
                         <td className="match-score">
                           <ScoreForm
@@ -302,7 +303,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
                           />
                         </td>
                         <td className="match-team match-team-right">
-                          <SideLabel match={m} side="B" teamsById={teamsById} />
+                          <SideLabel match={m} side="B" teamsById={teamsById} avecEcart />
                         </td>
                         <td className="match-terrain no-print">
                           {!m.byeB && (
@@ -350,13 +351,22 @@ export function SideLabel({
   match,
   side,
   teamsById,
+  avecEcart,
 }: {
   match: Match;
   side: 'A' | 'B';
   teamsById: Map<string, Team>;
+  /**
+   * Afficher l'écart de points de la partie (manuel §3.D.14). Optionnel plutôt
+   * que d'office : l'affichage grand écran du boulodrome se lit de loin, et un
+   * petit chiffre gris n'y apporterait que du bruit.
+   */
+  avecEcart?: boolean;
 }) {
   const bye = side === 'A' ? match.byeA : match.byeB;
   if (bye) return <span className="team-label team-bye">Exempt</span>;
+
+  const ecart = avecEcart ? ecartPartie(match, side) : undefined;
 
   const players = side === 'A' ? match.playersA : match.playersB;
   if (players && players.length > 0) {
@@ -375,10 +385,18 @@ export function SideLabel({
             </span>
           );
         })}
+        {/* En mêlée il n'y a pas de dossard de camp : l'écart se met après la
+            liste. Il vaut pour chacun de ses joueurs, que `rondeStandings`
+            crédite individuellement du score du camp. */}
+        {ecart !== undefined && (
+          <span className="team-ecart" title="Écart de points de cette partie">
+            ({ecart})
+          </span>
+        )}
       </span>
     );
   }
 
   const teamId = side === 'A' ? match.teamAId : match.teamBId;
-  return <TeamLabel team={teamId ? teamsById.get(teamId) : null} compact />;
+  return <TeamLabel team={teamId ? teamsById.get(teamId) : null} compact ecart={ecart} />;
 }
