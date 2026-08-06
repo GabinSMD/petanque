@@ -25,6 +25,42 @@ const CONTINGENTS: ContingentHorsUE[] = ['tous', 'un_externe', 'aucun'];
 /** Formation d'une partie de la rencontre. */
 export type TypePartie = 'tete_a_tete' | 'doublette' | 'triplette';
 
+/**
+ * Lettre d'une équipe de club (manuel §3.E, planche p.114). Un club peut engager
+ * plusieurs équipes dans la même compétition, chacune avec sa fiche.
+ *
+ * **Huit, pas plus.** Le panneau « Choix Equipe » porte exactement huit boutons
+ * — `Equipe A` à `Equipe H` — sans ascenseur, et aucune capture n'en montre un
+ * neuvième. Huit est donc le maximum *attesté* ; je n'affirme pas que ce soit
+ * une limite du règlement, et inventer un `I` serait exactement l'extrapolation
+ * que la lecture du manuel interdit.
+ */
+export type LettreEquipe = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
+
+export const LETTRES_EQUIPE: readonly LettreEquipe[] = [
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'H',
+];
+
+/**
+ * Désignation d'une équipe de club, comme sur la feuille imprimée :
+ * `Equipe A:PET CLUB DU VERCORS` contre `Equipe B:PETANQUE ILE VERTE`.
+ *
+ * Sans lettre, le seul nom du club — un club qui n'engage qu'une équipe n'a pas
+ * à porter une lettre qu'il n'a pas choisie. Sans nom, la seule lettre.
+ */
+export function libelleEquipeClub(lettre: LettreEquipe | undefined, club: string): string {
+  const nom = club.trim();
+  if (!lettre) return nom;
+  return nom ? `Equipe ${lettre}:${nom}` : `Equipe ${lettre}`;
+}
+
 /** Un bloc de la feuille : tant de parties de ce type, valant tant de points. */
 export interface BlocBareme {
   type: TypePartie;
@@ -278,6 +314,14 @@ export interface FeuilleMatch {
   /** Vide : une feuille n'appartient à aucun concours. */
   concoursId: string;
   competition: CompetitionClubId;
+  /**
+   * Lettre de **notre** équipe dans cette compétition (§3.E, « Choix Equipe »).
+   * Absente quand le club n'engage qu'une équipe : la feuille porte alors le seul
+   * nom du club, comme avant ce lot.
+   */
+  equipe?: LettreEquipe;
+  /** Lettre de l'équipe adverse — la feuille imprimée porte les deux. */
+  equipeAdverse?: LettreEquipe;
   maxMutes: number;
   /**
    * Contingent d'étrangers hors UE (§3.E). Porté par la feuille et non par le
@@ -318,6 +362,44 @@ export function placesVides(bareme: BaremeRencontre = BAREME_CDC): { a: string[]
     a: Array<string>(TAILLE_FORMATION[p.type]).fill(''),
     b: Array<string>(TAILLE_FORMATION[p.type]).fill(''),
   }));
+}
+
+/**
+ * « Réinitialiser Fiche A » (manuel §3.E, planche p.114) : remet la **fiche** à
+ * zéro, pas la rencontre.
+ *
+ * Ce que la fiche contient, c'est une composition : le coach ou capitaine et les
+ * huit joueurs. On l'efface, avec ce qui la nomme — les places du verso, qui
+ * portent des noms de joueurs, et les remplacements. Les **signatures** partent
+ * aussi : une signature atteste une composition, celle-ci effacée elle ne
+ * certifie plus rien.
+ *
+ * Ce qui reste : l'identité de la feuille (sa lettre, son club, l'adversaire, la
+ * compétition, la division, la poule, la date) et les **scores déjà
+ * enregistrés**. Ces derniers appartiennent à la rencontre et non à la fiche :
+ * une composition mal saisie se refait sans perdre les résultats du jour.
+ *
+ * Les autres fiches ne sont pas concernées : chacune est une entité distincte, et
+ * cette fonction n'en voit qu'une.
+ *
+ * Les places se reconstruisent d'après les parties de **cette** feuille, jamais
+ * d'après `BAREME_CDC` : le barème « varie d'un comité et d'un championnat à
+ * l'autre », et le figer ici rendrait onze places à une feuille qui n'en a que
+ * deux.
+ */
+export function reinitialiserFiche(feuille: FeuilleMatch): FeuilleMatch {
+  return {
+    ...feuille,
+    capitaineNom: '',
+    capitaineLicence: '',
+    licences: [],
+    places: feuille.parties.map((p) => ({
+      a: Array<string>(TAILLE_FORMATION[p.type]).fill(''),
+      b: Array<string>(TAILLE_FORMATION[p.type]).fill(''),
+    })),
+    remplacements: { a: {}, b: {} },
+    signatures: { a: null, b: null },
+  };
 }
 
 /** Feuille neuve, prête à remplir. */

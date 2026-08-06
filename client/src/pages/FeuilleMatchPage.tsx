@@ -4,6 +4,7 @@ import type { Licencie, Player } from '@shared';
 import {
   BAREME_CDC,
   COMPETITIONS_CLUB,
+  LETTRES_EQUIPE,
   categorieAgeDe,
   controlerEquipe,
   criteresCompetition,
@@ -12,12 +13,15 @@ import {
   parseLicenceQr,
   bilanRencontre,
   empreinteFeuille,
+  libelleEquipeClub,
   partiesVides,
+  reinitialiserFiche,
   pointsEnJeu,
   type ChampLicence,
   type CompetitionClubId,
   type ContingentHorsUE,
   type FeuilleMatch,
+  type LettreEquipe,
 } from '@shared';
 import { useFeuilleMatch, useLicencies } from '../db/hooks';
 import { updateFeuilleMatch } from '../db/actions';
@@ -106,9 +110,12 @@ export function FeuilleMatchPage() {
       date: etat.date,
       division: etat.division,
       poule: etat.poule,
-      clubA: etat.club,
+      // `libelleEquipeClub` est l'identité sur une feuille sans lettre : ajouter
+      // une clé `equipeA` aurait changé l'empreinte de **toutes** les feuilles,
+      // signées comprises, puisque `contenuSigne` parcourt tout l'en-tête.
+      clubA: libelleEquipeClub(etat.equipe, etat.club),
       numeroClubA: etat.numeroClub,
-      clubB: etat.adversaire,
+      clubB: libelleEquipeClub(etat.equipeAdverse, etat.adversaire),
       numeroClubB: etat.numeroClubAdverse,
       heureDebut: etat.heureDebut,
       heureFin: etat.heureFin,
@@ -187,7 +194,9 @@ export function FeuilleMatchPage() {
     .filter(Boolean)
     .join(' — ');
   const corpsCourriel = [
-    `${etat.club || 'Notre club'} contre ${etat.adversaire || 'l\'adversaire'}`,
+    `${libelleEquipeClub(etat.equipe, etat.club) || 'Notre club'} contre ${
+      libelleEquipeClub(etat.equipeAdverse, etat.adversaire) || 'l\'adversaire'
+    }`,
     `${formatDateFr(etat.date)}${etat.heureDebut ? ` — début ${etat.heureDebut}` : ''}`,
     '',
     `Résultat : ${bilanFeuille.totalA} - ${bilanFeuille.totalB}` +
@@ -389,6 +398,55 @@ export function FeuilleMatchPage() {
             />
           </label>
         </div>
+        {/* « Choix Equipe » (§3.E, planche p.114) : un club peut engager
+            plusieurs équipes dans la même compétition, chacune avec sa fiche.
+            Huit lettres, comme le panneau fédéral — pas de neuvième. */}
+        <div className="form-row">
+          <label>
+            Notre équipe
+            <select
+              value={etat.equipe ?? ''}
+              onChange={(e) =>
+                maj({ equipe: e.target.value ? (e.target.value as LettreEquipe) : undefined })
+              }
+            >
+              {/* Sans lettre : le club n'engage qu'une équipe. C'est aussi l'état
+                  des feuilles d'avant ce lot, dont l'empreinte ne doit pas bouger. */}
+              <option value="">— une seule équipe —</option>
+              {LETTRES_EQUIPE.map((l) => (
+                <option key={l} value={l}>
+                  Equipe {l}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Équipe adverse
+            <select
+              value={etat.equipeAdverse ?? ''}
+              onChange={(e) =>
+                maj({
+                  equipeAdverse: e.target.value ? (e.target.value as LettreEquipe) : undefined,
+                })
+              }
+            >
+              <option value="">— une seule équipe —</option>
+              {LETTRES_EQUIPE.map((l) => (
+                <option key={l} value={l}>
+                  Equipe {l}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {etat.equipe && (
+          <p className="hint">
+            Cette feuille est celle de <strong>{libelleEquipeClub(etat.equipe, etat.club)}</strong>.
+            Les autres fiches du club vivent dans leurs propres feuilles, et cette remise à zéro ne
+            les touche pas.
+          </p>
+        )}
+
         <p className="hint">
           {competition.label} · {competition.sexe === 'feminin' ? 'féminin' : 'ouvert'} ·{' '}
           {competition.categorieAge
@@ -423,8 +481,25 @@ export function FeuilleMatchPage() {
         />
         <span className="toolbar-actions">
           {etat.licences.length > 0 && (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => maj({ licences: [] })}>
-              🗑 Réinitialiser l'équipe
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                const quoi = etat.equipe ? `la fiche ${etat.equipe}` : 'cette fiche';
+                if (
+                  !window.confirm(
+                    `Vider la composition de ${quoi} ? Les scores déjà saisis sont gardés.`,
+                  )
+                )
+                  return;
+                // `reinitialiserFiche` et non `licences: []` : vider la seule
+                // composition laissait les places (qui nomment les joueurs
+                // effacés) et surtout la **signature**, qui certifiait alors une
+                // composition disparue.
+                void updateFeuilleMatch(reinitialiserFiche(etat));
+              }}
+            >
+              🗑 Réinitialiser {etat.equipe ? `Fiche ${etat.equipe}` : 'la fiche'}
             </button>
           )}
           <button
@@ -476,8 +551,14 @@ export function FeuilleMatchPage() {
         <h2>Feuille de rencontre — {competition.label}</h2>
         <p>
           {formatDateFr(etat.date)}
-          {etat.club ? ` · ${etat.club}` : ''}
-          {etat.adversaire ? ` contre ${etat.adversaire}` : ''}
+          {/* `Equipe A:PET CLUB DU VERCORS` contre `Equipe B:PETANQUE ILE VERTE`,
+              comme la feuille fédérale. Sans lettre, le seul nom du club. */}
+          {libelleEquipeClub(etat.equipe, etat.club)
+            ? ` · ${libelleEquipeClub(etat.equipe, etat.club)}`
+            : ''}
+          {libelleEquipeClub(etat.equipeAdverse, etat.adversaire)
+            ? ` contre ${libelleEquipeClub(etat.equipeAdverse, etat.adversaire)}`
+            : ''}
         </p>
       </div>
 
