@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, PhotoConcours, Poule, Team } from '@shared';
-import { TAILLE_FORMATION, libelleTerrain, EMPLACEMENTS_PHOTO, evolutionEnTexte, photosPubliables, pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
+import { TAILLE_FORMATION, libelleTerrain, EMPLACEMENTS_PHOTO, photoEntete, evolutionEnTexte, photosPubliables, pouleOutcome, classementRondes, rondesTirees, winnerOf } from '@shared';
 import { formateurTerrain } from '../lib/terrain';
 import { matchLabel, pendingMatchesForTeam, sideName, teamSideInMatch } from '../lib/matchLabel';
 import { followedTeams, pushSupported, subscribeForTeams } from '../lib/push';
@@ -118,6 +118,7 @@ export function PublicPage() {
   }
 
   const { concours, matches } = data;
+  const banniere = photoEntete(data.photos ?? []);
   const principal = matches.filter((m) => m.stage === 'principal');
   const maxRound = principal.length ? Math.max(...principal.map((m) => m.round)) : 0;
   const finale = principal.find((m) => m.round === maxRound && m.position === 0);
@@ -126,6 +127,18 @@ export function PublicPage() {
 
   return (
     <div className="public-page">
+      {/* Bannière en tête de page (manuel, paramétrage FTP : « Photo Haut de
+          Page »). Comme les photos du podium, elle ne s'affiche qu'avec un accord
+          constaté — `photoEntete` applique les mêmes quatre garde-fous, et un
+          serveur d'une autre version pourrait ne pas les appliquer. */}
+      {banniere && (
+        <img
+          className="public-banniere"
+          src={banniere.image}
+          alt=""
+          loading="lazy"
+        />
+      )}
       <header className="public-head">
         <h1>{concours.name}</h1>
         <p className="concours-meta">

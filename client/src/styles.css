@@ -375,6 +375,44 @@ input:disabled, select:disabled, input[readonly] {
   margin: 1rem 0;
 }
 
+/*
+ * Bannière en tête de la page publique (manuel, « Photo Haut de Page »).
+ * Détachée du podium : elle habille le document, elle n'illustre pas un résultat.
+ */
+.photos-entete {
+  margin: 1.2rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.photo-entete-apercu {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.photo-entete-apercu img {
+  max-width: min(100%, 320px);
+  max-height: 90px;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+
+/*
+ * La bannière sur la page publiée. `object-fit: contain` plutôt que `cover` :
+ * un logo de partenaire recadré n'est plus son logo.
+ */
+.public-banniere {
+  display: block;
+  width: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  margin-bottom: 0.8rem;
+  border-radius: var(--radius);
+}
+
 .liste-photos,
 .public-photos {
   list-style: none;

@@ -4,6 +4,7 @@ import type { Concours } from '@shared';
 import { api, postJson } from '../lib/api';
 import { getSession } from '../lib/session';
 import { Modal } from './Modal';
+import { BanniereEntete } from './PhotosPodium';
 
 interface Props {
   concours: Concours;
@@ -83,6 +84,14 @@ export function ShareModal({ concours, onClose }: Props) {
 
   return (
     <Modal title="🔗 Partager les résultats" onClose={onClose}>
+      {/* La bannière habille la page publiée : sa place est ici, avec le lien, et
+          non sous les photos du podium — l'onglet Résultats ne s'affiche pas
+          avant la première partie, si bien qu'un club n'aurait pas pu poser son
+          logo avant le concours.
+
+          Hors de la condition « compte requis », comme les photos du podium :
+          l'image se stocke sur l'appareil et s'applique dès qu'un lien existe. */}
+      <BanniereEntete concours={concours} />
       {guest ? (
         <p className="hint">
           Le lien public nécessite un compte (les résultats sont servis par le serveur).
