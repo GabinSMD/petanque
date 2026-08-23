@@ -133,3 +133,84 @@ export function PhotosPodium({ concours }: { concours: Concours }) {
     </div>
   );
 }
+
+/**
+ * Bannière en tête de la page publiée (manuel, paramétrage FTP planche p.61 :
+ * « Photo Haut de Page : Non / Oui », l'exemple montrant un encart de partenaire).
+ *
+ * Son accord est **distinct** de celui du podium, et sa formulation couvre les
+ * deux cas : un logo de partenaire demande une autorisation de diffusion, et une
+ * photo de groupe — que rien n'empêche d'y mettre — demande l'accord des
+ * personnes. Exempter cet emplacement aurait fait de lui la porte de sortie de la
+ * règle du podium.
+ */
+export function BanniereEntete({ concours }: { concours: Concours }) {
+  const photos = usePhotos(concours.id) ?? [];
+  const [accord, setAccord] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
+
+  /** La plus récente des bannières enregistrées, accord constaté ou non. */
+  let actuelle: PhotoConcours | undefined;
+  for (const ph of photos) {
+    if (ph.emplacement !== 'entete') continue;
+    if (!actuelle || actuelle.updatedAt < ph.updatedAt) actuelle = ph;
+  }
+
+  const ajouter = async (fichier: File): Promise<void> => {
+    setErreur(null);
+    setEnCours(true);
+    try {
+      const image = await reduire(fichier);
+      const verdict = photoAcceptable(image);
+      if (!verdict.ok) {
+        setErreur(verdict.raison);
+        return;
+      }
+      await enregistrerPhoto(concours.id, 'entete', image);
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : 'Image illisible.');
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  return (
+    <div className="photos-entete">
+      <h3>🖼 Bannière en tête de la page publique</h3>
+      <p className="hint">
+        Facultative : le logo du club ou d'un partenaire, affiché au-dessus des résultats sur le
+        lien de partage.
+      </p>
+      <label className="checkbox-label">
+        <input type="checkbox" checked={accord} onChange={(e) => setAccord(e.target.checked)} />
+        Je suis autorisé à diffuser cette image — et si des personnes y figurent, elles m'ont donné
+        leur accord
+      </label>
+      {erreur && <p className="form-error">{erreur}</p>}
+      {actuelle ? (
+        <div className="photo-entete-apercu">
+          <img src={actuelle.image} alt="Bannière de la page publique" />
+          <button className="btn btn-ghost btn-sm" onClick={() => void supprimerPhoto(actuelle.id)}>
+            🗑 Retirer la bannière
+          </button>
+        </div>
+      ) : (
+        <label className={accord ? 'btn btn-ghost btn-sm' : 'btn btn-ghost btn-sm disabled'}>
+          {enCours ? 'Ajout…' : '🖼 Choisir la bannière'}
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            disabled={!accord || enCours}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (f) void ajouter(f);
+            }}
+          />
+        </label>
+      )}
+    </div>
+  );
+}

@@ -23,7 +23,19 @@
  * pas le vérifier, seulement refuser de publier sans lui.
  */
 
-export type EmplacementPhoto = 'vainqueur' | 'demi1' | 'demi2' | 'demi3' | 'demi4';
+/**
+ * Où une image se place. Les cinq premières sont les places du podium ; `entete`
+ * est la bannière en tête de la page publiée (paramétrage FTP du manuel, planche
+ * p.61 : « Photo Haut de Page : Non / Oui », l'exemple montrant un encart de
+ * partenaire).
+ */
+export type EmplacementPhoto =
+  | 'vainqueur'
+  | 'demi1'
+  | 'demi2'
+  | 'demi3'
+  | 'demi4'
+  | 'entete';
 
 export interface PhotoConcours {
   id: string;
@@ -39,7 +51,11 @@ export interface PhotoConcours {
   updatedAt: string;
 }
 
-/** Les cinq emplacements du manuel, dans l'ordre du podium. */
+/**
+ * Les cinq emplacements du **podium**, dans son ordre. `entete` n'y figure pas
+ * volontairement : cette liste alimente la grille de saisie du podium et le tri
+ * de `photosPubliables`, où une bannière de partenaire n'a pas de place.
+ */
 export const EMPLACEMENTS_PHOTO: { id: EmplacementPhoto; label: string }[] = [
   { id: 'vainqueur', label: 'Vainqueur' },
   { id: 'demi1', label: '1re demi-finaliste' },
@@ -78,6 +94,39 @@ export function photoAcceptable(image: string): PhotoRefusee {
 const ORDRE = new Map(EMPLACEMENTS_PHOTO.map((e, i) => [e.id, i]));
 
 /**
+ * Une image est-elle diffusable ? Les mêmes quatre garde-fous pour toutes : accord
+ * constaté, image véritable, poids plafonné, emplacement connu.
+ */
+function diffusable(p: PhotoConcours): boolean {
+  if (!p.consentement || !p.image) return false;
+  return photoAcceptable(p.image).ok !== false;
+}
+
+/**
+ * Bannière en tête de la page publiée, ou rien.
+ *
+ * **Le consentement s'applique ici comme au podium.** Il aurait pu sembler
+ * superflu — une bannière de partenaire n'est pas une photo de personne — mais
+ * trois raisons l'imposent : nous ne pouvons pas distinguer un logo d'une photo
+ * de groupe, et rien n'empêchera un organisateur d'y mettre la seconde ; la
+ * surface de publication est **la même** page à jeton, avec le même risque
+ * d'indexation après suppression ; et un logo de partenaire a lui aussi besoin
+ * d'une autorisation de diffusion. Une seule déclaration couvre les deux cas.
+ *
+ * La plus récente gagne, comme au podium : remplacer une bannière ne demande pas
+ * de supprimer l'ancienne d'abord.
+ */
+export function photoEntete(photos: PhotoConcours[]): PhotoConcours | undefined {
+  let choisie: PhotoConcours | undefined;
+  for (const p of photos) {
+    if (p.emplacement !== 'entete') continue;
+    if (!diffusable(p)) continue;
+    if (!choisie || choisie.updatedAt < p.updatedAt) choisie = p;
+  }
+  return choisie;
+}
+
+/**
  * Les photos réellement publiables, une par emplacement, dans l'ordre du
  * podium. La plus récente gagne : reprendre une photo remplace la précédente
  * sans qu'il faille supprimer d'abord.
@@ -86,8 +135,7 @@ export function photosPubliables(photos: PhotoConcours[]): PhotoConcours[] {
   const parEmplacement = new Map<EmplacementPhoto, PhotoConcours>();
   for (const p of photos) {
     if (!ORDRE.has(p.emplacement)) continue;
-    if (!p.consentement || !p.image) continue;
-    if (photoAcceptable(p.image).ok === false) continue;
+    if (!diffusable(p)) continue;
     const actuelle = parEmplacement.get(p.emplacement);
     if (!actuelle || actuelle.updatedAt < p.updatedAt) parEmplacement.set(p.emplacement, p);
   }
