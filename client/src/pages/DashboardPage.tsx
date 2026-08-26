@@ -19,13 +19,13 @@ import { annoncerNouveautes } from '../help/nouveautesState';
 import { useSession } from '../db/hooks';
 import {
   FORMAT_LABELS,
-  MODE_INFO,
-  MODE_LABELS,
   dateLongFr,
   entrantWord,
   formatDateFr,
   isTirMode,
   statusLabel,
+  modeInfo,
+  modeLabel,
 } from '../lib/labels';
 import type { Concours } from '@shared';
 import { designationCategorie, partitionArchives } from '@shared';
@@ -304,7 +304,7 @@ export function DashboardPage() {
                   )}
                   {!isTirMode(c.mode) && <span className="tag">{FORMAT_LABELS[c.format]}</span>}
                   <span className="tag">
-                    {MODE_INFO[c.mode].emoji} {MODE_LABELS[c.mode]}
+                    {modeInfo(c.mode).emoji} {modeLabel(c.mode)}
                   </span>
                   {c.consolante && <span className="tag">Consolante</span>}
                 </p>

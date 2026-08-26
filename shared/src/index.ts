@@ -1,6 +1,7 @@
 export * from './types';
 export * from './engine/ctx';
 export * from './engine/match';
+export * from './engine/modes';
 export * from './engine/progressif';
 export * from './engine/protections';
 export * from './engine/qualification';

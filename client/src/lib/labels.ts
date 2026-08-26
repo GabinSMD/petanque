@@ -1,5 +1,12 @@
 import type { CategorieCritere, ConcoursMode, ConcoursStatus, EtatMise, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
 import type { AnomalieEquipe, ChampLicence } from '@shared';
+import {
+  accepteConsolante,
+  estModeConnu,
+  estModeIndividuel,
+  estModeRondes,
+  estModeTir,
+} from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
   petanque: 'Pétanque',
@@ -74,19 +81,17 @@ export const FORMULE_CHOICES: Formule[] = [
   'abc_cd53',
 ];
 
+/**
+ * Ce qu'on **dit** d'une formule. Ce qu'elle **implique** — rondes, inscriptions
+ * individuelles, tir, consolante — est dans `shared/engine/modes`, où les règles
+ * se testent : lues ici sans garde, elles faisaient disparaître tout l'écran
+ * d'un concours au premier mode inconnu.
+ */
 export interface ModeInfo {
   emoji: string;
   /** Accroche en langage courant, pour les novices. */
   tagline: string;
   description: string;
-  /** Inscriptions individuelles (équipes tirées au sort à chaque ronde). */
-  individual?: boolean;
-  /** Formule « en rondes » (pas d'élimination, classement final). */
-  rondes?: boolean;
-  /** Discipline en séries de tir (pas de parties). */
-  tir?: boolean;
-  /** La consolante a du sens pour cette formule. */
-  consolante?: boolean;
 }
 
 export const MODE_INFO: Record<ConcoursMode, ModeInfo> = {
@@ -95,49 +100,82 @@ export const MODE_INFO: Record<ConcoursMode, ModeInfo> = {
     tagline: 'Le classique des concours officiels',
     description:
       'Poules de 3 ou 4 équipes avec barrage : 2 qualifiés par poule, puis tableau final. Le déroulement FFPJP.',
-    consolante: true,
   },
   elimination_directe: {
     emoji: '⚡',
     tagline: 'Rapide : qui perd sort',
     description:
       'Un tableau à la coupe, tiré au sort. Avec la consolante, les perdants du 1er tour rejouent dans un second tableau.',
-    consolante: true,
   },
   melee: {
     emoji: '🎲',
     tagline: 'Idéal club & amis — chacun pour soi',
     description:
       'Chacun s\'inscrit seul : les équipes sont tirées au sort à chaque ronde (une triplette peut rencontrer une doublette) et le classement est individuel.',
-    individual: true,
-    rondes: true,
   },
   suisse: {
     emoji: '⚖️',
     tagline: 'Personne n\'est éliminé',
     description:
       'Tout le monde joue le même nombre de parties : à chaque ronde, les équipes de niveau égal se rencontrent. Classement aux victoires puis au goal-average.',
-    rondes: true,
   },
   championnat: {
     emoji: '🏅',
     tagline: 'Chacun rencontre chacun',
     description:
       'Toutes les rencontres sont jouées (idéal jusqu\'à 8 équipes environ). Le calendrier complet est généré d\'un coup.',
-    rondes: true,
   },
   tir_precision: {
     emoji: '🏹',
     tagline: 'La discipline de précision',
     description:
       'Chaque tireur réalise des séries de 20 boules sur 5 ateliers (100 points max). Classement à la meilleure série, départage au total.',
-    individual: true,
-    tir: true,
   },
 };
 
+/**
+ * Repli quand la formule n'est pas de celles que cette version connaît — un
+ * concours reçu d'un appareil plus récent, ou un import de sauvegarde.
+ *
+ * On montre la valeur brute : l'organisateur peut la rapporter, là où un « ? »
+ * muet ne dirait rien. C'est ce qui distingue un affichage dégradé d'un écran
+ * blanc.
+ */
+function modeInconnu(mode: ConcoursMode): ModeInfo {
+  return {
+    emoji: '❓',
+    tagline: 'Formule inconnue de cette version',
+    description: `Ce concours annonce la formule « ${String(mode)} », que cette version ne connaît pas. Les équipes et les résultats déjà saisis restent accessibles ; mettez l'application à jour pour la gérer.`,
+  };
+}
+
+/**
+ * Libellés d'une formule, avec repli.
+ *
+ * On demande à `estModeConnu` — la même source que les règles — plutôt que de
+ * reposer la question ici. Et surtout pas `MODE_INFO[mode] ?? …` : un `Record`
+ * interrogé avec une clé venue de la base répond pour les propriétés héritées
+ * d'`Object`, si bien que `MODE_INFO['constructor']` rend une fonction, le `??`
+ * ne se déclenche pas, et l'écran affiche du vide.
+ */
+export function modeInfo(mode: ConcoursMode): ModeInfo {
+  return estModeConnu(mode) ? MODE_INFO[mode] : modeInconnu(mode);
+}
+
+/** Nom d'une formule, avec repli — même source que `modeInfo`. */
+export function modeLabel(mode: ConcoursMode): string {
+  return estModeConnu(mode) ? MODE_LABELS[mode] : `Formule « ${String(mode)} »`;
+}
+
+/** Nom d'une formation, avec repli — même garde. */
+export function formatLabel(format: TeamFormat): string {
+  return Object.hasOwn(FORMAT_LABELS, format)
+    ? FORMAT_LABELS[format]
+    : `Formation « ${String(format)} »`;
+}
+
 export function isTirMode(mode: ConcoursMode): boolean {
-  return MODE_INFO[mode].tir === true;
+  return estModeTir(mode);
 }
 
 /** Libellé de statut contextualisé (les séries du tir sont des « rondes »). */
@@ -147,11 +185,11 @@ export function statusLabel(mode: ConcoursMode, status: ConcoursStatus): string 
 }
 
 export function isRondesMode(mode: ConcoursMode): boolean {
-  return MODE_INFO[mode].rondes === true;
+  return estModeRondes(mode);
 }
 
 export function isIndividualMode(mode: ConcoursMode): boolean {
-  return MODE_INFO[mode].individual === true;
+  return estModeIndividuel(mode);
 }
 
 export function entrantWord(mode: ConcoursMode, plural = false): string {
@@ -224,7 +262,7 @@ export function suggestedName(mode: ConcoursMode, format: TeamFormat, date: stri
     championnat: 'Championnat',
     tir_precision: 'Tir de précision',
   };
-  const f = FORMAT_LABELS[format].toLowerCase();
+  const f = formatLabel(format).toLowerCase();
   const fPlural = format === 'tete_a_tete' ? f : `${f}s`;
   return `${prefix[mode]} ${fPlural} du ${formatDateFr(date)}`;
 }

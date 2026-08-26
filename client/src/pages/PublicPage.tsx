@@ -19,6 +19,8 @@ import {
   isRondesMode,
   isTirMode,
   statusLabel,
+  formatLabel,
+  modeLabel,
 } from '../lib/labels';
 
 interface PublicDeclaration {
@@ -144,7 +146,7 @@ export function PublicPage() {
         <p className="concours-meta">
           {formatDateFr(concours.date)}
           {concours.lieu ? ` · ${concours.lieu}` : ''} · {FORMAT_LABELS[concours.format]} ·{' '}
-          {MODE_LABELS[concours.mode]}
+          {modeLabel(concours.mode)}
         </p>
         <p className="public-status">
           <span className={`status-chip status-${concours.status}`}>
@@ -294,7 +296,7 @@ function RegisterCard({ concours, token }: { concours: Concours; token: string }
     <section className="result-section declare-card">
       <h2>✍️ Je m'inscris au concours</h2>
       <p className="hint">
-        {individual ? 'Inscrivez-vous' : `Formez votre ${FORMAT_LABELS[concours.format].toLowerCase()}`}{' '}
+        {individual ? 'Inscrivez-vous' : `Formez votre ${formatLabel(concours.format).toLowerCase()}`}{' '}
         — l'organisateur validera votre demande.
       </p>
       <form className="declare-form" onSubmit={(e) => void submit(e)}>

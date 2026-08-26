@@ -28,10 +28,10 @@ import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS, ETAT_MISE_LABELS } from '../..
 import { RegistrationsPanel } from '../../components/RegistrationsPanel';
 import { exportListeSpecifique } from '../../lib/export';
 import {
-  FORMAT_LABELS,
   ROLE_ABREGE,
   ROLE_LABELS,
   isIndividualMode,
+  formatLabel,
 } from '../../lib/labels';
 
 interface Props {
@@ -767,7 +767,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
           (summary ? ` → ${summary}` : ' — effectif incompatible avec des poules (4, 6, 7, 8… équipes)')}
         {individual &&
           teams.length > 1 &&
-          ` → ${FORMAT_LABELS[concours.format].toLowerCase()}s tirées au sort à chaque ronde`}
+          ` → ${formatLabel(concours.format).toLowerCase()}s tirées au sort à chaque ronde`}
       </p>
 
       {trackPaid && engagements > 0 && (

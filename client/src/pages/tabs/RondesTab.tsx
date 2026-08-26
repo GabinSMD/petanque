@@ -19,11 +19,11 @@ import { PhasesFinalesPanel } from '../../components/PhasesFinalesPanel';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
 import { formateurTerrain } from '../../lib/terrain';
 import {
-  MODE_INFO,
   ROLE_ABREGE,
   ROLE_LABELS,
   entrantWord,
   isIndividualMode,
+  modeInfo,
 } from '../../lib/labels';
 
 interface Props {
@@ -134,7 +134,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
           <h2>{concours.mode === 'championnat' ? 'Calendrier du championnat' : 'Première ronde'}</h2>
           <p>
             {active.length} {entrantWord(concours.mode, active.length > 1)} (hors forfaits).{' '}
-            {MODE_INFO[concours.mode].description}
+            {modeInfo(concours.mode).description}
           </p>
           {concours.mode !== 'championnat' ? (
             <p className="hint">
