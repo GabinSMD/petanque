@@ -1,365 +1,507 @@
-# 🎯 Pétanque Concours — gestion de concours en SaaS, avec mode hors-ligne
+<a name="readme-top"></a>
 
-Application web de gestion de concours de pétanque inspirée du logiciel
-[FFPJP Gestion Concours](https://www.ffpjp-gestion-concours.com/), repensée en
-**SaaS multi-clubs** avec un **mode hors-ligne complet** : l'application
-fonctionne intégralement sans connexion au boulodrome (tirages, saisie des
-scores, tableaux) et se synchronise dès que le réseau revient.
+<!-- PROJECT SHIELDS -->
+[![Contributors][contributors-shield]][contributors-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![AGPL-3.0 License][license-shield]][license-url]
+![Offline-first][offline-shield]
 
-## Deux usages, une application
+<!-- PROJECT HEADER -->
+<br />
+<div align="center">
 
-Un club qui organise des concours amicaux n'a que faire du fichier des
-licenciés, du championnat des clubs ou des documents remis au comité. Le
-**mode fédéral** (⚙ Réglages) masque tout cela ; décoché, l'application s'en
-tient aux inscriptions, au tirage, aux poules, aux tableaux, aux scores et aux
-indemnités.
+<h3 align="center">🎯 Pétanque Concours</h3>
 
-Ce réglage ne change **que l'affichage**, jamais le comportement : un concours
-déjà déclaré officiel continue de contrôler ses licences, et ses écrans restent
-visibles sur lui. Il s'active de lui-même si un concours officiel existe ou si
-un fichier de licenciés a été importé — on ne cache pas à un organisateur une
-fonction dont il se sert.
+  <p align="center">
+    Multi-club SaaS for running pétanque competitions — with a genuinely complete offline mode.
+    Draws, scoring and brackets all work with no network at the boulodrome, and sync when it returns.
+    <br />
+    <a href="#features"><strong>See the features »</strong></a>
+    <br />
+    <br />
+    <a href="./docs/DEPLOIEMENT.md">Deployment guide</a>
+    ·
+    <a href="https://github.com/GabinSMD/petanque/issues">Report bug</a>
+    ·
+    <a href="https://github.com/GabinSMD/petanque/issues">Request feature</a>
+  </p>
+</div>
 
-## Fonctionnalités
+> **Language note** — the application, its help content and its documentation are in French:
+> it implements the FFPJP (French pétanque federation) rulebook for French clubs. This README is
+> in English because the repository is public.
 
-### Gestion sportive
-- **Concours** en tête-à-tête, doublette ou triplette ; parties en 13 points
-  (configurable, ex. 11) ; nombre de terrains ; parties en temps limité
-  (indication de durée).
-- **Toutes les formules de jeu** :
-  - **Poules puis élimination** (le classique FFPJP) ;
-  - **Élimination directe** (avec consolante possible) ;
-  - **Formules fédérales A-B-C** (manuel FFPJP §3.D.8 à §3.D.12) : les
-    perdants sont reversés d'un tableau à l'autre — consolante, complémentaire,
-    et récupération des perdants du 2ᵉ tour du principal au cadrage de la
-    consolante (ou au complémentaire, variante CD19) ;
-  - **Formule par groupes A-B-C** (manuel §3.D.5) : groupes de 4 **sans
-    barrage**, dont l'issue se lit au nombre de victoires — 2 victoires au
-    concours A, 1 victoire au B (les **deux** équipes), 0 au C. Personne ne
-    rentre après deux parties ;
-  - **Mêlée tournante** : inscriptions individuelles, équipes tirées au sort
-    à chaque ronde — effectifs inégaux gérés comme sur le terrain (une
-    triplette peut rencontrer une doublette, personne n'est exempt),
-    classement individuel ;
-  - **Système suisse** : ronde 1 aléatoire puis appariement par classement
-    sans revanche, exempt gagnant 13-7 en effectif impair (jamais deux fois
-    le même) ;
-  - **Championnat toutes rondes** : calendrier complet généré d'un coup
-    (méthode du cercle), ronde de repos en effectif impair.
-- **Classements en rondes** : victoires, puis goal-average, puis points
-  marqués — mis à jour en direct à chaque saisie.
-- **Phases finales après les rondes** (manuel §3.D.15) : le classement bascule
-  en élimination directe dans le même concours, sans export intermédiaire. Les
-  deux configurations fédérales sont proposées — 1/8 A + 1/8 B, ou 1/4 A + 1/4 B
-  + 1/4 C : chaque tranche du classement joue son propre concours. Égalités
-  départagées par confrontation directe, et interversion à la main de ce qu'elle
-  ne tranche pas.
-- **Inscriptions** : équipes numérotées, joueurs avec n° de licence optionnel,
-  club, forfaits, verrouillage après tirage — avec un **mode modification**
-  (manuel §3.B.8) pour remplacer ou ajouter un joueur après le tirage sans y
-  toucher : ni les dossards, ni les places au tableau.
-- **Poules à la FFPJP** : poules de 4 complétées par des poules de 3
-  (7 → 1×4 + 1×3, 9 → 3×3…), enchaînement automatique
-  *1ère partie / 2e partie → gagnants / perdants → barrage*, qualification du
-  1er (2 victoires) et du 2e (barrage), option « éviter deux équipes du même
-  club dans une poule ».
-- **Tableau final** : génération à l'issue des poules — exempts prioritaires
-  aux premiers, premier contre second d'une autre poule au 1er tour, 1er et 2e
-  d'une même poule placés dans des moitiés opposées ; tour de **cadrage**
-  automatique quand l'effectif n'est pas une puissance de 2 ; libellés
-  officiels (8èmes, quarts, demi-finales, finale).
-- **Élimination directe** (sans poules) avec les mêmes règles de cadrage.
-- **Consolante** : repêchage des éliminés de poules, ou des perdants du 1er
-  tour en élimination directe (places « perdant de la partie N » remplies au
-  fil des résultats).
-- **Saisie des scores** avec validation (13 points, pas de nul), **correction
-  en cascade** : corriger une partie amont réinitialise proprement tout ce qui
-  en dépendait.
-- **Terrains** affectés automatiquement aux premières parties, modifiables
-  partie par partie.
-- **Classement** : vainqueur, finaliste, demi-finalistes, éliminés par tour,
-  issue des poules, consolante.
-- **Affichage public** (TV / vidéoprojecteur) : page dédiée en lecture seule,
-  grandes polices, mise à jour en temps réel.
-- **Impression** : feuilles de poules, tableaux et résultats via la mise en
-  page d'impression du navigateur.
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#two-audiences-one-application">Two audiences, one application</a></li>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li><a href="#features">Features</a></li>
+    <li>
+      <a href="#architecture">Architecture</a>
+      <ul>
+        <li><a href="#sync-protocol">Sync protocol</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#server-environment-variables">Server environment variables</a></li>
+      </ul>
+    </li>
+    <li><a href="#deployment">Deployment</a></li>
+    <li><a href="#a-typical-competition-day">A typical competition day</a></li>
+    <li><a href="#shipping-a-user-visible-change">Shipping a user-visible change</a></li>
+    <li><a href="#tests">Tests</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
-### Organisation d'une journée
-- **Catégories & vue « journée »** : catégorie par concours — dérivée des
-  critères fédéraux quand ils existent (« Féminin Vétérans Promotion »), texte
-  libre sinon —, tableau de bord regroupé par date avec filtre par catégorie —
-  pratique quand un club enchaîne plusieurs concours le même jour.
-- **Fractionnement multisite** (manuel §3.B.10.D) : un concours qu'un seul
-  boulodrome ne peut accueillir se coupe en un concours par site. Les effectifs
-  suivent les terrains de chaque site, les équipes d'un même club restent
-  ensemble, les dossards sont conservés et le concours d'origine est archivé
-  comme trace.
-- **Archivage** (manuel §3.F.3) : un concours rangé sort de la liste courante
-  et du palmarès sans rien perdre, et revient d'un clic. Le palmarès annonce
-  toujours combien de concours archivés il laisse de côté — un vainqueur ne
-  disparaît pas en silence.
-- **Import d'une liste d'inscrits** (manuel §3.B.10.B) : reprendre en CSV la
-  liste d'un autre concours — l'export « 📋 Engagés » de l'application se
-  réimporte tel quel, dossards, licences, clubs, forfaits et règlements
-  compris. Une colonne par joueur est acceptée aussi, pour un tableur fait à la
-  main. Dans un concours vide, les dossards du fichier sont conservés ; sinon
-  les équipes s'ajoutent à la suite.
-- **Pré-inscriptions en ligne** : les équipes s'inscrivent elles-mêmes via
-  le lien public (« ✍️ Je m'inscris ») ; l'organisateur valide d'un clic à
-  la table de marque.
-- **Statistiques des poules** (manuel §3.D.1.G) : la synthèse de ce qui n'est
-  pas fini, la poule qui attend depuis le plus longtemps en tête, et les
-  barrages qui retiennent leur poule. Sur trente poules, c'est ce qui permet de
-  trouver la retardataire sans tout parcourir.
-- **Plan des terrains** : plateau libre/occupé en direct, affectation
-  automatique des parties en attente aux terrains libres, libération à la
-  saisie du score.
-- **Têtes de série** : au tirage, désigner les meilleures équipes pour les
-  répartir dans des poules / moitiés de tableau différentes.
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
-### Championnat des clubs (mode fédéral)
-- **Contrôle des compositions** (manuel §3.E) : les cinq compétitions de clubs
-  ont leur filtre prédéfini — Coupe de France, CNC/CRC/CDC Open, Féminin,
-  Jeunes, Vétérans — avec les contingents de mutés et de joueurs hors Union
-  européenne. Une nationalité illisible n'exclut personne.
-- **Feuille de match** : la feuille remplie à la main aujourd'hui — composition
-  des deux équipes, ordre des rencontres, scores et signatures. Les points ne
-  se saisissent pas : ils découlent du vainqueur et du type de partie
-  (tête-à-tête, doublette, triplette), et l'application vérifie l'invariant que
-  la feuille rappelle en en-tête — **la somme des deux totaux est connue
-  d'avance** (36 points sur la feuille du CD26). Une feuille fausse se voit
-  avant d'être signée. Le barème est une donnée : il varie d'un comité à
-  l'autre.
-- **Échange des compositions entre les deux clubs** : le club visiteur montre un
-  QR code, l'hôte le scanne, et les huit lignes de l'équipe adverse se
-  remplissent avec les numéros de licence — au lieu d'être recopiées à la main
-  alors que l'autre club les a déjà saisies et contrôlées chez lui. Rien ne
-  passe par le réseau ni par un compte commun : au boulodrome il n'y a souvent
-  ni l'un ni l'autre. Le code est du texte lisible, donc recopiable si une
-  caméra fait défaut.
-- **Une feuille par rencontre, synchronisée** : les feuilles sont des entités
-  répliquées, pas un brouillon d'appareil. Elles se retrouvent sur les autres
-  tablettes du club, survivent à la perte de l'une d'elles, et se conservent
-  d'une rencontre à l'autre.
-- **Signature des capitaines dans l'application** : chacun signe au doigt sur
-  la tablette. Signer **verrouille la feuille** — plus rien n'est modifiable —
-  et une **empreinte du contenu signé** est imprimée à côté des signatures. Si
-  la feuille est modifiée après coup, l'empreinte ne correspond plus à celle de
-  l'exemplaire signé, et l'application le dit. Corriger exige d'effacer
-  explicitement les signatures, jamais en silence. Une feuille en anomalie n'est
-  pas signable du tout.
-- **Sauvegarde en fichier** : une feuille s'exporte en JSON autonome, signatures
-  comprises, et se réimporte — pour l'archiver, la transmettre, ou la reprendre
-  sur un appareil qui n'a pas le compte du club. Elle arrive toujours **à côté**
-  des existantes, jamais par-dessus, et l'empreinte du contenu signé reste
-  vérifiable après l'aller-retour. Les deux imports — concours et feuille —
-  reconnaissent le fichier de l'autre et le disent.
-- **Retour au comité** : courriel préparé (objet, résultat, remarques) auquel
-  joindre la feuille signée — ou dépôt sur le site du comité. C'est la signature
-  qui fait foi.
+A web application for running pétanque competitions, inspired by
+[FFPJP Gestion Concours](https://www.ffpjp-gestion-concours.com/) and rebuilt as a
+**multi-club SaaS** with a **complete offline mode**: draws, score entry and brackets all work
+with no connection at the boulodrome, and synchronise as soon as the network is back.
 
-### Prise en main
-- **Création guidée en 3 étapes** : des cartes de formules en langage
-  courant (« le classique des concours officiels », « idéal club & amis —
-  chacun pour soi »…), la formation illustrée, puis un nom proposé
-  automatiquement.
-- **Tutoriel intégré** : écran de bienvenue à la première utilisation, visite
-  guidée interactive (mise en lumière des éléments de l'interface) et
-  **concours d'exemple** pré-rempli pour s'entraîner sans risque.
-- **Bandeau « prochaine étape »** : chaque concours indique en permanence où
-  vous en êtes et quoi faire ensuite (inscriptions → tirage → scores →
-  tableau → clôture).
-- **Assistant intégré** 💬 : une vingtaine de guides pas-à-pas (tirer les
-  poules, corriger un score, consolante, forfait, affichage TV, hors-ligne…),
-  recherche par mots-clés tolérante aux accents — entièrement **hors-ligne**,
-  aucun service externe.
-- **Il accompagne au lieu de cataloguer** : après avoir répondu, l'assistant
-  propose la **suite de votre concours** (« les poules sont finies, place au
-  tableau »), déduite de l'état réel des données — jamais des « sujets
-  voisins ». Question mal comprise ? Il demande une précision ancrée dans
-  l'écran où vous êtes plutôt que de dérouler le sommaire. Il se resitue à
-  l'ouverture (« vous êtes sur *Concours du 12/07* : il reste 3 parties à
-  saisir »), et le sommaire ne revient que sur demande explicite.
-- **Parcours guidés interactifs** : « 🎓 Me guider pas à pas » ne raconte pas,
-  il fait faire. L'assistant surligne l'élément, puis **attend le geste** — un
-  clic sur la cible, ou un fait constaté dans les données (les poules
-  existent, le barrage est saisi). Une cible qui n'apparaît qu'après une action
-  est attendue, pas sautée ; les étapes déjà accomplies sont passées, donc un
-  parcours **reprend là où vous en êtes** ; et si vous partez ailleurs, il le
-  dit et propose de reprendre au lieu de surligner le vide.
-- **Version affichée en pied de page** (numéro, commit, date de compilation,
-  injectés au build) : de quoi savoir ce que la tablette exécute vraiment.
-- **Pop-up « Nouveautés »** après une mise à jour : l'application se remplace
-  silencieusement (PWA en mise à jour automatique), la pop-up fait le tour
-  d'horizon de ce qu'elle a gagné, avec un bouton pour aller voir. Les versions
-  sautées sont cumulées en une seule fenêtre ; le tour d'horizon se rouvre
-  depuis le pied de page ou l'assistant (« Quoi de neuf ? »).
+The design constraint that shapes everything: at a boulodrome there is often neither Wi-Fi nor a
+shared account. So the tournament engine runs **in the browser**, the local database is the
+primary one, and the server is only an authenticated replicator.
 
-### Partage & auto-arbitrage
-- **Lien public** par concours (révocable, avec **QR code** à afficher au
-  boulodrome) avec **deux parcours** : *« Je joue »* (on saisit son numéro
-  d'équipe et on ne voit que sa partie, sa déclaration, ses notifications)
-  et *« Je consulte »* (affichage complet en direct), sans compte.
-- **Notifications push** : une équipe s'abonne par son numéro et reçoit une
-  alerte sur son téléphone à chaque convocation (barrage, tour suivant…) —
-  même application fermée. La table de marque n'a rien à faire : les
-  convocations sont détectées côté client et relayées par le serveur
-  (Web Push / VAPID, dédupliqué par partie).
-- **Auto-déclaration des scores** : une équipe déclare, l'adversaire
-  confirme depuis son propre téléphone ; la table de marque voit les
-  déclarations **concordantes** et les applique en un clic (elle reste
-  seule décisionnaire).
-- **Licenciés** : import CSV (Nom/Prénom/Licence/Club), autocomplétion aux
-  inscriptions, mise à jour sans doublons.
-- **Feuilles imprimables** : feuilles de poules officielles et tickets de
-  parties à distribuer.
-- **Multi-organisateurs** : codes d'invitation (7 jours) pour rejoindre le
-  club, liste des membres.
-- **Tir de précision** : séries de 20 boules (100 pts max), classement à la
-  meilleure série. **Indemnités** : répartition suggérée du pot par groupe
-  de classement.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### SaaS & hors-ligne
-- **Page vitrine** : un visiteur sans session est accueilli par une
-  présentation — ce que fait le logiciel, le hors-ligne, le déroulé d'une
-  journée, des captures réelles — et non par un formulaire de connexion. Elle
-  peut vivre sur son propre nom de domaine (`petanque.exemple.fr` pour la
-  vitrine, `app.petanque.exemple.fr` pour l'application) : les deux noms
-  arrivent sur le même serveur, qui choisit le document d'après l'en-tête
-  `Host`. Voir [DEPLOIEMENT.md](./docs/DEPLOIEMENT.md).
-- **Comptes club (multi-tenant)** : chaque organisation a ses concours, ses
-  utilisateurs et son journal de modifications.
-- **Mode invité** : tout essayer **sans créer de compte** — les données
-  restent sur l'appareil ; à la création d'un compte, l'application propose
-  de **rattacher les concours invité** (ils sont alors poussés au serveur).
-- **Stockage persistant** : `navigator.storage.persist()` est demandé au
-  démarrage pour interdire au navigateur de purger les données locales.
-- **Local-first / PWA** : l'interface lit et écrit d'abord dans IndexedDB ;
-  le service worker met l'application en cache — rechargez la page sans
-  réseau, tout est là. Installable sur mobile/tablette.
-- **Synchronisation** : envoi des modifications locales + récupération de
-  celles des autres appareils du club (curseur d'oplog par organisation,
-  résolution *dernier écrivain gagnant* horodatée, départage par appareil,
-  idempotente — rejouable sans effet de bord).
-- **Multi-appareils** : le même compte connecté sur l'ordinateur de la table
-  de marque et la tablette du terrain voit les mêmes données.
+### Two audiences, one application
 
+A club running friendly competitions has no use for the licensee file, the club championship or
+the paperwork handed to the committee. **Federal mode** (⚙ Settings) hides all of it; unchecked,
+the application sticks to entries, the draw, pools, brackets, scores and prize money.
+
+That toggle changes **display only**, never behaviour: a competition already declared official
+keeps checking licences, and its screens stay visible on it. It turns itself on when an official
+competition exists or a licensee file has been imported — an organiser is never hidden a feature
+they actually use.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Built With
+
+* [TypeScript](https://www.typescriptlang.org/) — including the tournament engine, framework-free
+* [React](https://react.dev/) + [Vite](https://vite.dev/) — PWA client
+* [Dexie](https://dexie.org/) / IndexedDB — the primary database, on the device
+* [Workbox](https://developer.chrome.com/docs/workbox) via `vite-plugin-pwa` — service worker
+* [Fastify](https://fastify.dev/) — API, on Node ≥ 22.5
+* [`node:sqlite`](https://nodejs.org/api/sqlite.html) — Node's built-in SQLite, zero native dependency
+* [Vitest](https://vitest.dev/) — the engine's test suite
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- FEATURES -->
+## Features
+
+<details>
+  <summary><strong>Tournament management</strong> — formats, pools, brackets, scoring</summary>
+
+* **Competitions** in singles, doubles or triples; games to 13 points (configurable, e.g. 11);
+  number of lanes; time-limited games (with a stated duration).
+* **Every format**:
+  * **Pools then knockout** — the FFPJP classic;
+  * **Straight knockout**, with an optional consolation bracket;
+  * **Federal A-B-C formats** (FFPJP manual §3.D.8 to §3.D.12): losers cascade from one bracket
+    to the next — consolation, complementary, and second-round losers of the main bracket feeding
+    the consolation qualifier (or the complementary bracket, CD19 variant);
+  * **A-B-C group format** (§3.D.5): groups of 4 with **no play-off**, decided on wins alone —
+    2 wins go to competition A, 1 win to B (**both** teams), 0 to C. Nobody goes home after two games;
+  * **Rotating mêlée**: individual entries, teams drawn afresh each round — uneven numbers handled
+    the way they are on the field (a triple can meet a double, nobody sits out), individual standings;
+  * **Swiss system**: random round 1, then pairing by standing with no rematch; the bye wins 13-7
+    and never falls on the same team twice;
+  * **Round-robin championship**: full schedule generated at once (circle method), a rest round when
+    the field is odd.
+* **Round standings**: wins, then goal difference, then points scored — updated live on every entry.
+* **Finals after rounds** (§3.D.15): the standings turn into a knockout bracket inside the same
+  competition, with no intermediate export. Both federal configurations are offered — 1/8 A + 1/8 B,
+  or 1/4 A + 1/4 B + 1/4 C: each slice of the standings plays its own competition. Ties are broken
+  on head-to-head, and what that does not settle can be swapped by hand.
+* **Entries**: numbered teams, players with optional licence number, club, forfeits, locking after
+  the draw — plus an **amendment mode** (§3.B.8) to replace or add a player after the draw without
+  disturbing bib numbers or bracket positions.
+* **FFPJP pools**: pools of 4 topped up with pools of 3 (7 → 1×4 + 1×3, 9 → 3×3…), automatic
+  *game 1 / game 2 → winners / losers → play-off* progression, first place qualifying on 2 wins and
+  second through the play-off, with an option to keep two teams from the same club out of one pool.
+* **Final bracket**: generated when pools end — byes go to the top seeds, first plays a second from
+  another pool in round 1, and the first and second of one pool land in opposite halves; automatic
+  **qualifying round** when the field is not a power of two; official labels (round of 16, quarters,
+  semi-finals, final).
+* **Straight knockout** (no pools) with the same qualifying rules.
+* **Consolation bracket**: pool eliminees, or first-round losers in straight knockout ("loser of
+  game N" slots filled as results come in).
+* **Score entry** with validation (13 points, no draws) and **cascading correction**: fixing an
+  upstream game cleanly resets everything that depended on it.
+* **Lanes** assigned automatically for opening games, editable game by game.
+* **Final standings**: winner, runner-up, semi-finalists, eliminees by round, pool outcome, consolation.
+* **Public display** (TV / projector): dedicated read-only page, large type, live updates.
+* **Printing**: pool sheets, brackets and results through the browser's print layout.
+
+</details>
+
+<details>
+  <summary><strong>Running a day</strong> — categories, multi-site, archiving, lane map</summary>
+
+* **Categories & day view**: a category per competition — derived from the federal criteria when
+  they exist ("Féminin Vétérans Promotion"), free text otherwise — with a dashboard grouped by date
+  and filtered by category, which matters when a club runs several competitions the same day.
+* **Multi-site split** (§3.B.10.D): a competition too big for one boulodrome splits into one
+  competition per site. Field sizes follow each site's lanes, teams from one club stay together,
+  bib numbers are kept, and the original competition is archived as a record.
+* **Archiving** (§3.F.3): a filed competition leaves the current list and the honours board without
+  losing anything, and comes back in one click. The honours board always states how many archived
+  competitions it is leaving out — a winner never disappears silently.
+* **Entry list import** (§3.B.10.B): reuse another competition's list as CSV — the application's own
+  "📋 Engagés" export re-imports as-is, bib numbers, licences, clubs, forfeits and payments included.
+  One column per player is accepted too, for a hand-made spreadsheet. In an empty competition the
+  file's bib numbers are kept; otherwise teams are appended.
+* **Online pre-registration**: teams enter themselves through the public link ("✍️ Je m'inscris");
+  the organiser validates in one click at the scoring table.
+* **Pool statistics** (§3.D.1.G): a summary of what is *not* finished, the longest-waiting pool
+  first, and the play-offs holding their pool up. Across thirty pools, that is what finds the
+  laggard without walking the whole list.
+* **Lane map**: free/busy board live, automatic assignment of waiting games to free lanes, released
+  on score entry.
+* **Seeds**: at the draw, mark the strongest teams so they land in different pools or bracket halves.
+
+</details>
+
+<details>
+  <summary><strong>Club championship</strong> (federal mode) — squad checks, match sheet, signatures</summary>
+
+* **Squad compliance** (§3.E): all five club competitions come with their preset filter — Coupe de
+  France, CNC/CRC/CDC Open, Women's, Youth, Veterans — including the quotas for transferred and
+  non-EU players. An unreadable nationality excludes nobody.
+* **Match sheet**: the sheet filled in by hand today — both squads, order of games, scores and
+  signatures. Points are not typed in: they follow from the winner and the game type (singles,
+  doubles, triples), and the application checks the invariant the sheet itself prints at the top —
+  **the two totals always add up to a known number** (36 on the CD26 sheet). A wrong sheet shows up
+  before it is signed. The scale is data: it varies from one committee to the next.
+* **Squad exchange between the two clubs**: the visiting club shows a QR code, the host scans it, and
+  the eight lines of the opposing squad fill in with licence numbers — instead of being copied by hand
+  when the other club already typed and checked them at home. Nothing goes through the network or a
+  shared account: at the boulodrome there is usually neither. The code is readable text, so it can be
+  typed if a camera fails.
+* **One synchronised sheet per fixture**: sheets are replicated entities, not a per-device draft. They
+  show up on the club's other tablets, survive the loss of one of them, and persist from one fixture
+  to the next.
+* **Captains sign in the application**: each signs with a finger on the tablet. Signing **locks the
+  sheet** — nothing can be edited any more — and a **fingerprint of the signed content** is printed
+  next to the signatures. If the sheet is altered afterwards, the fingerprint no longer matches the
+  signed copy, and the application says so. Correcting requires explicitly clearing the signatures,
+  never silently. A sheet in an inconsistent state cannot be signed at all.
+* **File backup**: a sheet exports as a self-contained JSON, signatures included, and re-imports —
+  to archive it, send it on, or pick it up on a device without the club's account. It always lands
+  **beside** existing ones, never on top, and the fingerprint of the signed content stays verifiable
+  after the round trip. Both importers — competition and match sheet — recognise the other's file and
+  say so.
+* **Return to the committee**: a pre-filled email (subject, result, remarks) to attach the signed
+  sheet to — or an upload to the committee's site. The signature is what counts.
+
+</details>
+
+<details>
+  <summary><strong>Onboarding</strong> — guided creation, tutorial, in-app assistant</summary>
+
+* **Three-step guided creation**: format cards in plain language ("the classic for official
+  competitions", "ideal for clubs & friends — every player for themselves"…), an illustrated pick of
+  the team formation, then a suggested name.
+* **Built-in tutorial**: welcome screen on first use, an interactive tour that highlights parts of the
+  interface, and a **pre-filled example competition** to practise on with nothing at stake.
+* **"Next step" banner**: every competition permanently states where you are and what comes next
+  (entries → draw → scores → bracket → close).
+* **In-app assistant** 💬: about twenty step-by-step guides (draw the pools, fix a score, consolation,
+  forfeit, TV display, offline…), keyword search tolerant of accents — entirely **offline**, no
+  external service.
+* **It assists instead of cataloguing**: after answering, the assistant offers **your competition's
+  next step** ("pools are done, on to the bracket"), inferred from the actual data — never "related
+  topics". Question unclear? It asks for a clarification anchored in the screen you are on rather
+  than unrolling the table of contents. It re-orients itself on opening ("you are on *Concours du
+  12/07*: 3 games left to enter"), and the index only comes back when explicitly asked for.
+* **Interactive walkthroughs**: "🎓 Me guider pas à pas" does not narrate, it makes you do. The
+  assistant highlights the element, then **waits for the gesture** — a click on the target, or a fact
+  observed in the data (the pools exist, the play-off is entered). A target that only appears after an
+  action is waited for, not skipped; steps already done are passed over, so a walkthrough **resumes
+  where you are**; and if you wander off, it says so and offers to resume instead of highlighting
+  nothing.
+* **Version in the footer** (number, commit, build date, injected at build time): so you know what the
+  tablet is actually running.
+* **"What's new" popup** after an update: the application replaces itself silently (auto-updating PWA),
+  and the popup walks through what it gained, with a button to go and look. Skipped versions are merged
+  into a single window; the tour can be reopened from the footer or the assistant ("Quoi de neuf ?").
+
+</details>
+
+<details>
+  <summary><strong>Sharing & self-refereeing</strong> — public link, push, score declarations</summary>
+
+* **Public link** per competition (revocable, with a **QR code** to display at the boulodrome) with
+  **two paths**: *"Je joue"* (enter your team number and see only your game, your declaration, your
+  notifications) and *"Je consulte"* (full live display) — no account either way.
+* **Push notifications**: a team subscribes with its number and gets an alert on its phone at every
+  call-up (play-off, next round…), even with the app closed. The scoring table does nothing:
+  call-ups are detected client-side and relayed by the server (Web Push / VAPID, deduplicated per game).
+* **Self-declared scores**: one team declares, the opponent confirms from their own phone; the scoring
+  table sees the **matching** declarations and applies them in one click — it stays the sole decider.
+* **Licensees**: CSV import (Surname/First name/Licence/Club), autocompletion on entry, updates
+  without duplicates.
+* **Printable sheets**: official pool sheets and game tickets to hand out.
+* **Multiple organisers**: invitation codes (7 days) to join the club, member list.
+* **Precision shooting**: series of 20 boules (100 points max), ranked on best series.
+  **Prize money**: suggested split of the pot by ranking group.
+
+</details>
+
+<details>
+  <summary><strong>SaaS & offline</strong> — landing page, tenants, local-first, sync</summary>
+
+* **Landing page**: a visitor with no session is met by a presentation — what the software does, the
+  offline mode, how a day unfolds, real screenshots — not by a login form. It can live on its own
+  domain (`petanque.exemple.fr` for the landing page, `app.petanque.exemple.fr` for the application):
+  both names reach the same server, which picks the document from the `Host` header. See
+  [DEPLOIEMENT.md](./docs/DEPLOIEMENT.md).
+* **Club accounts (multi-tenant)**: each organisation has its own competitions, users and audit log.
+* **Guest mode**: try everything **without creating an account** — data stays on the device; when an
+  account is created, the application offers to **attach the guest competitions** (which are then
+  pushed to the server).
+* **Persistent storage**: `navigator.storage.persist()` is requested at startup so the browser cannot
+  evict local data.
+* **Local-first / PWA**: the UI reads and writes IndexedDB first; the service worker caches the
+  application — reload the page with no network and everything is there. Installable on phone or tablet.
+* **Synchronisation**: local changes pushed, other devices' changes pulled (per-organisation oplog
+  cursor, timestamped last-writer-wins, tie-broken by device, idempotent — replayable with no side effect).
+* **Multi-device**: the same account on the scoring table's computer and the tablet on the field sees
+  the same data.
+
+</details>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- ARCHITECTURE -->
 ## Architecture
 
 ```
 petanque/
-├── shared/   Moteur de tournoi TypeScript pur (poules, barrage, cadrage,
-│             tableaux, consolante, classements) + types + tests Vitest.
-│             Il tourne CÔTÉ CLIENT : indispensable au mode hors-ligne.
-├── client/   PWA React + Vite. IndexedDB (Dexie) comme base primaire,
-│             moteur de synchronisation (outbox + curseur), react-router,
-│             service worker Workbox (vite-plugin-pwa).
-└── server/   API Fastify (Node ≥ 22.5, SQLite natif node:sqlite, zéro
-              dépendance native). Authentification JWT, multi-tenant,
-              endpoint /api/sync (réplication), sert le client construit.
+├── shared/   Pure TypeScript tournament engine (pools, play-offs, qualifying rounds,
+│             brackets, consolation, standings) + types + Vitest tests.
+│             It runs CLIENT-SIDE: this is what makes offline mode possible.
+├── client/   React + Vite PWA. IndexedDB (Dexie) as the primary store, sync engine
+│             (outbox + cursor), react-router, Workbox service worker (vite-plugin-pwa).
+└── server/   Fastify API (Node ≥ 22.5, native node:sqlite, zero native dependency).
+              JWT auth, multi-tenant, /api/sync endpoint (replication), serves the built client.
 ```
 
-Le serveur ne connaît **aucune règle de pétanque** : c'est un réplicateur
-authentifié. Toute la logique sportive vit dans `shared/` et s'exécute dans le
-navigateur — c'est ce qui permet un hors-ligne total.
+The server knows **no pétanque rules whatsoever**: it is an authenticated replicator. All the sporting
+logic lives in `shared/` and executes in the browser — which is exactly what allows total offline use.
 
-### Protocole de synchronisation
+### Sync protocol
 
-Le client n'acquitte que ce que le serveur a **accepté** : une entité refusée
-reste en attente et visible au compteur, plutôt que d'être crue synchronisée
-alors qu'elle n'est nulle part. Les deux décisions qui gouvernent la réplication
-— « ce changement remplace-t-il l'état local ? » et « cet envoi est-il
-acquitté ? » — vivent dans `shared/src/engine/replication.ts`, où elles sont
-testées.
+The client only acknowledges what the server has **accepted**: a rejected entity stays pending and
+visible in the counter, rather than being believed synced while it exists nowhere. The two decisions
+that govern replication — "does this change supersede local state?" and "is this push acknowledged?" —
+live in `shared/src/engine/replication.ts`, where they are tested.
 
 ```
 POST /api/sync  { cursor, deviceId, changes: [{type, id, data, updatedAt, deleted}] }
              →  { cursor, hasMore, accepted, changes: [...] }
 ```
 
-- Chaque organisation possède une séquence monotone (oplog). Le client envoie
-  ses entités « sales » et son curseur ; le serveur applique en
-  dernier-écrivain-gagnant (`updatedAt`, départage `deviceId`), attribue un
-  numéro de séquence et renvoie tout ce qui a changé depuis le curseur.
-- Un push rejeté (version serveur plus récente) renvoie immédiatement la
-  version gagnante : l'appareil émetteur converge sans attendre.
-- Les suppressions sont des pierres tombales synchronisées.
+* Each organisation owns a monotonic sequence (oplog). The client sends its dirty entities and its
+  cursor; the server applies last-writer-wins (`updatedAt`, tie-broken on `deviceId`), assigns a
+  sequence number and returns everything changed since the cursor.
+* A rejected push (a newer server version) immediately returns the winning version: the sending device
+  converges without waiting.
+* Deletions are synchronised tombstones.
 
-## Démarrage
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-Prérequis : **Node.js ≥ 22.5** (SQLite intégré).
+<!-- GETTING STARTED -->
+## Getting Started
 
-```bash
-npm install
+### Prerequisites
 
-# Développement (API sur :8787 + Vite sur :5173 avec proxy /api)
-npm run dev
+* **Node.js ≥ 22.5** — for the built-in SQLite module
+  ```sh
+  node --version
+  ```
 
-# Tests du moteur de tournoi
-npm test
+### Installation
 
-# Production : construit le client puis le serveur, puis sert le tout sur :8787
-npm run build
-npm start
+1. Clone the repository
+   ```sh
+   git clone https://github.com/GabinSMD/petanque.git
+   cd petanque
+   ```
+2. Install the workspaces
+   ```sh
+   npm install
+   ```
+3. Run in development — API on `:8787`, Vite on `:5173` with an `/api` proxy
+   ```sh
+   npm run dev
+   ```
+
+```sh
+npm test          # tournament engine test suite
+npm run typecheck # TypeScript across all workspaces
+npm run build     # build shared, then client, then server
+npm start         # serve everything on :8787
 ```
 
-Variables d'environnement du serveur :
+### Server environment variables
 
-| Variable     | Défaut           | Rôle                                   |
-| ------------ | ---------------- | -------------------------------------- |
-| `PORT`       | `8787`           | Port HTTP                              |
-| `DATA_DIR`   | `server/data`    | Dossier SQLite + secret JWT            |
-| `DB_PATH`    | `$DATA_DIR/petanque.sqlite` | Fichier de base           |
-| `JWT_SECRET` | généré/persisté  | Secret de signature des jetons         |
+| Variable | Default | Role |
+| --- | --- | --- |
+| `PORT` | `8787` | HTTP port |
+| `DATA_DIR` | `server/data` | SQLite directory and JWT secret |
+| `DB_PATH` | `$DATA_DIR/petanque.sqlite` | Database file |
+| `JWT_SECRET` | generated and persisted | Token signing secret |
 
-### Docker
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-```bash
+<!-- DEPLOYMENT -->
+## Deployment
+
+Three paths are kept in the repository, all documented in
+[docs/DEPLOIEMENT.md](./docs/DEPLOIEMENT.md):
+
+| Target | Files |
+| --- | --- |
+| **Docker** anywhere | `Dockerfile`, `docker-compose.yml` |
+| **Fly.io** | `fly.toml` (region `cdg`, a 1 GB volume for the data) |
+| **Render** | `render.yaml` (`/api/health` health check, generated `JWT_SECRET`) |
+| **Oracle Cloud free tier** | `deploy/` — `setup-oracle.sh`, `Caddyfile`, `petanque.service`, `update.sh`, plus [docs/DEPLOIEMENT-ORACLE.md](./docs/DEPLOIEMENT-ORACLE.md) |
+
+```sh
 docker build -t petanque-concours .
 docker run -p 8787:8787 -v petanque-data:/app/server/data petanque-concours
 ```
 
-## Utilisation type (jour de concours)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-1. La veille, au club : créer le concours, saisir les inscriptions.
-2. Au boulodrome (souvent sans réseau) : ouvrir l'application — elle charge
-   depuis le cache — tirer les poules, imprimer, saisir les scores, générer
-   le tableau, jouer la consolante… tout fonctionne hors connexion.
-3. L'écran d'affichage (TV) montre poules et tableaux en direct.
-4. Dès que le réseau revient (ou en partage de connexion), tout se
-   synchronise ; le second appareil du club voit les résultats.
+<!-- USAGE -->
+## A typical competition day
 
-## Publier une nouveauté
+1. The day before, at the club: create the competition, enter the teams.
+2. At the boulodrome, usually with no network: open the application — it loads from cache — draw the
+   pools, print, enter scores, generate the bracket, run the consolation… all of it works offline.
+3. The display screen (TV) shows pools and brackets live.
+4. As soon as the network is back (or through a phone hotspot), everything syncs and the club's second
+   device sees the results.
 
-Livrer quelque chose que l'utilisateur verra, c'est deux gestes :
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-1. ajouter un point dans `client/src/help/nouveautes.ts`, sous la version en
-   cours (ou une nouvelle entrée de version) ;
-2. monter le `version` du `package.json` racine.
+<!-- SHIPPING -->
+## Shipping a user-visible change
 
-C'est le **journal** qui déclenche la pop-up, pas le `package.json` : un oubli
-de bump ne rend pas la détection muette, il fait seulement mentir l'étiquette du
-pied de page. La version retenue est toujours la plus haute que le journal
-publie, et l'ordre du tableau n'a pas d'importance (`recapNouveautes` trie).
+Delivering something a user will notice takes two gestures:
 
+1. add a bullet to `client/src/help/nouveautes.ts`, under the current version (or a new version entry);
+2. bump `version` in the root `package.json`.
+
+It is the **changelog** that triggers the popup, not `package.json`: forgetting the bump does not
+silence detection, it only makes the footer label lie. The version shown is always the highest the
+changelog publishes, and the order of the array does not matter (`recapNouveautes` sorts it).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- TESTS -->
 ## Tests
 
-- `shared/` : 417 tests Vitest couvrant la répartition des poules, le
-  déroulement 4/3 avec barrage, les corrections en cascade, le cadrage et les
-  exempts, l'appariement premiers/seconds, la consolante alimentée par les
-  perdants et les classements.
-- Un test de bout en bout (Playwright) a validé le parcours complet :
-  inscription club → visite guidée → assistant (réponse pas-à-pas) →
-  concours → 7 équipes → poules → tableau → consolante → vainqueur →
-  synchronisation serveur → **rechargement de l'application hors ligne**.
+* `shared/` — 86 Vitest spec files, around 990 cases, covering pool distribution, the 4/3 progression
+  with play-off, cascading corrections, qualifying rounds and byes, first/second pairing, the
+  consolation bracket fed by losers, and the standings.
+  ```sh
+  npm test
+  ```
+* An end-to-end Playwright run has validated the whole path — club sign-up → guided tour → assistant
+  (step-by-step answer) → competition → 7 teams → pools → bracket → consolation → winner → server sync
+  → **reloading the application offline**. It was a one-off validation: there is no Playwright config
+  in the repository, so it is not part of `npm test`.
 
-## Feuille de route
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-- Invitations multi-utilisateurs au sein d'un club, rôles (table de marque /
-  lecture seule).
-- Import du fichier des licenciés (CSV / Geslico) et recherche par n° de
-  licence, lecteur code-barres.
-- Concours « complémentaire », parties limitées au temps, tir de précision.
-- Indemnités / répartition des mises, export PDF des feuilles de parties.
-- Page publique de résultats (lien partageable sans compte).
-- Durcissement SaaS : limitation de débit, Postgres, sauvegardes, RGPD.
+<!-- ROADMAP -->
+## Roadmap
+
+- [ ] Multi-user invitations within a club, roles (scoring table / read-only)
+- [ ] Licensee file import (CSV / Geslico), lookup by licence number, barcode scanner
+- [ ] "Complementary" competition, time-limited games, precision shooting
+- [ ] Prize money / stake splitting, PDF export of game sheets
+- [ ] Public results page (shareable link, no account)
+- [ ] SaaS hardening: rate limiting, Postgres, backups, GDPR
+
+See the [open issues](https://github.com/GabinSMD/petanque/issues) for the full list.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- CONTRIBUTING -->
+## Contributing
+
+Contributions are welcome, particularly from people who actually run competitions: a rule modelled
+wrongly is worth more as a bug report than as a pull request.
+
+1. Fork the project
+2. Create your branch (`git checkout -b feature/formule-cd19`)
+3. Add tests in `shared/` — the engine is where correctness is proven
+4. Check `npm test` and `npm run typecheck` pass
+5. Commit, push, and open a pull request
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- LICENSE -->
+## License
+
+Distributed under the GNU Affero General Public License v3.0. If you run a modified version as a
+network service, its source must be available to its users. See `LICENSE` for the full text.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- CONTACT -->
+## Contact
+
+Gabin Simond — gabin.simond@simondancebros.org
+
+Project link: [https://github.com/GabinSMD/petanque](https://github.com/GabinSMD/petanque)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+
+* The **FFPJP rulebook** — every §3.x reference above points to it
+* [FFPJP Gestion Concours](https://www.ffpjp-gestion-concours.com/) — the software this one learns from
+* [Dexie](https://dexie.org/) and [Workbox](https://developer.chrome.com/docs/workbox) — what makes offline plausible
+* [Best-README-Template](https://github.com/othneildrew/Best-README-Template) — the shape of this file
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[contributors-shield]: https://img.shields.io/github/contributors/GabinSMD/petanque.svg?style=for-the-badge
+[contributors-url]: https://github.com/GabinSMD/petanque/graphs/contributors
+[stars-shield]: https://img.shields.io/github/stars/GabinSMD/petanque.svg?style=for-the-badge
+[stars-url]: https://github.com/GabinSMD/petanque/stargazers
+[issues-shield]: https://img.shields.io/github/issues/GabinSMD/petanque.svg?style=for-the-badge
+[issues-url]: https://github.com/GabinSMD/petanque/issues
+[license-shield]: https://img.shields.io/badge/license-AGPL%20v3-blue.svg?style=for-the-badge
+[license-url]: https://github.com/GabinSMD/petanque/blob/main/LICENSE
+[offline-shield]: https://img.shields.io/badge/PWA-offline--first-5A0FC8?style=for-the-badge
