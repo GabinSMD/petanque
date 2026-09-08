@@ -244,6 +244,16 @@ function IndemnitesSection({
   const [open, setOpen] = useState(false);
   /** Ce qui ne va pas dans la mise saisie — remis à zéro à chaque frappe. */
   const [raisonMise, setRaisonMise] = useState<string | undefined>(undefined);
+  /**
+   * Ce qui est tapé dans le champ, tant que l'organisateur y est.
+   *
+   * `null` veut dire « personne n'a encore touché au champ » : la valeur
+   * affichée vient alors de la base. Sans cet état, le champ afficherait
+   * toujours la mise **enregistrée** — donc, dès qu'une saisie est refusée, il
+   * reviendrait à l'ancienne valeur tout en montrant une erreur qui parle d'un
+   * nombre disparu de l'écran. Le défaut s'est vu à la capture, pas au test.
+   */
+  const [saisieMise, setSaisieMise] = useState<string | null>(null);
   const nb = teams.filter((t) => !t.forfait).length;
   const taille = TAILLE_FORMATION[concours.format];
   /**
@@ -282,9 +292,10 @@ function IndemnitesSection({
                 min={0}
                 max={MAX_MISE}
                 step={0.01}
-                value={parJoueur ?? ''}
+                value={saisieMise ?? parJoueur ?? ''}
                 placeholder="—"
                 onChange={(e) => {
+                  setSaisieMise(e.target.value);
                   setRaisonMise(undefined);
                   if (e.target.value === '') {
                     void updateConcours({
