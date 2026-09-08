@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Concours, Match, MatchStage, Poule, Team } from '@shared';
 import {
+  MAX_MISE,
   TAILLE_FORMATION,
   bracketRanking,
   estConcoursOfficiel,
@@ -13,6 +14,7 @@ import {
   repartitionIndemnites,
   classementRondes,
   permutationsActives,
+  raisonRefusMise,
   type RankGroup,
 } from '@shared';
 import { updateConcours } from '../../db/actions';
@@ -240,6 +242,18 @@ function IndemnitesSection({
   groups: RankGroup[];
 }) {
   const [open, setOpen] = useState(false);
+  /** Ce qui ne va pas dans la mise saisie — remis à zéro à chaque frappe. */
+  const [raisonMise, setRaisonMise] = useState<string | undefined>(undefined);
+  /**
+   * Ce qui est tapé dans le champ, tant que l'organisateur y est.
+   *
+   * `null` veut dire « personne n'a encore touché au champ » : la valeur
+   * affichée vient alors de la base. Sans cet état, le champ afficherait
+   * toujours la mise **enregistrée** — donc, dès qu'une saisie est refusée, il
+   * reviendrait à l'ancienne valeur tout en montrant une erreur qui parle d'un
+   * nombre disparu de l'écran. Le défaut s'est vu à la capture, pas au test.
+   */
+  const [saisieMise, setSaisieMise] = useState<string | null>(null);
   const nb = teams.filter((t) => !t.forfait).length;
   const taille = TAILLE_FORMATION[concours.format];
   /**
@@ -272,23 +286,47 @@ function IndemnitesSection({
           <div className="indemnites-params no-print">
             <label>
               Mise par joueur (€)
+              {/* Au centime, comme ailleurs : le pas de 0,5 refusait 3,20 €. */}
               <input
                 type="number"
                 min={0}
-                step={0.5}
-                value={parJoueur ?? ''}
+                max={MAX_MISE}
+                step={0.01}
+                value={saisieMise ?? parJoueur ?? ''}
                 placeholder="—"
-                onChange={(e) =>
+                onChange={(e) => {
+                  setSaisieMise(e.target.value);
+                  setRaisonMise(undefined);
+                  if (e.target.value === '') {
+                    void updateConcours({
+                      ...concours,
+                      miseParJoueur: undefined,
+                      miseParEquipe: undefined,
+                    });
+                    return;
+                  }
+                  // Ce champ écrit en base à chaque frappe : la vérification est
+                  // donc ici, et non à l'envoi d'un formulaire qu'il n'y a pas.
+                  // Sans elle, une saisie illisible écrirait `NaN` dans la mise
+                  // et tout le bilan des indemnités deviendrait `NaN` — un
+                  // refus muet dans l'autre sens.
+                  const valeur = Number(e.target.value);
+                  const raison = raisonRefusMise(valeur);
+                  if (raison) {
+                    setRaisonMise(raison);
+                    return;
+                  }
                   // On écrit la mise par joueur et on retire l'ancien champ :
                   // le laisser en place ferait cohabiter deux vérités, et
                   // `miseEquipe` l'occulterait — la saisie semblerait sans effet.
                   void updateConcours({
                     ...concours,
-                    miseParJoueur: Number(e.target.value),
+                    miseParJoueur: valeur,
                     miseParEquipe: undefined,
-                  })
-                }
+                  });
+                }}
               />
+              {raisonMise && <small className="form-error">{raisonMise}</small>}
               <small className="form-hint">
                 {miseHeritee !== undefined
                   ? `Ancienne mise : ${miseHeritee.toLocaleString('fr-FR')} € par équipe, appliquée tant que ce champ est vide.`
