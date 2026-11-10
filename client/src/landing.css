@@ -611,7 +611,9 @@
 
 .lp-evolution-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  /* `min(…, 100%)` : sur un écran plus étroit que la colonne minimale, la
+     carte se réduit au lieu de faire défiler toute la page de côté. */
+  grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
   gap: 1.4rem;
   align-items: start;
 }
@@ -885,4 +887,12 @@
 
 .lp a {
   text-underline-offset: 0.18em;
+}
+
+/* Liens de suivi de la feuille de route : une ligne de 15 px de haut se rate
+   au doigt. La zone tactile s'agrandit sans déplacer le texte. */
+.lp-roadmap-lien {
+  display: inline-block;
+  padding: 0.45rem 0;
+  margin: 0 0 -0.3rem;
 }
