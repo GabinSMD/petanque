@@ -984,3 +984,33 @@
 .lp-inventaire > .lp-familles {
   padding: 0.4rem 0 1.2rem;
 }
+
+/* Marque : logo complet dans l'en-tête, icône seule quand la place va aux
+   deux boutons ; en blanc sur le pied de page sombre. */
+.lp-brand .boule-logo {
+  display: none;
+}
+
+.lp-brand .logo-treizero {
+  height: 1.8rem;
+}
+
+@media (max-width: 560px) {
+  .lp-brand:not(.lp-brand-footer) .logo-treizero {
+    display: none;
+  }
+
+  .lp-brand .boule-logo {
+    display: block;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.lp-brand-footer .logo-treizero {
+  color: var(--lp-blanc);
+}
+
+.lp-brand-footer .marque-rouge {
+  fill: var(--marque-rouge-clair);
+}

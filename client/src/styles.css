@@ -1,5 +1,5 @@
 /* ==================================================================
-   Pétanque Concours — thème fédéral bleu · blanc · rouge
+   Treizéro — thème fédéral bleu · blanc · rouge
    (palette inspirée des couleurs de la FFPJP, sans usage du logo
    officiel qui est une marque protégée)
    ================================================================== */
@@ -5758,4 +5758,89 @@ h2 {
   .score-valider-texte {
     display: inline;
   }
+}
+
+/* -------------------------------- Marque ------------------------------- */
+
+/* Les couleurs du visuel validé. Le bleu de la marque est un peu plus vif que
+   celui de l'interface (--accent) : il ne sert qu'au logo. */
+:root {
+  --blanc: #fff;
+  --marque-bleu: #2445bc;
+  --marque-rouge: #d21c34;
+  /* Sur le bleu de l'en-tête, le rouge de la marque devient illisible : un
+     rouge éclairci garde la couleur et le contraste. */
+  --marque-rouge-clair: #ff8f9a;
+}
+
+.logo-treizero,
+.boule-logo {
+  flex: none;
+  display: block;
+  color: var(--marque-bleu);
+}
+
+.logo-treizero {
+  height: 1.7rem;
+  width: auto;
+}
+
+.marque-rouge {
+  fill: var(--marque-rouge);
+}
+
+/* Le nom en toutes lettres (pied de page) : le « o » final est le zéro. */
+.marque {
+  font-family: var(--font-titre);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.marque-o {
+  color: var(--marque-rouge);
+}
+
+.app-footer-brand .marque {
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+/* En-tête : logo complet, en blanc. L'icône seule le remplace quand la place
+   manque (voir plus bas). */
+.app-header .logo-treizero,
+.app-header .boule-logo {
+  color: var(--blanc);
+}
+
+.app-header .marque-rouge {
+  fill: var(--marque-rouge-clair);
+}
+
+.brand .boule-logo {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .brand .logo-treizero {
+    display: none;
+  }
+
+  .brand .boule-logo {
+    display: block;
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.login-brand h1 {
+  margin: 0;
+}
+
+.login-brand .logo-treizero {
+  height: 2.4rem;
+}
+
+.welcome-brand .boule-logo {
+  width: 34px;
+  height: 34px;
 }

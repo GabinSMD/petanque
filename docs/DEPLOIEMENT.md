@@ -1,4 +1,4 @@
-# Déployer Pétanque Concours
+# Déployer Treizéro
 
 Le serveur est **mono-conteneur** : l'API Fastify sert aussi le client
 construit. Base SQLite sur disque — prévoyez un **volume persistant**.

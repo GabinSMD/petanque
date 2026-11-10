@@ -1,8 +1,8 @@
 [Unit]
-# Service systemd — Pétanque Concours (API + client construit)
+# Service systemd — Treizéro (API + client construit)
 # Copier dans /etc/systemd/system/petanque.service puis :
 #   sudo systemctl daemon-reload && sudo systemctl enable --now petanque
-Description=Pétanque Concours
+Description=Treizéro
 After=network-online.target
 Wants=network-online.target
 

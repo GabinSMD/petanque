@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Installe Pétanque Concours sur une VM Ubuntu (pensé pour Oracle Cloud
+# Installe Treizéro sur une VM Ubuntu (pensé pour Oracle Cloud
 # « Always Free »). Idempotent : relançable sans risque.
 #
 # Usage (en root, sur la VM) :

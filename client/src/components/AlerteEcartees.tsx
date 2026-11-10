@@ -26,7 +26,7 @@ export function AlerteEcartees() {
   if (!resume) return null;
 
   const rapport = [
-    'Pétanque Concours — données écartées',
+    'Treizéro — données écartées',
     APP_COMMIT ? `Version ${APP_VERSION} (commit ${APP_COMMIT})` : `Version ${APP_VERSION}`,
     detailEcartees(ecartees),
   ].join('\n');

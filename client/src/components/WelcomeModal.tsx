@@ -45,7 +45,7 @@ export function WelcomeModal({ onClose }: { onClose: () => void }) {
       <div className="modal welcome-modal" onClick={(e) => e.stopPropagation()}>
         <div className="welcome-brand">
           <BouleLogo />
-          <h2>Bienvenue sur Pétanque Concours !</h2>
+          <h2>Bienvenue sur Treizéro !</h2>
         </div>
         <p>Organisez vos concours de bout en bout, même sans connexion :</p>
         <ul className="welcome-list">

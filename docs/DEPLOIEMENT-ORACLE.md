@@ -1,4 +1,4 @@
-# Héberger Pétanque Concours gratuitement — Oracle Cloud « Always Free »
+# Héberger Treizéro gratuitement — Oracle Cloud « Always Free »
 
 Ce guide déploie l'application sur une **machine virtuelle gratuite à vie**
 d'Oracle Cloud. Contrairement aux offres « gratuites » qui remettent le

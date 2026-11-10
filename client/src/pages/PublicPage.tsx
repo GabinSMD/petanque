@@ -224,7 +224,7 @@ export function PublicPage() {
 
       {mode === 'watch' && <ResultsView data={data} teamsById={teamsById} />}
 
-      <footer className="public-footer">Résultats en direct — Pétanque Concours</footer>
+      <footer className="public-footer">Résultats en direct — Treizéro</footer>
     </div>
   );
 }

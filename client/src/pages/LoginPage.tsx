@@ -1,7 +1,7 @@
 import { Rocket } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BouleLogo } from '../components/BouleLogo';
+import { LogoTreizero } from '../components/BouleLogo';
 import { siteUrl } from '../lib/appUrl';
 import {
   adoptLocalDataForNewOrg,
@@ -132,9 +132,8 @@ export function LoginPage() {
       <div className="login-page">
         <div className="login-card login-card-attente">
           <div className="login-brand">
-            <BouleLogo />
             <h1>
-              Pétanque <strong>Concours</strong>
+              <LogoTreizero />
             </h1>
           </div>
           <p className="login-tagline">Ouverture du mode invité…</p>
@@ -147,9 +146,8 @@ export function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <BouleLogo />
           <h1>
-            Pétanque <strong>Concours</strong>
+            <LogoTreizero />
           </h1>
         </div>
         <p className="login-tagline">

@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { BouleLogo } from '../components/BouleLogo';
+import { BouleLogo, LogoTreizero } from '../components/BouleLogo';
 import { JOURNAL } from '../help/nouveautes';
 import { ROADMAP, lienIssue } from '../help/roadmap';
 import { appIsElsewhere, appUrl } from '../lib/appUrl';
@@ -421,10 +421,8 @@ export function LandingPage() {
       <header className="lp-header">
         <div className="lp-header-inner">
           <span className="lp-brand">
+            <LogoTreizero />
             <BouleLogo />
-            <span>
-              Pétanque <strong>Concours</strong>
-            </span>
           </span>
           <nav className="lp-nav" aria-label="Sections de la page">
             <a href="#fonctionnalites">Fonctionnalités</a>
@@ -789,10 +787,7 @@ export function LandingPage() {
       <footer className="lp-footer">
         <div className="lp-container lp-footer-inner">
           <span className="lp-brand lp-brand-footer">
-            <BouleLogo />
-            <span>
-              Pétanque <strong>Concours</strong>
-            </span>
+            <LogoTreizero />
           </span>
           <p className="lp-footer-note">
             Application indépendante, non affiliée à la FFPJP : elle applique les

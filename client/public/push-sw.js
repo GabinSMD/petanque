@@ -7,7 +7,7 @@ self.addEventListener('push', (event) => {
   } catch (e) {
     data = { body: event.data && event.data.text ? event.data.text() : '' };
   }
-  const title = data.title || 'Pétanque Concours';
+  const title = data.title || 'Treizéro';
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',
