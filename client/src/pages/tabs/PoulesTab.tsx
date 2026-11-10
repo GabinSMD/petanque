@@ -1,4 +1,5 @@
-import { AlarmClock, Dices, LayoutGrid, Pause, Printer, Search, Shield, Ticket, Timer } from 'lucide-react';
+import { MenuPlus, MenuPlusItem } from '../../components/MenuPlus';
+import { AlarmClock, Dices, LayoutGrid, Pause, Printer, Search, Shield, Ticket, Timer, Undo2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
@@ -290,9 +291,15 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
           </a>
           {concours.status === 'poules' && (
             <>
-              <button className="btn btn-ghost btn-sm" onClick={() => void doCancel()}>
-                Annuler le tirage
-              </button>
+              <MenuPlus>
+                <MenuPlusItem
+                  danger
+                  icone={<Undo2 className="ic" aria-hidden />}
+                  titre="Annuler le tirage"
+                  detail="Revient aux inscriptions. Tous les scores de poules, et le tableau s'il existe, sont supprimés."
+                  onClick={() => void doCancel()}
+                />
+              </MenuPlus>
               <button
                 className="btn btn-primary"
                 disabled={!allComplete || busy}
@@ -310,12 +317,6 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
                 {concours.parGroupes ? 'Tirer les concours A, B et C →' : 'Clôturer les poules →'}
               </button>
             </>
-          )}
-          {concours.status === 'poules' && (
-            <span className="hint">
-              Les qualifiés entrent au tableau au fil des poules : l'onglet Tableau se remplit
-              sans attendre la dernière.
-            </span>
           )}
           {scoresLocked && (
             <span className="hint">

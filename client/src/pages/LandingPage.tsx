@@ -122,6 +122,34 @@ interface Famille {
  * là qu'on tient le compte, et une vitrine qui en montre le tiers laisse croire
  * à un logiciel trois fois plus petit qu'il n'est.
  */
+/** Les quatre gestes de la journée : ce qu'un bénévole fait réellement. */
+const GESTES: { icone: LucideIcon; titre: string; texte: string }[] = [
+  {
+    icone: ClipboardList,
+    titre: 'Inscrire',
+    texte:
+      'Les noms des joueurs, un clic, l’équipe a son numéro. Ou les équipes s’inscrivent elles-mêmes depuis un lien.',
+  },
+  {
+    icone: Dices,
+    titre: 'Tirer',
+    texte:
+      'Un bouton tire les poules ou le tableau, en séparant les équipes d’un même club, et attribue les terrains.',
+  },
+  {
+    icone: PenLine,
+    titre: 'Saisir les scores',
+    texte:
+      'Vous tapez le numéro de l’équipe et le score. La suite — barrage, qualifiés, tour suivant — se construit toute seule.',
+  },
+  {
+    icone: Tv,
+    titre: 'Afficher les résultats',
+    texte:
+      'Poules, tableau et classement s’affichent en direct sur l’écran du club et sur le téléphone des joueurs.',
+  },
+];
+
 const FAMILLES: Famille[] = [
   {
     icone: Dices,
@@ -264,7 +292,7 @@ const STEPS: { title: string; body: string }[] = [
   {
     title: 'Au boulodrome, sans réseau',
     body:
-      'Vous ouvrez l’application : elle se charge depuis le cache. Tirage des ' +
+      'Vous ouvrez l’application comme d’habitude, même sans connexion. Tirage des ' +
       'poules, impression des feuilles, saisie des scores, génération du ' +
       'tableau, consolante — tout fonctionne hors connexion.',
   },
@@ -278,8 +306,8 @@ const STEPS: { title: string; body: string }[] = [
     title: 'Au retour du réseau',
     body:
       'Les modifications partent, celles des autres appareils arrivent. Le ' +
-      'compteur dit ce qui reste en attente : rien n’est cru synchronisé avant ' +
-      'que le serveur l’ait accepté.',
+      'compteur dit ce qui reste en attente : une saisie n’est annoncée ' +
+      'sauvegardée qu’une fois réellement enregistrée en ligne.',
   },
 ];
 
@@ -450,11 +478,13 @@ export function LandingPage() {
               synchronise quand le réseau revient.
             </p>
             <div className="lp-cta">
-              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
-                Créer un compte club
-              </a>
-              <a className="btn lp-btn-lg" href={appUrl('/login?invite=1')}>
+              {/* L'essai d'abord : la démonstration convainc mieux qu'un formulaire,
+                  et les concours créés en invité se rattachent ensuite au compte. */}
+              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?invite=1')}>
                 Essayer sans compte
+              </a>
+              <a className="btn lp-btn-lg" href={appUrl('/login?mode=inscription')}>
+                Créer un compte club
               </a>
             </div>
             <p className="lp-cta-note">
@@ -491,33 +521,31 @@ export function LandingPage() {
               Le réseau manque au boulodrome. L’application n’en a pas besoin.
             </h2>
             <p className="lp-section-lead" data-revele>
-              Ce n’est pas un mode dégradé qu’on active en cas de problème : c’est la
-              façon normale dont l’application fonctionne.
+              Pas de réglage à activer ni de panne à craindre : avec ou sans réseau,
+              l’application se comporte de la même façon.
             </p>
             <div className="lp-offline-grid">
               <div className="lp-offline-item" data-revele>
-                <h3>Tout s’écrit d’abord sur l’appareil</h3>
+                <h3>Vous ne dépendez jamais du réseau</h3>
                 <p>
-                  L’interface lit et écrit dans le navigateur. Tirer les poules,
-                  saisir un score, générer un tableau : aucune de ces opérations
-                  n’attend la réponse d’un serveur.
+                  Tirer les poules, saisir un score, lancer le tableau : tout répond
+                  tout de suite, que la connexion soit bonne, mauvaise ou absente.
                 </p>
               </div>
               <div className="lp-offline-item" data-revele>
-                <h3>Rechargez la page sans réseau : tout est là</h3>
+                <h3>Rien ne se perd si l’écran se ferme</h3>
                 <p>
-                  L’application est mise en cache et le navigateur a l’interdiction de
-                  purger vos données. Elle s’installe sur mobile et tablette et
-                  s’ouvre en plein écran.
+                  Le concours est enregistré sur l’appareil. Tablette éteinte, page
+                  rechargée, onglet fermé par erreur : vous le retrouvez là où vous
+                  l’aviez laissé.
                 </p>
               </div>
               <div className="lp-offline-item" data-revele>
-                <h3>La synchronisation attend son heure</h3>
+                <h3>Vous savez quand tout est sauvegardé</h3>
                 <p>
-                  Au retour du réseau, vos modifications partent et celles des autres
-                  appareils du club arrivent. Le compteur affiche ce qui reste en
-                  attente — une entité refusée reste visible plutôt que d’être crue
-                  sauvegardée.
+                  Un témoin en haut de l’écran indique « Synchronisé », ou combien de
+                  saisies attendent encore le réseau. Dès qu’il revient, elles partent
+                  toutes seules et les autres appareils du club se mettent à jour.
                 </p>
               </div>
             </div>
@@ -526,15 +554,37 @@ export function LandingPage() {
 
         <section className="lp-section" id="fonctionnalites">
           <div className="lp-container">
-            <h2 data-revele>Ce que l’application sait faire</h2>
+            <h2 data-revele>Quatre gestes, du matin au palmarès</h2>
             <p className="lp-section-lead" data-revele>
-              L’inventaire complet, groupé par moment de la journée. Les références au
-              manuel de l’arbitrage et des concours sont celles des règles réellement
-              appliquées.
+              Un bénévole qui n’a jamais ouvert l’application doit pouvoir tenir la
+              table de marque. Voici tout ce qu’il a à faire.
             </p>
+            <ol className="lp-gestes">
+              {GESTES.map((g) => (
+                <li key={g.titre} className="lp-geste" data-revele>
+                  <g.icone className="lp-geste-icone" aria-hidden strokeWidth={1.75} />
+                  <h3>{g.titre}</h3>
+                  <p>{g.texte}</p>
+                </li>
+              ))}
+            </ol>
+
+            {/* L'inventaire reste complet — une vitrine qui en montre le tiers
+                laisse croire à un logiciel trois fois plus petit — mais il ne
+                s'impose plus à qui veut seulement savoir si c'est simple. */}
+            <details className="lp-inventaire">
+              <summary>
+                <span>
+                  Tout ce que l’application sait faire
+                  <small>
+                    {FAMILLES.length} familles, {FAMILLES.reduce((n, f) => n + f.points.length, 0)}{' '}
+                    fonctions, avec les références au manuel de l’arbitrage
+                  </small>
+                </span>
+              </summary>
             <ul className="lp-familles">
               {FAMILLES.map((f) => (
-                <li key={f.titre} className="lp-famille" data-revele>
+                <li key={f.titre} className="lp-famille">
                   <f.icone className="lp-famille-icone" aria-hidden strokeWidth={1.75} />
                   <h3>{f.titre}</h3>
                   <p className="lp-famille-chapeau">{f.chapeau}</p>
@@ -546,6 +596,7 @@ export function LandingPage() {
                 </li>
               ))}
             </ul>
+            </details>
 
             <figure className="lp-shot lp-shot-wide" data-revele>
               <Capture
@@ -724,11 +775,11 @@ export function LandingPage() {
               risque.
             </p>
             <div className="lp-cta lp-cta-center" data-revele>
-              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
-                Créer un compte club
-              </a>
-              <a className="btn lp-btn-lg lp-btn-invert" href={appUrl('/login?invite=1')}>
+              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?invite=1')}>
                 Essayer sans compte
+              </a>
+              <a className="btn lp-btn-lg lp-btn-invert" href={appUrl('/login?mode=inscription')}>
+                Créer un compte club
               </a>
             </div>
           </div>

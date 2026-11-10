@@ -1,4 +1,4 @@
-import { Zap } from 'lucide-react';
+import { CircleCheck, Zap } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { declarableMatches, matchLabel, pendingMatchesForTeam } from '../lib/matchLabel';
@@ -23,6 +23,8 @@ export function QuickScore({
   matches: Match[];
 }) {
   const [num, setNum] = useState('');
+  /** Dernière partie saisie ici : de quoi confirmer, et corriger sans chercher. */
+  const [derniere, setDerniere] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const byNumber = useMemo(() => new Map(teams.map((t) => [t.number, t])), [teams]);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
@@ -64,6 +66,16 @@ export function QuickScore({
         )}
       </form>
 
+      {/* Le champ se vide après validation et le score s'affiche ailleurs dans la
+          page : sans ce retour, on ne sait pas si la saisie est partie. */}
+      {parsed === null && (
+        <Confirmation
+          concours={concours}
+          match={matches.find((m) => m.id === derniere)}
+          teamsById={teamsById}
+        />
+      )}
+
       {parsed !== null && !team && (
         <p className="hint quick-score-msg">Aucune équipe n°{num}.</p>
       )}
@@ -83,6 +95,7 @@ export function QuickScore({
               label={matchLabel(m, poules, matches)}
               teamsById={teamsById}
               onSaved={() => {
+                setDerniere(m.id);
                 setNum('');
                 inputRef.current?.focus();
               }}
@@ -91,6 +104,50 @@ export function QuickScore({
         </div>
       )}
     </div>
+  );
+}
+
+function Confirmation({
+  concours,
+  match,
+  teamsById,
+}: {
+  concours: Concours;
+  match: Match | undefined;
+  teamsById: Map<string, Team>;
+}) {
+  if (!match || !match.done) return null;
+  const numero = (id: string | null | undefined) =>
+    id ? `n°${teamsById.get(id)?.number ?? '?'}` : '—';
+  const scores = match.scoreA !== null && match.scoreB !== null;
+  const gagnant = !scores
+    ? null
+    : match.scoreA! > match.scoreB!
+      ? match.teamAId
+      : match.scoreB! > match.scoreA!
+        ? match.teamBId
+        : null;
+  return (
+    <p className="quick-score-ok" role="status">
+      <CircleCheck className="ic" aria-hidden />
+      <span>
+        {scores ? (
+          <>
+            Score{' '}
+            <strong>
+              {match.scoreA}–{match.scoreB}
+            </strong>{' '}
+            enregistré, {numero(match.teamAId)} contre {numero(match.teamBId)}
+            {gagnant ? ` : équipe ${numero(gagnant)} gagnante.` : '.'}
+          </>
+        ) : (
+          <>
+            Résultat enregistré, {numero(match.teamAId)} contre {numero(match.teamBId)}.
+          </>
+        )}
+      </span>
+      <ScoreForm concours={concours} match={match} editOnly />
+    </p>
   );
 }
 

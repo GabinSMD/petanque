@@ -1,4 +1,5 @@
-import { Dices, Shield, Ticket, Trophy } from 'lucide-react';
+import { MenuPlus, MenuPlusItem } from '../../components/MenuPlus';
+import { Dices, Shield, Ticket, Trophy, Undo2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
@@ -317,19 +318,26 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
             <Ticket className="ic" aria-hidden /> Tickets de parties
           </a>
           {!locked && (
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => {
-                const msg = finales
-                  ? 'Annuler les phases finales ? Leurs scores seront supprimés et le concours revient aux rondes.'
-                  : 'Annuler le tableau ? Tous les scores du tableau seront supprimés.';
-                if (window.confirm(msg)) {
-                  void (finales ? annulerPhasesFinales(concours) : cancelTableau(concours));
+            <MenuPlus>
+              <MenuPlusItem
+                danger
+                icone={<Undo2 className="ic" aria-hidden />}
+                titre={finales ? 'Annuler les phases finales' : 'Annuler le tableau'}
+                detail={
+                  finales
+                    ? 'Le concours revient aux rondes. Les scores des phases finales sont supprimés.'
+                    : 'Tous les scores du tableau sont supprimés.'
                 }
-              }}
-            >
-              {finales ? 'Annuler les phases finales' : 'Annuler le tableau'}
-            </button>
+                onClick={() => {
+                  const msg = finales
+                    ? 'Annuler les phases finales ? Leurs scores seront supprimés et le concours revient aux rondes.'
+                    : 'Annuler le tableau ? Tous les scores du tableau seront supprimés.';
+                  if (window.confirm(msg)) {
+                    void (finales ? annulerPhasesFinales(concours) : cancelTableau(concours));
+                  }
+                }}
+              />
+            </MenuPlus>
           )}
           {championTeam && !locked && (
             <button

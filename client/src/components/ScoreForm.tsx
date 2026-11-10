@@ -278,8 +278,14 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
       />
       {/* Bouton de confirmation optionnel (surtout utile sur tablette). */}
       {a.trim() !== '' && b.trim() !== '' && (
-        <button className="btn btn-primary btn-sm" title="Valider le score" aria-label="Valider">
+        <button
+          className="btn btn-primary btn-sm score-valider"
+          title="Valider le score"
+          aria-label="Valider le score"
+        >
           <Check className="ic" aria-hidden />
+          {/* Le mot n'apparaît qu'au doigt : au clavier, Entrée suffit. */}
+          <span className="score-valider-texte">Valider</span>
         </button>
       )}
       {editing && (

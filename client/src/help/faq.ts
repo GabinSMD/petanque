@@ -161,7 +161,7 @@ export const FAQ: FaqEntry[] = [
       'Cliquez sur « Inscrire » : l\'équipe reçoit automatiquement son numéro de dossard.',
       'Répétez pour chaque équipe — le pied de page indique la répartition en poules prévue.',
     ],
-    note: 'Les inscriptions se verrouillent après le tirage. Utilisez « Annuler le tirage » pour les rouvrir.',
+    note: 'Les inscriptions se verrouillent après le tirage. Pour les rouvrir : menu « Plus » de l\'onglet Poules, puis « Annuler le tirage ».',
     action: { label: 'Ouvrir l\'onglet Équipes', path: '/concours/:id/equipes', needsConcours: true },
   },
   {
@@ -202,7 +202,7 @@ export const FAQ: FaqEntry[] = [
       'Cliquez sur « Tirer les poules ».',
       'Chaque poule reçoit un terrain par défaut pour ses premières parties — modifiable sur chaque partie.',
     ],
-    note: 'Un tirage peut être annulé tant que le concours n\'est pas terminé : bouton « Annuler le tirage » (les scores de poules sont alors effacés).',
+    note: 'Un tirage peut être annulé tant que le concours n\'est pas terminé : menu « Plus » de l\'onglet Poules, puis « Annuler le tirage » (les scores de poules sont alors effacés).',
     action: { label: 'Ouvrir l\'onglet Poules', path: '/concours/:id/poules', needsConcours: true },
   },
   {

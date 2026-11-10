@@ -1,3 +1,4 @@
+import { MenuPlus, MenuPlusItem } from '../../components/MenuPlus';
 import { ArrowDownToLine, Ban, Camera, Check, ClipboardList, Coins, Download, Euro, Globe, Lightbulb, Mail, MapPin, Pencil, Search, Trash2, TriangleAlert, Undo2, User, X } from 'lucide-react';
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
@@ -8,7 +9,7 @@ import { MultisiteModal } from '../../components/MultisiteModal';
 import type { Concours, Licencie, Player, Poule, RolePetanque, Team } from '@shared';
 import { addTeam, deleteTeam, importerInscrits, insererEquipe, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
-import { useLicencies } from '../../db/hooks';
+import { useLicencies, useModeFederalActif } from '../../db/hooks';
 import {
   ETATS_MISE,
   PAYS_LICENCE_ETRANGERE,
@@ -121,6 +122,15 @@ export function TeamsTab({ concours, teams, poules }: Props) {
      critères fédéraux, ou au moins un fichier de licenciés importé. */
   const criteresFederaux = aDesCriteresLicence(concours);
   const controlActif = criteresFederaux || licencies.length > 0;
+  /**
+   * Licence, pays et club de chaque joueur : indispensables à un concours
+   * fédéral, du bruit pour un concours amical où l'on ne saisit que des noms.
+   * Ils restent ouverts dès que le contexte s'en sert, et à un clic sinon.
+   */
+  const modeFederal = useModeFederalActif();
+  const [complementsChoisis, setComplementsChoisis] = useState(false);
+  const complementsForces = criteresFederaux || modeFederal || licencies.length > 0;
+  const complements = complementsForces || complementsChoisis;
   const fiches = new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l]));
   const controles = new Map<string, ControleEquipe>(
     controlActif
@@ -290,6 +300,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
   const trackPaid = mise > 0;
   const bilan = bilanMises(teams, mise);
   const engagements = teams.filter((t) => !t.forfait).length;
+  const fractionnable = engagements >= 4;
 
   return (
     <div className="tab-content">
@@ -298,10 +309,14 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       {!locked && (
         <div className="export-bar no-print">
           <span className="export-bar-label">Inscrire :</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setScanning(true)}>
-            <Camera className="ic" aria-hidden /> Au lecteur de licences
-          </button>
-          <span className="hint">Caméra, douchette USB ou saisie du n° de licence.</span>
+          {complementsForces && (
+            <>
+              <button className="btn btn-ghost btn-sm" onClick={() => setScanning(true)}>
+                <Camera className="ic" aria-hidden /> Au lecteur de licences
+              </button>
+              <span className="hint">Caméra, douchette USB ou saisie du n° de licence.</span>
+            </>
+          )}
           <label className="btn btn-ghost btn-sm" title="Reprendre une liste d'inscrits (CSV)">
             <Download className="ic" aria-hidden /> Importer une liste (CSV)
             <input
@@ -314,24 +329,33 @@ export function TeamsTab({ concours, teams, poules }: Props) {
               }}
             />
           </label>
+          {/* Ce qui ne sert pas à chaque concours : à portée, mais hors du passage. */}
+          {(!complementsForces || fractionnable) && (
+            <MenuPlus>
+              {!complementsForces && (
+                <MenuPlusItem
+                  icone={<Camera className="ic" aria-hidden />}
+                  titre="Inscrire au lecteur de licences"
+                  detail="Caméra, douchette USB ou saisie du n° de licence."
+                  onClick={() => setScanning(true)}
+                />
+              )}
+              {/* Fractionnement multisite (manuel §3.B.10.D) : avant le tirage, et
+                  seulement si l'effectif permet de donner 2 équipes à chaque site. */}
+              {fractionnable && (
+                <MenuPlusItem
+                  icone={<MapPin className="ic" aria-hidden />}
+                  titre="Fractionner en plusieurs sites"
+                  detail="Un concours par site, quand un seul boulodrome n'a pas assez de terrains."
+                  onClick={() => setMultisite(true)}
+                />
+              )}
+            </MenuPlus>
+          )}
         </div>
       )}
 
       {bilanImport && <p className="banner-warn no-print"><Download className="ic" aria-hidden /> {bilanImport}</p>}
-
-      {/* Fractionnement multisite (manuel §3.B.10.D) : avant le tirage, et
-          seulement si l'effectif permet de donner 2 équipes à chaque site. */}
-      {!locked && teams.filter((t) => !t.forfait).length >= 4 && (
-        <div className="export-bar no-print">
-          <span className="export-bar-label">Plusieurs sites :</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setMultisite(true)}>
-            <MapPin className="ic" aria-hidden /> Fractionner en plusieurs sites
-          </button>
-          <span className="hint">
-            Un concours par site, quand un seul boulodrome n'a pas assez de terrains.
-          </span>
-        </div>
-      )}
 
       {multisite && (
         <MultisiteModal concours={concours} teams={teams} onClose={() => setMultisite(false)} />
@@ -346,6 +370,8 @@ export function TeamsTab({ concours, teams, poules }: Props) {
           <div className="team-add-players">
             {Array.from({ length: nbPlayers }, (_, i) => (
               <div key={i} className="player-inputs">
+                <label className="champ champ-nom">
+                  <span>{individual ? 'Joueur' : `Joueur ${i + 1}`}</span>
                 <input
                   ref={i === 0 ? firstInput : undefined}
                   value={names[i] ?? ''}
@@ -354,27 +380,33 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                     setNames(names.map((n, j) => (j === i ? e.target.value : n)));
                     applyLicencie(i, e.target.value);
                   }}
-                  placeholder={individual ? 'Nom du joueur' : `Joueur ${i + 1}`}
-                  aria-label={individual ? 'Nom du joueur' : `Nom du joueur ${i + 1}`}
+                  placeholder="Prénom Nom"
                   required={i === 0}
                 />
+                </label>
+                {complements && (
+                  <>
                 {/* Colonne « CD » de la grille fédérale, avant le n° de licence
                     comme dans le manuel. Réservée aux concours à critères
                     fédéraux : sur un concours de club, personne ne regarde le
                     comité, et la ligne de saisie est déjà chargée. */}
                 {criteresFederaux && (
+                  <label className="champ champ-cd">
+                    <span>CD</span>
                   <input
                     className="comite-input"
                     value={comites[i] ?? ''}
                     onChange={(e) =>
                       setComites(comites.map((c, j) => (j === i ? e.target.value : c)))
                     }
-                    placeholder="CD"
                     maxLength={3}
                     inputMode="numeric"
                     title="Comité départemental (manuel §3.B.1, zone 15). Prérempli depuis la licence, corrigible : un joueur peut relever d'un autre comité."
                   />
+                  </label>
                 )}
+                <label className="champ champ-licence">
+                  <span>N° de licence</span>
                 <input
                   className="licence-input"
                   value={licences[i] ?? ''}
@@ -382,16 +414,18 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                     setLicences(licences.map((l, j) => (j === i ? e.target.value : l)));
                     applyLicenceNumero(i, e.target.value);
                   }}
-                  placeholder="N° licence"
-                  aria-label={`N° de licence du joueur ${i + 1}`}
                 />
+                </label>
                 {!licences[i]?.trim() && (
+                  <span className="champ champ-pays">
+                    <span id={`pays-${i}`}>Fédération de la licence</span>
                   <span className="licence-etrangere-groupe">
                     {/* Une liste et non un code libre : le contingent hors UE se
                         calcule sur ce code, et un « SUI » tapé à la main ne
                         compterait dans aucun contrôle. */}
                     <select
                       className="licence-etrangere"
+                      aria-labelledby={`pays-${i}`}
                       value={etrangeres[i] ?? ''}
                       onChange={(e) =>
                         setEtrangeres(etrangeres.map((v, j) => (j === i ? e.target.value : v)))
@@ -414,15 +448,19 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                       <Globe className="ic" aria-hidden /> Fiche
                     </button>
                   </span>
+                  </span>
                 )}
+                <label className="champ">
+                  <span>{i === 0 ? 'Club du joueur' : 'Club du joueur (si différent)'}</span>
                 <input
                   className="club-input club-input-joueur"
                   value={clubs[i] ?? ''}
                   onChange={(e) => setClubs(clubs.map((c, j) => (j === i ? e.target.value : c)))}
-                  placeholder={i === 0 ? 'Club' : 'Club (si différent)'}
-                  aria-label={`Club du joueur ${i + 1}`}
                   list="clubs-connus"
                 />
+                </label>
+                  </>
+                )}
                 {avecRoles && (
                   <select
                     className="role-select"
@@ -445,15 +483,30 @@ export function TeamsTab({ concours, teams, poules }: Props) {
               </div>
             ))}
           </div>
-          <input
-            className="club-input"
-            value={club}
-            onChange={(e) => setClub(e.target.value)}
-            placeholder="Club de l'équipe (facultatif)"
-            aria-label="Club de l'équipe (facultatif)"
-            title="Utilisé pour les joueurs dont le club n'est pas précisé"
-            list="clubs-connus"
-          />
+          {!complementsForces && (
+            <button
+              type="button"
+              className="btn-lien champ-bascule"
+              aria-expanded={complements}
+              onClick={() => setComplementsChoisis(!complementsChoisis)}
+            >
+              {complements
+                ? 'Masquer les licences et clubs par joueur'
+                : 'Ajouter licences et clubs par joueur'}
+            </button>
+          )}
+          <label className="champ champ-club">
+            <span>
+              Club de l'équipe <small>(facultatif)</small>
+            </span>
+            <input
+              className="club-input"
+              value={club}
+              onChange={(e) => setClub(e.target.value)}
+              title="Utilisé pour les joueurs dont le club n'est pas précisé"
+              list="clubs-connus"
+            />
+          </label>
           <datalist id="clubs-connus">
             {[...new Set([
               ...teams.map((t) => t.club),

@@ -896,3 +896,91 @@
   padding: 0.45rem 0;
   margin: 0 0 -0.3rem;
 }
+
+/* ---------------------- Quatre gestes, puis l'inventaire ----------------- */
+
+.lp-gestes {
+  list-style: none;
+  margin: 0 0 1.6rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 1.6rem;
+  counter-reset: geste;
+}
+
+.lp-geste {
+  counter-increment: geste;
+  padding-top: 0.9rem;
+  border-top: 3px solid var(--accent);
+}
+
+.lp-geste-icone {
+  width: 1.7rem;
+  height: 1.7rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.lp-geste h3 {
+  font-size: 1.15rem;
+  margin: 0 0 0.35rem;
+}
+
+.lp-geste h3::before {
+  content: counter(geste) '. ';
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.lp-geste p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.lp-inventaire {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-inventaire > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.lp-inventaire > summary::-webkit-details-marker {
+  display: none;
+}
+
+.lp-inventaire > summary::before {
+  content: '';
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease-out;
+}
+
+.lp-inventaire[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.lp-inventaire > summary small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.lp-inventaire > .lp-familles {
+  padding: 0.4rem 0 1.2rem;
+}

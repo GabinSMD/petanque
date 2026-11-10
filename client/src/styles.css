@@ -5522,3 +5522,240 @@ h2 {
 .btn-icon {
   gap: 0.3rem;
 }
+
+/* ==================================================================
+   Passe « à confier à un bénévole » : moins d'options visibles par
+   défaut, des libellés qui restent, un retour après chaque saisie.
+   ================================================================== */
+
+/* ---------------------- Champ avec libellé persistant ------------------ */
+
+/* Le texte d'exemple disparaît dès qu'on tape : une fois la ligne remplie,
+   plus rien ne disait quel champ était quoi. Le libellé reste au-dessus. */
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 0;
+}
+
+.champ > span small {
+  font-weight: 400;
+}
+
+.champ input,
+.champ select {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.team-add-form .player-inputs > .champ {
+  flex: 1 1 100%;
+}
+
+.team-add-form .player-inputs > .champ-cd {
+  flex: 0 0 4rem;
+}
+
+.team-add-form .player-inputs > .champ-licence {
+  flex: 1 1 8rem;
+}
+
+.team-add-form .champ-pays .licence-etrangere-groupe {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+}
+
+.team-add-form > .champ-club {
+  flex: 1 1 15rem;
+  max-width: 24rem;
+}
+
+.team-add-form > .champ-bascule {
+  flex: 1 1 100%;
+  text-align: left;
+  font-size: 0.88rem;
+  padding: 0.2rem 0;
+}
+
+.team-add-form {
+  align-items: flex-end;
+}
+
+@media (max-width: 640px) {
+  .team-add-form > .champ-club {
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .team-add-form > .champ-bascule {
+    min-height: 2.75rem;
+  }
+}
+
+/* ------------------------------ Menu « Plus » -------------------------- */
+
+.menu-plus {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-plus > summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.menu-plus > summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-plus[open] > summary .ic {
+  transform: rotate(180deg);
+}
+
+.menu-plus-liste {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.3rem);
+  z-index: 30;
+  width: min(21rem, calc(100vw - 2rem));
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+  padding: 0.3rem;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.menu-plus-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  color: var(--ink);
+}
+
+.menu-plus-item:hover,
+.menu-plus-item:focus-visible {
+  background: var(--accent-soft);
+}
+
+.menu-plus-item .ic {
+  margin-top: 0.15rem;
+  color: var(--muted);
+}
+
+.menu-plus-item strong {
+  display: block;
+  font-weight: 600;
+}
+
+.menu-plus-item small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.83rem;
+  line-height: 1.4;
+  margin-top: 0.1rem;
+}
+
+.menu-plus-item-danger strong,
+.menu-plus-item-danger .ic {
+  color: var(--danger);
+}
+
+/* Sur téléphone, le menu prend la largeur de la barre d'outils : accroché au
+   bouton, il sortait de l'écran d'un côté ou de l'autre. */
+@media (max-width: 640px) {
+  .menu-plus {
+    position: static;
+  }
+
+  .toolbar,
+  .export-bar {
+    position: relative;
+  }
+
+  .menu-plus-liste {
+    left: 0;
+    right: 0;
+    width: auto;
+    top: calc(100% + 0.2rem);
+  }
+}
+
+/* ------------------------- Retour après saisie rapide ------------------ */
+
+.quick-score-ok {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  background: var(--succes-fond);
+  color: var(--succes-texte);
+  font-size: 0.93rem;
+}
+
+.quick-score-ok > .ic {
+  color: var(--succes-texte);
+}
+
+.quick-score-ok .btn-icon {
+  color: var(--succes-texte);
+}
+
+:root {
+  --succes-fond: #e6f4ea;
+  --succes-texte: #1b5e34;
+}
+
+/* --------------------------- Valider le score -------------------------- */
+
+/* À la souris ou au clavier, Entrée valide : la coche suffit. Au doigt, c'est
+   le seul chemin — elle devient un vrai bouton, avec son mot. */
+.score-valider-texte {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .score-valider {
+    min-height: 2.75rem;
+    padding: 0.4rem 0.9rem;
+    font-size: 1rem;
+  }
+
+  .score-valider-texte {
+    display: inline;
+  }
+}
+
+/* Même bouton sur un écran étroit : une tablette tenue à la main ne se
+   déclare pas toujours « tactile ». */
+@media (max-width: 640px) {
+  .score-valider {
+    min-height: 2.75rem;
+    padding: 0.4rem 0.9rem;
+    font-size: 1rem;
+  }
+
+  .score-valider-texte {
+    display: inline;
+  }
+}
