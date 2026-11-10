@@ -551,7 +551,7 @@ export function LandingPage() {
               <Capture
                 nom="poules"
                 largeur={1280}
-                hauteur={1118}
+                hauteur={1019}
                 largeurMobile={390}
                 hauteurMobile={844}
                 alt="Deux poules de quatre équipes terminées : 1ère partie, 2e partie,

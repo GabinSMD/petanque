@@ -5516,3 +5516,9 @@ h2 {
     letter-spacing: -0.015em;
   }
 }
+
+/* Un bouton-icône qui porte aussi un mot (« corriger ») : le pictogramme ne
+   colle pas au texte. */
+.btn-icon {
+  gap: 0.3rem;
+}
