@@ -49,7 +49,7 @@ body {
 }
 
 ::selection {
-  background: #cfe0ff;
+  background: var(--selection);
 }
 
 h1, h2, h3, h4 {
@@ -72,7 +72,7 @@ input, select {
   padding: 0.45rem 0.6rem;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--champ);
   color: var(--ink);
   max-width: 100%;
 }
@@ -106,7 +106,7 @@ input:disabled, select:disabled, input[readonly] {
   padding-top: calc(0.55rem + env(safe-area-inset-top));
   padding-left: calc(1.1rem + env(safe-area-inset-left));
   padding-right: calc(1.1rem + env(safe-area-inset-right));
-  background: linear-gradient(180deg, #101f52, var(--accent));
+  background: linear-gradient(180deg, var(--marine), var(--accent-plein));
   color: #fff;
   position: sticky;
   top: 0;
@@ -281,7 +281,7 @@ input:disabled, select:disabled, input[readonly] {
   border-radius: 7px;
   padding: 0.5rem 0.95rem;
   font-weight: 600;
-  background: #e7ebf5;
+  background: var(--neutre);
   color: var(--ink);
   transition: background 0.15s, transform 0.05s;
   text-decoration: none;
@@ -293,7 +293,7 @@ input:disabled, select:disabled, input[readonly] {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, #2c55d4, var(--accent) 55%, var(--accent-dark));
+  background: linear-gradient(180deg, var(--accent-plein-clair), var(--accent-plein) 55%, var(--accent-plein-fonce));
   color: #fff;
   box-shadow: 0 1px 3px rgba(18, 39, 122, 0.4);
 }
@@ -511,7 +511,7 @@ input:disabled, select:disabled, input[readonly] {
 }
 
 .hint-attention {
-  color: var(--warning, #a15c00);
+  color: var(--warning, var(--alerte-texte));
 }
 
 /* Classement : ligne dont la place a été échangée à la main. */
@@ -682,7 +682,7 @@ input:disabled, select:disabled, input[readonly] {
 }
 
 .sync-pending {
-  background: var(--terra);
+  background: var(--terra-plein);
   border-radius: 999px;
   padding: 0 0.45rem;
   font-weight: 700;
@@ -709,7 +709,7 @@ input:disabled, select:disabled, input[readonly] {
 
 .chip-filter {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   border-radius: 999px;
   padding: 0.28rem 0.8rem;
   font-weight: 600;
@@ -718,7 +718,7 @@ input:disabled, select:disabled, input[readonly] {
 }
 
 .chip-filter.active {
-  background: var(--accent);
+  background: var(--accent-plein);
   border-color: var(--accent);
   color: #fff;
 }
@@ -791,21 +791,21 @@ input:disabled, select:disabled, input[readonly] {
 
 .tag {
   display: inline-block;
-  background: #e9edf6;
+  background: var(--neutre);
   border-radius: 5px;
   padding: 0.1rem 0.5rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #4a5677;
+  color: var(--muted);
 }
 
-.tag-cat { background: #efe3f7; color: #6b3a8c; }
+.tag-cat { background: var(--violet-fond); color: var(--violet-texte); }
 .tag-ok { background: var(--accent-soft); color: var(--accent-dark); }
-.tag-info { background: #e3edf7; color: var(--info); }
-.tag-danger { background: #f7e3e0; color: var(--danger); }
+.tag-info { background: var(--info-fond); color: var(--info); }
+.tag-danger { background: var(--danger-fond); color: var(--danger); }
 .tag-qualifie {
-  background: #e2f4e6;
-  color: #216b32;
+  background: var(--succes-fond);
+  color: var(--succes-texte);
   margin-left: 0.4rem;
 }
 
@@ -817,10 +817,10 @@ input:disabled, select:disabled, input[readonly] {
   font-weight: 700;
 }
 
-.status-inscriptions { background: #e3edf7; color: var(--info); }
+.status-inscriptions { background: var(--info-fond); color: var(--info); }
 .status-poules { background: var(--terra-soft); color: var(--terra); }
 .status-tableau { background: var(--accent-soft); color: var(--accent-dark); }
-.status-termine { background: #e8eaf0; color: var(--muted); }
+.status-termine { background: var(--neutre); color: var(--muted); }
 
 .empty-state {
   background: var(--card);
@@ -1106,7 +1106,7 @@ form label select {
 .tabs {
   display: inline-flex;
   gap: 0.3rem;
-  background: #e3e8f4;
+  background: var(--neutre);
   border-radius: 999px;
   padding: 0.28rem;
   margin-bottom: 1rem;
@@ -1131,7 +1131,7 @@ form label select {
 
 .tab.active {
   color: var(--accent-dark);
-  background: #fff;
+  background: var(--card);
   box-shadow: 0 1px 3px rgba(20, 30, 58, 0.18);
 }
 
@@ -1254,7 +1254,7 @@ form label select {
 
 .teams-table th, .rank-table th {
   text-align: left;
-  background: #e9edf6;
+  background: var(--neutre);
   padding: 0.5rem 0.7rem;
   font-size: 0.85rem;
 }
@@ -1308,10 +1308,10 @@ form label select {
 .caisse-summary {
   margin-top: 0.4rem;
   padding: 0.5rem 0.75rem;
-  background: #fff8e6;
-  border: 1px solid #f0e0b0;
+  background: var(--alerte-fond);
+  border: 1px solid var(--alerte-bord);
   border-radius: 8px;
-  color: #6b5410;
+  color: var(--alerte-texte);
 }
 
 .cell-paid { text-align: center; white-space: nowrap; }
@@ -1332,7 +1332,7 @@ form label select {
   padding: 0.6rem 1rem;
   border-radius: 12px;
   background: var(--accent-soft);
-  border: 1px solid #c3d0f0;
+  border: 1px solid var(--info-bord);
 }
 .round-timer .timer-clock {
   font-size: 1.9rem;
@@ -1351,16 +1351,16 @@ form label select {
   gap: 0.4rem;
 }
 .round-timer.timer-warning {
-  background: #fff4e0;
-  border-color: #f0d29a;
+  background: var(--alerte-fond);
+  border-color: var(--alerte-bord);
 }
 .round-timer.timer-warning .timer-clock,
 .round-timer.timer-warning .timer-state {
-  color: #a05a00;
+  color: var(--alerte-texte);
 }
 .round-timer.timer-expired {
-  background: #f9e2df;
-  border-color: #e6b0a8;
+  background: var(--danger-fond);
+  border-color: var(--danger-bord);
   animation: timer-pulse 1s ease-in-out infinite;
 }
 .round-timer.timer-expired .timer-clock,
@@ -1414,10 +1414,10 @@ form label select {
 .qualifies-banner {
   margin: 0 0 0.6rem;
   padding: 0.5rem 0.75rem;
-  background: #e2f4e6;
-  border: 1px solid #b6ddc0;
+  background: var(--succes-fond);
+  border: 1px solid var(--succes-bord);
   border-radius: 8px;
-  color: #216b32;
+  color: var(--succes-texte);
   font-weight: 600;
 }
 
@@ -1543,7 +1543,7 @@ form label select {
 .terrain-field input {
   width: 2.6rem;
   padding: 0.2rem 0.3rem;
-  background: #f1f4fa;
+  background: var(--neutre-doux);
 }
 
 .score-form .btn-sm {
@@ -1641,7 +1641,7 @@ form label select {
   padding: 0.2rem 0.4rem;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #f1f4fa;
+  background: var(--neutre-doux);
   color: var(--muted);
   cursor: pointer;
 }
@@ -1649,7 +1649,7 @@ form label select {
   background: var(--accent-soft);
   color: var(--accent-dark);
   font-weight: 600;
-  border-color: #c3d0f0;
+  border-color: var(--info-bord);
 }
 
 /* Libellés d'équipes */
@@ -1873,14 +1873,14 @@ form label select {
 }
 
 .match-box-row.winner .match-box-score {
-  background: var(--accent);
+  background: var(--accent-plein);
   color: #fff;
 }
 
 .match-box-score {
   min-width: 1.7rem;
   text-align: center;
-  background: #e9edf6;
+  background: var(--neutre);
   border-radius: 5px;
   font-weight: 700;
   padding: 0.05rem 0.3rem;
@@ -1894,7 +1894,7 @@ form label select {
 }
 
 .champion-banner {
-  background: linear-gradient(90deg, var(--accent-soft), #fdf4d7);
+  background: linear-gradient(90deg, var(--accent-soft), var(--alerte-fond));
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   padding: 0.7rem 1rem;
@@ -1926,7 +1926,7 @@ form label select {
 }
 
 .rank-first {
-  background: #fdf8e2;
+  background: var(--alerte-fond);
 }
 
 .rank-teams {
@@ -2165,8 +2165,8 @@ form label select {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  background: linear-gradient(90deg, var(--accent-soft), #f3f6fd);
-  border: 1px solid #c9d7f2;
+  background: linear-gradient(90deg, var(--accent-soft), var(--neutre-doux));
+  border: 1px solid var(--info-bord);
   border-radius: var(--radius);
   padding: 0.6rem 0.9rem;
   margin-bottom: 1rem;
@@ -2184,7 +2184,7 @@ form label select {
 }
 
 .next-step-go {
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--accent);
   color: var(--accent-dark);
 }
@@ -2366,7 +2366,7 @@ form label select {
 
 .tour-card p {
   margin: 0 0 0.8rem;
-  color: #33405e;
+  color: var(--ink);
 }
 
 .tour-controls {
@@ -2454,7 +2454,7 @@ form label select {
   border-radius: 50%;
   border: none;
   font-size: 1.4rem;
-  background: linear-gradient(180deg, #2c55d4, var(--accent-dark));
+  background: linear-gradient(180deg, var(--accent-plein-clair), var(--accent-plein-fonce));
   color: #fff;
   box-shadow: 0 4px 14px rgba(18, 39, 122, 0.45);
   transition: transform 0.15s, box-shadow 0.15s;
@@ -2490,7 +2490,7 @@ form label select {
   align-items: center;
   justify-content: space-between;
   padding: 0.7rem 0.95rem;
-  background: linear-gradient(180deg, var(--accent-dark), var(--accent));
+  background: linear-gradient(180deg, var(--accent-plein-fonce), var(--accent-plein));
   color: #fff;
 }
 
@@ -2522,7 +2522,7 @@ form label select {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  background: #f7f9fd;
+  background: var(--neutre-doux);
 }
 
 .chat-bubble {
@@ -2534,14 +2534,14 @@ form label select {
 
 .chat-user {
   align-self: flex-end;
-  background: var(--accent);
+  background: var(--accent-plein);
   color: #fff;
   border-bottom-right-radius: 4px;
 }
 
 .chat-bot {
   align-self: flex-start;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--line);
   border-bottom-left-radius: 4px;
   box-shadow: var(--shadow);
@@ -2585,7 +2585,7 @@ form label select {
 
 .chat-chip {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   border-radius: 999px;
   padding: 0.3rem 0.7rem;
   font-size: 0.82rem;
@@ -2625,25 +2625,25 @@ form label select {
 
 /* Le guide passe devant l'action simple : faire vaut mieux que lire. */
 .chat-chip-guide {
-  background: linear-gradient(180deg, #2c55d4, var(--accent-dark));
+  background: linear-gradient(180deg, var(--accent-plein-clair), var(--accent-plein-fonce));
   border-color: var(--accent-dark);
   color: #fff;
   font-weight: 600;
 }
 
 .chat-chip-guide:hover {
-  background: var(--accent-dark);
+  background: var(--accent-plein-fonce);
   color: #fff;
 }
 
 .chat-chip-action {
-  background: var(--accent);
+  background: var(--accent-plein);
   border-color: var(--accent);
   color: #fff;
 }
 
 .chat-chip-action:hover {
-  background: var(--accent-dark);
+  background: var(--accent-plein-fonce);
   color: #fff;
 }
 
@@ -2661,7 +2661,7 @@ form label select {
   gap: 0.45rem;
   padding: 0.6rem;
   border-top: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
 }
 
 .chat-input input {
@@ -2686,7 +2686,7 @@ form label select {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--muted);
-  background: #e9edf6;
+  background: var(--neutre);
   border-radius: 999px;
   padding: 0.22rem 0.7rem 0.22rem 0.3rem;
 }
@@ -2696,7 +2696,7 @@ form label select {
   width: 1.35rem;
   height: 1.35rem;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2710,7 +2710,7 @@ form label select {
 
 .wizard-dot.current em,
 .wizard-dot.done em {
-  background: var(--accent);
+  background: var(--accent-plein);
   color: #fff;
 }
 
@@ -2854,7 +2854,7 @@ form label select {
 }
 
 .melee-player {
-  background: #e9edf6;
+  background: var(--neutre);
   border-radius: 6px;
   padding: 0.08rem 0.45rem;
   font-size: 0.86rem;
@@ -2900,7 +2900,7 @@ form label select {
 }
 
 .standing-top {
-  background: #fdf8e2;
+  background: var(--alerte-fond);
 }
 
 .tir-table input {
@@ -2974,7 +2974,7 @@ form label select {
   width: 140px;
   height: 140px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--card);
   padding: 8px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -3077,7 +3077,7 @@ form label select {
 
 .public-score {
   font-variant-numeric: tabular-nums;
-  background: #e9edf6;
+  background: var(--neutre);
   border-radius: 5px;
   padding: 0 0.4rem;
 }
@@ -3095,7 +3095,7 @@ form label select {
 .public-modeswitch {
   display: inline-flex;
   gap: 0.3rem;
-  background: #e3e8f4;
+  background: var(--neutre);
   border-radius: 999px;
   padding: 0.25rem;
   margin: 0 auto 0.4rem;
@@ -3111,7 +3111,7 @@ form label select {
 }
 
 .public-modeswitch button.active {
-  background: #fff;
+  background: var(--card);
   color: var(--accent-dark);
   box-shadow: 0 1px 3px rgba(31, 44, 28, 0.18);
 }
@@ -3239,9 +3239,9 @@ form label select {
   display: block;
   width: 100%;
   text-align: left;
-  background: linear-gradient(90deg, var(--terra-soft), #fdf4d7);
+  background: linear-gradient(90deg, var(--terra-soft), var(--alerte-fond));
   border: 1px solid var(--terra);
-  color: #8c1626;
+  color: var(--danger);
   border-radius: var(--radius);
   padding: 0.6rem 0.9rem;
   font-weight: 700;
@@ -3275,7 +3275,7 @@ form label select {
 /* ------------------------- Documents imprimables ------------------------ */
 
 .print-page {
-  background: #fff;
+  background: var(--card);
   color: #000;
   min-height: 100vh;
   padding: 1.2rem 1.4rem;
@@ -3565,8 +3565,8 @@ form label select {
 }
 
 .registrations-panel {
-  background: #fff7e6;
-  border: 1px solid #e6c976;
+  background: var(--alerte-fond);
+  border: 1px solid var(--alerte-bord);
   border-radius: var(--radius);
   padding: 0.8rem 0.9rem;
   margin-bottom: 1rem;
@@ -3592,7 +3592,7 @@ form label select {
   justify-content: space-between;
   gap: 0.7rem;
   flex-wrap: wrap;
-  border-top: 1px dashed #e6c976;
+  border-top: 1px dashed var(--alerte-bord);
   padding-top: 0.4rem;
 }
 
@@ -3612,7 +3612,7 @@ form label select {
   border-radius: 8px;
   padding: 0.6rem;
   margin-top: 0.4rem;
-  background: #f7f9fd;
+  background: var(--neutre-doux);
 }
 
 .seed-list {
@@ -3637,7 +3637,7 @@ form label select {
   min-width: 1.35rem;
   height: 1.35rem;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-plein);
   color: #fff;
   font-size: 0.75rem;
   font-weight: 700;
@@ -3658,7 +3658,7 @@ form label select {
 
 .seed-chip {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   border-radius: 999px;
   padding: 0.25rem 0.6rem;
   font-size: 0.82rem;
@@ -4050,7 +4050,7 @@ form label select {
 }
 
 .banner-warn {
-  background: #f7e3e0;
+  background: var(--danger-fond);
   color: var(--danger);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
@@ -4255,7 +4255,7 @@ form label select {
 }
 
 .scan-alerte {
-  background: #f7e3e0;
+  background: var(--danger-fond);
   color: var(--danger);
   border-radius: 8px;
   padding: 0.4rem 0.6rem;
@@ -4268,8 +4268,8 @@ form label select {
 }
 
 .tag-warn {
-  background: #fdf0d5;
-  color: #8a5a00;
+  background: var(--alerte-fond);
+  color: var(--alerte-texte);
 }
 
 /* Heures d'annonce et retards */
@@ -4285,7 +4285,7 @@ form label select {
 }
 
 .retards-panel {
-  background: #f7e3e0;
+  background: var(--danger-fond);
   border-radius: 10px;
   padding: 0.6rem 0.9rem;
   margin-bottom: 0.9rem;
@@ -4342,7 +4342,7 @@ form label select {
 
 .depot-jauge-remplie {
   height: 100%;
-  background: var(--accent);
+  background: var(--accent-plein);
   transition: width 0.3s ease;
 }
 
@@ -4380,7 +4380,7 @@ form label select {
   border-radius: 0.5rem;
   padding: 0.6rem 0.75rem;
   margin-bottom: 0.75rem;
-  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  background: color-mix(in srgb, var(--danger-plein) 8%, transparent);
 }
 
 .depot-pas-inscrit p {
@@ -4521,7 +4521,7 @@ form label select {
 }
 
 .depot-champ-faute {
-  background: #f7e3e0;
+  background: var(--danger-fond);
   color: var(--danger);
   font-weight: 600;
 }
@@ -4580,7 +4580,7 @@ form label select {
 }
 
 .btn-danger {
-  background: var(--danger);
+  background: var(--danger-plein);
   border-color: var(--danger);
   color: #fff;
 }
@@ -4710,7 +4710,7 @@ form label select {
 }
 
 .championnat-verdict.ko {
-  background: #f7e3e0;
+  background: var(--danger-fond);
   color: var(--danger);
 }
 
@@ -4830,7 +4830,7 @@ form label select {
 
 .feuille-jeu {
   width: 3.2rem;
-  background: #fffbe6;
+  background: var(--alerte-fond);
 }
 
 .feuille-jeu input {
@@ -4897,11 +4897,11 @@ form label select {
 }
 
 .feuille-verdict.ok {
-  background: #e8f6ec;
+  background: var(--succes-fond);
 }
 
 .feuille-verdict.ko {
-  background: #fdeceb;
+  background: var(--danger-fond);
   color: var(--danger);
   font-weight: 700;
 }
@@ -4952,7 +4952,7 @@ form label select {
 .signature-canvas {
   border: 1px dashed var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card);
   touch-action: none;
   display: block;
 }
@@ -5059,9 +5059,9 @@ form label select {
   padding: 0.6rem 1.1rem;
   padding-left: calc(1.1rem + env(safe-area-inset-left));
   padding-right: calc(1.1rem + env(safe-area-inset-right));
-  background: #fff6e0;
-  border-bottom: 1px solid #e8d9ad;
-  color: #6b4c07;
+  background: var(--alerte-fond);
+  border-bottom: 1px solid var(--alerte-bord);
+  color: var(--alerte-texte);
   font-size: 0.92rem;
 }
 
@@ -5846,4 +5846,186 @@ h2 {
 .welcome-brand .boule-logo {
   width: 34px;
   height: 34px;
+}
+
+/* ==================================================================
+   Thèmes — clair (par défaut) et sombre.
+
+   Toutes les couleurs de l'interface passent par ces jetons. Deux
+   familles à ne pas confondre :
+   - les jetons de texte et de trait (--accent, --danger…) s'éclaircissent
+     en thème sombre pour rester lisibles sur un fond foncé ;
+   - les jetons « plein » (--accent-plein…) servent de fond à du texte
+     blanc : ils gardent la même valeur dans les deux thèmes.
+
+   Le thème clair est aussi posé sur `.lp` (la vitrine) et `.print-page`
+   (les documents) : une feuille de poules s'imprime sur du papier blanc,
+   quel que soit le réglage de l'écran.
+   ================================================================== */
+
+:root,
+.lp,
+.print-page {
+  --bg: #f1f4fa;
+  --card: #ffffff;
+  --champ: #ffffff;
+  --ink: #16203a;
+  --muted: #5b6579;
+  --line: #dbe1ee;
+  --accent: #1d3d9c;
+  --accent-dark: #12277a;
+  --accent-soft: #e6ecfb;
+  --terra: #d21c34;
+  --terra-soft: #fbe3e8;
+  --danger: #b23a2f;
+  --info: #2b6cb0;
+  --selection: #cfe0ff;
+
+  --neutre-doux: #f7f9fd;
+  --neutre: #e9edf6;
+  --info-fond: #e3edf7;
+  --info-bord: #c9d7f2;
+  --succes-fond: #e6f4ea;
+  --succes-texte: #1b5e34;
+  --succes-bord: #b6ddc0;
+  --alerte-fond: #fdf4d7;
+  --alerte-texte: #8a5a00;
+  --alerte-bord: #e6c976;
+  --danger-fond: #f7e3e0;
+  --danger-bord: #e6b0a8;
+  --violet-fond: #efe3f7;
+  --violet-texte: #6b3a8c;
+
+  --medaille-or: #b8860b;
+  --medaille-argent: #6b7688;
+  --medaille-bronze: #a0522d;
+  --marque-bleu: #2445bc;
+
+  --shadow: 0 1px 2px rgba(20, 30, 58, 0.06), 0 2px 8px rgba(20, 30, 58, 0.08);
+  --shadow-lift: 0 4px 10px rgba(20, 30, 58, 0.1), 0 10px 30px rgba(20, 30, 58, 0.12);
+  color-scheme: light;
+}
+
+:root {
+  --accent-plein: #1d3d9c;
+  --accent-plein-fonce: #12277a;
+  --accent-plein-clair: #2c55d4;
+  --marine: #101f52;
+  --danger-plein: #b23a2f;
+  --terra-plein: #d21c34;
+}
+
+.lp,
+.print-page {
+  color: var(--ink);
+}
+
+/* Réservé à l'écran : on n'imprime jamais en sombre. */
+@media screen {
+  :root[data-theme='dark'] {
+    --bg: #0d1322;
+    --card: #171f38;
+    --champ: #0f162b;
+    --ink: #e9edf8;
+    --muted: #a5afc6;
+    --line: #2e395a;
+    --accent: #9db8ff;
+    --accent-dark: #c6d5ff;
+    --accent-soft: #1f2c55;
+    --terra: #ff8f9a;
+    --terra-soft: #47202a;
+    --danger: #ff9d92;
+    --info: #8cc0ff;
+    --selection: #2f4a8f;
+
+    --neutre-doux: #131a31;
+    --neutre: #263050;
+    --info-fond: #1b2f4d;
+    --info-bord: #35487c;
+    --succes-fond: #173524;
+    --succes-texte: #8fdcaa;
+    --succes-bord: #2f6a47;
+    --alerte-fond: #3a2f12;
+    --alerte-texte: #f2c96b;
+    --alerte-bord: #6d5820;
+    --danger-fond: #4a2320;
+    --danger-bord: #7a3a34;
+    --violet-fond: #33264a;
+    --violet-texte: #d3b0f0;
+
+    --medaille-or: #e6b84a;
+    --medaille-argent: #b4bdcc;
+    --medaille-bronze: #d98b5f;
+    --marque-bleu: #9db8ff;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.35);
+    --shadow-lift: 0 4px 10px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+
+  /* Le dossard est une pastille pleine : fond clair, chiffre foncé. */
+  :root[data-theme='dark'] .team-number {
+    color: var(--bg);
+  }
+
+  /* Bouton principal désactivé : un bleu éteint, pas le lavande du thème clair. */
+  :root[data-theme='dark'] .btn-primary:disabled {
+    background: #2a355c;
+    color: #8f9ab8;
+    box-shadow: none;
+  }
+
+  /* La signature se trace à l'encre foncée et part telle quelle sur la
+     feuille de match : son cadre reste blanc. */
+  :root[data-theme='dark'] .signature-canvas {
+    background: #fff;
+  }
+
+  /* Vitrine et documents restent clairs : ils reprennent le fond clair même
+     quand la page qui les porte est en sombre. */
+  :root[data-theme='dark'] .lp,
+  :root[data-theme='dark'] .print-page {
+    background: var(--bg);
+  }
+}
+
+/* ------------------------- Réglages : apparence ------------------------ */
+
+.reglages-apparence {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem 0.8rem;
+  margin: 0.4rem 0 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.reglages-apparence legend {
+  font-weight: 700;
+  padding: 0 0.35rem;
+}
+
+.reglages-choix {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+.reglages-choix input {
+  margin-top: 0.25rem;
+  min-height: 0;
+}
+
+.reglages-choix small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Boutons qui restent blancs dans les deux thèmes (sur l'en-tête bleu, et le
+   lien d'évitement) : leur texte ne suit pas le bleu éclairci du sombre. */
+.btn-header-cta,
+.skip-link {
+  color: var(--accent-plein-fonce);
 }

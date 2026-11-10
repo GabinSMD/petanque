@@ -449,7 +449,7 @@ export function LandingPage() {
               <strong>L’application a déménagé.</strong> Cet appareil garde des données
               de l’époque où elle était à cette adresse ; elles restent attachées à
               celle-ci. Vos concours <strong>synchronisés</strong> vous attendent à la
-              nouvelle adresse dès votre connexion — ceux créés en mode invité, jamais
+              nouvelle adresse dès votre connexion. Ceux créés en mode invité, jamais
               envoyés au serveur, sont à exporter depuis l’ancienne installation avant
               de la quitter.{' '}
               <a href={appUrl('/login')}>Aller à l’application</a>
@@ -467,8 +467,7 @@ export function LandingPage() {
           <div className="lp-container lp-hero-inner">
             <h1>Vos concours de pétanque, même sans réseau.</h1>
             <p className="lp-lead">
-              De l’inscription au palmarès : tirage, scores et affichage, tout se fait
-              sur place, au boulodrome.
+              De l’inscription au palmarès, tout se fait sur place, au boulodrome.
             </p>
             <div className="lp-cta">
               {/* L'essai d'abord : la démonstration convainc mieux qu'un formulaire,

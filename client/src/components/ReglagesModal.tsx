@@ -1,17 +1,25 @@
 import { besoinModeFederal } from '@shared';
 import { useConcoursList, useLicenciesCount } from '../db/hooks';
 import { useModeFederal } from '../lib/modeFederal';
+import { useTheme, type Theme } from '../lib/theme';
 import { Modal } from './Modal';
 
 /**
- * Réglages de l'appareil. Le seul pour l'instant : le mode fédéral, qui décide
- * de ce que l'application montre — pas de ce qu'elle fait.
+ * Réglages de l'appareil : le mode fédéral, qui décide de ce que l'application
+ * montre — pas de ce qu'elle fait — et l'apparence, claire ou sombre.
  */
+const THEMES: { valeur: Theme; libelle: string; detail: string }[] = [
+  { valeur: 'clair', libelle: 'Clair', detail: 'Le plus lisible en plein jour.' },
+  { valeur: 'sombre', libelle: 'Sombre', detail: 'Repose les yeux le soir ou en salle.' },
+  { valeur: 'auto', libelle: 'Comme l’appareil', detail: 'Suit le réglage du téléphone ou de l’ordinateur.' },
+];
+
 export function ReglagesModal({ onClose }: { onClose: () => void }) {
   const concours = useConcoursList() ?? [];
   const licencies = useLicenciesCount();
   const besoin = besoinModeFederal({ concours, licencies });
   const { actif, preference, choisir, oublier } = useModeFederal(besoin);
+  const apparence = useTheme();
 
   return (
     <Modal title="Réglages" onClose={onClose}>
@@ -49,6 +57,28 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
             </button>
           </p>
         )}
+
+        <fieldset className="reglages-apparence">
+          <legend>Apparence</legend>
+          {THEMES.map((t) => (
+            <label key={t.valeur} className="reglages-choix">
+              <input
+                type="radio"
+                name="apparence"
+                checked={apparence.theme === t.valeur}
+                onChange={() => apparence.choisir(t.valeur)}
+              />
+              <span>
+                <strong>{t.libelle}</strong>
+                <small>{t.detail}</small>
+              </span>
+            </label>
+          ))}
+          <p className="hint">
+            Ce choix vaut pour cet appareil. Les documents imprimés et l’écran d’affichage ne
+            changent pas.
+          </p>
+        </fieldset>
 
         <div className="form-actions">
           <button className="btn btn-primary" onClick={onClose}>
