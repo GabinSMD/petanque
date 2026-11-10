@@ -1,3 +1,4 @@
+import { Contact, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { deleteAllLicencies, deleteLicencie, importLicencies } from '../db/actions';
@@ -63,7 +64,7 @@ export function LicenciesPage() {
     <div className="page">
       <div className="page-head">
         <h1>
-          📇 Licenciés <span className="hint">({licencies.length})</span>
+          <Contact className="ic" aria-hidden /> Licenciés <span className="hint">({licencies.length})</span>
         </h1>
         <Link className="btn btn-ghost btn-sm" to="/">
           ← Retour aux concours
@@ -114,7 +115,7 @@ export function LicenciesPage() {
               }
             }}
           >
-            🗑 Tout supprimer
+            <Trash2 className="ic" aria-hidden /> Tout supprimer
           </button>
         )}
       </div>
@@ -148,7 +149,7 @@ export function LicenciesPage() {
                   title="Supprimer"
                   onClick={() => void deleteLicencie(l.id)}
                 >
-                  🗑
+                  <Trash2 className="ic" aria-hidden />
                 </button>
               </td>
             </tr>

@@ -5398,3 +5398,88 @@ h2,
 h3 {
   text-wrap: balance;
 }
+
+/* ------------------------- Pictogrammes au trait ----------------------- */
+
+/* Un pictogramme Lucide prend la taille et la couleur du texte qui le porte :
+   il se règle comme un caractère, par `font-size` et `color`. */
+.ic {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+  vertical-align: -0.18em;
+  stroke-width: 2;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon .ic {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.next-step-icon,
+.nouveautes-icone,
+.mode-card-emoji {
+  color: var(--accent);
+  display: inline-flex;
+}
+
+.format-card-emoji {
+  letter-spacing: 0;
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.format-card-emoji .ic + .ic {
+  margin-left: -0.3em;
+}
+
+/* Podium : la médaille est teintée, le chiffre reste. */
+.rang-podium {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 700;
+}
+
+.rang-podium-1 .ic { color: var(--medaille-or); }
+.rang-podium-2 .ic { color: var(--medaille-argent); }
+.rang-podium-3 .ic { color: var(--medaille-bronze); }
+
+:root {
+  --medaille-or: #b8860b;
+  --medaille-argent: #6b7688;
+  --medaille-bronze: #a0522d;
+}
+
+@media print {
+  .ic {
+    stroke-width: 1.75;
+  }
+}
+
+/* Partie de poule en cours de saisie : le formulaire (vainqueur à 13, deux
+   cases, mènes) est plus large que la colonne centrale d'une carte et passait
+   par-dessus les noms. Il prend sa propre ligne, sous les deux équipes. */
+.pmatch-versus:has(.score-form) {
+  grid-template-columns: 1fr 1fr;
+}
+
+.pmatch-versus:has(.score-form) .pmatch-score {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.pmatch-score .score-form {
+  justify-content: center;
+}
+
+.btn-icon {
+  vertical-align: middle;
+  line-height: 1;
+}

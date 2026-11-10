@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api, postJson } from '../lib/api';
 import { useSession } from '../db/hooks';
@@ -50,7 +51,7 @@ export function ClubModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Modal title={`👥 ${session?.org.name ?? 'Mon club'}`} onClose={onClose}>
+    <Modal title={`${session?.org.name ?? 'Mon club'}`} onClose={onClose}>
       <p className="hint">
         Plusieurs organisateurs peuvent travailler sur les mêmes concours : chacun son
         compte, les données se synchronisent entre les appareils du club.
@@ -72,7 +73,7 @@ export function ClubModal({ onClose }: { onClose: () => void }) {
         <div className="invite-code-box">
           <code className="invite-code">{invite.code}</code>
           <button className="btn btn-primary btn-sm" onClick={() => void copy()}>
-            {copied ? '✓ Copié' : 'Copier'}
+            {copied ? <><Check className="ic" aria-hidden /> {'Copié'}</> : 'Copier'}
           </button>
           <p className="hint">
             Transmettez ce code : sur l'écran « Créer un compte club », il suffit de le

@@ -1,3 +1,4 @@
+import { MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Concours } from '@shared';
 import { useConcoursList } from '../db/hooks';
@@ -28,7 +29,7 @@ export function LienMultisite({ concours }: Props) {
 
   return (
     <p className="hint no-print multisite-lien">
-      🏟{' '}
+      <MapPin className="ic" aria-hidden />{' '}
       {concours.issuDeConcours ? (
         <>
           Site d'un concours fractionné en {sites.length}

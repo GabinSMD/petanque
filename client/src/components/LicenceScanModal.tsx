@@ -1,3 +1,4 @@
+import { Camera, Square, Trash2, TriangleAlert } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Concours, Licencie, Player, Team } from '@shared';
 import { TAILLE_FORMATION, parseLicenceQr } from '@shared';
@@ -247,7 +248,7 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
 
   return (
     <Modal
-      title="📷 Inscription au lecteur de licences"
+      title="Inscription au lecteur de licences"
       onClose={() => {
         arreterCamera();
         onClose();
@@ -287,7 +288,7 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
         <div className="scan-camera">
           {camera === 'inactive' && (
             <button className="btn btn-ghost btn-sm" onClick={() => void demarrerCamera()}>
-              📷 Utiliser la caméra
+              <Camera className="ic" aria-hidden /> Utiliser la caméra
             </button>
           )}
           {camera === 'demande' && <p className="hint">Autorisation de la caméra…</p>}
@@ -307,7 +308,7 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
                 setCamera('inactive');
               }}
             >
-              ⏹ Arrêter la caméra
+              <Square className="ic" aria-hidden /> Arrêter la caméra
             </button>
           )}
         </div>
@@ -334,7 +335,7 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
                     title="Retirer"
                     onClick={() => setEncours(encours.filter((_, k) => k !== i))}
                   >
-                    🗑
+                    <Trash2 className="ic" aria-hidden />
                   </button>
                 </>
               ) : (
@@ -344,7 +345,7 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
           ))}
         </ol>
 
-        {alerte && <p className="scan-alerte">⚠ {alerte}</p>}
+        {alerte && <p className="scan-alerte"><TriangleAlert className="ic" aria-hidden /> {alerte}</p>}
         {message && <p className="hint scan-message">{message}</p>}
 
         <div className="form-actions">

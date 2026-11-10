@@ -1,13 +1,5 @@
-import {
-  Dices,
-  IdCard,
-  LayoutGrid,
-  ListOrdered,
-  RefreshCw,
-  Target,
-  Trophy,
-  Users,
-} from 'lucide-react';
+import { Icone } from '../components/Icone';
+import { Crosshair, Dices, Flag, IdCard, LayoutGrid, Link2, ListOrdered, PartyPopper, PenLine, Printer, RefreshCw, Settings, Target, Timer, TriangleAlert, Trophy, Tv, Users, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Concours, ConcoursStatus, Match, Poule, Team } from '@shared';
@@ -156,7 +148,7 @@ export function ConcoursPage() {
             data-tour="params"
             onClick={() => setEditing(true)}
           >
-            ⚙ Paramètres
+            <Settings className="ic" aria-hidden /> Paramètres
           </button>
           <a
             className="btn btn-ghost btn-sm"
@@ -166,21 +158,21 @@ export function ConcoursPage() {
             rel="noreferrer"
             title="Affichage public (TV / vidéoprojecteur)"
           >
-            📺 Affichage
+            <Tv className="ic" aria-hidden /> Affichage
           </a>
           <button
             className="btn btn-ghost btn-sm"
             data-tour="share"
             onClick={() => setSharing(true)}
           >
-            🔗 Partager
+            <Link2 className="ic" aria-hidden /> Partager
           </button>
           <button
             className="btn btn-ghost btn-sm"
             data-tour="imprimer"
             onClick={() => window.print()}
           >
-            🖨 Imprimer
+            <Printer className="ic" aria-hidden /> Imprimer
           </button>
         </div>
       </div>
@@ -294,7 +286,7 @@ export function ConcoursPage() {
 }
 
 interface NextStep {
-  icon: string;
+  icon: LucideIcon;
   text: string;
   /** Onglet où se joue la prochaine action. */
   tab?: string;
@@ -311,9 +303,9 @@ function nextStepOf(
   if (isTirMode(concours.mode)) {
     if (concours.status === 'inscriptions') {
       return active < 1
-        ? { icon: '✍️', text: 'Inscrivez vos tireurs.', tab: 'equipes' }
+        ? { icon: PenLine, text: 'Inscrivez vos tireurs.', tab: 'equipes' }
         : {
-            icon: '🏹',
+            icon: Crosshair,
             text: `${active} tireur${active > 1 ? 's' : ''} prêt${active > 1 ? 's' : ''} : ouvrez la série 1 !`,
             tab: 'series',
           };
@@ -325,20 +317,20 @@ function nextStepOf(
       const planned = concours.nbRondes ?? 2;
       if (pending > 0) {
         return {
-          icon: '⏱',
+          icon: Timer,
           text: `Saisissez les scores : ${pending} feuille${pending > 1 ? 's' : ''} de tir restante${pending > 1 ? 's' : ''} (série ${series}).`,
           tab: 'series',
         };
       }
       if (series < planned) {
         return {
-          icon: '🏹',
+          icon: Crosshair,
           text: `Série ${series} complète : ouvrez la série ${series + 1}.`,
           tab: 'series',
         };
       }
       return {
-        icon: '🏁',
+        icon: Flag,
         text: 'Toutes les séries sont tirées : clôturez le concours.',
         tab: 'series',
       };
@@ -350,13 +342,13 @@ function nextStepOf(
     if (concours.status === 'inscriptions') {
       if (active < 2) {
         return {
-          icon: '✍️',
+          icon: PenLine,
           text: `Inscrivez vos ${entrantWord(concours.mode, true)} (2 minimum).`,
           tab: 'equipes',
         };
       }
       return {
-        icon: '🎲',
+        icon: Dices,
         text:
           concours.mode === 'championnat'
             ? `${active} ${word} : générez le calendrier !`
@@ -372,20 +364,20 @@ function nextStepOf(
         concours.mode === 'championnat' ? tirees : (concours.nbRondes ?? 4);
       if (pending > 0) {
         return {
-          icon: '⏱',
+          icon: Timer,
           text: `Saisissez les scores : ${pending} partie${pending > 1 ? 's' : ''} restante${pending > 1 ? 's' : ''}.`,
           tab: 'rondes',
         };
       }
       if (tirees < planned) {
         return {
-          icon: '🎲',
+          icon: Dices,
           text: `Ronde ${tirees} terminée : tirez la ronde ${tirees + 1}.`,
           tab: 'rondes',
         };
       }
       return {
-        icon: '🏁',
+        icon: Flag,
         text: 'Toutes les rondes sont jouées : clôturez le concours (onglet Rondes).',
         tab: 'rondes',
       };
@@ -396,27 +388,27 @@ function nextStepOf(
     if (concours.mode === 'poules') {
       if (active < 4) {
         return {
-          icon: '✍️',
+          icon: PenLine,
           text: `Inscrivez vos équipes (${active}/4 minimum pour des poules).`,
           tab: 'equipes',
         };
       }
       if (!pouleSizes(active)) {
         return {
-          icon: '⚠️',
+          icon: TriangleAlert,
           text: `${active} équipes ne se répartissent pas en poules — inscrivez-en une de plus (ou retirez-en une).`,
           tab: 'equipes',
         };
       }
       return {
-        icon: '🎲',
+        icon: Dices,
         text: `${active} équipes prêtes : place au tirage des poules !`,
         tab: 'poules',
       };
     }
     return active < 2
-      ? { icon: '✍️', text: 'Inscrivez au moins 2 équipes.', tab: 'equipes' }
-      : { icon: '🎲', text: `${active} équipes prêtes : tirez le tableau !`, tab: 'tableau' };
+      ? { icon: PenLine, text: 'Inscrivez au moins 2 équipes.', tab: 'equipes' }
+      : { icon: Dices, text: `${active} équipes prêtes : tirez le tableau !`, tab: 'tableau' };
   }
 
   if (concours.status === 'poules') {
@@ -424,7 +416,7 @@ function nextStepOf(
     const remaining = pouleMatches.filter((m) => !m.done).length;
     if (remaining > 0) {
       return {
-        icon: '⏱',
+        icon: Timer,
         text: `Saisissez les scores : ${remaining} partie${remaining > 1 ? 's' : ''} de poule restante${remaining > 1 ? 's' : ''}.`,
         tab: 'poules',
       };
@@ -434,7 +426,7 @@ function nextStepOf(
     );
     if (complete) {
       return {
-        icon: '🏁',
+        icon: Flag,
         text: 'Toutes les poules sont terminées : générez le tableau final.',
         tab: 'poules',
       };
@@ -452,20 +444,20 @@ function nextStepOf(
     );
     if (winnerOf(finale)) {
       return {
-        icon: '🏆',
+        icon: Trophy,
         text: 'La finale est jouée ! Clôturez le concours pour figer le palmarès.',
         tab: 'tableau',
       };
     }
     return {
-      icon: '⏱',
+      icon: Timer,
       text: `Tableau en cours : ${playable} partie${playable > 1 ? 's' : ''} à saisir.`,
       tab: 'tableau',
     };
   }
 
   return {
-    icon: '🎉',
+    icon: PartyPopper,
     text: 'Concours terminé — consultez le palmarès ou imprimez les résultats.',
     tab: 'resultats',
   };
@@ -496,7 +488,9 @@ function NextStepBanner({
   const step = nextStepOf(concours, teams, poules, matches);
   return (
     <div className="next-step no-print" data-tour="next-step">
-      <span className="next-step-icon">{step.icon}</span>
+      <span className="next-step-icon">
+        <Icone de={step.icon} />
+      </span>
       <span className="next-step-text">{step.text}</span>
       {step.tab && step.tab !== activeTab && (
         <button className="btn btn-sm next-step-go" onClick={() => onGo(step.tab!)}>

@@ -1,3 +1,4 @@
+import { Dices, Shield, Ticket, Trophy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
@@ -114,7 +115,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               onClick={() => setGroupesOuverts(true)}
               title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
             >
-              🛡 Groupes de protection
+              <Shield className="ic" aria-hidden /> Groupes de protection
               {concours.protections?.length ? ` (${concours.protections.length})` : ''}
             </button>
             <label className="checkbox-label">
@@ -180,7 +181,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
                   .finally(() => setBusy(false));
               })}
             >
-              🎲 Tirer le tableau
+              <Dices className="ic" aria-hidden /> Tirer le tableau
             </button>
             {bilanOuvert && bilan && (
               <BilanTirageModal
@@ -304,7 +305,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
         <span className="toolbar-actions">
           {vainqueursEnAttente > 0 && (
             <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => void doTirerTour()}>
-              🎲 Tirer {vainqueursEnAttente} place{vainqueursEnAttente > 1 ? 's' : ''} du tour suivant
+              <Dices className="ic" aria-hidden /> Tirer {vainqueursEnAttente} place{vainqueursEnAttente > 1 ? 's' : ''} du tour suivant
             </button>
           )}
           <a
@@ -313,7 +314,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
             target="_blank"
             rel="noreferrer"
           >
-            🎫 Tickets de parties
+            <Ticket className="ic" aria-hidden /> Tickets de parties
           </a>
           {!locked && (
             <button
@@ -351,7 +352,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
 
       {championTeam && (
         <div className="champion-banner">
-          🏆 Vainqueur{stage !== 'principal' ? ` du ${libelleStage.principal.toLowerCase()}` : ''} :{' '}
+          <Trophy className="ic" aria-hidden /> Vainqueur{stage !== 'principal' ? ` du ${libelleStage.principal.toLowerCase()}` : ''} :{' '}
           <strong>
             n°{championTeam.number} {teamDisplayName(championTeam)}
           </strong>

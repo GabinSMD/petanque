@@ -14,7 +14,7 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
   const { actif, preference, choisir, oublier } = useModeFederal(besoin);
 
   return (
-    <Modal title="⚙ Réglages" onClose={onClose}>
+    <Modal title="Réglages" onClose={onClose}>
       <div className="reglages-modal">
         <label className="checkbox-label">
           <input type="checkbox" checked={actif} onChange={(e) => choisir(e.target.checked)} />

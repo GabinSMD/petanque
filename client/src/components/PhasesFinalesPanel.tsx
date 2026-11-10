@@ -1,3 +1,4 @@
+import { Trophy } from 'lucide-react';
 import { useState } from 'react';
 import type { Concours, Match, Team } from '@shared';
 import { classementFinales, configsPossibles, nomDuBloc } from '@shared';
@@ -35,7 +36,7 @@ export function PhasesFinalesPanel({ concours, teams, matches }: Props) {
   if (!config) {
     return (
       <div className="draw-panel no-print">
-        <h3>🏆 Phases finales</h3>
+        <h3><Trophy className="ic" aria-hidden /> Phases finales</h3>
         <p className="hint">
           Il faut au moins deux équipes classées pour disputer une phase finale.
         </p>
@@ -80,7 +81,7 @@ export function PhasesFinalesPanel({ concours, teams, matches }: Props) {
 
   return (
     <div className="draw-panel no-print finales-panel">
-      <h3>🏆 Phases finales</h3>
+      <h3><Trophy className="ic" aria-hidden /> Phases finales</h3>
       <p className="hint">
         Le classement des rondes remplit le tableau : le 1er contre le dernier qualifié, et les
         mieux classés placés pour se rencontrer le plus tard possible. Aucun tirage au sort.
@@ -183,7 +184,7 @@ export function PhasesFinalesPanel({ concours, teams, matches }: Props) {
 
       {error && <p className="form-error">{error}</p>}
       <button className="btn btn-primary" disabled={busy} onClick={() => void lancer()}>
-        🏆 Lancer les phases finales ({qualifies} qualifiée{qualifies > 1 ? 's' : ''})
+        <Trophy className="ic" aria-hidden /> Lancer les phases finales ({qualifies} qualifiée{qualifies > 1 ? 's' : ''})
       </button>
     </div>
   );

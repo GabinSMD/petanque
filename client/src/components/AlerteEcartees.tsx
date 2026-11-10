@@ -1,3 +1,4 @@
+import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { detailEcartees, resumeEcartees } from '@shared';
 import { useDonneesEcartees } from '../db/hooks';
@@ -37,7 +38,7 @@ export function AlerteEcartees() {
         onClick={() => setOuvert(true)}
         title="Des données reçues n'ont pas pu être lues"
       >
-        <span className="sync-dot" /> ⚠ {ecartees.length}
+        <span className="sync-dot" /> <TriangleAlert className="ic" aria-hidden /> {ecartees.length}
       </button>
       {ouvert && (
         <Modal title="Données reçues illisibles" onClose={() => setOuvert(false)}>

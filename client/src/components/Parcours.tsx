@@ -1,3 +1,4 @@
+import { Check, Hourglass, Pointer } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -266,7 +267,7 @@ function ParcoursOverlay() {
             <h3>{etape.titre}</h3>
             <p>{etape.texte}</p>
             {phase.phase === 'attente' && (
-              <p className="tour-attente">⏳ J'attends que l'écran s'affiche…</p>
+              <p className="tour-attente"><Hourglass className="ic" aria-hidden /> J'attends que l'écran s'affiche…</p>
             )}
             <div className="tour-controls">
               <span className="tour-progress">
@@ -278,11 +279,11 @@ function ParcoursOverlay() {
                 </button>
                 {etape.declencheur.type === 'lecture' ? (
                   <button className="btn btn-primary btn-sm" onClick={avancer}>
-                    {dernier ? 'Terminer ✓' : 'Suivant →'}
+                    {dernier ? <>{'Terminer'} <Check className="ic" aria-hidden /></> : 'Suivant →'}
                   </button>
                 ) : (
                   <span className="tour-consigne">
-                    {etape.declencheur.type === 'clic' ? '👆 à vous de cliquer' : '👉 à vous de faire'}
+                    {etape.declencheur.type === 'clic' ? <><Pointer className="ic" aria-hidden /> {'à vous de cliquer'}</> : <><Pointer className="ic" aria-hidden /> {'à vous de faire'}</>}
                   </span>
                 )}
               </span>

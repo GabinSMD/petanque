@@ -1,8 +1,8 @@
+import { Rang } from './Icone';
+import { ArrowUpDown } from 'lucide-react';
 import type { PermutationClassement, Standing, Team } from '@shared';
 import { estPermutee, libelleClubs } from '@shared';
 import { teamDisplayName } from './TeamLabel';
-
-const MEDALS = ['🥇', '🥈', '🥉'];
 
 interface Props {
   standings: Standing[];
@@ -63,13 +63,13 @@ export function StandingsTable({ standings, teamsById, limit, compact, permutati
                 .join(' ')}
             >
               <td className="standing-rank">
-                {MEDALS[i] ?? i + 1}
+                <Rang index={i} />
                 {estPermutee(permutations, s.id) && (
                   <span
                     className="standing-marque-permutee"
                     title="Place échangée à la main par l'organisateur, à égalité"
                   >
-                    ⇅
+                    <ArrowUpDown className="ic" aria-hidden />
                   </span>
                 )}
               </td>

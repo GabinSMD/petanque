@@ -1,3 +1,4 @@
+import { Printer, Square } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Match, Team } from '@shared';
@@ -175,7 +176,7 @@ export function PrintPage() {
     <div className="print-page">
       <div className="print-controls no-print">
         <button className="btn btn-primary" onClick={() => window.print()}>
-          🖨 Imprimer
+          <Printer className="ic" aria-hidden /> Imprimer
         </button>
         <Link className="btn btn-ghost" to={`/concours/${concours.id}`}>
           ← Retour au concours
@@ -497,7 +498,7 @@ export function PrintPage() {
               <p className="print-ticket-vs">contre</p>
               <p className="print-ticket-team">{t.b}</p>
               <p className="print-ticket-foot">
-                <span>Terrain : {t.terrain ? terrainLabel(t.terrain) : '⬜'}</span>
+                <span>Terrain : {t.terrain ? terrainLabel(t.terrain) : <Square className="ic" aria-hidden />}</span>
                 <span>
                   Score : <em className="print-box" /> – <em className="print-box" />
                 </span>

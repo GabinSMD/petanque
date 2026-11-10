@@ -1,3 +1,4 @@
+import { Rocket } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BouleLogo } from '../components/BouleLogo';
@@ -261,7 +262,7 @@ export function LoginPage() {
               type="button"
               onClick={() => void startGuest()}
             >
-              🚀 Essayer sans compte (mode invité)
+              <Rocket className="ic" aria-hidden /> Essayer sans compte (mode invité)
             </button>
             <p className="login-guest-hint">
               Tout fonctionne, mais uniquement sur cet appareil. Créez un compte plus

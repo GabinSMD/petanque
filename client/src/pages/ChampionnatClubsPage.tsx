@@ -1,3 +1,4 @@
+import { Download, Lock, Medal, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { COMPETITIONS_CLUB, bilanRencontre, resumeFeuille, BAREME_CDC } from '@shared';
@@ -57,13 +58,13 @@ export function ChampionnatClubsPage() {
   return (
     <div className="page">
       <div className="page-head">
-        <h1>🏅 Feuilles de match</h1>
+        <h1><Medal className="ic" aria-hidden /> Feuilles de match</h1>
         <span className="page-head-actions">
           <Link className="btn btn-sm" to="/">
             ← Mes concours
           </Link>
           <label className="btn btn-sm" title="Reprendre une feuille reçue en fichier">
-            📥 Importer une feuille
+            <Download className="ic" aria-hidden /> Importer une feuille
             <input
               type="file"
               accept="application/json,.json"
@@ -142,7 +143,7 @@ export function ChampionnatClubsPage() {
                     </td>
                     <td>
                       {signees === 2 ? (
-                        <span className="tag tag-ok">🔒 signée</span>
+                        <span className="tag tag-ok"><Lock className="ic" aria-hidden /> signée</span>
                       ) : signees === 1 ? (
                         <span className="tag tag-warn">1 sur 2</span>
                       ) : (
@@ -155,7 +156,7 @@ export function ChampionnatClubsPage() {
                         title="Supprimer cette feuille"
                         onClick={() => void supprimer(f.id, resume)}
                       >
-                        🗑
+                        <Trash2 className="ic" aria-hidden />
                       </button>
                     </td>
                   </tr>

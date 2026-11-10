@@ -1,3 +1,4 @@
+import { Icone } from '../components/Icone';
 import {
   ClipboardList,
   Dices,
@@ -647,7 +648,7 @@ export function LandingPage() {
                   {ROADMAP.map((c) => (
                     <li key={c.titre}>
                       <span className="lp-roadmap-icone" aria-hidden>
-                        {c.icone}
+                        <Icone de={c.icone} />
                       </span>
                       <div>
                         <strong>{c.titre}</strong>
@@ -681,7 +682,11 @@ export function LandingPage() {
                     <ul>
                       {entree.items.map((item) => (
                         <li key={item.titre}>
-                          {item.icone && <span aria-hidden>{item.icone}</span>}
+                          {item.icone && (
+                            <span aria-hidden>
+                              <Icone de={item.icone} />
+                            </span>
+                          )}
                           <div>
                             <strong>{item.titre}</strong>
                             <p>{item.texte}</p>

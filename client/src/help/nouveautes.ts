@@ -1,3 +1,4 @@
+import { CaseUpper, ClipboardList, Compass, GraduationCap, IdCard, Printer, Tag, Timer, type LucideIcon } from 'lucide-react';
 import type { Nouveaute } from '@shared';
 
 /**
@@ -12,13 +13,13 @@ import type { Nouveaute } from '@shared';
  * Les `path` visent des écrans de premier niveau : le journal parle de
  * l'application, pas d'un concours en particulier.
  */
-export const JOURNAL: Nouveaute[] = [
+export const JOURNAL: Nouveaute<LucideIcon>[] = [
   {
     version: '0.4.0',
     date: '2026-07-29',
     items: [
       {
-        icone: '🧭',
+        icone: Compass,
         titre: 'L\'assistant sait où vous en êtes',
         texte:
           'Il ne renvoie plus vers une liste de sujets après avoir répondu : il propose la ' +
@@ -34,7 +35,7 @@ export const JOURNAL: Nouveaute[] = [
     date: '2026-07-29',
     items: [
       {
-        icone: '🎓',
+        icone: GraduationCap,
         titre: 'L\'assistant vous fait faire, il ne raconte plus',
         texte:
           'Chaque geste courant a son guide pas à pas : l\'assistant surligne où cliquer, ' +
@@ -50,7 +51,7 @@ export const JOURNAL: Nouveaute[] = [
     date: '2026-07-29',
     items: [
       {
-        icone: '📋',
+        icone: ClipboardList,
         titre: 'Feuille de match du championnat des clubs',
         texte:
           'Remplissez la feuille dans l\'application au lieu du papier : compositions, ' +
@@ -59,7 +60,7 @@ export const JOURNAL: Nouveaute[] = [
         action: { label: 'Ouvrir les rencontres', path: '/championnat-clubs' },
       },
       {
-        icone: '🪪',
+        icone: IdCard,
         titre: 'Licences contrôlées avant le concours',
         texte:
           'Importez le fichier des licenciés, faites le dépôt des licences équipe par ' +
@@ -67,28 +68,28 @@ export const JOURNAL: Nouveaute[] = [
         action: { label: 'Voir les licenciés', path: '/licencies' },
       },
       {
-        icone: '🅰️',
+        icone: CaseUpper,
         titre: 'Formules A-B-C et récupérations',
         texte:
           'Les formules du manuel fédéral où personne ne rentre chez lui après une ' +
           'défaite : deux victoires en A, une en B, zéro en C, avec les récupérations.',
       },
       {
-        icone: '🖨️',
+        icone: Printer,
         titre: 'Impressions officielles',
         texte:
           'Feuille d\'arbitrage, liste des inscrits, résultats pour la presse, absents, ' +
           'graphique du tableau : les documents que la fédération attend, prêts à sortir.',
       },
       {
-        icone: '⏱️',
+        icone: Timer,
         titre: 'Trouver la poule qui retarde tout le monde',
         texte:
           'Les statistiques des poules classent les retardataires par temps d\'attente, ' +
           'et signalent les barrages qui n\'attendent plus que d\'être joués.',
       },
       {
-        icone: '🏷️',
+        icone: Tag,
         titre: 'La version est affichée en pied de page',
         texte:
           'Version, commit et date de compilation, en bas de chaque écran : de quoi ' +

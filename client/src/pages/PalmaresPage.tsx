@@ -1,3 +1,5 @@
+import { Icone } from '../components/Icone';
+import { Archive, Medal, Printer, Trophy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -108,20 +110,20 @@ export function PalmaresPage() {
   return (
     <div className="page">
       <div className="page-head">
-        <h1>🏆 Palmarès du club</h1>
+        <h1><Trophy className="ic" aria-hidden /> Palmarès du club</h1>
         <span className="page-head-actions">
           <Link className="btn btn-sm" to="/">
             ← Mes concours
           </Link>
           <button className="btn btn-ghost btn-sm no-print" onClick={() => window.print()}>
-            🖨 Imprimer
+            <Printer className="ic" aria-hidden /> Imprimer
           </button>
         </span>
       </div>
 
       {nbArchives > 0 && (
         <p className="hint no-print">
-          🗄 {nbArchives} concours archivé{nbArchives > 1 ? 's' : ''}{' '}
+          <Archive className="ic" aria-hidden /> {nbArchives} concours archivé{nbArchives > 1 ? 's' : ''}{' '}
           {voirArchives
             ? 'compris dans ce palmarès'
             : `exclu${nbArchives > 1 ? 's' : ''} de ce palmarès`}
@@ -155,8 +157,8 @@ export function PalmaresPage() {
                 <tr>
                   <th>Concours</th>
                   <th>Date</th>
-                  <th>🏆 Vainqueur</th>
-                  <th>🥈 Finaliste</th>
+                  <th><Trophy className="ic" aria-hidden /> Vainqueur</th>
+                  <th><Medal className="ic" aria-hidden /> Finaliste</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,7 +166,7 @@ export function PalmaresPage() {
                   <tr key={p.concours.id}>
                     <td>
                       <Link to={`/concours/${p.concours.id}/resultats`}>
-                        {MODE_INFO[p.concours.mode].emoji} {p.concours.name}
+                        <Icone de={MODE_INFO[p.concours.mode].icone} /> {p.concours.name}
                       </Link>
                       {designationCategorie(p.concours) && (
                         <span className="tag tag-cat">{designationCategorie(p.concours)}</span>
@@ -195,8 +197,8 @@ export function PalmaresPage() {
                 <thead>
                   <tr>
                     <th>Club</th>
-                    <th>🏆 Victoires</th>
-                    <th>🥈 Finales</th>
+                    <th><Trophy className="ic" aria-hidden /> Victoires</th>
+                    <th><Medal className="ic" aria-hidden /> Finales</th>
                   </tr>
                 </thead>
                 <tbody>
