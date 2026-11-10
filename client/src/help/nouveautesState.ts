@@ -1,3 +1,4 @@
+import type { LucideIcon } from 'lucide-react';
 import { recapNouveautes, type Nouveaute } from '@shared';
 import { JOURNAL } from './nouveautes';
 
@@ -13,7 +14,7 @@ import { JOURNAL } from './nouveautes';
 const VUE_KEY = 'petanque.nouveautesVue';
 
 export interface VueNouveautes {
-  entrees: Nouveaute[];
+  entrees: Nouveaute<LucideIcon>[];
   /** Version à retenir en refermant. */
   aMemoriser: string | null;
   /** Tour d'horizon demandé à la main, plutôt qu'annoncé après mise à jour. */

@@ -1,3 +1,4 @@
+import { Check, PenLine } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { Concours, Player } from '@shared';
 import { addTeam } from '../db/actions';
@@ -67,7 +68,7 @@ export function RegistrationsPanel({ concours }: { concours: Concours }) {
   return (
     <section className="registrations-panel no-print">
       <h3>
-        ✍️ Pré-inscriptions en ligne <span className="tag tag-info">{regs.length} en attente</span>
+        <PenLine className="ic" aria-hidden /> Pré-inscriptions en ligne <span className="tag tag-info">{regs.length} en attente</span>
       </h3>
       <ul>
         {regs.map((r) => (
@@ -87,7 +88,7 @@ export function RegistrationsPanel({ concours }: { concours: Concours }) {
                 disabled={busy === r.id}
                 onClick={() => void accept(r)}
               >
-                ✓ Valider
+                <Check className="ic" aria-hidden /> Valider
               </button>
               <button
                 className="btn btn-ghost btn-sm"

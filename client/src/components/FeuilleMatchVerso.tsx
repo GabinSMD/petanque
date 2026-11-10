@@ -336,7 +336,7 @@ export function FeuilleMatchVerso({
           'Une partie n\'a qu\'un seul score saisi. '}
         {bilan.anomalies.length === 0 &&
           (bilan.complete
-            ? `✓ Feuille complète : ${bilan.totalA} + ${bilan.totalB} = ${enJeu} points, le compte est bon.`
+            ? `Feuille complète : ${bilan.totalA} + ${bilan.totalB} = ${enJeu} points, le compte est bon.`
             : `${bilan.jouees} partie${bilan.jouees > 1 ? 's' : ''} sur ${bilan.parties} saisie${
                 bilan.jouees > 1 ? 's' : ''
               } — ${enJeu} points en jeu au total.`)}

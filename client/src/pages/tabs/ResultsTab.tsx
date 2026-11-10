@@ -1,3 +1,4 @@
+import { ChartColumn, ClipboardList, Euro, FolderOpen, Medal, Newspaper, Receipt, Save, Ticket, Trophy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Concours, Match, MatchStage, Poule, Team } from '@shared';
@@ -165,7 +166,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
           <h2>Concours principal</h2>
           {qualifiedIds.size > 0 && (
             <p className="qualifies-banner">
-              🎫 {qualifiedIds.size} qualifié{qualifiedIds.size > 1 ? 's' : ''} pour la phase
+              <Ticket className="ic" aria-hidden /> {qualifiedIds.size} qualifié{qualifiedIds.size > 1 ? 's' : ''} pour la phase
               suivante{' '}
               {qualificatif
                 ? '(vainqueurs du dernier tour — le tableau s\'arrête là).'
@@ -262,7 +263,7 @@ function IndemnitesSection({
   return (
     <section className="result-section indemnites">
       <h2>
-        💶 Indemnités{' '}
+        <Euro className="ic" aria-hidden /> Indemnités{' '}
         <button className="btn btn-ghost btn-sm no-print" onClick={() => setOpen(!open)}>
           {open ? 'Masquer' : 'Calculer'}
         </button>
@@ -408,14 +409,14 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
             to={`/concours/${concours.id}/imprimer/arbitrage`}
             title="Feuille à remettre au comité (points fédéraux)"
           >
-            🧾 Arbitrage (impression)
+            <Receipt className="ic" aria-hidden /> Arbitrage (impression)
           </Link>
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => exportArbitrageCSV(concours, teams, matches)}
             title="Colonnes du tableur fédéral, pour la saisie dans Geslico"
           >
-            🧾 Arbitrage (CSV)
+            <Receipt className="ic" aria-hidden /> Arbitrage (CSV)
           </button>
           {/* Phases finales en système suisse : le délégué a son propre
               document (manuel §3.D.15), même contenu dans l'ordre fédéral. */}
@@ -425,7 +426,7 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
               to={`/concours/${concours.id}/imprimer/delegue`}
               title="Résultat du concours à remplir par le délégué (phases finales)"
             >
-              📋 Rapport du délégué
+              <ClipboardList className="ic" aria-hidden /> Rapport du délégué
             </Link>
           )}
           <Link
@@ -433,7 +434,7 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
             to={`/concours/${concours.id}/imprimer/presse`}
             title="Résultats détaillés par tour, pour le journal"
           >
-            📰 Presse
+            <Newspaper className="ic" aria-hidden /> Presse
           </Link>
         </>
       )}
@@ -445,20 +446,20 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
           to={`/concours/${concours.id}/imprimer/graphique`}
           title="Graphique papier, pour le suivi manuel"
         >
-          🗂 Graphique
+          <FolderOpen className="ic" aria-hidden /> Graphique
         </Link>
       )}
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => exportClassementCSV(concours, teams, poules, matches)}
       >
-        📊 Classement (CSV)
+        <ChartColumn className="ic" aria-hidden /> Classement (CSV)
       </button>
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => exportEngagesCSV(concours, teams)}
       >
-        📋 Engagés (CSV)
+        <ClipboardList className="ic" aria-hidden /> Engagés (CSV)
       </button>
       {qualifies.length > 0 && (
         <button
@@ -466,7 +467,7 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
           onClick={() => exportQualifiesCSV(concours, qualifies)}
           title="Liste à réutiliser comme inscriptions de la phase finale"
         >
-          🎫 Qualifiés (CSV)
+          <Ticket className="ic" aria-hidden /> Qualifiés (CSV)
         </button>
       )}
       <button
@@ -474,7 +475,7 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
         onClick={() => exportBackupJSON(concours, teams, poules, matches)}
         title="Sauvegarde complète réimportable"
       >
-        💾 Sauvegarde (JSON)
+        <Save className="ic" aria-hidden /> Sauvegarde (JSON)
       </button>
     </div>
   );
@@ -495,7 +496,7 @@ function RankTable({
         {groups.map((g) => (
           <tr key={g.rank} className={g.rank === 1 ? 'rank-first' : ''}>
             <td className="rank-cell">
-              {g.rank === 1 ? '🏆' : g.rank === 2 ? '🥈' : `${g.rank}e`}
+              {g.rank === 1 ? <Trophy className="ic" aria-hidden /> : g.rank === 2 ? <Medal className="ic" aria-hidden /> : `${g.rank}e`}
             </td>
             <td className="rank-label">{g.label}</td>
             <td>

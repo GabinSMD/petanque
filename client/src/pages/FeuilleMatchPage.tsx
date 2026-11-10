@@ -1,3 +1,4 @@
+import { Lock, Mail, Medal, Printer, Repeat, Save, Trash2, TriangleAlert, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Licencie, Player } from '@shared';
@@ -235,7 +236,7 @@ export function FeuilleMatchPage() {
   return (
     <div className="page championnat-page">
       <div className="page-head no-print">
-        <h1>🏅 {resumeFeuille(etat)}</h1>
+        <h1><Medal className="ic" aria-hidden /> {resumeFeuille(etat)}</h1>
         <Link className="btn btn-ghost btn-sm" to="/championnat-clubs">
           ← Feuilles de match
         </Link>
@@ -249,7 +250,7 @@ export function FeuilleMatchPage() {
 
       {signee && (
         <p className="banner-warn no-print">
-          🔒 Feuille signée — elle n'est plus modifiable. Empreinte{' '}
+          <Lock className="ic" aria-hidden /> Feuille signée — elle n'est plus modifiable. Empreinte{' '}
           <strong>{empreinteSignee}</strong>.{' '}
           <button className="btn-lien" onClick={effacerSignatures}>
             Effacer les signatures pour corriger
@@ -259,7 +260,7 @@ export function FeuilleMatchPage() {
 
       {empreinteDivergente && (
         <p className="banner-warn no-print">
-          ⚠ Le contenu a changé depuis la signature : l'empreinte est maintenant{' '}
+          <TriangleAlert className="ic" aria-hidden /> Le contenu a changé depuis la signature : l'empreinte est maintenant{' '}
           <strong>{empreinte}</strong> au lieu de <strong>{empreinteSignee}</strong>. L'exemplaire
           signé ne correspond plus — faites signer de nouveau.
         </p>
@@ -499,7 +500,7 @@ export function FeuilleMatchPage() {
                 void updateFeuilleMatch(reinitialiserFiche(etat));
               }}
             >
-              🗑 Réinitialiser {etat.equipe ? `Fiche ${etat.equipe}` : 'la fiche'}
+              <Trash2 className="ic" aria-hidden /> Réinitialiser {etat.equipe ? `Fiche ${etat.equipe}` : 'la fiche'}
             </button>
           )}
           <button
@@ -508,7 +509,7 @@ export function FeuilleMatchPage() {
             onClick={() => setEchange(true)}
             title="Montrer notre composition à l'autre club, ou recevoir la sienne"
           >
-            🔁 Échanger les compositions
+            <Repeat className="ic" aria-hidden /> Échanger les compositions
           </button>
         </span>
       </form>
@@ -524,10 +525,10 @@ export function FeuilleMatchPage() {
             onClick={() => exportFeuilleJSON(etat)}
             title="Fichier autonome : à archiver, à transmettre, ou à reprendre ailleurs"
           >
-            💾 Sauvegarde (JSON)
+            <Save className="ic" aria-hidden /> Sauvegarde (JSON)
           </button>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => window.print()}>
-            🖨 Feuille de rencontre
+            <Printer className="ic" aria-hidden /> Feuille de rencontre
           </button>
         </span>
       </div>
@@ -573,8 +574,8 @@ export function FeuilleMatchPage() {
             }
           >
             {controle.conforme
-              ? `✓ Équipe conforme (${etat.licences.length} joueurs)`
-              : `⚠ Équipe non conforme : ${
+              ? `Équipe conforme (${etat.licences.length} joueurs)`
+              : `Équipe non conforme : ${
                   controle.anomaliesEquipe.map((a) => ANOMALIE_EQUIPE_LABELS[a]).join(', ') ||
                   'voir les joueurs en rouge'
                 }`}
@@ -643,7 +644,7 @@ export function FeuilleMatchPage() {
                         title="Retirer de l'équipe"
                         onClick={() => retirer(licence)}
                       >
-                        ✕
+                        <X className="ic" aria-hidden />
                       </button>
                     </td>
                   </tr>
@@ -803,7 +804,7 @@ export function FeuilleMatchPage() {
               }}
               title="Prépare le message ; joignez-y la feuille signée"
             >
-              ✉ Préparer le courriel
+              <Mail className="ic" aria-hidden /> Préparer le courriel
             </a>
             <span className="hint">
               Imprimez, faites signer les deux capitaines, puis joignez la feuille au message : une

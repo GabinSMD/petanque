@@ -25,25 +25,29 @@ export interface NouveauteAction {
   parcours?: string;
 }
 
-export interface NouveauteItem {
-  /** Émoji d'appui, facultatif. */
-  icone?: string;
+/**
+ * `I` est le type du pictogramme : le moteur ne le regarde pas, c'est l'écran
+ * qui décide de ce qu'il sait dessiner (un composant d'icône côté client).
+ */
+export interface NouveauteItem<I = string> {
+  /** Pictogramme d'appui, facultatif. */
+  icone?: I;
   titre: string;
   texte: string;
   action?: NouveauteAction;
 }
 
 /** Une version publiée, et ce qu'elle a apporté. */
-export interface Nouveaute {
+export interface Nouveaute<I = string> {
   version: string;
   /** Date de mise en ligne, au format AAAA-MM-JJ. */
   date: string;
-  items: NouveauteItem[];
+  items: NouveauteItem<I>[];
 }
 
-export interface RecapNouveautes {
+export interface RecapNouveautes<I = string> {
   /** Versions à présenter, la plus récente d'abord. Vide = rien à annoncer. */
-  entrees: Nouveaute[];
+  entrees: Nouveaute<I>[];
   /**
    * Version à retenir comme « vue ». Renseignée même quand il n'y a rien à
    * montrer : c'est ce qui évite de rouvrir la pop-up au prochain démarrage.
@@ -77,7 +81,7 @@ export function comparerVersions(a: string, b: string): number {
 }
 
 /** La plus haute version que le journal publie, ou `null` s'il est vide. */
-export function versionJournal(journal: Nouveaute[]): string | null {
+export function versionJournal<I>(journal: Nouveaute<I>[]): string | null {
   return trier(journal)[0]?.version ?? null;
 }
 
@@ -91,11 +95,11 @@ export function versionJournal(journal: Nouveaute[]): string | null {
  *   complet.
  * - Versions sautées : tout est cumulé en une seule pop-up.
  */
-export function recapNouveautes(
-  journal: Nouveaute[],
+export function recapNouveautes<I>(
+  journal: Nouveaute<I>[],
   vue: string | null,
   options: { premiereInstallation: boolean },
-): RecapNouveautes {
+): RecapNouveautes<I> {
   const triees = trier(journal);
   const derniere = triees[0]?.version ?? null;
   if (!derniere) return { entrees: [], aMemoriser: null };
@@ -113,7 +117,7 @@ export function recapNouveautes(
 }
 
 /** Copie triée du plus récent au plus ancien, entrées illisibles écartées. */
-function trier(journal: Nouveaute[]): Nouveaute[] {
+function trier<I>(journal: Nouveaute<I>[]): Nouveaute<I>[] {
   return journal
     .filter((e) => analyserVersion(e.version) !== null)
     .slice()

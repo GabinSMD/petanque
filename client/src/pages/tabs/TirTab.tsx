@@ -1,3 +1,5 @@
+import { Rang } from '../../components/Icone';
+import { Crosshair, Settings } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Team } from '@shared';
 import { TIR_MAX, seriesTirees, tirStandings } from '@shared';
@@ -15,8 +17,6 @@ interface Props {
   teams: Team[];
   matches: Match[];
 }
-
-const MEDALS = ['🥇', '🥈', '🥉'];
 
 /** Séries de tir de précision : saisie des scores et classement combinés. */
 export function TirTab({ concours, teams, matches }: Props) {
@@ -55,14 +55,14 @@ export function TirTab({ concours, teams, matches }: Props) {
             Chaque tireur réalise une série de 20 boules sur 5 ateliers — {TIR_MAX} points
             maximum. Classement à la meilleure série, départage au total.
           </p>
-          <p className="hint">{planned} séries prévues — modifiable dans ⚙ Paramètres.</p>
+          <p className="hint">{planned} séries prévues — modifiable dans <Settings className="ic" aria-hidden /> Paramètres.</p>
           {error && <p className="form-error">{error}</p>}
           <button
             className="btn btn-primary"
             disabled={teams.filter((t) => !t.forfait).length < 1}
             onClick={() => void addSerie()}
           >
-            🏹 Ouvrir la série 1
+            <Crosshair className="ic" aria-hidden /> Ouvrir la série 1
           </button>
         </div>
       </div>
@@ -91,7 +91,7 @@ export function TirTab({ concours, teams, matches }: Props) {
           )}
           {!locked && (
             <button className="btn btn-primary btn-sm" onClick={() => void addSerie()}>
-              🏹 Ouvrir la série {nbSeries + 1}
+              <Crosshair className="ic" aria-hidden /> Ouvrir la série {nbSeries + 1}
             </button>
           )}
           {!locked && allDone && nbSeries >= planned && (
@@ -131,7 +131,7 @@ export function TirTab({ concours, teams, matches }: Props) {
             return (
               <tr key={s.id} className={rank < 3 && s.best > 0 ? 'standing-top' : ''}>
                 <td className="standing-rank">
-                  {s.best > 0 ? (MEDALS[rank] ?? rank + 1) : '—'}
+                  {s.best > 0 ? <Rang index={rank} /> : '—'}
                 </td>
                 <td>
                   {t ? (

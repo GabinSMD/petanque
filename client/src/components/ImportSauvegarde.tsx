@@ -1,3 +1,4 @@
+import { Download, TriangleAlert } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { lireSauvegarde, resumeSauvegarde, type Sauvegarde } from '@shared';
@@ -55,7 +56,7 @@ export function ImportSauvegarde() {
   return (
     <>
       <label className="btn btn-ghost btn-sm import-sauvegarde">
-        📥 Importer une sauvegarde
+        <Download className="ic" aria-hidden /> Importer une sauvegarde
         <input
           ref={input}
           type="file"
@@ -66,10 +67,10 @@ export function ImportSauvegarde() {
           }}
         />
       </label>
-      {erreur && <p className="scan-alerte import-erreur">⚠ {erreur}</p>}
+      {erreur && <p className="scan-alerte import-erreur"><TriangleAlert className="ic" aria-hidden /> {erreur}</p>}
 
       {sauvegarde && (
-        <Modal title="📥 Importer une sauvegarde" onClose={reinitialiser}>
+        <Modal title="Importer une sauvegarde" onClose={reinitialiser}>
           <div className="import-modal">
             <p className="import-resume">{resumeSauvegarde(sauvegarde)}</p>
 

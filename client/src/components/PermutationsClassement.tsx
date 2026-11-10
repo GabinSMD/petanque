@@ -1,3 +1,4 @@
+import { ArrowUpDown, X } from 'lucide-react';
 import { useState } from 'react';
 import type { Concours, Standing, Team } from '@shared';
 import {
@@ -102,7 +103,7 @@ export function PermutationsClassement({
           />
         </label>
         <button type="button" className="btn btn-sm" onClick={() => void intervertir()}>
-          ⇅ Intervertir
+          <ArrowUpDown className="ic" aria-hidden /> Intervertir
         </button>
       </div>
       {paire && !aEgalite && (
@@ -116,7 +117,7 @@ export function PermutationsClassement({
         <ul className="permutations-liste">
           {permutations.map((p, i) => (
             <li key={`${p.a}-${p.b}`}>
-              {nom(p.a)} ⇅ {nom(p.b)}
+              {nom(p.a)} <ArrowUpDown className="ic" aria-hidden /> {nom(p.b)}
               {/* Une interversion ne vaut que tant que l'égalité dure. Quand les
                   résultats séparent les deux équipes, elle cesse d'agir — et il
                   faut le dire, sinon elle paraîtrait ignorée. */}
@@ -131,7 +132,7 @@ export function PermutationsClassement({
                 onClick={() => void annuler(i)}
                 title="Annuler cette interversion"
               >
-                ✕
+                <X className="ic" aria-hidden />
               </button>
             </li>
           ))}

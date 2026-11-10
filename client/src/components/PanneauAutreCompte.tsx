@@ -1,3 +1,4 @@
+import { Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { messageProtection } from '@shared';
 import { useProtectionOrg } from '../db/hooks';
@@ -96,7 +97,7 @@ export function PanneauAutreCompte({ onClose }: { onClose: () => void }) {
                 modification{nb > 1 ? 's' : ''}
               </span>
               <button className="btn btn-sm btn-ghost" onClick={() => void sauvegarder(concoursId)}>
-                💾 Sauvegarder ce concours
+                <Save className="ic" aria-hidden /> Sauvegarder ce concours
               </button>
             </li>
           ))}
@@ -105,7 +106,7 @@ export function PanneauAutreCompte({ onClose }: { onClose: () => void }) {
       {erreur && <p className="form-error">{erreur}</p>}
       <div className="form-actions">
         <button className="btn btn-danger" disabled={busy} onClick={() => void effacer()}>
-          🗑 Effacer et utiliser mon compte
+          <Trash2 className="ic" aria-hidden /> Effacer et utiliser mon compte
         </button>
         <button className="btn btn-ghost" onClick={onClose}>
           Plus tard

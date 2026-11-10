@@ -1,3 +1,4 @@
+import { Camera, ImageIcon, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   EMPLACEMENTS_PHOTO,
@@ -77,7 +78,7 @@ export function PhotosPodium({ concours }: { concours: Concours }) {
 
   return (
     <div className="photos-podium no-print">
-      <h3>📷 Photos du podium</h3>
+      <h3><Camera className="ic" aria-hidden /> Photos du podium</h3>
       <p className="hint">
         Ces photos apparaissent sur le lien de partage public, visible par toute personne qui
         l'a. Chacune se retire d'un clic, mais une page déjà consultée peut avoir été enregistrée
@@ -101,12 +102,12 @@ export function PhotosPodium({ concours }: { concours: Concours }) {
                     className="btn btn-ghost btn-sm"
                     onClick={() => void supprimerPhoto(photo.id)}
                   >
-                    🗑 Retirer
+                    <Trash2 className="ic" aria-hidden /> Retirer
                   </button>
                 </>
               ) : (
                 <label className={accord ? 'btn btn-ghost btn-sm' : 'btn btn-ghost btn-sm disabled'}>
-                  {enCours === id ? 'Ajout…' : '📷 Ajouter'}
+                  {enCours === id ? 'Ajout…' : <><Camera className="ic" aria-hidden /> {'Ajouter'}</>}
                   <input
                     type="file"
                     accept="image/*"
@@ -177,7 +178,7 @@ export function BanniereEntete({ concours }: { concours: Concours }) {
 
   return (
     <div className="photos-entete">
-      <h3>🖼 Bannière en tête de la page publique</h3>
+      <h3><ImageIcon className="ic" aria-hidden /> Bannière en tête de la page publique</h3>
       <p className="hint">
         Facultative : le logo du club ou d'un partenaire, affiché au-dessus des résultats sur le
         lien de partage.
@@ -192,12 +193,12 @@ export function BanniereEntete({ concours }: { concours: Concours }) {
         <div className="photo-entete-apercu">
           <img src={actuelle.image} alt="Bannière de la page publique" />
           <button className="btn btn-ghost btn-sm" onClick={() => void supprimerPhoto(actuelle.id)}>
-            🗑 Retirer la bannière
+            <Trash2 className="ic" aria-hidden /> Retirer la bannière
           </button>
         </div>
       ) : (
         <label className={accord ? 'btn btn-ghost btn-sm' : 'btn btn-ghost btn-sm disabled'}>
-          {enCours ? 'Ajout…' : '🖼 Choisir la bannière'}
+          {enCours ? 'Ajout…' : <><ImageIcon className="ic" aria-hidden /> {'Choisir la bannière'}</>}
           <input
             type="file"
             accept="image/*"

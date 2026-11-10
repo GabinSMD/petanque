@@ -1,3 +1,4 @@
+import { Dices, Settings, Ticket } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, RolePetanque, Team } from '@shared';
 import {
@@ -138,7 +139,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
           </p>
           {concours.mode !== 'championnat' ? (
             <p className="hint">
-              {planned} rondes prévues — modifiable dans ⚙ Paramètres.
+              {planned} rondes prévues — modifiable dans <Settings className="ic" aria-hidden /> Paramètres.
               {concours.mode === 'suisse' && concours.ggStrict
                 ? ' Appariement strict : seules des équipes à égalité de victoires se rencontrent, avec des exempts si un groupe est impair.'
                 : ''}
@@ -148,7 +149,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
               <p className="hint">
                 Marathon : {planned} ronde{planned > 1 ? 's' : ''} au lieu de{' '}
                 {championnatRondes(Math.max(active.length, 2))} pour le calendrier complet —
-                modifiable dans ⚙ Paramètres.
+                modifiable dans <Settings className="ic" aria-hidden /> Paramètres.
               </p>
             )
           )}
@@ -167,7 +168,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
             disabled={active.length < 2 || busy}
             onClick={() => avecControle(() => void doTirer())}
           >
-            🎲 {concours.mode === 'championnat' ? 'Générer le calendrier' : 'Tirer la ronde 1'}
+            <Dices className="ic" aria-hidden /> {concours.mode === 'championnat' ? 'Générer le calendrier' : 'Tirer la ronde 1'}
           </button>
           {bilanOuvert && bilan && (
             <BilanTirageModal
@@ -226,7 +227,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
             target="_blank"
             rel="noreferrer"
           >
-            🎫 Tickets de parties
+            <Ticket className="ic" aria-hidden /> Tickets de parties
           </a>
           {!locked && (
             <button
@@ -249,7 +250,7 @@ export function RondesTab({ concours, teams, matches }: Props) {
               title={currentComplete ? '' : 'Terminez la ronde en cours'}
               onClick={() => void doTirer()}
             >
-              🎲 Tirer la ronde {tirees + 1}
+              <Dices className="ic" aria-hidden /> Tirer la ronde {tirees + 1}
             </button>
           )}
           {!locked && allDone && (

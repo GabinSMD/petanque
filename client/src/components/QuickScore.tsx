@@ -1,3 +1,4 @@
+import { Zap } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { declarableMatches, matchLabel, pendingMatchesForTeam } from '../lib/matchLabel';
@@ -44,7 +45,7 @@ export function QuickScore({
         }}
       >
         <label>
-          ⚡ Saisie rapide — n° d'équipe
+          <Zap className="ic" aria-hidden /> Saisie rapide — n° d'équipe
           <input
             ref={inputRef}
             type="number"

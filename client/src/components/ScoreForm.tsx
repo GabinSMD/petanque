@@ -1,3 +1,4 @@
+import { Check, Pencil, RotateCw, Trash2, Undo, X } from 'lucide-react';
 import { useRef, useState, type FocusEvent, type FormEvent } from 'react';
 import type { Concours, Match } from '@shared';
 import { evolutionEnTexte } from '@shared';
@@ -26,7 +27,7 @@ function BoutonInverser({ concours, match }: { concours: Concours; match: Match 
       title="Inverser Résultat : le mauvais camp a été désigné"
       aria-label="Inverser Résultat"
     >
-      ↻
+      <RotateCw className="ic" aria-hidden />
     </button>
   );
 }
@@ -118,7 +119,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
       return (
         <span className="score-view score-done">
           <button type="button" className="btn-icon" onClick={startEdit} title="Corriger le score">
-            ✎ corriger
+            <Pencil className="ic" aria-hidden /> corriger
           </button>
           <BoutonInverser concours={concours} match={match} />
         </span>
@@ -138,7 +139,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
               onClick={startEdit}
               title="Corriger : saisir le score ou changer le vainqueur"
             >
-              ✎
+              <Pencil className="ic" aria-hidden />
             </button>
           )}
           {!disabled && <BoutonInverser concours={concours} match={match} />}
@@ -161,7 +162,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
             onClick={startEdit}
             title="Corriger le score"
           >
-            ✎
+            <Pencil className="ic" aria-hidden />
           </button>
         )}
         {!disabled && <BoutonInverser concours={concours} match={match} />}
@@ -204,7 +205,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
         </button>
         {match.done && (
           <button type="button" className="btn-icon" title="Effacer" onClick={() => void erase()}>
-            🗑
+            <Trash2 className="ic" aria-hidden />
           </button>
         )}
       </span>
@@ -278,7 +279,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
       {/* Bouton de confirmation optionnel (surtout utile sur tablette). */}
       {a.trim() !== '' && b.trim() !== '' && (
         <button className="btn btn-primary btn-sm" title="Valider le score" aria-label="Valider">
-          ✓
+          <Check className="ic" aria-hidden />
         </button>
       )}
       {editing && (
@@ -289,7 +290,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
             onClick={() => setEditing(false)}
             title="Annuler la correction"
           >
-            ✕
+            <X className="ic" aria-hidden />
           </button>
           <button
             type="button"
@@ -297,7 +298,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
             onClick={() => void erase()}
             title="Effacer le score"
           >
-            🗑
+            <Trash2 className="ic" aria-hidden />
           </button>
         </>
       )}
@@ -379,7 +380,7 @@ function MenesInline({
           onClick={() => void retirerMeneDuMatch(concours, match)}
           title="Annuler la dernière mène"
         >
-          ↶
+          <Undo className="ic" aria-hidden />
         </button>
       )}
       {erreur && <span className="score-error">{erreur}</span>}

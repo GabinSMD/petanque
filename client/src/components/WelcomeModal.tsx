@@ -1,3 +1,4 @@
+import { Dices, GraduationCap, MessageCircle, Target, Trophy, WifiOff } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createDemoConcours } from '../db/actions';
@@ -48,16 +49,16 @@ export function WelcomeModal({ onClose }: { onClose: () => void }) {
         </div>
         <p>Organisez vos concours de bout en bout, même sans connexion :</p>
         <ul className="welcome-list">
-          <li>🎲 <strong>Poules à la FFPJP</strong> — tirage, barrage, qualifications automatiques.</li>
-          <li>🏆 <strong>Tableaux</strong> — cadrage, consolante, correction en cascade.</li>
-          <li>📡 <strong>Hors ligne</strong> — tout fonctionne au boulodrome, la synchronisation reprend au retour du réseau.</li>
+          <li><Dices className="ic" aria-hidden /> <strong>Poules à la FFPJP</strong> — tirage, barrage, qualifications automatiques.</li>
+          <li><Trophy className="ic" aria-hidden /> <strong>Tableaux</strong> — cadrage, consolante, correction en cascade.</li>
+          <li><WifiOff className="ic" aria-hidden /> <strong>Hors ligne</strong> — tout fonctionne au boulodrome, la synchronisation reprend au retour du réseau.</li>
         </ul>
         <div className="welcome-actions">
           <button className="btn btn-primary" onClick={visit}>
-            🎓 Commencer la visite guidée
+            <GraduationCap className="ic" aria-hidden /> Commencer la visite guidée
           </button>
           <button className="btn" onClick={() => void demo()} disabled={busy}>
-            {busy ? 'Création…' : '🎯 Créer un concours d\'exemple'}
+            {busy ? 'Création…' : <><Target className="ic" aria-hidden /> {'Créer un concours d\'exemple'}</>}
           </button>
           <button className="btn btn-ghost" onClick={close}>
             Plus tard
@@ -65,7 +66,7 @@ export function WelcomeModal({ onClose }: { onClose: () => void }) {
         </div>
         <p className="welcome-hint">
           Vous retrouverez la visite guidée et tous les guides pas à pas dans
-          l'assistant 💬 (en bas à droite).
+          l'assistant <MessageCircle className="ic" aria-hidden /> (en bas à droite).
         </p>
       </div>
     </div>
