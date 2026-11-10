@@ -354,6 +354,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                     applyLicencie(i, e.target.value);
                   }}
                   placeholder={individual ? 'Nom du joueur' : `Joueur ${i + 1}`}
+                  aria-label={individual ? 'Nom du joueur' : `Nom du joueur ${i + 1}`}
                   required={i === 0}
                 />
                 {/* Colonne « CD » de la grille fédérale, avant le n° de licence
@@ -381,6 +382,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                     applyLicenceNumero(i, e.target.value);
                   }}
                   placeholder="N° licence"
+                  aria-label={`N° de licence du joueur ${i + 1}`}
                 />
                 {!licences[i]?.trim() && (
                   <span className="licence-etrangere-groupe">
@@ -417,6 +419,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   value={clubs[i] ?? ''}
                   onChange={(e) => setClubs(clubs.map((c, j) => (j === i ? e.target.value : c)))}
                   placeholder={i === 0 ? 'Club' : 'Club (si différent)'}
+                  aria-label={`Club du joueur ${i + 1}`}
                   list="clubs-connus"
                 />
                 {avecRoles && (
@@ -446,6 +449,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
             value={club}
             onChange={(e) => setClub(e.target.value)}
             placeholder="Club de l'équipe (facultatif)"
+            aria-label="Club de l'équipe (facultatif)"
             title="Utilisé pour les joueurs dont le club n'est pas précisé"
             list="clubs-connus"
           />
@@ -635,6 +639,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   <input
                     type="checkbox"
                     checked={team.retenue ?? false}
+                    aria-label={`Retenir l'équipe n°${team.number} dans la liste spécifique`}
                     title="Retenir dans la liste spécifique"
                     onChange={(e) =>
                       void updateTeam({ ...team, retenue: e.target.checked || undefined })
@@ -701,6 +706,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   {(!locked || modification) && (
                     <button
                       className="btn-icon"
+                      aria-label={`Modifier l'équipe n°${team.number}`}
                       title={
                         locked
                           ? 'Modifier la composition (le tirage n\'est pas touché)'
@@ -714,6 +720,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   {!locked && (
                     <button
                       className="btn-icon"
+                      aria-label={`Insérer une équipe avant le n°${team.number}`}
                       title={`Insérer une équipe avant le n°${team.number} (les suivants décalent)`}
                       onClick={() => setInsertionAvant(team.number)}
                     >
@@ -722,6 +729,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   )}
                   <button
                     className="btn-icon"
+                    aria-label={`${team.forfait ? 'Annuler le forfait de' : 'Déclarer forfait'} l'équipe n°${team.number}`}
                     title={team.forfait ? 'Annuler le forfait' : 'Déclarer forfait'}
                     onClick={() => void updateTeam({ ...team, forfait: !team.forfait })}
                   >
@@ -730,6 +738,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   {!locked && (
                     <button
                       className="btn-icon btn-icon-danger"
+                      aria-label={`Supprimer l'équipe n°${team.number}`}
                       title="Supprimer"
                       onClick={() => {
                         if (window.confirm(`Supprimer l'équipe n°${team.number} ?`)) {

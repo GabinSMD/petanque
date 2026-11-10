@@ -1,3 +1,13 @@
+import {
+  Dices,
+  IdCard,
+  LayoutGrid,
+  ListOrdered,
+  RefreshCw,
+  Target,
+  Trophy,
+  Users,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Concours, ConcoursStatus, Match, Poule, Team } from '@shared';
@@ -49,6 +59,18 @@ const DEFAULT_TAB: Record<ConcoursStatus, string> = {
   termine: 'resultats',
 };
 
+/** Ramène l'onglet actif dans la partie visible de la barre d'onglets. */
+function garderOngletVisible(el: HTMLButtonElement | null) {
+  const barre = el?.parentElement;
+  if (!el || !barre) return;
+  const gauche = el.offsetLeft - barre.offsetLeft;
+  const droite = gauche + el.offsetWidth;
+  if (gauche < barre.scrollLeft) barre.scrollLeft = gauche - 8;
+  else if (droite > barre.scrollLeft + barre.clientWidth) {
+    barre.scrollLeft = droite - barre.clientWidth + 8;
+  }
+}
+
 export function ConcoursPage() {
   const { id, tab } = useParams<{ id: string; tab?: string }>();
   const navigate = useNavigate();
@@ -76,30 +98,31 @@ export function ConcoursPage() {
   const tabs = [
     {
       key: 'equipes',
-      label: `👥 ${
+      icon: Users,
+      label: `${
         tirMode ? 'Tireurs' : isIndividualMode(concours.mode) ? 'Participants' : 'Équipes'
       } (${teams?.length ?? 0})`,
     },
-    ...(concours.mode === 'poules' ? [{ key: 'poules', label: '🎲 Poules' }] : []),
+    ...(concours.mode === 'poules' ? [{ key: 'poules', icon: Dices, label: 'Poules' }] : []),
     ...(tirMode
-      ? [{ key: 'series', label: '🏹 Séries' }]
+      ? [{ key: 'series', icon: Target, label: 'Séries' }]
       : rondesMode
         ? [
-            { key: 'rondes', label: '🔄 Rondes' },
+            { key: 'rondes', icon: RefreshCw, label: 'Rondes' },
             // Les phases finales d'un concours en rondes (manuel §3.D.15) :
             // l'onglet n'apparaît que quand le tableau existe.
             ...((matches ?? []).some((m) => m.stage !== 'ronde')
-              ? [{ key: 'tableau', label: '🏆 Phases finales' }]
+              ? [{ key: 'tableau', icon: Trophy, label: 'Phases finales' }]
               : []),
           ]
-        : [{ key: 'tableau', label: '🏆 Tableau' }]),
+        : [{ key: 'tableau', icon: Trophy, label: 'Tableau' }]),
     // Le dépôt des licences n'a de sens qu'avec des critères fédéraux : un
     // concours de club n'a rien à contrôler.
-    ...(controleLicences ? [{ key: 'licences', label: '🪪 Licences' }] : []),
+    ...(controleLicences ? [{ key: 'licences', icon: IdCard, label: 'Licences' }] : []),
     ...(!tirMode && concours.status !== 'inscriptions' && concours.planTerrains !== false
-      ? [{ key: 'terrains', label: '🟦 Terrains' }]
+      ? [{ key: 'terrains', icon: LayoutGrid, label: 'Terrains' }]
       : []),
-    { key: 'resultats', label: '📋 Résultats' },
+    { key: 'resultats', icon: ListOrdered, label: 'Résultats' },
   ];
   const fallbackTab =
     tirMode && concours.status === 'rondes' ? 'series' : DEFAULT_TAB[concours.status];
@@ -196,9 +219,15 @@ export function ConcoursPage() {
           <button
             key={t.key}
             className={active === t.key ? 'tab active' : 'tab'}
+            aria-current={active === t.key ? 'page' : undefined}
+            // Sur téléphone la barre défile : l'onglet ouvert doit rester en vue,
+            // sinon on ne sait plus où l'on est. On ne touche qu'au défilement
+            // horizontal de la barre — jamais à celui de la page.
+            ref={active === t.key ? garderOngletVisible : undefined}
             data-tour={`tab-${t.key}`}
             onClick={() => navigate(`/concours/${concours.id}/${t.key}`, { replace: true })}
           >
+            <t.icon className="tab-icon" aria-hidden strokeWidth={2} />
             {t.label}
           </button>
         ))}

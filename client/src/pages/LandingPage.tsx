@@ -1,3 +1,16 @@
+import {
+  ClipboardList,
+  Dices,
+  FolderOpen,
+  GraduationCap,
+  Medal,
+  PenLine,
+  Printer,
+  Trophy,
+  Tv,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BouleLogo } from '../components/BouleLogo';
 import { JOURNAL } from '../help/nouveautes';
@@ -95,7 +108,7 @@ function animationsPossibles(): boolean {
 
 /** Une famille de fonctionnalités : un pictogramme, un titre, ce qu'elle couvre. */
 interface Famille {
-  icone: string;
+  icone: LucideIcon;
   titre: string;
   chapeau: string;
   points: string[];
@@ -110,7 +123,7 @@ interface Famille {
  */
 const FAMILLES: Famille[] = [
   {
-    icone: '🎲',
+    icone: Dices,
     titre: 'Formules et tirages',
     chapeau: 'Chaque formule avec ses règles, pas une approximation commune.',
     points: [
@@ -123,7 +136,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🏆',
+    icone: Trophy,
     titre: 'Poules, tableaux, classements',
     chapeau: 'L’enchaînement se construit tout seul, au fil des scores.',
     points: [
@@ -137,7 +150,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '✍️',
+    icone: PenLine,
     titre: 'La table de marque',
     chapeau: 'Ce qu’on fait cent fois dans une journée doit être rapide et rattrapable.',
     points: [
@@ -151,7 +164,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '📋',
+    icone: ClipboardList,
     titre: 'Inscriptions',
     chapeau: 'La file d’attente du matin est le vrai goulot d’étranglement.',
     points: [
@@ -164,7 +177,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '📺',
+    icone: Tv,
     titre: 'Suivre et partager',
     chapeau: 'Les joueurs cherchent l’information ; autant la leur donner.',
     points: [
@@ -176,7 +189,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🖨',
+    icone: Printer,
     titre: 'Tout ce qui s’imprime',
     chapeau: 'Le papier reste roi au boulodrome, et la mise en page le sait.',
     points: [
@@ -187,7 +200,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🏅',
+    icone: Medal,
     titre: 'Concours fédéraux',
     chapeau: 'Le manuel de l’arbitrage et des concours, appliqué à la lettre.',
     points: [
@@ -200,7 +213,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🗂',
+    icone: FolderOpen,
     titre: 'La saison du club',
     chapeau: 'Un concours n’est pas un événement isolé.',
     points: [
@@ -213,7 +226,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '👥',
+    icone: Users,
     titre: 'À plusieurs, sur plusieurs appareils',
     chapeau: 'Une table de marque, ce n’est jamais une seule personne.',
     points: [
@@ -224,7 +237,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🎓',
+    icone: GraduationCap,
     titre: 'Prise en main',
     chapeau: 'Un bénévole doit pouvoir tenir un concours sans avoir lu de mode d’emploi.',
     points: [
@@ -412,7 +425,7 @@ export function LandingPage() {
               nouvelle adresse dès votre connexion — ceux créés en mode invité, jamais
               envoyés au serveur, sont à exporter depuis l’ancienne installation avant
               de la quitter.{' '}
-              <a href={appUrl('/login')}>Aller à l’application →</a>
+              <a href={appUrl('/login')}>Aller à l’application</a>
               {ancienneVersion && (
                 <>
                   {' · '}
@@ -425,23 +438,22 @@ export function LandingPage() {
 
         <section className="lp-hero">
           <div className="lp-container lp-hero-inner">
-            <p className="lp-eyebrow">Gestion de concours de pétanque</p>
             <h1>
               De la feuille d’inscription au palmarès,
               <br />
               <span className="lp-accent">même sans réseau au boulodrome.</span>
             </h1>
             <p className="lp-lead">
-              Tirage des poules, barrages, cadrage, tableaux, consolante, saisie des
-              scores, affichage sur écran, impression des feuilles. Tout se fait sur
-              place, et se synchronise quand le réseau revient.
+              Vos concours de pétanque, du tirage des poules à la consolante : scores,
+              affichage sur écran, feuilles imprimées. Tout se fait sur place et se
+              synchronise quand le réseau revient.
             </p>
             <div className="lp-cta">
               <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
                 Créer un compte club
               </a>
               <a className="btn lp-btn-lg" href={appUrl('/login?invite=1')}>
-                🚀 Essayer sans compte
+                Essayer sans compte
               </a>
             </div>
             <p className="lp-cta-note">
@@ -522,9 +534,7 @@ export function LandingPage() {
             <ul className="lp-familles">
               {FAMILLES.map((f) => (
                 <li key={f.titre} className="lp-famille" data-revele>
-                  <span className="lp-famille-icone" aria-hidden>
-                    {f.icone}
-                  </span>
+                  <f.icone className="lp-famille-icone" aria-hidden strokeWidth={1.75} />
                   <h3>{f.titre}</h3>
                   <p className="lp-famille-chapeau">{f.chapeau}</p>
                   <ul>
@@ -628,9 +638,7 @@ export function LandingPage() {
 
             <div className="lp-evolution-grid">
               <div className="lp-roadmap" data-revele>
-                <h3>
-                  <span aria-hidden>🛠</span> En chantier
-                </h3>
+                <h3>En chantier</h3>
                 <p className="lp-roadmap-note">
                   Sans dates : on annonce l’intention, pas un calendrier de livraison.
                   Chaque ligne renvoie à son suivi public.
@@ -650,7 +658,7 @@ export function LandingPage() {
                           target="_blank"
                           rel="noreferrer noopener"
                         >
-                          Suivre le sujet #{c.issue} ↗
+                          Suivre le sujet #{c.issue}
                         </a>
                       </div>
                     </li>
@@ -659,9 +667,7 @@ export function LandingPage() {
               </div>
 
               <div className="lp-changelog" data-revele>
-                <h3>
-                  <span aria-hidden>✨</span> Déjà livré
-                </h3>
+                <h3>Déjà livré</h3>
                 <p className="lp-roadmap-note">
                   Le même journal que celui affiché dans l’application après une mise à
                   jour — une seule source, donc rien à tenir à deux endroits.
@@ -717,7 +723,7 @@ export function LandingPage() {
                 Créer un compte club
               </a>
               <a className="btn lp-btn-lg lp-btn-invert" href={appUrl('/login?invite=1')}>
-                🚀 Essayer sans compte
+                Essayer sans compte
               </a>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { MessageCircle, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -239,7 +240,7 @@ export function ChatBot() {
         aria-label={open ? 'Fermer l\'assistant' : 'Ouvrir l\'assistant'}
         title="Assistant — il vous guide pas à pas"
       >
-        {open ? '✕' : '💬'}
+        {open ? <X aria-hidden /> : <MessageCircle aria-hidden />}
       </button>
 
       {open && (

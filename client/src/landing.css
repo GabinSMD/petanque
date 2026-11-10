@@ -128,15 +128,6 @@
   padding-bottom: 2.4rem;
 }
 
-.lp-eyebrow {
-  margin: 0 0 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
 .lp-hero h1 {
   font-size: clamp(1.85rem, 4.2vw, 2.9rem);
   line-height: 1.12;
@@ -291,10 +282,10 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 1rem;
-  align-items: start;
+  /* Colonnes « en maçonnerie » : dix familles de longueurs inégales laissaient,
+     en grille, des trous sous les cartes courtes et une carte seule en bas. */
+  columns: 3 300px;
+  column-gap: 1rem;
 }
 
 .lp-famille {
@@ -303,19 +294,16 @@
   border-radius: var(--radius);
   padding: 1.15rem 1.2rem 1.25rem;
   box-shadow: var(--shadow);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.lp-famille:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lift);
+  break-inside: avoid;
+  margin-bottom: 1rem;
 }
 
 .lp-famille-icone {
-  font-size: 1.5rem;
-  line-height: 1;
   display: block;
-  margin-bottom: 0.5rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-bottom: 0.6rem;
+  color: var(--accent);
 }
 
 .lp-famille h3 {
@@ -855,4 +843,20 @@
   .lp-header-cta .btn {
     white-space: nowrap;
   }
+}
+
+/* Titres équilibrés, paragraphes sans mot orphelin en dernière ligne. */
+.lp h1,
+.lp h2,
+.lp h3 {
+  text-wrap: balance;
+}
+
+.lp p,
+.lp li {
+  text-wrap: pretty;
+}
+
+.lp a {
+  text-underline-offset: 0.18em;
 }
