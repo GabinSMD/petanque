@@ -938,10 +938,7 @@ form label select {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background:
-    radial-gradient(circle at 20% 10%, rgba(29, 61, 156, 0.16), transparent 45%),
-    radial-gradient(circle at 85% 85%, rgba(210, 28, 52, 0.12), transparent 45%),
-    var(--bg);
+  background: var(--bg);
 }
 
 .login-card {
@@ -988,26 +985,32 @@ form label select {
   margin: 0.5rem 0 1.1rem;
 }
 
+/* Deux onglets soulignés, pas un cadre dans la carte : la carte suffit comme
+   contenant. */
 .login-tabs {
   display: flex;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
+  border-bottom: 1px solid var(--line);
   margin-bottom: 1rem;
 }
 
 .login-tabs button {
   flex: 1;
   border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
   background: transparent;
-  padding: 0.55rem;
+  padding: 0.6rem 0.4rem;
   font-weight: 600;
   color: var(--muted);
 }
 
+.login-tabs button:hover {
+  color: var(--ink);
+}
+
 .login-tabs button.active {
-  background: var(--accent);
-  color: #fff;
+  border-bottom-color: var(--accent);
+  color: var(--accent-dark);
 }
 
 .login-divider {

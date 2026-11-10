@@ -300,8 +300,11 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
                   onClick={() => void doCancel()}
                 />
               </MenuPlus>
+              {/* Bouton principal seulement quand c'est la prochaine action : tant
+                  que des poules se jouent, il ne dispute pas la place à « Placer
+                  les qualifiés ». */}
               <button
-                className="btn btn-primary"
+                className={allComplete ? 'btn btn-primary' : 'btn'}
                 disabled={!allComplete || busy}
                 title={
                   allComplete

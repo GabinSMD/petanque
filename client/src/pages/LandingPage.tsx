@@ -465,15 +465,10 @@ export function LandingPage() {
 
         <section className="lp-hero">
           <div className="lp-container lp-hero-inner">
-            <h1>
-              De la feuille d’inscription au palmarès,
-              <br />
-              <span className="lp-accent">même sans réseau au boulodrome.</span>
-            </h1>
+            <h1>Vos concours de pétanque, même sans réseau.</h1>
             <p className="lp-lead">
-              Vos concours de pétanque, du tirage des poules à la consolante : scores,
-              affichage sur écran, feuilles imprimées. Tout se fait sur place et se
-              synchronise quand le réseau revient.
+              De l’inscription au palmarès : tirage, scores et affichage, tout se fait
+              sur place, au boulodrome.
             </p>
             <div className="lp-cta">
               {/* L'essai d'abord : la démonstration convainc mieux qu'un formulaire,
