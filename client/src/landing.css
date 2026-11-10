@@ -6,6 +6,32 @@
    pour ne pas alourdir la feuille de l'application.
    ================================================================== */
 
+/* Jetons de couleur propres à la vitrine. Ceux de l'application (--accent,
+   --terra, --ink…) viennent de styles.css ; ici, uniquement ce que la page
+   publique ajoute : surfaces sombres du bas de page, halos de l'accroche,
+   cadre des captures d'écran. */
+:root {
+  --lp-blanc: #fff;
+  --lp-blanc-60: rgba(255, 255, 255, 0.6);
+  --lp-blanc-12: rgba(255, 255, 255, 0.12);
+  --lp-verre: rgba(255, 255, 255, 0.88);
+  --lp-lisere-blanc: #e8ecf7;
+  --lp-avis-fond: #fff6e0;
+  --lp-avis-bord: #e8d9ad;
+  --lp-avis-texte: #6b4c07;
+  --lp-halo-bleu: rgba(29, 61, 156, 0.11);
+  --lp-halo-rouge: rgba(210, 28, 52, 0.06);
+  --lp-fenetre-barre: #eef1f8;
+  --lp-fenetre-pastille: #cfd6e6;
+  --lp-nuit: #0b1329;
+  --lp-marine: #101f52;
+  --lp-marine-texte: #d5ddf5;
+  --lp-pied-fond: #0d1836;
+  --lp-pied-texte: #aab6d6;
+  --lp-pied-lien: #cdd7ef;
+  --lp-ombre-survol: 0 6px 14px rgba(20, 30, 58, 0.12), 0 16px 40px rgba(20, 30, 58, 0.16);
+}
+
 .lp {
   --lp-max: 1120px;
   min-height: 100vh;
@@ -28,7 +54,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--lp-verre);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
@@ -46,7 +72,7 @@
   background: linear-gradient(
     90deg,
     var(--accent) 0 34%,
-    #e8ecf7 34% 67%,
+    var(--lp-lisere-blanc) 34% 67%,
     var(--terra) 67% 100%
   );
 }
@@ -100,9 +126,9 @@
 /* ------------------------- Bandeau de déménagement ------------------------ */
 
 .lp-moved {
-  background: #fff6e0;
-  border-bottom: 1px solid #e8d9ad;
-  color: #6b4c07;
+  background: var(--lp-avis-fond);
+  border-bottom: 1px solid var(--lp-avis-bord);
+  color: var(--lp-avis-texte);
   padding: 0.75rem 0;
   font-size: 0.92rem;
   line-height: 1.55;
@@ -119,8 +145,8 @@
 .lp-hero {
   padding: 3.2rem 0 0;
   background:
-    radial-gradient(circle at 12% 0%, rgba(29, 61, 156, 0.11), transparent 42%),
-    radial-gradient(circle at 94% 12%, rgba(210, 28, 52, 0.06), transparent 38%);
+    radial-gradient(circle at 12% 0%, var(--lp-halo-bleu), transparent 42%),
+    radial-gradient(circle at 94% 12%, var(--lp-halo-rouge), transparent 38%);
 }
 
 .lp-hero-inner {
@@ -201,7 +227,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.55rem 0.75rem;
-  background: #eef1f8;
+  background: var(--lp-fenetre-barre);
   border-bottom: 1px solid var(--line);
 }
 
@@ -209,7 +235,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #cfd6e6;
+  background: var(--lp-fenetre-pastille);
 }
 
 .lp-shot-wide,
@@ -226,7 +252,7 @@
 }
 
 .lp-shot-dark img {
-  background: #0b1329;
+  background: var(--lp-nuit);
 }
 
 /* ------------------------------- Sections ------------------------------- */
@@ -405,7 +431,7 @@
   height: 30px;
   border-radius: 50%;
   background: var(--accent);
-  color: #fff;
+  color: var(--lp-blanc);
   font-weight: 700;
   font-size: 0.95rem;
   margin-bottom: 0.6rem;
@@ -485,8 +511,8 @@
 
 .lp-final {
   padding: 3.4rem 0;
-  background: linear-gradient(180deg, #101f52, var(--accent));
-  color: #fff;
+  background: linear-gradient(180deg, var(--lp-marine), var(--accent));
+  color: var(--lp-blanc);
   text-align: center;
   position: relative;
 }
@@ -501,7 +527,7 @@
   background: linear-gradient(
     90deg,
     var(--accent) 0 34%,
-    #ffffff 34% 67%,
+    var(--lp-blanc) 34% 67%,
     var(--terra) 67% 100%
   );
 }
@@ -515,7 +541,7 @@
 .lp-final p {
   margin: 0 auto 1.6rem;
   max-width: 58ch;
-  color: #d5ddf5;
+  color: var(--lp-marine-texte);
   line-height: 1.6;
 }
 
@@ -525,19 +551,19 @@
 
 .btn.lp-btn-invert {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.6);
-  color: #fff;
+  border-color: var(--lp-blanc-60);
+  color: var(--lp-blanc);
 }
 
 .btn.lp-btn-invert:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--lp-blanc-12);
 }
 
 /* --------------------------------- Pied --------------------------------- */
 
 .lp-footer {
-  background: #0d1836;
-  color: #aab6d6;
+  background: var(--lp-pied-fond);
+  color: var(--lp-pied-texte);
   padding: 2rem 0 2.4rem;
   padding-bottom: calc(2.4rem + env(safe-area-inset-bottom));
   font-size: 0.88rem;
@@ -549,7 +575,7 @@
 }
 
 .lp-brand-footer {
-  color: #fff;
+  color: var(--lp-blanc);
   font-size: 1rem;
 }
 
@@ -565,7 +591,7 @@
 }
 
 .lp-footer-links a {
-  color: #cdd7ef;
+  color: var(--lp-pied-lien);
   text-decoration: none;
   font-weight: 600;
 }
@@ -780,7 +806,7 @@
 }
 
 .lp-shot:hover {
-  box-shadow: 0 6px 14px rgba(20, 30, 58, 0.12), 0 16px 40px rgba(20, 30, 58, 0.16);
+  box-shadow: var(--lp-ombre-survol);
 }
 
 .btn.lp-btn-lg {

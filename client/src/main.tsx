@@ -6,6 +6,7 @@ import { FrontiereErreur } from './components/FrontiereErreur';
 import { startSyncLoop } from './sync/engine';
 import { ensurePersistentStorage } from './lib/storage';
 import '@fontsource-variable/inter';
+import '@fontsource-variable/bricolage-grotesque/opsz.css';
 import './styles.css';
 
 registerSW({ immediate: true });

@@ -21,6 +21,11 @@
   --shadow: 0 1px 2px rgba(20, 30, 58, 0.06), 0 2px 8px rgba(20, 30, 58, 0.08);
   --shadow-lift: 0 4px 10px rgba(20, 30, 58, 0.1), 0 10px 30px rgba(20, 30, 58, 0.12);
   font-size: 15px;
+  /* Deux voix : Inter pour tout ce qui se lit et se saisit (chiffres alignés,
+     densité des tableaux, feuilles imprimées), Bricolage Grotesque pour les
+     titres — un dessin français, un peu affiche de concours. */
+  --font-texte: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-titre: 'Bricolage Grotesque Variable', var(--font-texte);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -36,7 +41,7 @@
 
 body {
   margin: 0;
-  font-family: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-texte);
   background: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -5482,4 +5487,32 @@ h3 {
 .btn-icon {
   vertical-align: middle;
   line-height: 1;
+}
+
+/* ------------------------------- Titres -------------------------------- */
+
+h1,
+h2,
+.brand,
+.lp-brand,
+.login-card h1,
+.lp h3 {
+  font-family: var(--font-titre);
+  font-optical-sizing: auto;
+}
+
+h1,
+h2 {
+  letter-spacing: -0.02em;
+}
+
+/* Les documents imprimés (feuilles de poules, résultats pour le comité)
+   gardent une seule police : leur mise en page est calée dessus. */
+@media print {
+  h1,
+  h2,
+  .brand {
+    font-family: var(--font-texte);
+    letter-spacing: -0.015em;
+  }
 }
