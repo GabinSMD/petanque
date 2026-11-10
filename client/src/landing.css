@@ -1017,3 +1017,13 @@
 .lp-shot figcaption {
   padding-right: max(1rem, calc(100% - 78ch));
 }
+
+/* Mesure de lecture : les réponses de la FAQ, les chapeaux de section et la
+   mention du pied de page dépassaient 100 caractères par ligne. Un `ch` vaut
+   la largeur du « 0 », plus large qu'une lettre moyenne : 58ch donnent environ
+   78 caractères réels. */
+.lp-faq-list p,
+.lp-section-lead,
+.lp-footer-note {
+  max-width: 58ch;
+}
