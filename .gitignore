@@ -26,7 +26,3 @@ Manuel_GC_*.pdf
 *.log
 coverage/
 .gstack/
-
-# Impeccable : moteur binaire (retéléchargé au premier lancement) et réglages locaux
-.claude/skills/impeccable/scripts/bin/
-.claude/settings.local.json
