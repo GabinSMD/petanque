@@ -1,4 +1,18 @@
-import { CaseUpper, ClipboardList, Compass, GraduationCap, IdCard, Printer, Tag, Timer, type LucideIcon } from 'lucide-react';
+import {
+  CaseUpper,
+  CircleCheck,
+  ClipboardList,
+  Compass,
+  GraduationCap,
+  IdCard,
+  Moon,
+  Printer,
+  Sparkles,
+  Tag,
+  Timer,
+  UserPlus,
+  type LucideIcon,
+} from 'lucide-react';
 import type { Nouveaute } from '@shared';
 
 /**
@@ -14,6 +28,47 @@ import type { Nouveaute } from '@shared';
  * l'application, pas d'un concours en particulier.
  */
 export const JOURNAL: Nouveaute<LucideIcon>[] = [
+  {
+    version: '0.5.0',
+    date: '2026-11-11',
+    items: [
+      {
+        icone: Sparkles,
+        titre: 'Pétanque Concours devient Treizéro',
+        texte:
+          'Nouveau nom, nouveau logo : treize à zéro, la fanny. Rien d\'autre ne change — ' +
+          'vos concours, votre compte et vos sauvegardes sont exactement là où vous les ' +
+          'avez laissés. Si l\'application est installée sur votre appareil, son nom et ' +
+          'son icône se mettent à jour d\'eux-mêmes.',
+      },
+      {
+        icone: Moon,
+        titre: 'Un thème sombre',
+        texte:
+          'Pour le soir ou le club-house : ouvrez les réglages (la roue dentée de « Mes ' +
+          'concours »), rubrique Apparence, et choisissez Clair, Sombre ou Comme ' +
+          'l\'appareil. Le choix vaut pour cet appareil ; les documents imprimés et ' +
+          'l\'écran d\'affichage ne changent pas.',
+      },
+      {
+        icone: UserPlus,
+        titre: 'Inscrire une équipe : les noms, et c\'est tout',
+        texte:
+          'Pour un concours de club, le formulaire ne montre plus que les noms et le ' +
+          'club de l\'équipe. Licences et clubs par joueur restent à un clic, et ' +
+          's\'affichent d\'office sur un concours officiel. Les actions rares — lecteur de ' +
+          'licences, plusieurs sites, annuler un tirage — sont rangées dans le menu « Plus ».',
+      },
+      {
+        icone: CircleCheck,
+        titre: 'La saisie rapide confirme chaque score',
+        texte:
+          'Après validation, un bandeau rappelle le score enregistré et l\'équipe ' +
+          'gagnante, avec « corriger » juste à côté. Au doigt, le bouton « Valider » est ' +
+          'plus grand.',
+      },
+    ],
+  },
   {
     version: '0.4.0',
     date: '2026-07-29',
