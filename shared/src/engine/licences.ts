@@ -32,7 +32,12 @@ export type ChampLicence =
   | 'sexe'
   | 'classification'
   | 'certificatMedical'
-  | 'club';
+  | 'club'
+  /**
+   * Licencié suspendu (#136). À part des autres : ce n'est pas un critère du
+   * concours mal rempli, c'est un joueur qui n'a pas le droit de jouer.
+   */
+  | 'suspension';
 
 export type AnomalieEquipe =
   | 'mixte'
@@ -107,11 +112,16 @@ export interface CriteresLicence {
    */
   ignorerLicencesManquantes?: boolean;
   /**
-   * Compétitions de clubs (manuel §3.E) : nombre de joueurs mutés autorisés,
-   * fixé par l'organisateur, et nombre de joueurs hors Union européenne —
-   * un seul par équipe.
+   * Compétitions de clubs (manuel §3.E) : nombre de joueurs en mutation
+   * **externe** admis — panneau « Mutations », Tous / Limite 1 Externe / Aucune.
+   * Une mutation interne ne compte pas.
    */
   maxMutes?: number;
+  /**
+   * Joueurs étrangers hors Union européenne admis : « 1 seul joueur étranger
+   * Hors UE par équipe » (manuel p.35, Critères France). Règle distincte du
+   * contingent de mutés.
+   */
   maxHorsUE?: number;
 }
 
@@ -143,6 +153,19 @@ export function criteresDuConcours(c: {
     maxMutes: c.maxMutes,
     maxHorsUE: c.maxHorsUE,
   };
+}
+
+/**
+ * La fiche compte-t-elle au contingent de mutés externes ?
+ *
+ * L'état fédéral fait foi quand il est connu. Une fiche qui ne porte que
+ * l'ancien booléen — import d'avant ce champ, ou fichier fait à la main qui dit
+ * « muté » sans préciser — compte comme externe : c'est ce que le contrôle
+ * faisait jusqu'ici, et on ne l'assouplit pas sur une information absente.
+ */
+export function estMuteExterne(fiche: Pick<Licencie, 'mutation' | 'etatMutation'>): boolean {
+  if (fiche.etatMutation) return fiche.etatMutation === 'externe';
+  return fiche.mutation === true;
 }
 
 export interface ControleJoueur {
@@ -307,6 +330,10 @@ export function controlerEquipe(
     const categorie = categorieAgeDe(fiche?.dateNaissance, criteres.annee);
 
     if (fiche) {
+      // Suspendu : signalé en premier, et quel que soit le concours — un
+      // concours de club n'a pas plus le droit de faire jouer un suspendu.
+      if (fiche.suspendu) anomalies.push('suspension');
+
       // Licence à jour : l'année en cours ou la suivante.
       if (
         fiche.anneeReprise !== undefined &&
@@ -391,9 +418,10 @@ export function controlerEquipe(
     }
   }
 
-  // Contingent de mutés (manuel §3.E) : compté sur les fiches connues.
+  // Contingent de mutés externes (manuel §3.E) : compté sur les fiches connues.
+  // Une mutation interne n'y entre pas (#134).
   if (criteres.maxMutes !== undefined) {
-    const mutes = fichesEquipe.filter((f) => f.mutation).length;
+    const mutes = fichesEquipe.filter(estMuteExterne).length;
     if (mutes > criteres.maxMutes) anomaliesEquipe.push('mutes');
   }
 

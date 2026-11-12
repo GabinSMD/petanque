@@ -573,6 +573,9 @@ export interface Match {
  * Licencié du fichier club/comité (import CSV) : sert à l'autocomplétion
  * des inscriptions. Rattaché à l'organisation, pas à un concours.
  */
+/** Mutation fédérale : aucune (MUT.OK), interne au comité, ou externe. */
+export type EtatMutation = 'aucune' | 'interne' | 'externe';
+
 export interface Licencie {
   id: string;
   name: string;
@@ -595,8 +598,23 @@ export interface Licencie {
   certificatMedical?: string;
   /** Code pays ; les joueurs hors UE sont contingentés en championnat. */
   nationalite?: string;
-  /** Joueur muté (position fédérale) : contingenté en championnat des clubs. */
+  /**
+   * Joueur muté, sans distinction. Ancien champ : il reste écrit pour les
+   * appareils qui n'ont pas `etatMutation`, et il est lu quand une fiche
+   * d'avant ce champ n'a que lui. Voir `estMuteExterne`.
+   */
   mutation?: boolean;
+  /**
+   * État de mutation fédéral, colonne « Position » du fichier (manuel §3.C
+   * p.36, cartes « MUT.OK » / « MUT.INT » de l'écran Championnat p.114). Seule
+   * la mutation **externe** compte au contingent « Limite 1 Externe ».
+   */
+  etatMutation?: EtatMutation;
+  /**
+   * Licencié suspendu. La base fédérale en transporte une liste à part
+   * (journal de téléchargement, manuel p.7 : « Suspension: 63 »).
+   */
+  suspendu?: boolean;
   updatedAt: string;
 }
 

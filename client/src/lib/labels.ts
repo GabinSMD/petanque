@@ -1,6 +1,6 @@
 import { Crosshair, Dices, Medal, Scale, Target, Zap, type LucideIcon } from 'lucide-react';
 import type { CategorieCritere, ConcoursMode, ConcoursStatus, EtatMise, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
-import type { AnomalieEquipe, ChampLicence } from '@shared';
+import type { AnomalieEquipe, ChampLicence, EtatMutation } from '@shared';
 
 export const DISCIPLINE_LABELS: Record<Discipline, string> = {
   petanque: 'Pétanque',
@@ -272,12 +272,20 @@ export const ANOMALIE_LABELS: Record<ChampLicence, string> = {
   classification: 'classification',
   certificatMedical: 'certificat médical',
   club: 'club',
+  suspension: 'licencié suspendu',
+};
+
+/** État de mutation, tel que le logiciel fédéral l'affiche sur la carte joueur. */
+export const ETAT_MUTATION_LABELS: Record<EtatMutation, string> = {
+  aucune: 'MUT.OK',
+  interne: 'MUT.INT',
+  externe: 'MUT.EXT',
 };
 
 export const ANOMALIE_EQUIPE_LABELS: Record<AnomalieEquipe, string> = {
   mixte: 'équipe non mixte',
   homogeneite: 'équipe non homogène',
-  mutes: 'trop de joueurs mutés',
+  mutes: 'trop de joueurs en mutation externe',
   horsUE: 'plus d\'un joueur hors Union européenne',
   // Le libellé du manuel dit ce qu'il faut faire, pas seulement ce qui est faux.
   clubEquipeNonHomogene: 'club d\'équipe incorrect : devrait être N.H.',

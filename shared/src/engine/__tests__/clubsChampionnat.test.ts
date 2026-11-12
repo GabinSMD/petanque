@@ -71,11 +71,11 @@ describe('quota de joueurs hors UE', () => {
   });
 });
 
-describe('quota de mutés', () => {
+describe('quota de mutés externes (#134)', () => {
   it('respecte le nombre autorisé', () => {
     const b = base(
-      fiche({ licence: '1', mutation: true }),
-      fiche({ licence: '2', mutation: true }),
+      fiche({ licence: '1', etatMutation: 'externe' }),
+      fiche({ licence: '2', etatMutation: 'externe' }),
       fiche({ licence: '3' }),
     );
     const deuxAutorises = controlerEquipe([j('1'), j('2'), j('3')], b, {
@@ -88,11 +88,51 @@ describe('quota de mutés', () => {
     expect(unSeul.anomaliesEquipe).toContain('mutes');
   });
 
+  it('une mutation interne ne compte pas', () => {
+    // Le cas de la planche p.114 : « MUT.INT » sur une carte d'une équipe
+    // conforme. Compter les internes refusait des équipes valides.
+    const b = base(
+      fiche({ licence: '1', etatMutation: 'interne', mutation: true }),
+      fiche({ licence: '2', etatMutation: 'interne', mutation: true }),
+      fiche({ licence: '3', etatMutation: 'externe', mutation: true }),
+    );
+    expect(
+      controlerEquipe([j('1'), j('2'), j('3')], b, { annee: 2026, maxMutes: 1 }).anomaliesEquipe,
+    ).not.toContain('mutes');
+    expect(
+      controlerEquipe([j('1'), j('2'), j('3')], b, { annee: 2026, maxMutes: 0 }).anomaliesEquipe,
+    ).toContain('mutes');
+  });
+
+  it('une fiche qui ne dit que « muté » compte comme externe', () => {
+    // Ancien champ seul : on ne sait pas laquelle, et on garde le contrôle
+    // d'avant plutôt que de l'assouplir sur une information absente.
+    const b = base(fiche({ licence: '1', mutation: true }), fiche({ licence: '2', mutation: true }));
+    expect(
+      controlerEquipe([j('1'), j('2')], b, { annee: 2026, maxMutes: 1 }).anomaliesEquipe,
+    ).toContain('mutes');
+  });
+
   it('aucun muté autorisé : une équipe sans muté passe', () => {
     const b = base(fiche({ licence: '1' }), fiche({ licence: '2' }));
     expect(
       controlerEquipe([j('1'), j('2')], b, { annee: 2026, maxMutes: 0 }).anomaliesEquipe,
     ).not.toContain('mutes');
+  });
+});
+
+describe('licencié suspendu (#136)', () => {
+  it('le joueur est signalé, quel que soit le concours', () => {
+    const b = base(fiche({ licence: '1', suspendu: true }), fiche({ licence: '2' }));
+    const c = controlerEquipe([j('1'), j('2')], b, { annee: 2026 });
+    expect(c.joueurs[0]!.anomalies).toContain('suspension');
+    expect(c.joueurs[1]!.anomalies).not.toContain('suspension');
+    expect(c.conforme).toBe(false);
+  });
+
+  it('une suspension levée ne laisse rien', () => {
+    const b = base(fiche({ licence: '1', suspendu: false }));
+    expect(controlerEquipe([j('1')], b, { annee: 2026 }).joueurs[0]!.anomalies).toEqual([]);
   });
 });
 
@@ -107,33 +147,29 @@ describe('compétitions de clubs prédéfinies', () => {
   });
 
   it('le championnat féminin n accepte que des femmes', () => {
-    const c = criteresCompetition('cnc_feminin', 2026, 1);
+    const c = criteresCompetition('cnc_feminin', 2026);
     expect(c.sexe).toBe('feminin');
   });
 
   it('l homogénéité est exigée partout sauf chez les jeunes', () => {
-    expect(criteresCompetition('coupe_de_france', 2026, 1).homogene).toBe(true);
-    expect(criteresCompetition('cnc_open', 2026, 1).homogene).toBe(true);
+    expect(criteresCompetition('coupe_de_france', 2026).homogene).toBe(true);
+    expect(criteresCompetition('cnc_open', 2026).homogene).toBe(true);
     // Le manuel : « il faut Homogène club pour tous les championnats sauf
     // pour les championnats jeunes ».
-    expect(criteresCompetition('cnc_jeunes', 2026, 1).homogene).toBe(false);
+    expect(criteresCompetition('cnc_jeunes', 2026).homogene).toBe(false);
   });
 
   it('un seul joueur hors UE partout', () => {
     for (const c of COMPETITIONS_CLUB) {
-      expect(criteresCompetition(c.id, 2026, 1).maxHorsUE, c.id).toBe(1);
+      expect(criteresCompetition(c.id, 2026).maxHorsUE, c.id).toBe(1);
     }
-  });
-
-  it('le quota de mutés vient de l organisateur', () => {
-    expect(criteresCompetition('cnc_open', 2026, 3).maxMutes).toBe(3);
   });
 
   it('les jeunes admettent les cadets, et rien de plus jeune', () => {
     // « Juniors (Cadet) » sur le panneau fédéral : une seule catégorie s'ouvre
     // en dessous. On vérifie la règle sur des joueurs, pas la présence d'un
     // champ : le champ, je l'avais inventé, et il a disparu.
-    const c = criteresCompetition('cnc_jeunes', 2026, 0);
+    const c = criteresCompetition('cnc_jeunes', 2026);
     expect(c.categorieAge).toBe('juniors');
     expect(c.strict).toBe(false);
     const cadet = fiche({ licence: 'c', dateNaissance: '2013-06-01' }); // 13 ans
@@ -147,25 +183,31 @@ describe('compétitions de clubs prédéfinies', () => {
     // La règle « une seule en dessous » est celle de `controlerEquipe` hors mode
     // strict : il suffit qu'aucune compétition ne demande le mode strict.
     for (const c of COMPETITIONS_CLUB) {
-      expect(criteresCompetition(c.id, 2026, 0).strict, c.id).toBe(false);
+      expect(criteresCompetition(c.id, 2026).strict, c.id).toBe(false);
     }
   });
 
   it('porte le championnat « +55 »', () => {
-    const c = criteresCompetition('cnc_plus55', 2026, 0);
+    const c = criteresCompetition('cnc_plus55', 2026);
     expect(c.categorieAge).toBe('plus55');
     expect(COMPETITIONS_CLUB.map((x) => x.id)).toContain('cnc_plus55');
   });
 
-  it('les trois états du contingent hors UE (Tous / Limite 1 Externe / Aucune)', () => {
-    // Le manuel : « Choix du nbre de joueurs mutés dans l'équipe (étranger hors
-    // UE) », avec trois positions. Le 1 était codé en dur.
-    expect(criteresCompetition('cnc_open', 2026, 0, undefined, 'un_externe').maxHorsUE).toBe(1);
-    expect(criteresCompetition('cnc_open', 2026, 0, undefined, 'aucun').maxHorsUE).toBe(0);
-    // « Tous » : aucun plafond, donc aucun contrôle du tout.
-    expect(criteresCompetition('cnc_open', 2026, 0, undefined, 'tous').maxHorsUE).toBeUndefined();
-    // Sans précision, on garde la limite d'un seul : c'est le cas courant, et
-    // c'est le comportement qui existait avant les trois états.
-    expect(criteresCompetition('cnc_open', 2026, 0).maxHorsUE).toBe(1);
+  it('le panneau « Mutations » règle le contingent de mutés externes (#134)', () => {
+    // Manuel §3.E, planches p.112-114 : le panneau s'appelle « Mutations », ses
+    // trois positions sont Tous / Limite 1 Externe / Aucune.
+    expect(criteresCompetition('cnc_open', 2026, 'un_externe').maxMutes).toBe(1);
+    expect(criteresCompetition('cnc_open', 2026, 'aucun').maxMutes).toBe(0);
+    expect(criteresCompetition('cnc_open', 2026, 'tous').maxMutes).toBeUndefined();
+    // Sans précision, la limite d'un seul : la position courante du panneau.
+    expect(criteresCompetition('cnc_open', 2026).maxMutes).toBe(1);
+  });
+
+  it('le contingent hors UE ne dépend pas du panneau « Mutations »', () => {
+    // Deux règles distinctes : « 1 seul joueur étranger Hors UE par équipe »
+    // (manuel p.35, Critères France) ne s'ouvre pas quand on choisit « Tous ».
+    for (const position of ['tous', 'un_externe', 'aucun'] as const) {
+      expect(criteresCompetition('cnc_open', 2026, position).maxHorsUE, position).toBe(1);
+    }
   });
 });

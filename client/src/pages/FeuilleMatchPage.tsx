@@ -20,9 +20,10 @@ import {
   pointsEnJeu,
   type ChampLicence,
   type CompetitionClubId,
-  type ContingentHorsUE,
+  type ContingentMutations,
   type FeuilleMatch,
   type LettreEquipe,
+  estMuteExterne,
 } from '@shared';
 import { useFeuilleMatch, useLicencies } from '../db/hooks';
 import { updateFeuilleMatch } from '../db/actions';
@@ -41,6 +42,7 @@ import {
   ANOMALIE_EQUIPE_LABELS,
   ANOMALIE_LABELS,
   CATEGORIE_AGE_LABELS,
+  ETAT_MUTATION_LABELS,
   formatDateFr,
 } from '../lib/labels';
 
@@ -93,9 +95,8 @@ export function FeuilleMatchPage() {
   const criteres = criteresCompetition(
     etat.competition,
     Number(etat.date.slice(0, 4)) || new Date().getFullYear(),
-    etat.maxMutes,
+    etat.mutations,
     etat.date,
-    etat.horsUE,
   );
   const controle = controlerEquipe(joueurs, parLicence, criteres);
   const competition = COMPETITIONS_CLUB.find((c) => c.id === etat.competition)!;
@@ -284,25 +285,18 @@ export function FeuilleMatchPage() {
               ))}
             </select>
           </label>
+          {/* Le panneau « Mutations » du logiciel fédéral (§3.E) : il porte sur
+              les mutations externes. Les étrangers hors UE relèvent d'une règle
+              fixe, un seul par équipe, qui n'a pas de réglage. */}
           <label>
-            Mutés autorisés
-            <input
-              type="number"
-              min={0}
-              max={11}
-              value={etat.maxMutes}
-              onChange={(e) => maj({ maxMutes: Number(e.target.value) })}
-            />
-          </label>
-          <label>
-            Étrangers hors UE
+            Mutations
             <select
-              value={etat.horsUE}
-              onChange={(e) => maj({ horsUE: e.target.value as ContingentHorsUE })}
+              value={etat.mutations}
+              onChange={(e) => maj({ mutations: e.target.value as ContingentMutations })}
             >
               <option value="tous">Tous</option>
               <option value="un_externe">Limite 1 externe</option>
-              <option value="aucun">Aucun</option>
+              <option value="aucun">Aucune</option>
             </select>
           </label>
         </div>
@@ -454,11 +448,12 @@ export function FeuilleMatchPage() {
             ? CATEGORIE_AGE_LABELS[competition.categorieAge].toLowerCase()
             : 'toutes catégories'}{' '}
           · {competition.homogene ? 'équipe homogène exigée' : 'homogénéité non exigée'} ·{' '}
-          {etat.horsUE === 'tous'
-            ? 'étrangers hors UE sans limite'
-            : etat.horsUE === 'aucun'
-              ? 'aucun étranger hors UE'
-              : '1 joueur hors UE au plus'}
+          {etat.mutations === 'tous'
+            ? 'mutations externes sans limite'
+            : etat.mutations === 'aucun'
+              ? 'aucune mutation externe'
+              : '1 mutation externe au plus'}{' '}
+          · 1 joueur hors UE au plus
         </p>
       </div>
 
@@ -626,7 +621,12 @@ export function FeuilleMatchPage() {
                     </td>
                     <td>
                       {[
-                        fiche?.mutation ? 'muté' : '',
+                        fiche?.suspendu ? 'SUSPENDU' : '',
+                        fiche?.etatMutation
+                          ? ETAT_MUTATION_LABELS[fiche.etatMutation]
+                          : fiche?.mutation
+                            ? 'muté'
+                            : '',
                         horsUE === true ? 'hors UE' : '',
                         horsUE === null && fiche ? 'nationalité inconnue' : '',
                       ]
@@ -656,8 +656,16 @@ export function FeuilleMatchPage() {
           <ul className="print-bilan">
             <li>Joueurs : {etat.licences.length}</li>
             <li>
-              Mutés : {joueurs.filter((p) => parLicence.get(p.licence!)?.mutation).length} /{' '}
-              {etat.maxMutes} autorisé{etat.maxMutes > 1 ? 's' : ''}
+              Mutations externes :{' '}
+              {joueurs.filter((p) => {
+                const f = parLicence.get(p.licence!);
+                return f ? estMuteExterne(f) : false;
+              }).length}{' '}
+              {criteres.maxMutes === undefined
+                ? '— aucune limite'
+                : criteres.maxMutes === 0
+                  ? '/ aucune autorisée'
+                  : `/ ${criteres.maxMutes} autorisée`}
             </li>
             <li>
               Hors Union européenne :{' '}

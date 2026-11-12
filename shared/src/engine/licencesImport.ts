@@ -7,7 +7,7 @@
  * un contrôle de licence appuyé sur une donnée fausse est pire que pas de
  * contrôle du tout.
  */
-import type { Classification, Sexe } from '../types';
+import type { Classification, Sexe, EtatMutation } from '../types';
 
 export interface LicencieRow {
   name: string;
@@ -22,6 +22,8 @@ export interface LicencieRow {
   certificatMedical?: string;
   nationalite?: string;
   mutation?: boolean;
+  etatMutation?: EtatMutation;
+  suspendu?: boolean;
 }
 
 const strip = (s: string): string => s.replace(/^"(.*)"$/, '$1').trim();
@@ -78,13 +80,44 @@ function parseAnnee(value: string | undefined): number | undefined {
   return n;
 }
 
-/** « Muté », « oui », « 1 », « X » → vrai ; vide → non renseigné. */
-function parseMutation(value: string | undefined): boolean | undefined {
-  if (!value || !value.trim()) return undefined;
-  const v = norm(value);
-  if (v.startsWith('mut') || v === 'oui' || v === '1' || v === 'x' || v === 'm') return true;
-  if (v.startsWith('non') || v === '0') return false;
-  return undefined;
+/**
+ * Colonne « Position » du fichier fédéral : l'état de mutation.
+ *
+ * Le logiciel fédéral affiche « MUT.OK » pour un joueur non muté et « MUT.INT »
+ * pour une mutation interne (manuel p.114) ; « MUT.EXT » s'en déduit. L'ancienne
+ * lecture prenait tout ce qui commençait par « mut » pour une mutation : chaque
+ * « MUT.OK » comptait au contingent, et des équipes conformes étaient refusées.
+ *
+ * Les valeurs d'un fichier fait à la main (« muté », « oui », « X ») disent
+ * qu'il y a mutation sans dire laquelle : `etat` reste vide, et le contrôle la
+ * compte comme externe — c'est ce qu'il faisait avant, il ne s'ouvre pas.
+ */
+export function parsePosition(
+  value: string | undefined,
+): { etat?: EtatMutation; mute?: boolean } {
+  if (!value || !value.trim()) return {};
+  const v = norm(value).replace(/[^a-z0-9]/g, '');
+  if (v.includes('ext')) return { etat: 'externe', mute: true };
+  if (v.includes('int')) return { etat: 'interne', mute: true };
+  if (v.endsWith('ok') || v.startsWith('non') || v === '0' || v === 'n') {
+    return { etat: 'aucune', mute: false };
+  }
+  if (v.startsWith('mut') || v === 'oui' || v === '1' || v === 'x' || v === 'm') {
+    return { mute: true };
+  }
+  return {};
+}
+
+/**
+ * Colonne de suspension. Le format d'un export réel n'est pas documenté : toute
+ * valeur qui n'est pas une négation vaut suspension (« oui », « S », une date
+ * de fin…). Une cellule vide, colonne présente, vaut « non suspendu » — sans
+ * quoi un réimport ne lèverait jamais une suspension terminée.
+ */
+function parseSuspension(value: string | undefined): boolean {
+  if (!value || !value.trim()) return false;
+  const v = norm(value).trim();
+  return !(v.startsWith('non') || v === '0' || v === 'n' || v === 'false');
 }
 
 /** En-tête désignant un numéro (« n° club », « num club », « code club »). */
@@ -133,6 +166,7 @@ const COLUMNS: ColumnSpec[] = [
   },
   { key: 'nationalite', match: (h) => h.includes('nationalite') || h.includes('pays') },
   { key: 'mutation', match: (h) => h.includes('mutation') || h.includes('mute') || h.includes('position') },
+  { key: 'suspension', match: (h) => h.includes('suspen') },
 ];
 
 export function parseLicenciesCsv(text: string): { rows: LicencieRow[]; skipped: number } {
@@ -196,7 +230,11 @@ export function parseLicenciesCsv(text: string): { rows: LicencieRow[]; skipped:
       anneeReprise: parseAnnee(cell(cells, 'anneeReprise')),
       certificatMedical: parseDateFr(cell(cells, 'certificatMedical')),
       nationalite: cell(cells, 'nationalite'),
-      mutation: parseMutation(cell(cells, 'mutation')),
+      ...(() => {
+        const position = parsePosition(cell(cells, 'mutation'));
+        return { mutation: position.mute, etatMutation: position.etat };
+      })(),
+      suspendu: (idx.suspension ?? -1) >= 0 ? parseSuspension(cell(cells, 'suspension')) : undefined,
     });
   }
 
