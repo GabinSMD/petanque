@@ -25,6 +25,7 @@ import { ScoreForm } from '../../components/ScoreForm';
 import { SeedPicker } from '../../components/SeedPicker';
 import { ProtectionsModal } from '../../components/ProtectionsModal';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
+import { FicheEquipeModal } from '../../components/FicheEquipe';
 import { isRondesMode } from '../../lib/labels';
 import { BilanTirageModal } from '../../components/BilanTirageModal';
 import { useBilanAvantTirage } from '../../db/hooks';
@@ -53,6 +54,9 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  /** Équipe dont la fiche est ouverte (manuel §3.D.1.C). */
+  const [ficheId, setFicheId] = useState<string | null>(null);
+  const fiche = ficheId ? teamsById.get(ficheId) : undefined;
   /**
    * Tour du cadrage (manuel §3.D.11 : « vous devez choisir à quel tour vous
    * voulez faire le cadrage »). C'est une décision de tirage, pas un paramètre
@@ -374,7 +378,19 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
         allMatches={matches}
         teamsById={teamsById}
         locked={locked}
+        onFiche={(t) => setFicheId(t.id)}
       />
+
+      {fiche && (
+        <FicheEquipeModal
+          key={fiche.id}
+          concours={concours}
+          team={fiche}
+          poules={poules}
+          matches={matches}
+          onClose={() => setFicheId(null)}
+        />
+      )}
     </div>
   );
 }
@@ -387,6 +403,7 @@ export function BracketView({
   poules = [],
   locked,
   compact,
+  onFiche,
 }: {
   concours: Concours;
   stageMatches: Match[];
@@ -396,6 +413,11 @@ export function BracketView({
   poules?: Poule[];
   locked: boolean;
   compact?: boolean;
+  /**
+   * Ouvre la fiche d'une équipe (§3.D.1.C). Absent sur l'affichage public et
+   * l'écran géant, où personne ne doit modifier une composition.
+   */
+  onFiche?: (team: Team) => void;
 }) {
   const [collapsedRounds, setCollapsedRounds] = useState<Set<number>>(new Set());
   const toggleRound = (r: number) =>
@@ -506,7 +528,7 @@ export function BracketView({
                       }`}
                     >
                       {m.teamAId ? (
-                        <TeamLabel team={teamsById.get(m.teamAId)} compact />
+                        <TeamLabel team={teamsById.get(m.teamAId)} compact onFiche={onFiche} />
                       ) : m.byeA ? (
                         <span className="team-label team-bye">Exempt</span>
                       ) : m.loserFromA ? (
@@ -526,7 +548,7 @@ export function BracketView({
                       }`}
                     >
                       {m.teamBId ? (
-                        <TeamLabel team={teamsById.get(m.teamBId)} compact />
+                        <TeamLabel team={teamsById.get(m.teamBId)} compact onFiche={onFiche} />
                       ) : m.byeB ? (
                         <span className="team-label team-bye">Exempt</span>
                       ) : m.loserFromB ? (

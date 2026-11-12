@@ -51,6 +51,7 @@ export * from './engine/photos';
 export * from './engine/rapportDelegue';
 export * from './engine/championnatCDF';
 export * from './engine/recherche';
+export * from './engine/resultatsClub';
 export * from './engine/insertionEquipe';
 export * from './engine/rondeSupplementaire';
 export * from './engine/parcoursCatalogue';

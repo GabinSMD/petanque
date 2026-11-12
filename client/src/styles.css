@@ -1678,6 +1678,41 @@ form label select {
   font-size: 0.78rem;
 }
 
+/* Dossard cliquable (§3.D.1.C) : même pastille, avec ce qu'il faut pour se
+   savoir bouton — curseur, survol, anneau de focus au clavier. */
+button.team-number-fiche {
+  border: 0;
+  font-family: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+button.team-number-fiche:hover {
+  background: var(--accent);
+}
+button.team-number-fiche:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.fiche-equipe-resume {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.8rem;
+}
+.fiche-equipe-joueur {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem 0;
+  margin: 0 0 0.7rem;
+}
+.fiche-equipe-joueur legend {
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0 0.3rem;
+}
+
 /*
  * « Différence de points de la partie indiquée à coté de l'équipe » (manuel
  * §3.D.14) : le dossard, puis l'écart signé de cette partie entre parenthèses.
