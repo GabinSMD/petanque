@@ -2,7 +2,13 @@ import { Icone } from './Icone';
 import { PartyPopper, User } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import type { ConcoursMode, Discipline, TeamFormat } from '@shared';
-import { TAILLE_FORMATION, bornesParties } from '@shared';
+import {
+  MAX_MISE,
+  TAILLE_FORMATION,
+  accepteConsolante,
+  bornesParties,
+  raisonRefusMise,
+} from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
   CATEGORY_SUGGESTIONS,
@@ -14,6 +20,7 @@ import {
   isRondesMode,
   isTirMode,
   suggestedName,
+  formatLabel,
 } from '../lib/labels';
 
 interface Props {
@@ -68,6 +75,9 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const [miseParJoueur, setMiseParJoueur] = useState<number | ''>('');
   const [consolante, setConsolante] = useState(true);
 
+  // Ce qui ne va pas dans la mise, en clair. Vide = champ facultatif non rempli.
+  const raisonMise = miseParJoueur === '' ? undefined : raisonRefusMise(Number(miseParJoueur));
+
   const pickMode = (m: ConcoursMode) => {
     setMode(m);
     if (isTirMode(m)) {
@@ -98,7 +108,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       mode,
       discipline,
       category: category.trim() || undefined,
-      consolante: MODE_INFO[mode].consolante ? consolante : false,
+      consolante: accepteConsolante(mode) ? consolante : false,
       scoreMax,
       nbTerrains,
       planTerrains,
@@ -324,28 +334,31 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
             )}
             <label>
               Mise par joueur (€, facultatif)
+              {/* Au centime, comme dans les paramètres : un pas de 0,5 refusait
+                  3,20 € sans le dire. */}
               <input
                 type="number"
                 min={0}
-                max={1000}
-                step={0.5}
+                max={MAX_MISE}
+                step={0.01}
                 value={miseParJoueur}
                 placeholder="—"
                 onChange={(e) =>
                   setMiseParJoueur(e.target.value === '' ? '' : Number(e.target.value))
                 }
               />
+              {raisonMise && <small className="form-error">{raisonMise}</small>}
               {/* Le total d'équipe se lit à la saisie : c'est l'unité que le
                   barème fédéral donne, et celle qu'un organisateur recopie. */}
               {miseParJoueur !== '' && format && (
                 <small className="form-hint">
                   soit {(Number(miseParJoueur) * TAILLE_FORMATION[format]).toLocaleString('fr-FR')} €
-                  par équipe en {FORMAT_LABELS[format].toLowerCase()}
+                  par équipe en {formatLabel(format).toLowerCase()}
                 </small>
               )}
             </label>
           </div>
-          {MODE_INFO[mode].consolante && (
+          {accepteConsolante(mode) && (
             <label className="checkbox-label">
               <input
                 type="checkbox"

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type MouseEvent } from 'react';
 import type {
   CategorieAge,
   NiveauConcours,
@@ -12,8 +12,13 @@ import type {
 } from '@shared';
 import {
   CATEGORIES_AGE_CONCOURS,
+  accepteConsolante,
   JEUX_FEDERAUX,
+  MAX_DECALAGE,
+  MAX_MISE,
   bornesParties,
+  raisonRefusDecalage,
+  raisonRefusMise,
   categorieDuDessous,
   championnatsDuJeu,
   LETTRES_TERRAIN,
@@ -48,10 +53,10 @@ import {
   FORMULE_LABELS,
   DISCIPLINE_LABELS,
   FORMAT_LABELS,
-  MODE_INFO,
   MODE_LABELS,
   isRondesMode,
   isTirMode,
+  formatLabel,
 } from '../lib/labels';
 
 interface Props {
@@ -196,6 +201,24 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
    */
   const bornes = bornesParties({ mode, ggStrict });
 
+  /**
+   * Ce qui ne va pas dans les trois champs nombre, en clair.
+   *
+   * Un champ vide n'est pas une faute : ces trois-là sont facultatifs, et `''`
+   * veut dire « rien à enregistrer », pas « zéro ».
+   *
+   * La raison s'affiche **dès l'ouverture** du formulaire et non au moment
+   * d'enregistrer. C'est délibéré : une valeur peut arriver d'une sauvegarde,
+   * d'une synchronisation ou d'une autre version, et l'organisateur qui ouvre
+   * ses paramètres pour changer le nom du concours doit voir tout de suite ce
+   * qui l'empêchera d'enregistrer — au lieu de cliquer sur un bouton inerte.
+   */
+  const raisonDecalageEquipe =
+    decalageEquipe === '' ? undefined : raisonRefusDecalage(Number(decalageEquipe));
+  const raisonDecalageTerrain =
+    decalageTerrain === '' ? undefined : raisonRefusDecalage(Number(decalageTerrain));
+  const raisonMise = miseParJoueur === '' ? undefined : raisonRefusMise(Number(miseParJoueur));
+
   /* ------------------------------------------------------------------ */
   /* Numéro de concours fédéral (§3.A)                                   */
   /* ------------------------------------------------------------------ */
@@ -244,6 +267,38 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
     segmentRetenu ? '' : 'le segment de catégorie',
   ].filter(Boolean);
 
+  /**
+   * Déplie les sections repliées qui cachent un champ invalide, avant que le
+   * navigateur ne valide.
+   *
+   * C'est le garde de fond de ce lot, et il vaut pour tout champ, pas seulement
+   * pour les trois qu'on corrige. Un contrôle invalide placé dans un `<details>`
+   * fermé n'est pas peint : le navigateur ne peut pas y amener le curseur, donc
+   * il **n'affiche aucune bulle** et se contente d'écrire en console
+   * `An invalid form control with name='' is not focusable`. Le formulaire
+   * refuse alors de s'envoyer sans qu'un seul mot n'apparaisse à l'écran.
+   *
+   * Le geste est sur le clic du bouton et non dans `onSubmit` : la validation
+   * native s'exécute **avant** l'événement `submit`, donc `onSubmit` n'est
+   * jamais appelé quand le formulaire est invalide — un garde placé là ne
+   * servirait à rien. Le clic, lui, précède la validation.
+   *
+   * On ouvre sans jamais refermer : une section dépliée par ce garde montre
+   * précisément ce que l'organisateur doit corriger.
+   */
+  const deplierAvantValidation = (e: MouseEvent<HTMLButtonElement>) => {
+    const form = e.currentTarget.form;
+    if (!form || form.checkValidity()) return;
+    for (const champ of form.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+      'input, select, textarea',
+    )) {
+      if (champ.checkValidity()) continue;
+      for (let n = champ.closest('details'); n; n = n.parentElement?.closest('details') ?? null) {
+        n.open = true;
+      }
+    }
+  };
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void onSubmit({
@@ -265,8 +320,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         : {
             // Formule par groupes : le concours B n'est pas une consolante, et il
             // n'y a pas de repêchage — la donnée doit le dire.
-            consolante: parGroupes ? false : MODE_INFO[mode].consolante ? consolante : false,
-            complementaire: MODE_INFO[mode].consolante && consolante ? complementaire : false,
+            consolante: parGroupes ? false : accepteConsolante(mode) ? consolante : false,
+            complementaire: accepteConsolante(mode) && consolante ? complementaire : false,
             recupCadrage:
               mode === 'poules' && consolante && recupCadrage && !parGroupes ? true : undefined,
             parGroupes: mode === 'poules' && parGroupes ? true : undefined,
@@ -511,23 +566,27 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       <div className="form-row">
         <label>
           Mise par joueur (€, facultatif)
+          {/* `step={0.01}` et non 0,5 : une mise s'écrit au centime, et 3,20 €
+              était refusé par l'ancien pas. C'est `raisonRefusMise` qui dit ce
+              qui ne va pas, pas un pas qui bloque sans un mot. */}
           <input
             type="number"
             min={0}
-            max={1000}
-            step={0.5}
+            max={MAX_MISE}
+            step={0.01}
             value={miseParJoueur}
             placeholder="—"
             onChange={(e) =>
               setMiseParJoueur(e.target.value === '' ? '' : Number(e.target.value))
             }
           />
+          {raisonMise && <small className="form-error">{raisonMise}</small>}
           {/* L'unité fédérale est par joueur ; le total d'équipe se lit à côté,
               pour qu'un barème recopié se vérifie à la saisie. */}
           {miseParJoueur !== '' && (
             <small className="form-hint">
               soit {(Number(miseParJoueur) * TAILLE_FORMATION[format]).toLocaleString('fr-FR')} € par
-              équipe en {FORMAT_LABELS[format].toLowerCase()}
+              équipe en {formatLabel(format).toLowerCase()}
             </small>
           )}
           {miseParJoueur === '' && miseHeritee !== undefined && (
@@ -614,7 +673,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           </span>
         </label>
       )}
-      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && !parGroupes && (
+      {mode !== 'elimination_directe' && accepteConsolante(mode) && !parGroupes && (
         <>
           <label className="checkbox-label">
             <input
@@ -884,38 +943,51 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         <div className="form-row">
           <label>
             Décalage n° d'équipe
+            {/* Plus de `step={100}` : le manuel ne demande aucun pas, et il
+                refusait en silence tout décalage qui n'était pas rond. */}
             <input
               type="number"
               min={0}
-              max={9000}
-              step={100}
+              max={MAX_DECALAGE}
+              step={1}
               value={decalageEquipe}
               placeholder="0"
               onChange={(e) =>
                 setDecalageEquipe(e.target.value === '' ? '' : Number(e.target.value))
               }
             />
-            <span className="hint">
-              1<sup>re</sup> équipe : n°{(decalageEquipe === '' ? 0 : Number(decalageEquipe)) + 1}
-            </span>
+            {raisonDecalageEquipe ? (
+              <small className="form-error">{raisonDecalageEquipe}</small>
+            ) : (
+              <span className="hint">
+                1<sup>re</sup> équipe : n°{(decalageEquipe === '' ? 0 : Number(decalageEquipe)) + 1}
+              </span>
+            )}
           </label>
           <label>
             Décalage n° de terrain
+            {/* Le `step={50}` d'origine est ce qui a fait tout ce lot : il
+                rendait `decalageTerrain: 8` invalide, donc le concours
+                inenregistrable, sans jamais afficher pourquoi. */}
             <input
               type="number"
               min={0}
-              max={9000}
-              step={50}
+              max={MAX_DECALAGE}
+              step={1}
               value={decalageTerrain}
               placeholder="0"
               onChange={(e) =>
                 setDecalageTerrain(e.target.value === '' ? '' : Number(e.target.value))
               }
             />
-            <span className="hint">
-              Terrains {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + 1} à{' '}
-              {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + nbTerrains}
-            </span>
+            {raisonDecalageTerrain ? (
+              <small className="form-error">{raisonDecalageTerrain}</small>
+            ) : (
+              <span className="hint">
+                Terrains {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + 1} à{' '}
+                {(decalageTerrain === '' ? 0 : Number(decalageTerrain)) + nbTerrains}
+              </span>
+            )}
           </label>
         </div>
       </details>
@@ -1004,7 +1076,9 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         <button type="button" className="btn btn-ghost" onClick={onCancel}>
           Annuler
         </button>
-        <button className="btn btn-primary">{initial ? 'Enregistrer' : 'Créer le concours'}</button>
+        <button className="btn btn-primary" onClick={deplierAvantValidation}>
+          {initial ? 'Enregistrer' : 'Créer le concours'}
+        </button>
       </div>
     </form>
   );
