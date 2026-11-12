@@ -129,3 +129,40 @@ describe('rapport d arbitrage : bilan des engagés', () => {
     expect(stats.joueursSansLicence).toBe(8); // seule « Avec licence » en a une
   });
 });
+
+describe('rapport d arbitrage : concours B et C', () => {
+  it('un concours A seul garde ses intitulés, sans préfixe', () => {
+    const teams = makeTeams(8);
+    const matches = playAll(drawElimination('c1', 'principal', teams, testCtx()));
+    const report = arbitrageReport(teams, matches);
+    expect(report.sections.every((s) => s.concours === 'A')).toBe(true);
+    expect(report.sections[0]!.label).toBe('Vainqueur');
+  });
+
+  it('les places du B suivent celles du A, préfixées par leur concours', () => {
+    const teams = makeTeams(16);
+    const a = teams.slice(0, 8);
+    const b = teams.slice(8);
+    const matches = playAll(
+      [
+        ...playAll(drawElimination('c1', 'principal', a, testCtx())),
+        ...drawElimination('c1', 'consolante', b, testCtx()),
+      ],
+      'consolante',
+    );
+    const report = arbitrageReport(teams, matches);
+
+    expect(report.sections.map((s) => s.label)).toEqual([
+      'Concours A — Vainqueur',
+      'Concours A — Finaliste',
+      'Concours A — Perdants 1/2 finale',
+      'Concours A — Perdants 1/4 de finale',
+      'Concours B — Vainqueur',
+      'Concours B — Finaliste',
+      'Concours B — Perdants 1/2 finale',
+      'Concours B — Perdants 1/4 de finale',
+    ]);
+    const vainqueurB = report.sections.find((s) => s.label === 'Concours B — Vainqueur')!;
+    expect(b.map((t) => t.number)).toContain(vainqueurB.teams[0]!.number);
+  });
+});

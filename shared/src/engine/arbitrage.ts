@@ -9,7 +9,7 @@
  * La fédération ne collecte que les quatre derniers tours — un perdant du 1er
  * tour d'un concours à 32 équipes n'y figure pas.
  */
-import type { Match, Team } from '../types';
+import type { Match, MatchStage, Team } from '../types';
 import { bracketRanking } from './bracket';
 
 export interface ArbitragePlayerRow {
@@ -27,7 +27,11 @@ export interface ArbitrageTeamRow {
   players: ArbitragePlayerRow[];
 }
 
+export type LettreConcours = 'A' | 'B' | 'C';
+
 export interface ArbitrageSection {
+  /** Concours auquel appartient la place : A (principal), B, C. */
+  concours: LettreConcours;
   label: string;
   teams: ArbitrageTeamRow[];
 }
@@ -59,26 +63,48 @@ const SECTION_LABELS: Record<string, string> = {
   'Éliminés en 8èmes': 'Perdants 8ème de finale',
 };
 
+/**
+ * Les tableaux, dans l'ordre du document fédéral. Le manuel répète à chaque
+ * formule A-B et A-B-C (§3.D.3 à §3.D.13) « imprimer les résultats arbitrage
+ * concours A, B, C » : les places du B et du C rapportent aussi des points.
+ */
+const CONCOURS: { stage: MatchStage; lettre: LettreConcours }[] = [
+  { stage: 'principal', lettre: 'A' },
+  { stage: 'consolante', lettre: 'B' },
+  { stage: 'complementaire', lettre: 'C' },
+];
+
 export function arbitrageReport(teams: Team[], matches: Match[]): ArbitrageReport {
   const byId = new Map(teams.map((t) => [t.id, t]));
+  const joues = CONCOURS.filter((c) => matches.some((m) => m.stage === c.stage));
+  // Un concours sans B ni C garde ses intitulés d'origine : préfixer « Concours A »
+  // partout alourdirait le cas de loin le plus courant.
+  const prefixer = joues.length > 1;
 
   const sections: ArbitrageSection[] = [];
-  for (const group of bracketRanking(matches, 'principal')) {
-    const label = SECTION_LABELS[group.label];
-    if (!label) continue; // tours plus profonds : non collectés par la fédération
-    const rows = group.teamIds
-      .map((id) => byId.get(id))
-      .filter((t): t is Team => Boolean(t))
-      .map((t) => ({
-        number: t.number,
-        club: t.club,
-        players: t.players.map((p) => ({
-          licence: p.licence,
-          name: p.name,
-          club: p.club ?? t.club,
-        })),
-      }));
-    if (rows.length > 0) sections.push({ label, teams: rows });
+  for (const { stage, lettre } of joues) {
+    for (const group of bracketRanking(matches, stage)) {
+      const base = SECTION_LABELS[group.label];
+      if (!base) continue; // tours plus profonds : non collectés par la fédération
+      const rows = group.teamIds
+        .map((id) => byId.get(id))
+        .filter((t): t is Team => Boolean(t))
+        .map((t) => ({
+          number: t.number,
+          club: t.club,
+          players: t.players.map((p) => ({
+            licence: p.licence,
+            name: p.name,
+            club: p.club ?? t.club,
+          })),
+        }));
+      if (rows.length === 0) continue;
+      sections.push({
+        concours: lettre,
+        label: prefixer ? `Concours ${lettre} — ${base}` : base,
+        teams: rows,
+      });
+    }
   }
 
   const players = teams.flatMap((t) => t.players);

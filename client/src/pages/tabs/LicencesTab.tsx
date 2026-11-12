@@ -4,6 +4,7 @@ import type { Concours, Licencie, Team } from '@shared';
 import {
   TAILLE_FORMATION,
   controlerEquipe,
+  criteresDuConcours,
   depotStats,
   lireLicenceAuDepot,
   parseLicenceQr,
@@ -80,19 +81,9 @@ export function LicencesTab({ concours, teams }: Props) {
    */
   const taillePrevue = isIndividualMode(concours.mode) ? 1 : TAILLE_FORMATION[concours.format];
 
-  const criteres: CriteresLicence = useMemo(
-    () => ({
-      annee: Number(concours.date.slice(0, 4)),
-      dateConcours: concours.date,
-      categorieAge: concours.categorieAge,
-      strict: concours.strict,
-      sexe: concours.critereSexe,
-      classification: concours.critereClassification,
-      homogene: concours.homogene,
-      certificatsValides: new Set(concours.certificatsValides ?? []),
-    }),
-    [concours],
-  );
+  // La même source que le bilan avant tirage : une copie locale avait perdu
+  // les contingents (hors UE, mutés) des « Critères France ».
+  const criteres: CriteresLicence = useMemo(() => criteresDuConcours(concours), [concours]);
 
   const controles = useMemo(() => {
     const map = new Map<string, ControleEquipe>();
