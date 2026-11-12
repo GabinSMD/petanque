@@ -65,4 +65,5 @@ export * from './engine/rondes';
 export * from './engine/tir';
 export * from './engine/terrains';
 export * from './engine/saisieNombres';
+export * from './engine/effacementsAval';
 export * from './engine/defautsConcours';
