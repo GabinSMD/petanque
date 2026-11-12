@@ -13,7 +13,7 @@
 import type { Match, MatchStage, Poule } from '../types';
 import type { EngineCtx } from './ctx';
 import { shuffle } from './ctx';
-import { nextPow2 } from './bracket';
+import { nextPow2, squeletteCadrageDiffere } from './bracket';
 import { loserOf, winnerOf } from './match';
 
 /** Un qualifié attendu : la poule d'où il sort, et son rang (1er ou 2e). */
@@ -40,8 +40,18 @@ export function buildTableauVide(
   ctx: EngineCtx,
   /** Tableau visé : la consolante s'alimente au fil des poules elle aussi. */
   stage: MatchStage = 'principal',
+  /**
+   * Tour du cadrage (manuel §3.D.2, « cadrer au 1er tour après les poules »
+   * ou non). 0, le défaut : les exempts sont au premier tour. Au-delà, tous
+   * les qualifiés jouent d'abord, et les exempts tombent au tour demandé ;
+   * `toursCadragePossibles` dit ce que l'effectif permet.
+   */
+  tourCadrage = 0,
 ): Match[] {
   if (nbQualifies < 2) return [];
+  if (tourCadrage > 0) {
+    return squeletteCadrageDiffere(concoursId, stage, nbQualifies, tourCadrage, ctx);
+  }
   const size = nextPow2(nbQualifies);
   const byes = size - nbQualifies;
   const now = ctx.now();
@@ -179,7 +189,12 @@ export function placerQualifie(
   }
   if (libres.length === 0) return matches;
 
-  const moitie = (m: Match): 0 | 1 => (m.position * 2 < principal.length ? 0 : 1);
+  // Nombre d'unités du premier tour, trous compris : un tableau à cadrage
+  // différé (§3.D.2) n'a pas de partie sur ses trous, mais ses positions
+  // courent sur toute la largeur. Plus de la moitié des unités y sont occupées,
+  // donc la puissance de deux supérieure retombe sur la largeur exacte.
+  const largeur = nextPow2(principal.length);
+  const moitie = (m: Match): 0 | 1 => (m.position * 2 < largeur ? 0 : 1);
   const memePouleDansMoitie = new Set<0 | 1>();
   for (const m of principal) {
     for (const ref of [m.qualifFromA, m.qualifFromB]) {

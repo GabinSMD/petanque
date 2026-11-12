@@ -25,6 +25,13 @@ const LOSER_1TA: RecoveryRule = {
   to: 'consolante',
   toRound: 0,
 };
+/** Récupération au cadrage : le perdant de la 2e partie de A rejoint la 2e partie de B. */
+const LOSER_2TA_2TB: RecoveryRule = {
+  from: 'principal',
+  fromRound: 1,
+  to: 'consolante',
+  toRound: 1,
+};
 const LOSER_1TB: RecoveryRule = {
   from: 'consolante',
   fromRound: 0,
@@ -34,13 +41,15 @@ const LOSER_1TB: RecoveryRule = {
 
 export const FORMULE_RULES: Record<Formule, RecoveryRule[]> = {
   a: [],
+  // §3.D.11 « Sans Récup » : seuls les perdants de la 1re partie de A
+  // descendent au B.
   ab: [LOSER_1TA],
+  // §3.D.9 : le A-B-C du §3.D.8 sans concours C. Le manuel ne détaille pas la
+  // récupération, mais il la nomme par contraste : le §3.D.11 est le A-B
+  // « Sans Récup », donc le §3.D.9 garde celle du §3.D.8.
+  ab_recup: [LOSER_1TA, LOSER_2TA_2TB],
   abc: [LOSER_1TA, LOSER_1TB],
-  abc_recup: [
-    LOSER_1TA,
-    { from: 'principal', fromRound: 1, to: 'consolante', toRound: 1 },
-    LOSER_1TB,
-  ],
+  abc_recup: [LOSER_1TA, LOSER_2TA_2TB, LOSER_1TB],
   abc_cd19: [
     LOSER_1TA,
     { from: 'principal', fromRound: 1, to: 'complementaire', toRound: 0 },
@@ -48,7 +57,7 @@ export const FORMULE_RULES: Record<Formule, RecoveryRule[]> = {
   ],
   abc_cd53: [
     LOSER_1TA,
-    { from: 'principal', fromRound: 1, to: 'consolante', toRound: 1 },
+    LOSER_2TA_2TB,
     LOSER_1TB,
     { from: 'consolante', fromRound: 1, to: 'complementaire', toRound: 1 },
   ],

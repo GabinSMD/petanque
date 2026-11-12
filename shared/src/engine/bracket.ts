@@ -357,20 +357,8 @@ function drawEliminationCadrageDiffere(
       'Têtes de série et cadrage différé ne se combinent pas : choisissez l\'un ou l\'autre.',
     );
   }
-  const forme = formeCadrage(teams.length, k);
-  const tourDuCadrage = forme[k];
-  if (!tourDuCadrage) throw new Error('Cadrage impossible : tour hors du tableau.');
-  const { reelles, exempts } = tourDuCadrage;
+  const occupees = unitesCadrageDiffere(teams.length, k);
 
-  // Places du tour de cadrage : celles qui jouent, celles qui sont exemptes,
-  // réparties régulièrement — un paquet d'exempts d'un côté du tableau
-  // offrirait un chemin plus facile à cette moitié.
-  const placesCadrage = spreadEvenly(
-    Array.from({ length: reelles }, () => true),
-    Array.from({ length: exempts }, () => false),
-  );
-
-  const parBloc = 1 << k; // parties du premier tour sous une place du cadrage
   const pool = shuffle(teams, ctx.rng);
   const pairs: [Team, Team][] = [];
   for (let i = 0; i < pool.length; i += 2) {
@@ -378,17 +366,60 @@ function drawEliminationCadrageDiffere(
   }
   if (!opts.sansProtection) repairSameClubPairs(pairs, ctx, opts.protections ?? []);
 
-  // Distribution des parties dans les blocs, en laissant les trous voulus.
-  const units: (Unit | null)[] = [];
+  // Distribution des parties dans les unités occupées, dans l'ordre.
   let prochaine = 0;
+  const units: (Unit | null)[] = occupees.map((occupee) => {
+    if (!occupee) return null;
+    const paire = pairs[prochaine++];
+    return paire ? { a: teamSlot(paire[0].id), b: teamSlot(paire[1].id) } : null;
+  });
+  return createHollowBracketMatches(concoursId, stage, units, ctx);
+}
+
+/**
+ * Unités du premier tour d'un tableau à cadrage différé au tour `k` : `true`
+ * quand une partie s'y joue, `false` pour un trou.
+ *
+ * Chaque place du tour de cadrage possède un bloc de 2^k unités du premier
+ * tour ; une place qui jouera son tour occupe tout son bloc, une place exempte
+ * n'en occupe que la moitié. Les places exemptes sont réparties régulièrement
+ * — un paquet d'exempts d'un côté du tableau offrirait un chemin plus facile à
+ * cette moitié.
+ */
+function unitesCadrageDiffere(nbEquipes: number, k: number): boolean[] {
+  const forme = formeCadrage(nbEquipes, k);
+  const tourDuCadrage = forme[k];
+  if (!tourDuCadrage) throw new Error('Cadrage impossible : tour hors du tableau.');
+  const { reelles, exempts } = tourDuCadrage;
+  const placesCadrage = spreadEvenly(
+    Array.from({ length: reelles }, () => true),
+    Array.from({ length: exempts }, () => false),
+  );
+  const parBloc = 1 << k;
+  const unites: boolean[] = [];
   for (const joue of placesCadrage) {
     const aRemplir = joue ? parBloc : parBloc / 2;
-    for (let i = 0; i < parBloc; i += 1) {
-      const paire = i < aRemplir ? pairs[prochaine] : undefined;
-      if (i < aRemplir) prochaine += 1;
-      units.push(paire ? { a: teamSlot(paire[0].id), b: teamSlot(paire[1].id) } : null);
-    }
+    for (let i = 0; i < parBloc; i += 1) unites.push(i < aRemplir);
   }
+  return unites;
+}
+
+/**
+ * Squelette vide d'un tableau à cadrage différé, pour `nbEquipes` qui n'y
+ * entreront que plus tard : les qualifiés des poules, au fil de l'eau (manuel
+ * §3.D.2, « cadrer au 1er tour après les poules » ou non). Mêmes trous que
+ * `drawElimination` avec `tourCadrage`, sans équipe placée.
+ */
+export function squeletteCadrageDiffere(
+  concoursId: string,
+  stage: MatchStage,
+  nbEquipes: number,
+  tourCadrage: number,
+  ctx: EngineCtx,
+): Match[] {
+  const units = unitesCadrageDiffere(nbEquipes, tourCadrage).map((occupee): Unit | null =>
+    occupee ? { a: {}, b: {} } : null,
+  );
   return createHollowBracketMatches(concoursId, stage, units, ctx);
 }
 

@@ -13,6 +13,7 @@
  */
 import type { Match, MatchStage } from '../types';
 import { nextPow2 } from './bracket';
+import { toursCadragePossibles } from './cadrage';
 import { isByeMatch, winnerOf } from './match';
 
 /**
@@ -28,6 +29,22 @@ export function nbToursQualification(
   if ((nbQualifies & (nbQualifies - 1)) !== 0) return null;
   const taille = nextPow2(nbEntrants);
   return Math.log2(taille / nbQualifies);
+}
+
+/**
+ * Tours où le cadrage peut tomber dans un tableau de `nbEntrants`, compte tenu
+ * d'un éventuel arrêt au nombre de qualifiés (manuel §3.D.2 : « cadrer au 1er
+ * tour après les poules » ou non).
+ *
+ * Un cadrage placé à un tour que le qualificatif ne joue pas laisserait passer
+ * trop d'équipes : à 12 qualifiés de poules pour 8 places, seul le premier tour
+ * se joue, et un cadrage au second en qualifierait 6. Ces tours-là sont exclus.
+ */
+export function toursCadrageQualificatif(nbEntrants: number, nbQualifies?: number): number[] {
+  const possibles = toursCadragePossibles(nbEntrants);
+  const tours = nbQualifies ? nbToursQualification(nbEntrants, nbQualifies) : null;
+  if (tours === null || tours <= 0) return possibles;
+  return possibles.filter((k) => k < tours);
 }
 
 /** Ne garde que les `nbTours` premiers tours d'un tableau. */
