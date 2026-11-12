@@ -53,7 +53,8 @@ export const MODE_LABELS: Record<ConcoursMode, string> = {
  */
 export const FORMULE_LABELS: Record<Formule, string> = {
   a: 'Un seul tableau',
-  ab: 'Tableau + consolante',
+  ab: 'Tableau + consolante, sans récupération',
+  ab_recup: 'Tableau + consolante, avec repêchage au cadrage (A-B récup.)',
   abc: 'Tableau + consolante + complémentaire',
   abc_recup: 'Avec repêchage au cadrage (A-B-C récup.)',
   abc_cd19: 'Avec repêchage vers le complémentaire (CD19)',
@@ -62,7 +63,9 @@ export const FORMULE_LABELS: Record<Formule, string> = {
 
 export const FORMULE_HINTS: Record<Formule, string> = {
   a: 'Qui perd sort, définitivement.',
-  ab: 'Les perdants du 1er tour rejouent dans la consolante.',
+  ab: 'Les perdants du 1er tour rejouent dans la consolante, sans récupération (§3.D.11) : qui perd ensuite au tableau principal sort.',
+  ab_recup:
+    'Les perdants du 1er tour rejouent dans la consolante, et ceux du 2e tour du tableau principal entrent directement au 2e tour de la consolante, le « cadrage » (§3.D.9).',
   abc: 'Les perdants du 1er tour de la consolante rejouent dans un 3e tableau.',
   abc_recup:
     'Comme ci-dessus, et les perdants du 2e tour du tableau principal entrent directement au 2e tour de la consolante (le « cadrage ») — la formule des concours officiels A-B-C.',
@@ -76,6 +79,7 @@ export const FORMULE_HINTS: Record<Formule, string> = {
 export const FORMULE_CHOICES: Formule[] = [
   'a',
   'ab',
+  'ab_recup',
   'abc',
   'abc_recup',
   'abc_cd19',

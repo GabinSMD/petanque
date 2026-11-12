@@ -51,7 +51,22 @@ describe('formules A-B-C : structure', () => {
     expect(b.filter((m) => m.round === 0 && isByeMatch(m))).toHaveLength(0);
   });
 
-  it('ab (§3.D.9) : pas de concours C', () => {
+  it('ab_recup (§3.D.9) : le B du A-B-C récup., sans concours C', () => {
+    const ctx = testCtx();
+    const main = drawElimination('c1', 'principal', makeTeams(16), ctx);
+    const secondary = buildFormuleBrackets('c1', main, 'ab_recup', ctx);
+
+    expect(secondary.some((m) => m.stage === 'complementaire')).toBe(false);
+    const b = secondary.filter((m) => m.stage === 'consolante');
+    // Même B que l'abc_recup : 8 perdants du 1er tour de A en 4 parties, et
+    // 4 unités exemptées qui gardent la place des perdants du 2e tour.
+    expect(bracketSizeOf(b)).toBe(16);
+    const b0 = b.filter((m) => m.round === 0);
+    expect(b0).toHaveLength(8);
+    expect(b0.filter((m) => isByeMatch(m))).toHaveLength(4);
+  });
+
+  it('ab (§3.D.11, sans récupération) : pas de concours C', () => {
     const ctx = testCtx();
     const main = drawElimination('c1', 'principal', makeTeams(16), ctx);
     const secondary = buildFormuleBrackets('c1', main, 'ab', ctx);
@@ -94,6 +109,44 @@ describe('formules A-B-C : cheminement des perdants', () => {
         (m.teamAId === recovered || m.teamBId === recovered),
     );
     expect(inCadrage).toBe(true);
+  });
+
+  it('ab_recup : le perdant du 2e tour de A entre au 2e tour du B sans jouer le 1er', () => {
+    const ctx = testCtx();
+    const main = drawElimination('c1', 'principal', makeTeams(16), ctx);
+    let all = [...main, ...buildFormuleBrackets('c1', main, 'ab_recup', ctx)];
+
+    all = playRound(all, 'principal', 0);
+    const a1 = at(all, 'principal', 1, 0);
+    all = playBracketMatch(all, a1.id, 13, 5);
+    const recovered = loserOf(at(all, 'principal', 1, 0));
+    expect(recovered).toBeTruthy();
+
+    const dansLeB = all.filter(
+      (m) => m.stage === 'consolante' && (m.teamAId === recovered || m.teamBId === recovered),
+    );
+    // Au 1er tour du B, il n'occupe qu'une unité exemptée, déjà résolue…
+    const auPremier = dansLeB.filter((m) => m.round === 0);
+    expect(auPremier.every((m) => isByeMatch(m) && m.done)).toBe(true);
+    // … et sa première vraie partie est au 2e tour.
+    expect(dansLeB.some((m) => m.round === 1)).toBe(true);
+    expect(all.some((m) => m.stage === 'complementaire')).toBe(false);
+  });
+
+  it('ab : le perdant du 2e tour de A ne réapparaît nulle part (§3.D.11)', () => {
+    const ctx = testCtx();
+    const main = drawElimination('c1', 'principal', makeTeams(16), ctx);
+    let all = [...main, ...buildFormuleBrackets('c1', main, 'ab', ctx)];
+
+    all = playRound(all, 'principal', 0);
+    const a1 = at(all, 'principal', 1, 0);
+    all = playBracketMatch(all, a1.id, 13, 5);
+    const eliminated = loserOf(at(all, 'principal', 1, 0));
+    expect(
+      all.some(
+        (m) => m.stage !== 'principal' && (m.teamAId === eliminated || m.teamBId === eliminated),
+      ),
+    ).toBe(false);
   });
 
   it('abc : le perdant du 2e tour de A ne réapparaît nulle part', () => {
@@ -319,4 +372,75 @@ describe('formule ABC CD53 (§3.D.13) : double repêchage au cadrage', () => {
     const premiereVraie = dansLeC.filter((m) => !isByeMatch(m)).sort((a, b) => a.round - b.round)[0];
     if (premiereVraie) expect(premiereVraie.round).toBeGreaterThanOrEqual(1);
   });
+});
+
+describe('formule A-B avec récupération (§3.D.9) : de bout en bout', () => {
+  /** Joue tout ce qui est jouable, dans tous les tableaux, jusqu'à épuisement. */
+  function jouerTout(all: Match[]): Match[] {
+    let out = all;
+    for (let garde = 0; garde < 400; garde += 1) {
+      const jouable = out.find((m) => !m.done && !isByeMatch(m) && m.teamAId && m.teamBId);
+      if (!jouable) break;
+      out = playBracketMatch(out, jouable.id, 13, 7);
+    }
+    return out;
+  }
+
+  const equipesDe = (ms: Match[]) =>
+    new Set(ms.flatMap((m) => [m.teamAId, m.teamBId]).filter((t): t is string => Boolean(t)));
+
+  // Effectifs qui ne tombent pas juste (exempts au 1er tour de A, donc moins
+  // de perdants qu'on ne croirait), et un cadrage différé (§3.D.11).
+  const cas: { equipes: number; tourCadrage?: number }[] = [
+    { equipes: 5 },
+    { equipes: 6 },
+    { equipes: 10 },
+    { equipes: 13 },
+    { equipes: 16 },
+    { equipes: 24 },
+    { equipes: 33 },
+    { equipes: 24, tourCadrage: 1 },
+    { equipes: 48, tourCadrage: 1 },
+  ];
+
+  for (const { equipes, tourCadrage } of cas) {
+    it(`${equipes} équipes${tourCadrage ? `, cadrage au tour ${tourCadrage + 1}` : ''} : A et B vont au bout, les bons perdants descendent`, () => {
+      const ctx = testCtx();
+      const main = drawElimination('c1', 'principal', makeTeams(equipes), ctx, { tourCadrage });
+      const all = jouerTout([...main, ...buildFormuleBrackets('c1', main, 'ab_recup', ctx)]);
+
+      // Rien ne reste en plan, et chaque tableau a sa finale jouée.
+      expect(all.filter((m) => !m.done).map((m) => `${m.stage} ${m.round}:${m.position}`)).toEqual(
+        [],
+      );
+      for (const stage of ['principal', 'consolante']) {
+        const ms = all.filter((m) => m.stage === stage);
+        const finale = ms.filter((m) => m.round === Math.max(...ms.map((x) => x.round)));
+        expect(finale, `${stage} : une seule finale`).toHaveLength(1);
+        expect(loserOf(finale[0]!), `${stage} : finale jouée`).toBeTruthy();
+      }
+      expect(all.some((m) => m.stage === 'complementaire')).toBe(false);
+
+      // Le B réunit exactement les perdants des vraies parties des deux
+      // premiers tours de A — pas un exempt, personne d'autre.
+      const perdantsDuTour = (round: number) =>
+        all
+          .filter((m) => m.stage === 'principal' && m.round === round && !isByeMatch(m))
+          .map((m) => loserOf(m));
+      const attendus = new Set([...perdantsDuTour(0), ...perdantsDuTour(1)]);
+      expect(equipesDe(all.filter((m) => m.stage === 'consolante'))).toEqual(attendus);
+
+      // Les perdants du 2e tour de A ne jouent pas le 1er tour du B.
+      for (const t of perdantsDuTour(1)) {
+        const auPremier = all.filter(
+          (m) =>
+            m.stage === 'consolante' &&
+            m.round === 0 &&
+            !isByeMatch(m) &&
+            (m.teamAId === t || m.teamBId === t),
+        );
+        expect(auPremier, `${t} a joué le 1er tour du B`).toEqual([]);
+      }
+    });
+  }
 });

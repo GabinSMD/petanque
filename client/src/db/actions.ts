@@ -31,6 +31,7 @@ import {
   rondesTirees,
   seriesTirees,
   terrainNumeros,
+  toursCadrageQualificatif,
   tronquerTableau,
   terrainsPoule,
   validateScore,
@@ -611,6 +612,11 @@ export async function generatePoules(
   concours: Concours,
   sansProtection: boolean,
   seeds: string[] = [],
+  /**
+   * Tour du cadrage du tableau issu des poules (manuel §3.D.2, « cadrer au
+   * 1er tour après les poules » ou non) : 0 = au premier tour, comme le défaut.
+   */
+  tourCadrage = 0,
 ): Promise<void> {
   const teams = (await listByConcours('team', concours.id)).filter((t) => !t.forfait);
   const draw = drawPoules(concours.id, teams, ctx(), {
@@ -663,7 +669,17 @@ export async function generatePoules(
   // Tableau créé vide dès maintenant : les qualifiés y entreront au fil des
   // poules, sans attendre la dernière (manuel §3.D.1.A).
   const nbAttendus = draw.poules.length * 2;
-  const complet = buildTableauVide(concours.id, nbAttendus, ctx());
+  // Le choix a été fait sur un effectif prévu ; on le revérifie sur celui du
+  // tirage, plutôt que de construire un tableau qui qualifierait de travers.
+  if (
+    tourCadrage > 0 &&
+    !toursCadrageQualificatif(nbAttendus, concours.nbQualifies).includes(tourCadrage)
+  ) {
+    throw new Error(
+      `Cadrage impossible au tour ${tourCadrage + 1} avec ${nbAttendus} qualifiés : choisissez un autre tour.`,
+    );
+  }
+  const complet = buildTableauVide(concours.id, nbAttendus, ctx(), 'principal', tourCadrage);
   // Qualificatif par poules (manuel §3.D.2) : le tableau s'arrête au nombre
   // de qualifiés demandé.
   const toursQualif = concours.nbQualifies

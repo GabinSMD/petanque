@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { drawElimination } from '../bracket';
+import { toursCadragePossibles } from '../cadrage';
 import {
   nbToursQualification,
   qualifiesTableau,
+  toursCadrageQualificatif,
   tronquerTableau,
 } from '../qualification';
 import { isByeMatch } from '../match';
@@ -95,6 +97,33 @@ describe('équipes qualifiées à l issue d un tableau tronqué', () => {
     const tronque = tronquerTableau(drawElimination('c1', 'principal', teams, testCtx()), 1);
     expect(tronque.filter((m) => m.round === 0 && isByeMatch(m))).toHaveLength(4);
     const joue = jouerTout(tronque);
+    expect(qualifiesTableau(joue, 'principal')).toHaveLength(8);
+  });
+});
+
+describe('cadrage d un qualificatif (§3.D.2)', () => {
+  it('sans nombre de qualifiés, tous les tours de cadrage restent possibles', () => {
+    expect(toursCadrageQualificatif(12)).toEqual(toursCadragePossibles(12));
+  });
+
+  it('exclut un cadrage placé à un tour que le qualificatif ne joue pas', () => {
+    // 12 qualifiés de poules pour 8 places : un seul tour se joue. Cadrer au
+    // 2e tour en laisserait passer 6.
+    expect(toursCadrageQualificatif(12, 8)).toEqual([0]);
+    // 24 pour 8 : deux tours se jouent, le cadrage peut tomber au 1er ou au 2e.
+    expect(toursCadrageQualificatif(24, 8)).toEqual([0, 1]);
+  });
+
+  it('un cadrage différé retenu qualifie exactement le nombre voulu', () => {
+    const [, tour] = toursCadrageQualificatif(24, 8);
+    expect(tour).toBe(1);
+    const nbTours = nbToursQualification(24, 8)!;
+    const tableau = drawElimination('c1', 'principal', makeTeams(24), testCtx(), {
+      tourCadrage: tour,
+    });
+    const joue = jouerTout(tronquerTableau(tableau, nbTours));
+    // Tout le monde joue au 1er tour : aucun exempt d'entrée.
+    expect(joue.filter((m) => m.round === 0 && isByeMatch(m))).toHaveLength(0);
     expect(qualifiesTableau(joue, 'principal')).toHaveLength(8);
   });
 });

@@ -333,6 +333,7 @@ export const FAQ: FaqEntry[] = [
       'Activez « Consolante » à la création du concours (ou dans Paramètres avant le tableau).',
       'Formule poules : les éliminés des poules entrent en consolante, générée en même temps que le tableau principal.',
       'Élimination directe : les perdants du 1er tour y entrent au fil des résultats (places « Perdant P1, P2… »).',
+      'Élimination directe, « avec repêchage au cadrage » : les perdants du 2e tour du tableau principal entrent en plus directement au 2e tour de la consolante (manuel §3.D.9). Sans repêchage, ils sont éliminés (§3.D.11).',
       'Dans l\'onglet « Tableau », basculez entre « Concours principal » et « Consolante ».',
     ],
   },

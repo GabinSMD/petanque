@@ -5,12 +5,15 @@ import type { Concours, Match, Poule, Team } from '@shared';
 import {
   besoinTerrains,
   dureeMinutes,
+  formeCadrage,
   pouleGroupOutcome,
+  pouleSizes,
   pouleOutcome,
   pouleRemaining,
   qualifiesManquants,
   statistiquesPoules,
   terrainNumeros,
+  toursCadrageQualificatif,
 } from '@shared';
 import {
   cancelPoules,
@@ -54,6 +57,19 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
 
   const activeTeams = teams.filter((t) => !t.forfait);
   const summary = pouleSummary(activeTeams.length, concours.nbTerrains);
+  /**
+   * Cadrage du tableau final (manuel §3.D.2 : « cadrer au 1er tour après les
+   * poules » ou non). Le tableau est créé au tirage des poules, c'est donc ici
+   * qu'on le choisit. Décision de tirage, comme dans l'onglet Tableau : rien
+   * n'est enregistré sur le concours, la forme du tableau suffit.
+   */
+  const [tourCadrage, setTourCadrage] = useState(0);
+  const nbQualifiesPoules = (pouleSizes(activeTeams.length, concours.nbTerrains)?.length ?? 0) * 2;
+  const toursCadrage = concours.parGroupes
+    ? []
+    : toursCadrageQualificatif(nbQualifiesPoules, concours.nbQualifies);
+  // L'effectif a pu changer depuis le choix : on retombe sur le défaut.
+  const tourCadrageRetenu = toursCadrage.includes(tourCadrage) ? tourCadrage : 0;
 
   const pouleMatches = (p: Poule) => matches.filter((m) => m.pouleId === p.id);
   const outcomes = poules.map((p) => pouleOutcome(p, pouleMatches(p)));
@@ -91,7 +107,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
     setError(null);
     setBusy(true);
     try {
-      await generatePoules(concours, !protection, seeds);
+      await generatePoules(concours, !protection, seeds, tourCadrageRetenu);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Tirage impossible');
     } finally {
@@ -190,6 +206,27 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             />
           )}
           <SeedPicker teams={teams} seeds={seeds} onChange={setSeeds} />
+          {toursCadrage.length > 1 && (
+            <label className="champ">
+              Cadrage du tableau final
+              <select
+                value={tourCadrageRetenu}
+                onChange={(e) => setTourCadrage(Number(e.target.value))}
+              >
+                {toursCadrage.map((tour) => (
+                  <option key={tour} value={tour}>
+                    {tour === 0
+                      ? `Au 1er tour après les poules — ${formeCadrage(nbQualifiesPoules, 0)[0]!.exempts} qualifiés exempts`
+                      : `Au tour ${tour + 1} — tous les qualifiés jouent ${tour} partie${tour > 1 ? 's' : ''} d'abord`}
+                  </option>
+                ))}
+              </select>
+              <span className="hint">
+                {nbQualifiesPoules} qualifiés attendus. Différer le cadrage évite qu'une partie
+                d'entre eux passe un tour sans jouer (manuel §3.D.2).
+              </span>
+            </label>
+          )}
           {/* Le besoin en terrains se dit avant le tirage, pour tout concours —
               le rapport de contrôle des licences, lui, ne s'ouvre que sur un
               concours fédéral. */}

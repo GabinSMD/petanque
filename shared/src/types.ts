@@ -52,8 +52,12 @@ export type ConcoursMode =
  * Formule fédérale : quels tableaux coexistent et où sont reversés les
  * perdants (manuel « Gestion Concours » §3.D.8 à §3.D.12).
  * - `a` : un seul tableau ;
- * - `ab` : perdants de la 1re partie de A → concours B (§3.D.9) ;
- * - `abc` : idem + perdants de la 1re partie de B → concours C (§3.D.10) ;
+ * - `ab` : perdants de la 1re partie de A → concours B, sans récupération
+ *   (§3.D.11) ;
+ * - `ab_recup` : idem `ab` + perdants de la **2e** partie de A reversés à la
+ *   2e partie du B (§3.D.9, le §3.D.8 sans concours C) ;
+ * - `abc` : idem `ab` + perdants de la 1re partie de B → concours C, sans
+ *   récupération (§3.D.10) ;
  * - `abc_recup` : idem `abc` + perdants de la **2e** partie de A reversés au
  *   cadrage du B (§3.D.8) ;
  * - `abc_cd19` : les perdants de la 2e partie de A partent au 1er tour du C
@@ -61,7 +65,14 @@ export type ConcoursMode =
  * - `abc_cd53` : comme `abc_recup`, plus les perdants de la 2e partie de B
  *   reversés à la 2e partie du C (§3.D.13).
  */
-export type Formule = 'a' | 'ab' | 'abc' | 'abc_recup' | 'abc_cd19' | 'abc_cd53';
+export type Formule =
+  | 'a'
+  | 'ab'
+  | 'ab_recup'
+  | 'abc'
+  | 'abc_recup'
+  | 'abc_cd19'
+  | 'abc_cd53';
 
 /** Cycle de vie d'un concours. */
 export type ConcoursStatus = 'inscriptions' | 'poules' | 'tableau' | 'rondes' | 'termine';
