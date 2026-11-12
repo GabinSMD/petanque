@@ -108,19 +108,29 @@ describe('bilan d\'une feuille de match', () => {
   });
 });
 
-describe('contingent d\'étrangers hors UE porté par la feuille (§3.E)', () => {
-  it('une feuille neuve limite à un joueur hors UE', () => {
-    // C'est la position courante du panneau fédéral, et le comportement qui
-    // existait quand la limite était codée en dur.
-    expect(feuilleVierge('f1', '2026-03-01', 'cnc_open').horsUE).toBe('un_externe');
+describe('contingent de mutés externes porté par la feuille (§3.E, #134)', () => {
+  it('une feuille neuve limite à un muté externe', () => {
+    // C'est la position courante du panneau fédéral « Mutations ».
+    expect(feuilleVierge('f1', '2026-03-01', 'cnc_open').mutations).toBe('un_externe');
   });
 
   it('garde la position choisie', () => {
     const f = feuilleDepuisMemoire('f1', {
       ...feuilleVierge('f1', '2026-03-01', 'cnc_open'),
-      horsUE: 'aucun',
+      mutations: 'aucun',
     });
-    expect(f.horsUE).toBe('aucun');
+    expect(f.mutations).toBe('aucun');
+  });
+
+  it('reprend la position d\'une feuille enregistrée sous l\'ancien nom `horsUE`', () => {
+    // C'était déjà le panneau « Mutations », mal nommé : ce que le club avait
+    // choisi garde le même sens.
+    const ancienne: Record<string, unknown> = {
+      ...feuilleVierge('f1', '2026-03-01', 'cnc_open'),
+      horsUE: 'tous',
+    };
+    delete ancienne.mutations;
+    expect(feuilleDepuisMemoire('f1', ancienne).mutations).toBe('tous');
   });
 
   it('une feuille d\'avant ce champ retombe sur la limite d\'un seul', () => {
@@ -130,15 +140,15 @@ describe('contingent d\'étrangers hors UE porté par la feuille (§3.E)', () =>
     const ancienne: Record<string, unknown> = {
       ...feuilleVierge('f1', '2026-03-01', 'cnc_open'),
     };
-    delete ancienne.horsUE;
-    expect(feuilleDepuisMemoire('f1', ancienne).horsUE).toBe('un_externe');
+    delete ancienne.mutations;
+    expect(feuilleDepuisMemoire('f1', ancienne).mutations).toBe('un_externe');
   });
 
   it('refuse une position inventée plutôt que de la propager', () => {
     const f = feuilleDepuisMemoire('f1', {
       ...feuilleVierge('f1', '2026-03-01', 'cnc_open'),
-      horsUE: 'trois_externes',
+      mutations: 'trois_externes',
     });
-    expect(f.horsUE).toBe('un_externe');
+    expect(f.mutations).toBe('un_externe');
   });
 });

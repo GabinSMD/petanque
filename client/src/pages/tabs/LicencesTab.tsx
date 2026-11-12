@@ -394,6 +394,16 @@ export function LicencesTab({ concours, teams }: Props) {
                           </p>
                         ) : (
                           <div className="depot-champs">
+                            {/* Un suspendu n'est pas un critère mal rempli : il
+                                passe devant tout le reste, et seulement s'il l'est. */}
+                            {fiche?.suspendu && (
+                              <Champ
+                                libelle="Suspension"
+                                valeur="Licencié suspendu"
+                                champ="suspension"
+                                anomalies={c.anomalies}
+                              />
+                            )}
                             <Champ
                               libelle="Licence"
                               valeur={joueur.licence ?? ''}

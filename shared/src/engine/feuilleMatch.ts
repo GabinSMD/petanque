@@ -16,11 +16,11 @@
  * championnat à l'autre, et celui du CD26 n'est qu'un cas.
  */
 
-import type { CompetitionClubId, ContingentHorsUE } from './championnat';
+import type { CompetitionClubId, ContingentMutations } from './championnat';
 import { TAILLE_FORMATION } from './formations';
 
 /** Les trois positions admises, pour ne rien reprendre d'autre d'une feuille lue. */
-const CONTINGENTS: ContingentHorsUE[] = ['tous', 'un_externe', 'aucun'];
+const CONTINGENTS: ContingentMutations[] = ['tous', 'un_externe', 'aucun'];
 
 /** Formation d'une partie de la rencontre. */
 export type TypePartie = 'tete_a_tete' | 'doublette' | 'triplette';
@@ -322,13 +322,19 @@ export interface FeuilleMatch {
   equipe?: LettreEquipe;
   /** Lettre de l'équipe adverse — la feuille imprimée porte les deux. */
   equipeAdverse?: LettreEquipe;
+  /**
+   * Ancien nombre de « mutés autorisés », qui comptait aussi les mutations
+   * internes. Conservé pour les feuilles déjà enregistrées ; le contrôle lit
+   * désormais `mutations` (#134).
+   */
   maxMutes: number;
   /**
-   * Contingent d'étrangers hors UE (§3.E). Porté par la feuille et non par le
-   * code : les trois positions du panneau fédéral se choisissent rencontre par
-   * rencontre, selon le règlement de la division.
+   * Contingent de mutés externes (§3.E, panneau « Mutations »). Porté par la
+   * feuille et non par le code : les trois positions se choisissent rencontre
+   * par rencontre, selon le règlement de la division. S'appelait `horsUE`, et
+   * une feuille d'avant le renommage est relue par `feuilleDepuisMemoire`.
    */
-  horsUE: ContingentHorsUE;
+  mutations: ContingentMutations;
   date: string;
   division: string;
   poule: string;
@@ -413,7 +419,7 @@ export function feuilleVierge(
     concoursId: '',
     competition,
     maxMutes: 1,
-    horsUE: 'un_externe',
+    mutations: 'un_externe',
     date,
     division: '',
     poule: '',
@@ -483,12 +489,13 @@ export function feuilleDepuisMemoire(id: string, brut: unknown): FeuilleMatch {
       ? (m.competition as CompetitionClubId)
       : vierge.competition),
     maxMutes: typeof m.maxMutes === 'number' ? m.maxMutes : vierge.maxMutes,
-    // Une position inconnue — feuille d'avant ce champ, ou valeur abîmée — ramène
-    // à la limite d'un seul : le contrôle reste celui d'avant, il ne s'ouvre pas
-    // dans le dos du club.
-    horsUE: CONTINGENTS.includes(m.horsUE as ContingentHorsUE)
-      ? (m.horsUE as ContingentHorsUE)
-      : vierge.horsUE,
+    // Le champ s'appelait `horsUE` : c'était déjà le panneau « Mutations », mal
+    // nommé, et la position choisie se reprend telle quelle. Une position inconnue
+    // — feuille d'avant ce champ, ou valeur abîmée — ramène à la limite d'un
+    // seul : le contrôle ne s'ouvre pas dans le dos du club.
+    mutations: CONTINGENTS.includes((m.mutations ?? m.horsUE) as ContingentMutations)
+      ? ((m.mutations ?? m.horsUE) as ContingentMutations)
+      : vierge.mutations,
     date: texte('date', vierge.date),
     division: texte('division'),
     poule: texte('poule'),

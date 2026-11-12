@@ -4,9 +4,9 @@
  * Ce module ne fait pas jouer la compétition : il contrôle qu'une composition
  * d'équipe est réglementaire, comme le fait le menu fédéral. Les critères
  * viennent des mêmes règles que le dépôt des licences, avec deux contingents
- * propres aux compétitions de clubs : les joueurs mutés, dont le nombre est
- * fixé par l'organisateur, et les joueurs étrangers hors Union européenne, dont
- * le contingent a trois positions — tous, un seul, aucun.
+ * propres aux compétitions de clubs : les joueurs en mutation externe, dont le
+ * contingent a trois positions — tous, un seul, aucun — et les joueurs étrangers
+ * hors Union européenne, un seul par équipe.
  */
 import type { CritereSexe } from '../types';
 import type { CategorieCritere, CriteresLicence } from './licences';
@@ -50,19 +50,31 @@ export type CompetitionClubId =
   | 'cnc_plus55';
 
 /**
- * Les trois positions du contingent d'étrangers hors Union européenne. Le manuel
- * (§3.E, p.113) : « Choix du nbre de joueurs mutés dans l'équipe (étranger hors
- * UE) », et le panneau offre **Tous / Limite 1 Externe / Aucune**. La limite
- * d'un seul était codée en dur ici : les deux autres positions étaient
- * inatteignables.
+ * Les trois positions du panneau « Mutations » de l'écran Championnat – Coupe
+ * (manuel §3.E, planches p.112 à p.114) : **Tous / Limite 1 Externe / Aucune**.
+ * Elles portent sur les joueurs en mutation **externe** — les cartes joueur
+ * affichent « MUT.OK » ou « MUT.INT », et le voyant de l'équipe s'appelle
+ * « Mutation ».
+ *
+ * Ce panneau était lu jusqu'ici comme un contingent d'étrangers hors UE, à cause
+ * d'une légende du manuel qui mêle les deux (« Choix du nbre de joueurs mutés
+ * dans l'équipe (étranger hors UE) »). Les étrangers hors UE relèvent d'une
+ * autre règle, fixe : un seul par équipe (p.35, Critères France).
+ *
+ * « Aucune » est lu comme « aucune mutation externe » : une mutation interne au
+ * comité ne compte dans aucune des trois positions. Lecture à confirmer sur un
+ * règlement de division, le manuel ne le dit pas en toutes lettres.
  */
-export type ContingentHorsUE = 'tous' | 'un_externe' | 'aucun';
+export type ContingentMutations = 'tous' | 'un_externe' | 'aucun';
 
-const PLAFOND_HORS_UE: Record<ContingentHorsUE, number | undefined> = {
+const PLAFOND_MUTES_EXTERNES: Record<ContingentMutations, number | undefined> = {
   tous: undefined,
   un_externe: 1,
   aucun: 0,
 };
+
+/** « 1 seul joueur étranger Hors UE par équipe (même championnat des clubs et coupe de France) » */
+const MAX_HORS_UE = 1;
 
 export interface CompetitionClub {
   id: CompetitionClubId;
@@ -108,9 +120,8 @@ export const COMPETITIONS_CLUB: CompetitionClub[] = [
 export function criteresCompetition(
   id: CompetitionClubId,
   annee: number,
-  maxMutes: number,
+  mutations: ContingentMutations = 'un_externe',
   dateRencontre?: string,
-  horsUE: ContingentHorsUE = 'un_externe',
 ): CriteresLicence {
   const competition = COMPETITIONS_CLUB.find((c) => c.id === id) ?? COMPETITIONS_CLUB[0]!;
   return {
@@ -122,7 +133,7 @@ export function criteresCompetition(
     // règle générale, appliquée dans `controlerEquipe`.
     strict: false,
     homogene: competition.homogene,
-    maxMutes,
-    maxHorsUE: PLAFOND_HORS_UE[horsUE],
+    maxMutes: PLAFOND_MUTES_EXTERNES[mutations],
+    maxHorsUE: MAX_HORS_UE,
   };
 }
