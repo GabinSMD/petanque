@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { controlerEquipe } from '../licences';
-import { COMPETITIONS_CLUB, criteresCompetition, estHorsUE } from '../championnat';
+import {
+  COMPETITIONS_CLUB,
+  competitionClub,
+  criteresCompetition,
+  estHorsUE,
+} from '../championnat';
 import type { Licencie, Player } from '../../types';
 
 const T = '2026-01-01T00:00:00.000Z';
@@ -209,5 +214,78 @@ describe('compétitions de clubs prédéfinies', () => {
     for (const position of ['tous', 'un_externe', 'aucun'] as const) {
       expect(criteresCompetition('cnc_open', 2026, position).maxHorsUE, position).toBe(1);
     }
+  });
+});
+
+describe('autre championnat de clubs : filtres libres (§3.E)', () => {
+  it('figure dans la liste, à côté des compétitions prédéfinies', () => {
+    expect(COMPETITIONS_CLUB.map((c) => c.id)).toContain('autre');
+  });
+
+  it('sans filtres, part d un championnat ouvert, homogène, toutes catégories', () => {
+    // « Il faut Homogène club pour tous les championnats sauf pour les
+    // championnats jeunes » : l'homogénéité est la valeur de départ.
+    const c = criteresCompetition('autre', 2026);
+    expect(c.sexe).toBe('tous');
+    expect(c.categorieAge).toBeUndefined();
+    expect(c.homogene).toBe(true);
+    expect(c.strict).toBe(false);
+    expect(c.maxHorsUE).toBe(1);
+  });
+
+  it('applique le sexe, la catégorie et l homogénéité choisis', () => {
+    const c = criteresCompetition('autre', 2026, 'aucun', '2026-05-01', {
+      sexe: 'feminin',
+      categorieAge: 'veterans',
+      homogene: false,
+    });
+    expect(c.sexe).toBe('feminin');
+    expect(c.categorieAge).toBe('veterans');
+    expect(c.homogene).toBe(false);
+    // Le contingent de mutations se règle à part, comme pour les autres.
+    expect(c.maxMutes).toBe(0);
+    expect(c.dateConcours).toBe('2026-05-01');
+  });
+
+  it('le filtre se vérifie sur les joueurs', () => {
+    const c = criteresCompetition('autre', 2026, 'tous', undefined, {
+      sexe: 'feminin',
+      categorieAge: 'veterans',
+      homogene: true,
+    });
+    const veterane = fiche({ licence: 'v', sexe: 'F', dateNaissance: '1960-01-01' });
+    const homme = fiche({ licence: 'h', sexe: 'M', dateNaissance: '1960-01-01' });
+    const jeune = fiche({ licence: 'y', sexe: 'F', dateNaissance: '1990-01-01' });
+    const b = base(veterane, homme, jeune);
+    expect(controlerEquipe([j('v')], b, c).joueurs[0]!.anomalies).toEqual([]);
+    expect(controlerEquipe([j('h')], b, c).joueurs[0]!.anomalies).toContain('sexe');
+    expect(controlerEquipe([j('y')], b, c).joueurs[0]!.anomalies).toContain('dateNaissance');
+  });
+
+  it('l homogénéité se règle : deux clubs passent quand elle n est pas exigée', () => {
+    const a = fiche({ licence: 'a', club: 'Club A' });
+    const b2 = fiche({ licence: 'b', club: 'Club B' });
+    const b = base(a, b2);
+    const exige = criteresCompetition('autre', 2026, 'tous', undefined, {
+      sexe: 'tous',
+      homogene: true,
+    });
+    const libre = criteresCompetition('autre', 2026, 'tous', undefined, {
+      sexe: 'tous',
+      homogene: false,
+    });
+    expect(controlerEquipe([j('a'), j('b')], b, exige).conforme).toBe(false);
+    expect(controlerEquipe([j('a'), j('b')], b, libre).conforme).toBe(true);
+  });
+
+  it('ignore les filtres d une compétition prédéfinie', () => {
+    // Le règlement d'une compétition de la liste ne se change pas sur la feuille.
+    const filtres = { sexe: 'masculin' as const, categorieAge: 'juniors' as const, homogene: false };
+    const c = criteresCompetition('cnc_feminin', 2026, 'un_externe', undefined, filtres);
+    expect(c.sexe).toBe('feminin');
+    expect(c.categorieAge).toBeUndefined();
+    expect(c.homogene).toBe(true);
+    expect(competitionClub('cnc_feminin', filtres).sexe).toBe('feminin');
+    expect(competitionClub('autre', filtres).sexe).toBe('masculin');
   });
 });
