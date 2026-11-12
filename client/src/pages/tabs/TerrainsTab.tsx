@@ -1,4 +1,4 @@
-import { AlarmClock, Hourglass, Lock, LockOpen, Target, Timer, Undo2, X } from 'lucide-react';
+import { AlarmClock, Hourglass, Lock, LockOpen, PenLine, Target, Timer, Undo2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
@@ -17,6 +17,7 @@ import {
 } from '../../db/actions';
 import { Link } from 'react-router-dom';
 import { matchLabel, sideName } from '../../lib/matchLabel';
+import { demanderSaisieTerrain } from '../../components/QuickScore';
 import { formateurTerrain, type LibelleTerrain } from '../../lib/terrain';
 
 interface Props {
@@ -228,12 +229,25 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
             </div>
             {t.match ? (
               <div className="terrain-match">
-                <span className="terrain-match-label">{label(t.match)}</span>
-                <span className="terrain-vs">
-                  {sideName(t.match, 'A', teamsById)}
-                  <em> contre </em>
-                  {sideName(t.match, 'B', teamsById)}
-                </span>
+                {/* Toute la carte ouvre la saisie de sa partie : l'arbitre qui
+                    rapporte un score dit souvent « terrain 5 » avant les
+                    numéros d'équipe. */}
+                <button
+                  type="button"
+                  className="terrain-saisir"
+                  title="Saisir le score de cette partie"
+                  onClick={() => demanderSaisieTerrain(terrain(t.number))}
+                >
+                  <span className="terrain-match-label">{label(t.match)}</span>
+                  <span className="terrain-vs">
+                    {sideName(t.match, 'A', teamsById)}
+                    <em> contre </em>
+                    {sideName(t.match, 'B', teamsById)}
+                  </span>
+                  <span className="terrain-saisir-mot no-print">
+                    <PenLine className="ic" aria-hidden /> Saisir le score
+                  </span>
+                </button>
                 <HeureAnnonce match={t.match} maintenant={maintenant} />
                 <span className="terrain-actions no-print">
                   <button

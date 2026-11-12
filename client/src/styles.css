@@ -6173,3 +6173,201 @@ h2 {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ------------------------ Saisie du score : tablette -------------------- */
+
+/* Annonce du vainqueur désigné (saisie rapide) : on lit qui gagne avant de
+   taper le score du perdant, et on peut se reprendre d'un toucher. */
+.score-annonce {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.3rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 1.05rem;
+}
+
+.score-annonce-perdant {
+  display: inline-block;
+  min-width: 1.6em;
+  font-weight: 700;
+  border-bottom: 2px solid currentColor;
+  text-align: center;
+}
+
+/* Outils de correction : Inverser et Effacer portent leur mot. Ils ne vivent
+   plus à côté du crayon, où un toucher de travers suffisait. */
+.score-outils {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.score-outils .btn-icon-danger {
+  color: var(--danger);
+}
+
+/* Accord avant d'effacer des parties déjà jouées. */
+.score-confirmer {
+  flex-basis: 100%;
+  margin-top: 0.35rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: var(--terra-soft);
+  color: var(--ink);
+  font-size: 0.92rem;
+  white-space: normal;
+  text-align: left;
+}
+
+.score-confirmer p {
+  margin: 0 0 0.25rem;
+  color: var(--danger);
+}
+
+.score-confirmer ul {
+  margin: 0 0 0.45rem;
+  padding-left: 1.2rem;
+}
+
+.score-confirmer-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Saisie rapide : choix Équipe | Terrain, blocs titrés. */
+.quick-score-mode {
+  display: inline-flex;
+  gap: 0.2rem;
+  align-self: flex-end;
+}
+
+.quick-score-mode .actif {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.quick-score-bloc {
+  margin-top: 0.6rem;
+}
+
+.quick-score-titre {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.quick-score-astuce {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* Les parties déjà jouées se distinguent de celle à saisir : fond grisé,
+   titre en gris. On ne doit pas les confondre. */
+.quick-score-bloc-jouees .quick-score-titre {
+  color: var(--muted);
+}
+
+.quick-score-row-jouee {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+}
+
+.quick-score-bloc-jouees .quick-score-matches {
+  margin-top: 0.35rem;
+}
+
+.quick-score-cible .team-label {
+  font-weight: 700;
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 0.1rem 0.4rem;
+  outline: 2px solid var(--accent);
+}
+
+.quick-score-face {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.quick-score-face em {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* Carte de terrain touchable : elle ouvre la saisie de sa partie. */
+.terrain-saisir {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.terrain-saisir-mot {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+/* Cibles au doigt. Les règles « 44 px » ne jouaient que sous 640 px de large,
+   donc jamais sur une tablette (1024 px) : boutons « gagne » à 25 px, crayon à
+   26 × 22, cases à 30. On vise le pointeur grossier, et ces éléments-là
+   seulement — pas tout bouton de la page. */
+@media (pointer: coarse) {
+  .score-gagne,
+  .score-outil,
+  .score-confirmer .btn {
+    min-height: 44px;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+  }
+
+  .score-crayon,
+  .score-outils .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .score-form input,
+  .pmatch-score .score-form input {
+    min-height: 44px;
+    width: 3.6rem;
+  }
+
+  .quick-score-bar input,
+  .quick-score-mode .btn {
+    min-height: 44px;
+  }
+
+  .terrain-saisir {
+    min-height: 44px;
+  }
+}
+
+/* Sur tablette, l'équipe tapée, la saisie, puis l'adversaire sur une ligne :
+   l'annonce du vainqueur élargit la saisie, et l'adversaire passait dessous. */
+@media (min-width: 641px) {
+  .quick-score-teams {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    justify-content: start;
+  }
+}
