@@ -20,6 +20,7 @@ import {
   updateTeam,
 } from '../../db/actions';
 import { useLicencies } from '../../db/hooks';
+import { CameraQr } from '../../components/CameraQr';
 import { FraicheurBase } from '../../components/FraicheurBase';
 import {
   ANOMALIE_EQUIPE_LABELS,
@@ -226,6 +227,12 @@ export function LicencesTab({ concours, teams }: Props) {
           ))}
         </span>
       </form>
+
+      {/* La tablette posée à la table de marque n'a pas toujours de douchette :
+          la caméra lit la même licence et passe par le même chemin. */}
+      <div className="no-print">
+        <CameraQr onCode={scanner} />
+      </div>
 
       {message && <p className="hint">{message}</p>}
 
