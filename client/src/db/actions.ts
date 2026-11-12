@@ -26,6 +26,10 @@ import {
   ajouterJoueur,
   remplacerJoueur,
   renommerIdentifiants,
+  fusionnerResultats,
+  fusionTerminee,
+  cumulerFusions,
+  type FusionResultats,
   autoAssignTerrains,
   rondeComplete,
   rondesTirees,
@@ -195,6 +199,44 @@ export async function importSauvegarde(
   await bulkPutEntities('poule', s.poules);
   await bulkPutEntities('match', s.matches);
   return s.concours.id;
+}
+
+/**
+ * Fusionne les résultats d'une sauvegarde du **même** concours dans celui de
+ * cet appareil (manuel §3.D.1.B.6.2, « Importation Manuelle ») : c'est le
+ * passage par clé USB des saisies d'un poste annexe vers le poste principal.
+ *
+ * Le moteur dit quoi reprendre ; chaque résultat repris est écrit puis répercuté
+ * par `recomputeAfter`, exactement comme une saisie à la table de marque. Les
+ * vainqueurs avancent donc au tableau par le même chemin. Une passe ne reprend
+ * que les parties dont les équipes sont déjà les mêmes ici et là-bas ; on en
+ * refait une après chaque propagation, jusqu'à ce que rien de neuf n'arrive.
+ */
+export async function fusionnerSauvegarde(sauvegarde: Sauvegarde): Promise<FusionResultats> {
+  const id = sauvegarde.concours.id;
+  const reference = await listByConcours('match', id);
+  const passes: FusionResultats[] = [];
+  // Une passe par niveau de dépendance (poule, puis chaque tour) suffit ; la
+  // borne n'est là que contre une boucle inattendue.
+  for (let i = 0; i < 64; i++) {
+    const concours = await getEntity('concours', id);
+    if (!concours) throw new Error("Ce concours n'existe plus sur cet appareil.");
+    const locales = await listByConcours('match', id);
+    const passe = fusionnerResultats(locales, sauvegarde.matches, reference);
+    passes.push(passe);
+    if (fusionTerminee(passe)) break;
+    await bulkPutEntities('match', passe.aEcrire);
+    // Une répercussion par poule touchée, et une pour le reste : `recomputeAfter`
+    // reprend toute la poule ou tout le tableau, inutile de la répéter.
+    const deja = new Set<string>();
+    for (const m of passe.aEcrire) {
+      const cle = m.stage === 'poule' ? `poule:${m.pouleId}` : m.stage;
+      if (deja.has(cle)) continue;
+      deja.add(cle);
+      await recomputeAfter(concours, m);
+    }
+  }
+  return cumulerFusions(passes);
 }
 
 /** Un concours de cet identifiant existe-t-il déjà sur cet appareil ? */

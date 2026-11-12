@@ -5,17 +5,20 @@ import type { Match, Team } from '@shared';
 import {
   arbitrageReport,
   bilanArbitrage,
+  fichesDeJeu,
   bracketSizeOf,
   isByeMatch,
   presseSections,
   roundLabel,
   rondesTirees,
   type TriEquipes,
+  type TriFiches,
   rapportDelegue,
 } from '@shared';
 import {
   BilanLicences,
   BilanPaiements,
+  FichesDeJeu,
   SyntheseNonPayeDoc,
   GraphiqueTableau,
   ListeAbsents,
@@ -107,13 +110,31 @@ export function PrintPage() {
   const [tri, setTri] = useState<TriEquipes>('numero');
   // Désignation des jeux : numéro, ou lettre peinte au sol (§ « Gestion des Terrains »).
   const terrainLabel = formateurTerrain(concours ?? {});
+  // Fiches de jeu (§3.D.1.B.4.2) : les deux choix de l'écran fédéral, « Par
+  // Equipes » (dossards) ou « Par Poules » (numéros de poule), avec sa plage.
+  // Par défaut, par poule s'il y en a : les poules se chargent après le premier
+  // rendu, d'où un choix calculé plutôt qu'un état initial figé.
+  const [triChoisi, setTriFiches] = useState<TriFiches | null>(null);
+  const triFiches: TriFiches = triChoisi ?? (poules.length > 0 ? 'poule' : 'equipe');
+  const [selectionFiches, setSelectionFiches] = useState('');
+  const fiches = useMemo(
+    () =>
+      doc === 'fiches' && concours
+        ? fichesDeJeu(concours, teams, poules, matches, {
+            tri: triFiches,
+            selection: selectionFiches,
+          })
+        : [],
+    [doc, concours, teams, poules, matches, triFiches, selectionFiches],
+  );
   const [toursMasques, setToursMasques] = useState<Set<number>>(new Set());
   const printed = useRef(false);
 
   /** Documents à options : on laisse l'organisateur régler avant d'imprimer. */
   const avecTri = doc === 'inscrits' || doc === 'capitaines' || doc === 'paiements';
   const avecTours = doc === 'presse';
-  const autoPrint = !avecTri && !avecTours;
+  const avecFiches = doc === 'fiches';
+  const autoPrint = !avecTri && !avecTours && !avecFiches;
 
   useEffect(() => {
     if (!concours || printed.current || !autoPrint) return;
@@ -191,6 +212,38 @@ export function PrintPage() {
             </select>
           </label>
         )}
+        {avecFiches && (
+          <>
+            <label className="print-option">
+              Trier par
+              <select
+                value={triFiches}
+                onChange={(e) => {
+                  setTriFiches(e.target.value as TriFiches);
+                  // La plage change de sens (dossards ou poules) : on la vide.
+                  setSelectionFiches('');
+                }}
+              >
+                <option value="equipe">Équipe</option>
+                <option value="poule" disabled={poules.length === 0}>
+                  Poule
+                </option>
+              </select>
+            </label>
+            <label className="print-option">
+              {triFiches === 'poule' ? 'Poules' : 'Équipes'}
+              <input
+                className="print-option-input"
+                value={selectionFiches}
+                onChange={(e) => setSelectionFiches(e.target.value)}
+                placeholder={triFiches === 'poule' ? 'Toutes (ex. 1-8)' : 'Toutes (ex. 1-10;15;25)'}
+              />
+            </label>
+            <span className="print-option">
+              {fiches.length} fiche{fiches.length > 1 ? 's' : ''}
+            </span>
+          </>
+        )}
         {avecTours && presse.length > 0 && (
           <span className="print-option">
             Tours :
@@ -215,7 +268,9 @@ export function PrintPage() {
         )}
       </div>
 
-      <header className="print-doc-head">
+      {/* Chaque fiche de jeu porte déjà le nom du concours : l'en-tête n'y
+          ajouterait qu'une demi-page perdue à l'impression. */}
+      <header className={avecFiches ? 'print-doc-head no-print' : 'print-doc-head'}>
         <h1>{concours.name}</h1>
         <p>
           {formatDateFr(concours.date)}
@@ -308,6 +363,8 @@ export function PrintPage() {
           terrain={terrainLabel}
         />
       )}
+
+      {doc === 'fiches' && <FichesDeJeu fiches={fiches} terrain={terrainLabel} />}
 
       {doc === 'presse' && <ResultatsPresse sections={presse} toursMasques={toursMasques} />}
 

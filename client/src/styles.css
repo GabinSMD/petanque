@@ -3286,6 +3286,8 @@ form label select {
 
 .print-controls {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.6rem;
   margin-bottom: 1rem;
 }
@@ -4569,6 +4571,11 @@ form label select {
   border-radius: 8px;
   padding: 0.5rem 0.7rem;
   margin: 0;
+}
+
+/* Quatre choix quand le concours existe déjà : ils passent à la ligne sur mobile. */
+.import-modal .form-actions {
+  flex-wrap: wrap;
 }
 
 .import-choix {
@@ -6028,4 +6035,106 @@ h2 {
 .btn-header-cta,
 .skip-link {
   color: var(--accent-plein-fonce);
+}
+
+/* Fiches de jeu (§3.D.1.B.4.2) : deux colonnes, plusieurs fiches par page A4.
+   Les lignes sont hautes pour qu'on y écrive un score à la main. */
+.print-option-input {
+  width: 11rem;
+}
+
+.fiches-jeu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+.fiche-jeu {
+  border: 1.5px solid #000;
+  padding: 0.45rem 0.55rem;
+  break-inside: avoid;
+  font-size: 0.82rem;
+}
+
+.fiche-jeu p {
+  margin: 0;
+}
+
+.fiche-jeu-concours {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 0.2rem;
+  margin-bottom: 0.3rem !important;
+}
+
+.fiche-jeu-equipe {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.fiche-jeu-dossard {
+  font-size: 1.15rem;
+  font-weight: 800;
+  border: 1.5px solid #000;
+  padding: 0.05rem 0.4rem;
+  white-space: nowrap;
+}
+
+.fiche-jeu-joueur {
+  font-weight: 700;
+}
+
+.fiche-jeu-club {
+  font-size: 0.72rem;
+}
+
+.fiche-jeu-poule {
+  margin-top: 0.3rem !important;
+  font-size: 0.75rem;
+}
+
+.fiche-jeu-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.35rem;
+}
+
+.fiche-jeu-table th,
+.fiche-jeu-table td {
+  border: 1px solid #000;
+  padding: 0.12rem 0.25rem;
+  height: 1.9rem;
+  text-align: center;
+  font-size: 0.72rem;
+}
+
+.fiche-jeu-table thead th {
+  height: auto;
+  font-weight: 700;
+}
+
+.fiche-jeu-table tbody th {
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fiche-jeu-score {
+  width: 2.4rem;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .fiches-jeu {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .fiches-jeu {
+    grid-template-columns: 1fr 1fr;
+  }
 }

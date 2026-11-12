@@ -1,9 +1,9 @@
 /**
  * Documents imprimables du manuel « Gestion Concours » : listes d'inscrits et
  * de capitaines (§3.B.9.A et B), bilan des paiements (§3.B.9.D), résultats
- * pour la presse (§3.D.1.B.4.6), impression des absents (§3.D.1.B.4.7) et
- * graphique du tableau (§3.D.1.B.4.4), et bilan de validité des inscriptions
- * avant tirage (§3.B.6).
+ * pour la presse (§3.D.1.B.4.6), impression des absents (§3.D.1.B.4.7),
+ * graphique du tableau (§3.D.1.B.4.4), fiches de jeu (§3.D.1.B.4.2) et bilan
+ * de validité des inscriptions avant tirage (§3.B.6).
  *
  * `PrintPage` porte l'enveloppe (en-tête, barre d'outils, lancement de
  * l'impression) ; ici on ne fait que la mise en page de chaque document.
@@ -21,6 +21,7 @@ import {
   partiesLancees,
   presseSections,
   trierEquipes,
+  type FicheDeJeu,
   type PresseSection,
   type TriEquipes,
 } from '@shared';
@@ -560,6 +561,92 @@ export function PartiesLancees({
         {lancees.length > 1 ? 's' : ''} ·{' '}
         {lancees.filter((m) => m.retard && !m.done).length} en retard
       </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Fiches de jeu                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Fiches de jeu (§3.D.1.B.4.2) : une par équipe, plusieurs par page A4, à remettre
+ * aux joueurs pour que le concours continue à la main si l'ordinateur tombe.
+ * Les colonnes sont celles de la planche p.51 : Partie, Terrain, Pts,
+ * Adversaire (N°, Pts), Horaire. Ce qui est déjà connu est pré-rempli.
+ */
+export function FichesDeJeu({
+  fiches,
+  terrain,
+}: {
+  fiches: FicheDeJeu[];
+  terrain: LibelleTerrain;
+}) {
+  if (fiches.length === 0) return <p>Aucune fiche à imprimer pour cette sélection.</p>;
+  const nombre = (n: number | null) => (n === null ? '' : n);
+  return (
+    <div className="fiches-jeu">
+      {fiches.map((f) => (
+        <section key={f.teamId} className="fiche-jeu">
+          <p className="fiche-jeu-concours">{f.concours}</p>
+          <div className="fiche-jeu-equipe">
+            <span className="fiche-jeu-dossard">N° {f.numero}</span>
+            <div>
+              {f.joueurs.map((j, i) => (
+                <div key={i} className="fiche-jeu-joueur">
+                  {maj(j)}
+                </div>
+              ))}
+              {f.club && <div className="fiche-jeu-club">Club : {f.club}</div>}
+            </div>
+          </div>
+          {f.poule && (
+            <p className="fiche-jeu-poule">
+              <strong>Poule {f.poule.index}</strong>
+              {f.poule.terrain !== null && <> · Terrain {terrain(f.poule.terrain)}</>}
+              {f.poule.adversaires.length > 0 && (
+                <>
+                  {' '}
+                  · Adversaires :{' '}
+                  {f.poule.adversaires.map((a, i) => (
+                    <Fragment key={a.numero}>
+                      {i > 0 && ', '}
+                      n°{a.numero} {a.joueurs.join(' / ')}
+                    </Fragment>
+                  ))}
+                </>
+              )}
+            </p>
+          )}
+          <table className="fiche-jeu-table">
+            <thead>
+              <tr>
+                <th rowSpan={2}>Partie</th>
+                <th rowSpan={2}>Terrain</th>
+                <th rowSpan={2}>Pts</th>
+                <th colSpan={2}>Adversaire</th>
+                <th rowSpan={2}>Horaire</th>
+              </tr>
+              <tr>
+                <th>N°</th>
+                <th>Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {f.lignes.map((l) => (
+                <tr key={l.libelle}>
+                  <th scope="row">{l.libelle}</th>
+                  <td>{l.terrain !== null ? terrain(l.terrain) : ''}</td>
+                  <td className="fiche-jeu-score">{nombre(l.pour)}</td>
+                  <td>{l.exempt ? 'Exempt' : nombre(l.adversaire)}</td>
+                  <td className="fiche-jeu-score">{nombre(l.contre)}</td>
+                  <td />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ))}
     </div>
   );
 }

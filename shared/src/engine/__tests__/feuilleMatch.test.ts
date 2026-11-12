@@ -152,3 +152,39 @@ describe('contingent de mutés externes porté par la feuille (§3.E, #134)', ()
     expect(f.mutations).toBe('un_externe');
   });
 });
+
+describe('filtres libres d un autre championnat de clubs (§3.E)', () => {
+  it('une feuille d avant ce champ se relit sans filtres', () => {
+    const ancienne: Record<string, unknown> = { ...feuilleVierge('f1', '2026-03-01', 'cnc_open') };
+    delete ancienne.filtres;
+    expect(feuilleDepuisMemoire('f1', ancienne).filtres).toBeUndefined();
+  });
+
+  it('garde les filtres choisis', () => {
+    const f = feuilleDepuisMemoire('f1', {
+      ...feuilleVierge('f1', '2026-03-01', 'autre'),
+      filtres: { sexe: 'feminin', categorieAge: 'plus55', homogene: false },
+    });
+    expect(f.competition).toBe('autre');
+    expect(f.filtres).toEqual({ sexe: 'feminin', categorieAge: 'plus55', homogene: false });
+  });
+
+  it('remplace une valeur abîmée par la valeur de départ', () => {
+    const f = feuilleDepuisMemoire('f1', {
+      ...feuilleVierge('f1', '2026-03-01', 'autre'),
+      filtres: { sexe: 'personne', categorieAge: 'doyens', homogene: 'oui' },
+    });
+    expect(f.filtres).toEqual({ sexe: 'tous', categorieAge: undefined, homogene: true });
+  });
+});
+
+describe('relecture des lettres d équipe', () => {
+  it('garde les lettres valides et écarte les autres', () => {
+    const f = feuilleDepuisMemoire('x', { equipe: 'B', equipeAdverse: 'C' });
+    expect(f.equipe).toBe('B');
+    expect(f.equipeAdverse).toBe('C');
+    const abimee = feuilleDepuisMemoire('y', { equipe: 'Z', equipeAdverse: 3 });
+    expect(abimee.equipe).toBeUndefined();
+    expect(abimee.equipeAdverse).toBeUndefined();
+  });
+});

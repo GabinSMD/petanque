@@ -4,8 +4,10 @@ import { Link, useParams } from 'react-router-dom';
 import type { Licencie, Player } from '@shared';
 import {
   BAREME_CDC,
+  CATEGORIES_AGE_CONCOURS,
   COMPETITIONS_CLUB,
   LETTRES_EQUIPE,
+  competitionClub,
   categorieAgeDe,
   controlerEquipe,
   criteresCompetition,
@@ -20,14 +22,18 @@ import {
   pointsEnJeu,
   type ChampLicence,
   type CompetitionClubId,
+  type CategorieCritere,
   type ContingentMutations,
+  type CritereSexe,
   type FeuilleMatch,
+  type FiltresCompetition,
   type LettreEquipe,
   estMuteExterne,
 } from '@shared';
 import { useFeuilleMatch, useLicencies } from '../db/hooks';
 import { updateFeuilleMatch } from '../db/actions';
 import { exportFeuilleJSON } from '../lib/export';
+import { CameraQr } from '../components/CameraQr';
 import { SignaturePad } from '../components/SignaturePad';
 import {
   EchangeCompositionModal,
@@ -42,6 +48,7 @@ import {
   ANOMALIE_EQUIPE_LABELS,
   ANOMALIE_LABELS,
   CATEGORIE_AGE_LABELS,
+  CRITERE_SEXE_LABELS,
   ETAT_MUTATION_LABELS,
   formatDateFr,
 } from '../lib/labels';
@@ -97,9 +104,19 @@ export function FeuilleMatchPage() {
     Number(etat.date.slice(0, 4)) || new Date().getFullYear(),
     etat.mutations,
     etat.date,
+    etat.filtres,
   );
   const controle = controlerEquipe(joueurs, parLicence, criteres);
-  const competition = COMPETITIONS_CLUB.find((c) => c.id === etat.competition)!;
+  // Pour « autre », la compétition porte les filtres de la feuille (§3.E).
+  const competition = competitionClub(etat.competition, etat.filtres);
+  /** Filtres en vigueur, point de départ de chaque réglage d'un « autre » championnat. */
+  const filtres: FiltresCompetition = {
+    sexe: competition.sexe,
+    categorieAge: competition.categorieAge,
+    homogene: competition.homogene,
+  };
+  const majFiltres = (patch: Partial<FiltresCompetition>): void =>
+    maj({ filtres: { ...filtres, ...patch } });
 
   /* ------------------------------------------------------------------ */
   /* Signature : ce qu'elle atteste, et ce qu'elle verrouille             */
@@ -122,6 +139,19 @@ export function FeuilleMatchPage() {
       heureDebut: etat.heureDebut,
       heureFin: etat.heureFin,
       capitaine: `${etat.capitaineNom} ${etat.capitaineLicence}`,
+      // Les filtres d'un « autre » championnat font partie de ce qui est signé :
+      // ils disent selon quelles règles la composition a été jugée conforme. La
+      // clé n'existe que pour cette compétition, pour ne pas changer
+      // l'empreinte des feuilles déjà signées.
+      ...(etat.competition === 'autre'
+        ? {
+            filtres: [
+              filtres.sexe,
+              filtres.categorieAge ?? 'toutes',
+              filtres.homogene ? 'homogene' : 'libre',
+            ].join(','),
+          }
+        : {}),
     },
     compositionA: joueurs.map((p) => p.name),
     compositionB: etat.adversaireJoueurs.map((j) => `${j.nom} ${j.licence}`),
@@ -213,6 +243,9 @@ export function FeuilleMatchPage() {
 
   /** Ajoute un joueur par son numéro de licence (scan, douchette ou saisie). */
   const ajouter = (contenu: string): void => {
+    // La caméra peut rester ouverte au moment où l'on signe : sa lecture ne
+    // doit pas modifier une feuille verrouillée.
+    if (signee) return;
     const decode = parseLicenceQr(contenu);
     if (!decode?.licence) {
       setMessage(`Contenu non reconnu : « ${contenu.slice(0, 40)} ».`);
@@ -300,6 +333,59 @@ export function FeuilleMatchPage() {
             </select>
           </label>
         </div>
+        {/* « Filtres à définir selon le type de Championnat des clubs à
+            contrôler » (§3.E, planche p.113) : pour un championnat que la liste
+            ne connaît pas, on règle soi-même ce que fixe une compétition
+            prédéfinie. */}
+        {etat.competition === 'autre' && (
+          <div className="form-row">
+            <label>
+              Sexe
+              <select
+                value={filtres.sexe}
+                onChange={(e) => majFiltres({ sexe: e.target.value as CritereSexe })}
+              >
+                {(Object.keys(CRITERE_SEXE_LABELS) as CritereSexe[]).map((s) => (
+                  <option key={s} value={s}>
+                    {CRITERE_SEXE_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Catégorie d'âge
+              <select
+                value={filtres.categorieAge ?? ''}
+                onChange={(e) =>
+                  majFiltres({
+                    categorieAge: e.target.value
+                      ? (e.target.value as CategorieCritere)
+                      : undefined,
+                  })
+                }
+              >
+                <option value="">Toutes catégories</option>
+                {/* +55 se range après les vétérans, comme sur le panneau des
+                    compétitions de clubs. */}
+                {(['veterans', 'plus55', ...CATEGORIES_AGE_CONCOURS.slice(1)] as CategorieCritere[]).map(
+                  (c) => (
+                    <option key={c} value={c}>
+                      {CATEGORIE_AGE_LABELS[c]}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={filtres.homogene}
+                onChange={(e) => majFiltres({ homogene: e.target.checked })}
+              />
+              Équipe homogène club
+            </label>
+          </div>
+        )}
         <div className="form-row">
           <label>
             Division
@@ -443,7 +529,11 @@ export function FeuilleMatchPage() {
         )}
 
         <p className="hint">
-          {competition.label} · {competition.sexe === 'feminin' ? 'féminin' : 'ouvert'} ·{' '}
+          {competition.label} · {/* Un « autre » championnat peut être masculin ou mixte. */}
+          {competition.sexe === 'tous'
+            ? 'ouvert'
+            : CRITERE_SEXE_LABELS[competition.sexe].toLowerCase()}{' '}
+          ·{' '}
           {competition.categorieAge
             ? CATEGORIE_AGE_LABELS[competition.categorieAge].toLowerCase()
             : 'toutes catégories'}{' '}
@@ -508,6 +598,11 @@ export function FeuilleMatchPage() {
           </button>
         </span>
       </form>
+      {/* Même chemin que la douchette : le contenu lu passe par `ajouter`, qui
+          le décode avec `parseLicenceQr` (§3.E, lecture du QR de licence). */}
+      <div className="no-print">
+        <CameraQr onCode={ajouter} />
+      </div>
       </fieldset>
 
       {/* Hors du verrou : imprimer et sauvegarder une feuille signée est
