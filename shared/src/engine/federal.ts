@@ -244,6 +244,7 @@ export interface CriteresLicenceConcours {
   critereSexe?: CritereSexe;
   critereClassification?: CritereClassification;
   homogene?: boolean;
+  criteresFrance?: boolean;
 }
 
 /**
@@ -255,6 +256,7 @@ export function aDesCriteresLicence(c: CriteresLicenceConcours): boolean {
   return Boolean(
     c.categorieAge ||
       c.homogene ||
+      c.criteresFrance ||
       (c.critereSexe && c.critereSexe !== 'tous') ||
       (c.critereClassification && c.critereClassification !== 'tous'),
   );

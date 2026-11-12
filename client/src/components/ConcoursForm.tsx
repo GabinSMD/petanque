@@ -122,6 +122,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
     initial?.critereClassification ?? 'tous',
   );
   const [homogene, setHomogene] = useState(initial?.homogene ?? false);
+  const [criteresFrance, setCriteresFrance] = useState(initial?.criteresFrance ?? false);
   const [officiel, setOfficiel] = useState(
     initial ? estConcoursOfficiel(initial) : false,
   );
@@ -366,6 +367,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
       critereClassification:
         officiel && critereClassification !== 'tous' ? critereClassification : undefined,
       homogene: officiel && homogene ? true : undefined,
+      criteresFrance: officiel && criteresFrance ? true : undefined,
     });
   };
 
@@ -757,7 +759,15 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
               Niveau
               <select
                 value={niveau}
-                onChange={(e) => setNiveau(e.target.value as NiveauConcours | '')}
+                onChange={(e) => {
+                  const n = e.target.value as NiveauConcours | '';
+                  setNiveau(n);
+                  // Un championnat applique les Critères France : proposés
+                  // d'office, décochables. Le reste ne les décoche pas — une
+                  // case cochée à la main ne disparaît pas sur un changement de
+                  // liste.
+                  if (estNiveauChampionnat(n === '' ? undefined : n)) setCriteresFrance(true);
+                }}
               >
                 <option value="">Non précisé</option>
                 {/* Les huit niveaux de la liste fédérale, dans son ordre, puis
@@ -1069,6 +1079,14 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           <label className="checkbox-label">
             <input type="checkbox" checked={homogene} onChange={(e) => setHomogene(e.target.checked)} />
             Équipes homogènes : tous les joueurs du même club
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={criteresFrance}
+              onChange={(e) => setCriteresFrance(e.target.checked)}
+            />
+            Critères France : 1 joueur étranger hors UE et 1 muté externe au plus par équipe
           </label>
         </fieldset>
       )}

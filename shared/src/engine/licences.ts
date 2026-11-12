@@ -138,9 +138,13 @@ export function criteresDuConcours(c: {
   critereClassification?: CritereClassification;
   homogene?: boolean;
   certificatsValides?: string[];
+  criteresFrance?: boolean;
   maxMutes?: number;
   maxHorsUE?: number;
 }): CriteresLicence {
+  // Critères France : un hors UE et un muté externe au plus. Un contingent
+  // fixé explicitement (feuille de match des clubs) l'emporte.
+  const france = c.criteresFrance ? CONTINGENTS_FRANCE : undefined;
   return {
     annee: Number(c.date.slice(0, 4)),
     dateConcours: c.date,
@@ -150,10 +154,18 @@ export function criteresDuConcours(c: {
     classification: c.critereClassification,
     homogene: c.homogene,
     certificatsValides: new Set(c.certificatsValides ?? []),
-    maxMutes: c.maxMutes,
-    maxHorsUE: c.maxHorsUE,
+    maxMutes: c.maxMutes ?? france?.maxMutes,
+    maxHorsUE: c.maxHorsUE ?? france?.maxHorsUE,
   };
 }
+
+/**
+ * « Critères France » (manuel §3.C, p.35) : « 1 seul joueur étranger Hors UE
+ * par équipe » et un contrôle de la mutation. Le manuel ne chiffre pas ce
+ * dernier ; un seul muté externe est la position « Limite 1 Externe » du
+ * panneau Mutations (§3.E), par défaut aussi sur la feuille de match.
+ */
+export const CONTINGENTS_FRANCE = { maxMutes: 1, maxHorsUE: 1 } as const;
 
 /**
  * La fiche compte-t-elle au contingent de mutés externes ?
