@@ -3,6 +3,11 @@ import {
   CircleCheck,
   ClipboardList,
   Compass,
+  Copy,
+  FileStack,
+  Scale,
+  Search,
+  Trophy,
   GraduationCap,
   IdCard,
   Moon,
@@ -28,6 +33,59 @@ import type { Nouveaute } from '@shared';
  * l'application, pas d'un concours en particulier.
  */
 export const JOURNAL: Nouveaute<LucideIcon>[] = [
+  {
+    version: '0.6.0',
+    date: '2026-11-12',
+    items: [
+      {
+        icone: Scale,
+        titre: 'Les règles fédérales, au plus près du logiciel officiel',
+        texte:
+          'Mutations internes et externes distinguées, licenciés suspendus refusés, ' +
+          'case « Critères France » sur les championnats (un joueur hors UE et un muté ' +
+          'externe au plus), et un rapport d\'arbitrage qui donne aussi les places des ' +
+          'concours B et C.',
+      },
+      {
+        icone: Trophy,
+        titre: 'Nouvelle formule A-B avec récupération',
+        texte:
+          'Les perdants du 2e tour du A entrent au 2e tour du B. Et pour un concours en ' +
+          'poules, on choisit désormais au tirage le tour où se fait le cadrage du tableau.',
+      },
+      {
+        icone: Printer,
+        titre: 'Des fiches de jeu à imprimer',
+        texte:
+          'Une fiche par équipe — poule, adversaires, terrains, cases de score — pour ' +
+          'continuer le concours à la main si l\'informatique lâche. Bouton « Fiches de ' +
+          'jeu » à côté des tickets de parties.',
+      },
+      {
+        icone: Search,
+        titre: 'La fiche d\'une équipe en un clic, les résultats d\'un club',
+        texte:
+          'Cliquez sur un dossard dans les poules ou le tableau pour ouvrir la fiche de ' +
+          'l\'équipe. Dans Résultats, tapez le nom d\'un club pour voir où en sont toutes ' +
+          'ses équipes.',
+      },
+      {
+        icone: Copy,
+        titre: 'Fusionner les scores de deux appareils sans réseau',
+        texte:
+          'Importez la sauvegarde d\'un autre poste dans le même concours : ses scores sont ' +
+          'repris et font avancer le tableau, et les désaccords vous sont montrés.',
+      },
+      {
+        icone: FileStack,
+        titre: 'Plus vite à la création et au dépôt',
+        texte:
+          'Un nouveau concours repart des réglages du précédent (terrains, points, mise, ' +
+          'lieu). La caméra lit les licences au dépôt et sur la feuille de match, et un ' +
+          '« autre championnat de clubs » se règle à la main.',
+      },
+    ],
+  },
   {
     version: '0.5.0',
     date: '2026-11-11',
