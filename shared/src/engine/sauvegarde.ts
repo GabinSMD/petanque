@@ -60,7 +60,7 @@ export function lireSauvegarde(texte: string): LectureSauvegarde {
   if (brut.app !== 'petanque-concours') {
     return {
       ok: false,
-      erreur: 'Ce fichier n\'est pas une sauvegarde de Pétanque Concours.',
+      erreur: 'Ce fichier n\'est pas une sauvegarde de Treizéro.',
     };
   }
   const version = typeof brut.version === 'number' ? brut.version : 0;

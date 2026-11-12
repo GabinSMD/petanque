@@ -1,3 +1,4 @@
+import { Check, Hourglass, Megaphone, TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import { setScore } from '../db/actions';
@@ -83,12 +84,12 @@ export function DeclarationsWatch({
   return (
     <>
       <button className="declarations-banner no-print" onClick={() => setOpen(true)}>
-        📣 {byMatch.size} score{byMatch.size > 1 ? 's' : ''} déclaré
+        <Megaphone className="ic" aria-hidden /> {byMatch.size} score{byMatch.size > 1 ? 's' : ''} déclaré
         {byMatch.size > 1 ? 's' : ''} par les équipes — à valider
       </button>
 
       {open && (
-        <Modal title="📣 Scores déclarés par les équipes" onClose={() => setOpen(false)}>
+        <Modal title="Scores déclarés par les équipes" onClose={() => setOpen(false)}>
           <p className="hint">
             Les équipes déclarent depuis le lien public ; quand les deux camps annoncent
             le même score, la déclaration est <strong>concordante</strong>. Vous restez
@@ -125,11 +126,11 @@ export function DeclarationsWatch({
                       <span className="tag">Camp B : en attente</span>
                     )}
                     {agreement ? (
-                      <span className="tag tag-ok">✓ Concordant</span>
+                      <span className="tag tag-ok"><Check className="ic" aria-hidden /> Concordant</span>
                     ) : a && b ? (
-                      <span className="tag tag-danger">⚠ Divergent</span>
+                      <span className="tag tag-danger"><TriangleAlert className="ic" aria-hidden /> Divergent</span>
                     ) : (
-                      <span className="tag tag-info">⏳ Un seul camp</span>
+                      <span className="tag tag-info"><Hourglass className="ic" aria-hidden /> Un seul camp</span>
                     )}
                   </p>
                   <p className="declaration-actions">

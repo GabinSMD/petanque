@@ -164,7 +164,7 @@ export function rapportIncident(entree: EntreeRapport): string {
   const nom = erreur?.name?.trim();
   const message = erreur?.message?.trim();
   const lignes = [
-    'Pétanque Concours — incident',
+    'Treizéro — incident',
     commit ? `Version ${version} (commit ${commit})` : `Version ${version}`,
     `Écran : ${cheminPublic(chemin)}`,
     `Quand : ${quand}`,

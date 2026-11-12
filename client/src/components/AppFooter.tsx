@@ -1,3 +1,4 @@
+import { Marque } from './BouleLogo';
 import { rappelerNouveautes } from '../help/nouveautesState';
 import { versionCourte, versionDetaillee } from '../lib/version';
 
@@ -13,7 +14,7 @@ export function AppFooter() {
   return (
     <footer className="app-footer no-print">
       <span className="app-footer-brand">
-        Pétanque <strong>Concours</strong>
+        <Marque />
       </span>
       <button
         type="button"

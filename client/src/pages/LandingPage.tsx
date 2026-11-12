@@ -1,5 +1,19 @@
+import { Icone } from '../components/Icone';
+import {
+  ClipboardList,
+  Dices,
+  FolderOpen,
+  GraduationCap,
+  Medal,
+  PenLine,
+  Printer,
+  Trophy,
+  Tv,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { BouleLogo } from '../components/BouleLogo';
+import { BouleLogo, LogoTreizero } from '../components/BouleLogo';
 import { JOURNAL } from '../help/nouveautes';
 import { ROADMAP, lienIssue } from '../help/roadmap';
 import { appIsElsewhere, appUrl } from '../lib/appUrl';
@@ -95,7 +109,7 @@ function animationsPossibles(): boolean {
 
 /** Une famille de fonctionnalités : un pictogramme, un titre, ce qu'elle couvre. */
 interface Famille {
-  icone: string;
+  icone: LucideIcon;
   titre: string;
   chapeau: string;
   points: string[];
@@ -108,9 +122,37 @@ interface Famille {
  * là qu'on tient le compte, et une vitrine qui en montre le tiers laisse croire
  * à un logiciel trois fois plus petit qu'il n'est.
  */
+/** Les quatre gestes de la journée : ce qu'un bénévole fait réellement. */
+const GESTES: { icone: LucideIcon; titre: string; texte: string }[] = [
+  {
+    icone: ClipboardList,
+    titre: 'Inscrire',
+    texte:
+      'Les noms des joueurs, un clic, l’équipe a son numéro. Ou les équipes s’inscrivent elles-mêmes depuis un lien.',
+  },
+  {
+    icone: Dices,
+    titre: 'Tirer',
+    texte:
+      'Un bouton tire les poules ou le tableau, en séparant les équipes d’un même club, et attribue les terrains.',
+  },
+  {
+    icone: PenLine,
+    titre: 'Saisir les scores',
+    texte:
+      'Vous tapez le numéro de l’équipe et le score. La suite — barrage, qualifiés, tour suivant — se construit toute seule.',
+  },
+  {
+    icone: Tv,
+    titre: 'Afficher les résultats',
+    texte:
+      'Poules, tableau et classement s’affichent en direct sur l’écran du club et sur le téléphone des joueurs.',
+  },
+];
+
 const FAMILLES: Famille[] = [
   {
-    icone: '🎲',
+    icone: Dices,
     titre: 'Formules et tirages',
     chapeau: 'Chaque formule avec ses règles, pas une approximation commune.',
     points: [
@@ -123,7 +165,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🏆',
+    icone: Trophy,
     titre: 'Poules, tableaux, classements',
     chapeau: 'L’enchaînement se construit tout seul, au fil des scores.',
     points: [
@@ -137,7 +179,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '✍️',
+    icone: PenLine,
     titre: 'La table de marque',
     chapeau: 'Ce qu’on fait cent fois dans une journée doit être rapide et rattrapable.',
     points: [
@@ -151,7 +193,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '📋',
+    icone: ClipboardList,
     titre: 'Inscriptions',
     chapeau: 'La file d’attente du matin est le vrai goulot d’étranglement.',
     points: [
@@ -164,7 +206,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '📺',
+    icone: Tv,
     titre: 'Suivre et partager',
     chapeau: 'Les joueurs cherchent l’information ; autant la leur donner.',
     points: [
@@ -176,7 +218,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🖨',
+    icone: Printer,
     titre: 'Tout ce qui s’imprime',
     chapeau: 'Le papier reste roi au boulodrome, et la mise en page le sait.',
     points: [
@@ -187,7 +229,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🏅',
+    icone: Medal,
     titre: 'Concours fédéraux',
     chapeau: 'Le manuel de l’arbitrage et des concours, appliqué à la lettre.',
     points: [
@@ -200,7 +242,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🗂',
+    icone: FolderOpen,
     titre: 'La saison du club',
     chapeau: 'Un concours n’est pas un événement isolé.',
     points: [
@@ -213,7 +255,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '👥',
+    icone: Users,
     titre: 'À plusieurs, sur plusieurs appareils',
     chapeau: 'Une table de marque, ce n’est jamais une seule personne.',
     points: [
@@ -224,7 +266,7 @@ const FAMILLES: Famille[] = [
     ],
   },
   {
-    icone: '🎓',
+    icone: GraduationCap,
     titre: 'Prise en main',
     chapeau: 'Un bénévole doit pouvoir tenir un concours sans avoir lu de mode d’emploi.',
     points: [
@@ -250,7 +292,7 @@ const STEPS: { title: string; body: string }[] = [
   {
     title: 'Au boulodrome, sans réseau',
     body:
-      'Vous ouvrez l’application : elle se charge depuis le cache. Tirage des ' +
+      'Vous ouvrez l’application comme d’habitude, même sans connexion. Tirage des ' +
       'poules, impression des feuilles, saisie des scores, génération du ' +
       'tableau, consolante — tout fonctionne hors connexion.',
   },
@@ -264,8 +306,8 @@ const STEPS: { title: string; body: string }[] = [
     title: 'Au retour du réseau',
     body:
       'Les modifications partent, celles des autres appareils arrivent. Le ' +
-      'compteur dit ce qui reste en attente : rien n’est cru synchronisé avant ' +
-      'que le serveur l’ait accepté.',
+      'compteur dit ce qui reste en attente : une saisie n’est annoncée ' +
+      'sauvegardée qu’une fois réellement enregistrée en ligne.',
   },
 ];
 
@@ -379,10 +421,8 @@ export function LandingPage() {
       <header className="lp-header">
         <div className="lp-header-inner">
           <span className="lp-brand">
+            <LogoTreizero />
             <BouleLogo />
-            <span>
-              Pétanque <strong>Concours</strong>
-            </span>
           </span>
           <nav className="lp-nav" aria-label="Sections de la page">
             <a href="#fonctionnalites">Fonctionnalités</a>
@@ -409,10 +449,10 @@ export function LandingPage() {
               <strong>L’application a déménagé.</strong> Cet appareil garde des données
               de l’époque où elle était à cette adresse ; elles restent attachées à
               celle-ci. Vos concours <strong>synchronisés</strong> vous attendent à la
-              nouvelle adresse dès votre connexion — ceux créés en mode invité, jamais
+              nouvelle adresse dès votre connexion. Ceux créés en mode invité, jamais
               envoyés au serveur, sont à exporter depuis l’ancienne installation avant
               de la quitter.{' '}
-              <a href={appUrl('/login')}>Aller à l’application →</a>
+              <a href={appUrl('/login')}>Aller à l’application</a>
               {ancienneVersion && (
                 <>
                   {' · '}
@@ -425,23 +465,18 @@ export function LandingPage() {
 
         <section className="lp-hero">
           <div className="lp-container lp-hero-inner">
-            <p className="lp-eyebrow">Gestion de concours de pétanque</p>
-            <h1>
-              De la feuille d’inscription au palmarès,
-              <br />
-              <span className="lp-accent">même sans réseau au boulodrome.</span>
-            </h1>
+            <h1>Vos concours de pétanque, même sans réseau.</h1>
             <p className="lp-lead">
-              Tirage des poules, barrages, cadrage, tableaux, consolante, saisie des
-              scores, affichage sur écran, impression des feuilles. Tout se fait sur
-              place, et se synchronise quand le réseau revient.
+              De l’inscription au palmarès, tout se fait sur place, au boulodrome.
             </p>
             <div className="lp-cta">
-              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
-                Créer un compte club
+              {/* L'essai d'abord : la démonstration convainc mieux qu'un formulaire,
+                  et les concours créés en invité se rattachent ensuite au compte. */}
+              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?invite=1')}>
+                Essayer sans compte
               </a>
-              <a className="btn lp-btn-lg" href={appUrl('/login?invite=1')}>
-                🚀 Essayer sans compte
+              <a className="btn lp-btn-lg" href={appUrl('/login?mode=inscription')}>
+                Créer un compte club
               </a>
             </div>
             <p className="lp-cta-note">
@@ -478,33 +513,31 @@ export function LandingPage() {
               Le réseau manque au boulodrome. L’application n’en a pas besoin.
             </h2>
             <p className="lp-section-lead" data-revele>
-              Ce n’est pas un mode dégradé qu’on active en cas de problème : c’est la
-              façon normale dont l’application fonctionne.
+              Pas de réglage à activer ni de panne à craindre : avec ou sans réseau,
+              l’application se comporte de la même façon.
             </p>
             <div className="lp-offline-grid">
               <div className="lp-offline-item" data-revele>
-                <h3>Tout s’écrit d’abord sur l’appareil</h3>
+                <h3>Vous ne dépendez jamais du réseau</h3>
                 <p>
-                  L’interface lit et écrit dans le navigateur. Tirer les poules,
-                  saisir un score, générer un tableau : aucune de ces opérations
-                  n’attend la réponse d’un serveur.
+                  Tirer les poules, saisir un score, lancer le tableau : tout répond
+                  tout de suite, que la connexion soit bonne, mauvaise ou absente.
                 </p>
               </div>
               <div className="lp-offline-item" data-revele>
-                <h3>Rechargez la page sans réseau : tout est là</h3>
+                <h3>Rien ne se perd si l’écran se ferme</h3>
                 <p>
-                  L’application est mise en cache et le navigateur a l’interdiction de
-                  purger vos données. Elle s’installe sur mobile et tablette et
-                  s’ouvre en plein écran.
+                  Le concours est enregistré sur l’appareil. Tablette éteinte, page
+                  rechargée, onglet fermé par erreur : vous le retrouvez là où vous
+                  l’aviez laissé.
                 </p>
               </div>
               <div className="lp-offline-item" data-revele>
-                <h3>La synchronisation attend son heure</h3>
+                <h3>Vous savez quand tout est sauvegardé</h3>
                 <p>
-                  Au retour du réseau, vos modifications partent et celles des autres
-                  appareils du club arrivent. Le compteur affiche ce qui reste en
-                  attente — une entité refusée reste visible plutôt que d’être crue
-                  sauvegardée.
+                  Un témoin en haut de l’écran indique « Synchronisé », ou combien de
+                  saisies attendent encore le réseau. Dès qu’il revient, elles partent
+                  toutes seules et les autres appareils du club se mettent à jour.
                 </p>
               </div>
             </div>
@@ -513,18 +546,38 @@ export function LandingPage() {
 
         <section className="lp-section" id="fonctionnalites">
           <div className="lp-container">
-            <h2 data-revele>Ce que l’application sait faire</h2>
+            <h2 data-revele>Quatre gestes, du matin au palmarès</h2>
             <p className="lp-section-lead" data-revele>
-              L’inventaire complet, groupé par moment de la journée. Les références au
-              manuel de l’arbitrage et des concours sont celles des règles réellement
-              appliquées.
+              Un bénévole qui n’a jamais ouvert l’application doit pouvoir tenir la
+              table de marque. Voici tout ce qu’il a à faire.
             </p>
+            <ol className="lp-gestes">
+              {GESTES.map((g) => (
+                <li key={g.titre} className="lp-geste" data-revele>
+                  <g.icone className="lp-geste-icone" aria-hidden strokeWidth={1.75} />
+                  <h3>{g.titre}</h3>
+                  <p>{g.texte}</p>
+                </li>
+              ))}
+            </ol>
+
+            {/* L'inventaire reste complet — une vitrine qui en montre le tiers
+                laisse croire à un logiciel trois fois plus petit — mais il ne
+                s'impose plus à qui veut seulement savoir si c'est simple. */}
+            <details className="lp-inventaire">
+              <summary>
+                <span>
+                  Tout ce que l’application sait faire
+                  <small>
+                    {FAMILLES.length} familles, {FAMILLES.reduce((n, f) => n + f.points.length, 0)}{' '}
+                    fonctions, avec les références au manuel de l’arbitrage
+                  </small>
+                </span>
+              </summary>
             <ul className="lp-familles">
               {FAMILLES.map((f) => (
-                <li key={f.titre} className="lp-famille" data-revele>
-                  <span className="lp-famille-icone" aria-hidden>
-                    {f.icone}
-                  </span>
+                <li key={f.titre} className="lp-famille">
+                  <f.icone className="lp-famille-icone" aria-hidden strokeWidth={1.75} />
                   <h3>{f.titre}</h3>
                   <p className="lp-famille-chapeau">{f.chapeau}</p>
                   <ul>
@@ -535,12 +588,13 @@ export function LandingPage() {
                 </li>
               ))}
             </ul>
+            </details>
 
             <figure className="lp-shot lp-shot-wide" data-revele>
               <Capture
                 nom="poules"
                 largeur={1280}
-                hauteur={1118}
+                hauteur={1019}
                 largeurMobile={390}
                 hauteurMobile={844}
                 alt="Deux poules de quatre équipes terminées : 1ère partie, 2e partie,
@@ -628,9 +682,7 @@ export function LandingPage() {
 
             <div className="lp-evolution-grid">
               <div className="lp-roadmap" data-revele>
-                <h3>
-                  <span aria-hidden>🛠</span> En chantier
-                </h3>
+                <h3>En chantier</h3>
                 <p className="lp-roadmap-note">
                   Sans dates : on annonce l’intention, pas un calendrier de livraison.
                   Chaque ligne renvoie à son suivi public.
@@ -639,7 +691,7 @@ export function LandingPage() {
                   {ROADMAP.map((c) => (
                     <li key={c.titre}>
                       <span className="lp-roadmap-icone" aria-hidden>
-                        {c.icone}
+                        <Icone de={c.icone} />
                       </span>
                       <div>
                         <strong>{c.titre}</strong>
@@ -650,7 +702,7 @@ export function LandingPage() {
                           target="_blank"
                           rel="noreferrer noopener"
                         >
-                          Suivre le sujet #{c.issue} ↗
+                          Suivre le sujet #{c.issue}
                         </a>
                       </div>
                     </li>
@@ -659,9 +711,7 @@ export function LandingPage() {
               </div>
 
               <div className="lp-changelog" data-revele>
-                <h3>
-                  <span aria-hidden>✨</span> Déjà livré
-                </h3>
+                <h3>Déjà livré</h3>
                 <p className="lp-roadmap-note">
                   Le même journal que celui affiché dans l’application après une mise à
                   jour — une seule source, donc rien à tenir à deux endroits.
@@ -675,7 +725,11 @@ export function LandingPage() {
                     <ul>
                       {entree.items.map((item) => (
                         <li key={item.titre}>
-                          {item.icone && <span aria-hidden>{item.icone}</span>}
+                          {item.icone && (
+                            <span aria-hidden>
+                              <Icone de={item.icone} />
+                            </span>
+                          )}
                           <div>
                             <strong>{item.titre}</strong>
                             <p>{item.texte}</p>
@@ -713,11 +767,11 @@ export function LandingPage() {
               risque.
             </p>
             <div className="lp-cta lp-cta-center" data-revele>
-              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?mode=inscription')}>
-                Créer un compte club
+              <a className="btn btn-primary lp-btn-lg" href={appUrl('/login?invite=1')}>
+                Essayer sans compte
               </a>
-              <a className="btn lp-btn-lg lp-btn-invert" href={appUrl('/login?invite=1')}>
-                🚀 Essayer sans compte
+              <a className="btn lp-btn-lg lp-btn-invert" href={appUrl('/login?mode=inscription')}>
+                Créer un compte club
               </a>
             </div>
           </div>
@@ -727,10 +781,7 @@ export function LandingPage() {
       <footer className="lp-footer">
         <div className="lp-container lp-footer-inner">
           <span className="lp-brand lp-brand-footer">
-            <BouleLogo />
-            <span>
-              Pétanque <strong>Concours</strong>
-            </span>
+            <LogoTreizero />
           </span>
           <p className="lp-footer-note">
             Application indépendante, non affiliée à la FFPJP : elle applique les

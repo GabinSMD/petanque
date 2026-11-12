@@ -66,7 +66,7 @@ export function SyncBadge() {
         data-tour="sync"
         title={`Mode invité : les données restent sur cet appareil, sans sauvegarde en ligne. Créez un compte pour synchroniser.${storageNote}`}
       >
-        <span className="sync-dot" /> Mode invité — créer un compte
+        <span className="sync-dot" /> Mode invité
       </Link>
     );
   }

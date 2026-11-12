@@ -1,4 +1,4 @@
-# Déployer Pétanque Concours
+# Déployer Treizéro
 
 Le serveur est **mono-conteneur** : l'API Fastify sert aussi le client
 construit. Base SQLite sur disque — prévoyez un **volume persistant**.
@@ -189,6 +189,38 @@ navigateur.
 
 La redirection est **permanente (301)** : les navigateurs la gardent en cache.
 Un retour en arrière demande de vider ce cache côté visiteur.
+
+## Changer de nom de domaine
+
+Renommer l'enregistrement DNS ne suffit pas : le serveur garde l'ancien nom dans
+trois fichiers que git ne suit pas — le `Caddyfile`, le service systemd et
+`client/.env.production`. Tant qu'ils ne changent pas, Caddy n'a pas de
+certificat pour le nouveau nom (erreur 525 derrière Cloudflare, poignée de main
+TLS refusée en accès direct) et la vitrine continue de pointer vers l'ancienne
+adresse.
+
+Un script fait les trois remplacements, vérifie la configuration de Caddy avant
+de la recharger, et garde une copie datée de chaque fichier :
+
+```bash
+sudo bash /opt/petanque/app/deploy/renommer-domaine.sh petanque.exemple.fr treizero.exemple.fr
+sudo bash /opt/petanque/app/deploy/update.sh
+```
+
+Le remplacement porte sur le nom entier : `app.petanque.exemple.fr` devient
+`app.treizero.exemple.fr` du même coup. Le second appel reconstruit le client
+avec les nouvelles adresses et redémarre le service.
+
+À savoir avant de le faire :
+
+- **Les données locales suivent l'adresse.** Un navigateur range les concours
+  par nom de domaine : un appareil qui utilisait l'ancienne adresse ne retrouve
+  rien à la nouvelle avant de s'y être connecté, et les concours créés en mode
+  invité ne se transfèrent pas. S'il y a des utilisateurs, gardez l'ancien nom
+  en service le temps qu'ils basculent.
+- **Les liens publics et QR codes déjà distribués** pointent vers l'ancien nom.
+- **Le piège du joker TLS** décrit plus haut vaut pour le nouveau nom comme pour
+  l'ancien.
 
 ## Option A — Fly.io (recommandé, région Paris)
 

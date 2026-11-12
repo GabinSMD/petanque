@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useState } from 'react';
 import type { Team } from '@shared';
 import { teamDisplayName } from './TeamLabel';
@@ -67,7 +68,7 @@ export function SeedPicker({
                       onClick={() => toggle(id)}
                       title="Retirer"
                     >
-                      ✕
+                      <X className="ic" aria-hidden />
                     </button>
                   </li>
                 );

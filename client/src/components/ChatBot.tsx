@@ -1,3 +1,4 @@
+import { ClipboardList, Compass, GraduationCap, Lightbulb, MessageCircle, Sparkles, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -45,7 +46,7 @@ type Message = BotMessage | UserMessage;
 const BONJOUR: BotMessage = {
   role: 'bot',
   text:
-    'Bonjour 👋 Je suis l\'assistant. Posez votre question (« comment corriger un score ? ») ' +
+    'Bonjour Je suis l\'assistant. Posez votre question (« comment corriger un score ? ») ' +
     'ou laissez-moi vous guider — je fonctionne aussi hors connexion.',
 };
 
@@ -182,7 +183,7 @@ export function ChatBot() {
         ...m,
         {
           role: 'bot',
-          text: 'Ouvrez d\'abord un concours depuis le tableau de bord, puis revenez me voir 😉',
+          text: 'Ouvrez d\'abord un concours depuis le tableau de bord, puis revenez me voir',
         },
       ]);
       navigate('/');
@@ -205,7 +206,7 @@ export function ChatBot() {
           role: 'bot',
           text:
             'Ce guide se déroule dans un concours. Ouvrez-en un depuis le tableau de bord, ' +
-            'puis redemandez-moi 😉',
+            'puis redemandez-moi',
         },
       ]);
       navigate('/');
@@ -239,18 +240,18 @@ export function ChatBot() {
         aria-label={open ? 'Fermer l\'assistant' : 'Ouvrir l\'assistant'}
         title="Assistant — il vous guide pas à pas"
       >
-        {open ? '✕' : '💬'}
+        {open ? <X aria-hidden /> : <MessageCircle aria-hidden />}
       </button>
 
       {open && (
         <div className="chat-panel no-print" role="dialog" aria-label="Assistant">
           <header className="chat-head">
             <span className="chat-head-title">
-              💬 Assistant
+              <MessageCircle className="ic" aria-hidden /> Assistant
               <small>Guides pas à pas — fonctionne hors ligne</small>
             </span>
             <button className="btn-icon chat-close" onClick={() => setOpen(false)} aria-label="Fermer">
-              ✕
+              <X className="ic" aria-hidden />
             </button>
           </header>
 
@@ -282,7 +283,7 @@ export function ChatBot() {
                             className="chat-chip chat-chip-guide"
                             onClick={() => guider(id)}
                           >
-                            🎓 {p.titre}
+                            <GraduationCap className="ic" aria-hidden /> {p.titre}
                           </button>
                         );
                       })}
@@ -307,7 +308,7 @@ export function ChatBot() {
                     {showAll ? 'Réduire ▲' : 'Tous les sujets ▼'}
                   </button>
                   <button className="chat-chip chat-chip-alt" onClick={showNouveautes}>
-                    ✨ Quoi de neuf ?
+                    <Sparkles className="ic" aria-hidden /> Quoi de neuf ?
                   </button>
                 </div>
                 {showAll &&
@@ -340,7 +341,7 @@ export function ChatBot() {
           </form>
           {!vierge && !sommaire && (
             <button className="chat-sommaire" onClick={demanderSommaire}>
-              📋 Revoir tous les sujets
+              <ClipboardList className="ic" aria-hidden /> Revoir tous les sujets
             </button>
           )}
         </div>
@@ -371,7 +372,7 @@ function FaqAnswer({
           ))}
         </ol>
       )}
-      {entry.note && <p className="faq-note">💡 {entry.note}</p>}
+      {entry.note && <p className="faq-note"><Lightbulb className="ic" aria-hidden /> {entry.note}</p>}
       <div className="chat-chips">
         {/* Le guide d'abord : lire des étapes vaut moins que les faire. */}
         {entry.parcours && (
@@ -379,17 +380,17 @@ function FaqAnswer({
             className="chat-chip chat-chip-guide"
             onClick={() => onGuider(entry.parcours!)}
           >
-            🎓 Me guider pas à pas
+            <GraduationCap className="ic" aria-hidden /> Me guider pas à pas
           </button>
         )}
         {entry.action && (
           <button className="chat-chip chat-chip-action" onClick={() => onAction(entry)}>
-            🧭 {entry.action.label}
+            <Compass className="ic" aria-hidden /> {entry.action.label}
           </button>
         )}
         {entry.id === 'nouveautes' && (
           <button className="chat-chip chat-chip-action" onClick={onNouveautes}>
-            ✨ Voir les nouveautés
+            <Sparkles className="ic" aria-hidden /> Voir les nouveautés
           </button>
         )}
       </div>

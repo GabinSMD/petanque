@@ -1,3 +1,5 @@
+import { Icone } from './Icone';
+import { Compass, Sparkles } from 'lucide-react';
 import { useEffect, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parcoursParId, type NouveauteAction } from '@shared';
@@ -52,7 +54,7 @@ export function NouveautesHost() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="nouveautes-head">
-          <h2>✨ {titre}</h2>
+          <h2><Sparkles className="ic" aria-hidden /> {titre}</h2>
           <p className="nouveautes-intro">
             {vue.rappel
               ? 'Le tour d\'horizon de ce que l\'application sait faire de plus.'
@@ -74,7 +76,7 @@ export function NouveautesHost() {
                   <li key={item.titre}>
                     {item.icone && (
                       <span className="nouveautes-icone" aria-hidden>
-                        {item.icone}
+                        <Icone de={item.icone} />
                       </span>
                     )}
                     <div className="nouveautes-item-text">
@@ -85,7 +87,7 @@ export function NouveautesHost() {
                           className="btn btn-sm nouveautes-action"
                           onClick={() => suivre(item.action!)}
                         >
-                          🧭 {item.action.label}
+                          <Compass className="ic" aria-hidden /> {item.action.label}
                         </button>
                       )}
                     </div>

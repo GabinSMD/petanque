@@ -1,3 +1,5 @@
+import { Icone } from './Icone';
+import { PartyPopper, User } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import type { ConcoursMode, Discipline, TeamFormat } from '@shared';
 import { MAX_MISE, TAILLE_FORMATION, bornesParties, raisonRefusMise } from '@shared';
@@ -28,10 +30,11 @@ const MODES: ConcoursMode[] = [
   'tir_precision',
 ];
 const FORMATS: TeamFormat[] = ['tete_a_tete', 'doublette', 'triplette'];
-const FORMAT_EMOJI: Record<TeamFormat, string> = {
-  tete_a_tete: '🧍',
-  doublette: '🧍🧍',
-  triplette: '🧍🧍🧍',
+/** Un personnage par joueur de la formation. */
+const FORMAT_JOUEURS: Record<TeamFormat, number> = {
+  tete_a_tete: 1,
+  doublette: 2,
+  triplette: 3,
 };
 
 /**
@@ -132,7 +135,9 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
           <div className="mode-cards">
             {MODES.map((m) => (
               <button key={m} type="button" className="mode-card" onClick={() => pickMode(m)}>
-                <span className="mode-card-emoji">{MODE_INFO[m].emoji}</span>
+                <span className="mode-card-emoji">
+                  <Icone de={MODE_INFO[m].icone} />
+                </span>
                 <span className="mode-card-body">
                   <strong>{MODE_LABELS[m]}</strong>
                   <span className="mode-card-tagline">{MODE_INFO[m].tagline}</span>
@@ -159,7 +164,11 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
           <div className="format-cards">
             {FORMATS.map((f) => (
               <button key={f} type="button" className="format-card" onClick={() => pickFormat(f)}>
-                <span className="format-card-emoji">{FORMAT_EMOJI[f]}</span>
+                <span className="format-card-emoji" aria-hidden>
+                  {Array.from({ length: FORMAT_JOUEURS[f] }, (_, i) => (
+                    <User key={i} className="ic" />
+                  ))}
+                </span>
                 <strong>{FORMAT_LABELS[f]}</strong>
                 <span className="mode-card-tagline">
                   {f === 'tete_a_tete' ? '1 joueur' : f === 'doublette' ? '2 joueurs' : '3 joueurs'}
@@ -179,7 +188,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       {step === 2 && mode && format && (
         <form onSubmit={submit}>
           <p className="wizard-recap">
-            {MODE_INFO[mode].emoji} {MODE_LABELS[mode]}
+            <Icone de={MODE_INFO[mode].icone} /> {MODE_LABELS[mode]}
             {!isTirMode(mode) && ` · ${FORMAT_LABELS[format]}`}
             {isIndividualMode(mode) && ' · inscriptions individuelles'}
           </p>
@@ -372,7 +381,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
             <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>
               ← Retour
             </button>
-            <button className="btn btn-primary">Créer le concours 🎉</button>
+            <button className="btn btn-primary">Créer le concours <PartyPopper className="ic" aria-hidden /></button>
           </div>
         </form>
       )}

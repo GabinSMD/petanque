@@ -1,3 +1,4 @@
+import { TriangleAlert } from 'lucide-react';
 import { useFraicheurLicencies } from '../db/hooks';
 
 /**
@@ -20,7 +21,7 @@ export function FraicheurBase({ compact = false }: { compact?: boolean }) {
   const date = f.date ? new Date(f.date).toLocaleDateString('fr-FR') : null;
   return (
     <p className={f.perimee ? 'base-licencies base-licencies-perimee' : 'base-licencies'}>
-      {f.perimee ? '⚠ ' : ''}
+      {f.perimee ? <TriangleAlert className="ic" aria-hidden /> : ''}
       {date ? (
         <>
           Fichier des licenciés du <strong>{date}</strong>

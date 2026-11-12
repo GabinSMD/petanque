@@ -1,3 +1,5 @@
+import { Icone } from '../components/Icone';
+import { Archive, Contact, Medal, Settings, Trash2, Trophy, Undo2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -126,16 +128,16 @@ export function DashboardPage() {
         <span className="page-head-actions">
           {!session?.guest && (
             <button className="btn btn-sm" onClick={() => setClub(true)}>
-              👥 Mon club
+              <Users className="ic" aria-hidden /> Mon club
             </button>
           )}
           {federal && (
             <Link className="btn btn-sm" to="/licencies">
-              📇 Licenciés
+              <Contact className="ic" aria-hidden /> Licenciés
             </Link>
           )}
           <Link className="btn btn-sm" to="/palmares">
-            🏆 Palmarès
+            <Trophy className="ic" aria-hidden /> Palmarès
           </Link>
           {federal && (
             <Link
@@ -143,12 +145,12 @@ export function DashboardPage() {
               to="/championnat-clubs"
               title="Contrôle des compositions et feuille de rencontre"
             >
-              🏅 Championnat des clubs
+              <Medal className="ic" aria-hidden /> Championnat des clubs
             </Link>
           )}
           <ImportSauvegarde />
           <button className="btn btn-sm" title="Réglages" onClick={() => setReglages(true)}>
-            ⚙
+            <Settings className="ic" aria-hidden />
           </button>
           <button
             className="btn btn-primary"
@@ -210,7 +212,7 @@ export function DashboardPage() {
               setCategoryFilter('');
             }}
           >
-            🗄 Archivés ({archives.length})
+            <Archive className="ic" aria-hidden /> Archivés ({archives.length})
           </button>
         </div>
       )}
@@ -267,7 +269,7 @@ export function DashboardPage() {
                         }}
                         title="Remettre dans les concours courants"
                       >
-                        ↩
+                        <Undo2 className="ic" aria-hidden />
                       </button>
                     ) : (
                       <button
@@ -278,7 +280,7 @@ export function DashboardPage() {
                         }}
                         title="Archiver : sortir de la liste courante sans rien supprimer"
                       >
-                        🗄
+                        <Archive className="ic" aria-hidden />
                       </button>
                     )}
                     <button
@@ -289,7 +291,7 @@ export function DashboardPage() {
                       }}
                       title="Supprimer"
                     >
-                      🗑
+                      <Trash2 className="ic" aria-hidden />
                     </button>
                   </span>
                 </div>
@@ -304,7 +306,7 @@ export function DashboardPage() {
                   )}
                   {!isTirMode(c.mode) && <span className="tag">{FORMAT_LABELS[c.format]}</span>}
                   <span className="tag">
-                    {MODE_INFO[c.mode].emoji} {MODE_LABELS[c.mode]}
+                    <Icone de={MODE_INFO[c.mode].icone} /> {MODE_LABELS[c.mode]}
                   </span>
                   {c.consolante && <span className="tag">Consolante</span>}
                 </p>

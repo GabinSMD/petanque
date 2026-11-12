@@ -81,8 +81,8 @@ export default defineConfig({
       includeAssets: ['favicon.svg'],
       manifest: {
         id: '/',
-        name: 'Pétanque Concours',
-        short_name: 'Pétanque',
+        name: 'Treizéro — concours de pétanque',
+        short_name: 'Treizéro',
         description:
           'Gestion de concours de pétanque : poules, tableaux, consolante — fonctionne sans connexion.',
         lang: 'fr',

@@ -6,6 +6,32 @@
    pour ne pas alourdir la feuille de l'application.
    ================================================================== */
 
+/* Jetons de couleur propres à la vitrine. Ceux de l'application (--accent,
+   --terra, --ink…) viennent de styles.css ; ici, uniquement ce que la page
+   publique ajoute : surfaces sombres du bas de page, halos de l'accroche,
+   cadre des captures d'écran. */
+:root {
+  --lp-blanc: #fff;
+  --lp-blanc-60: rgba(255, 255, 255, 0.6);
+  --lp-blanc-12: rgba(255, 255, 255, 0.12);
+  --lp-verre: rgba(255, 255, 255, 0.88);
+  --lp-lisere-blanc: #e8ecf7;
+  --lp-avis-fond: #fff6e0;
+  --lp-avis-bord: #e8d9ad;
+  --lp-avis-texte: #6b4c07;
+  --lp-halo-bleu: rgba(29, 61, 156, 0.11);
+  --lp-halo-rouge: rgba(210, 28, 52, 0.06);
+  --lp-fenetre-barre: #eef1f8;
+  --lp-fenetre-pastille: #cfd6e6;
+  --lp-nuit: #0b1329;
+  --lp-marine: #101f52;
+  --lp-marine-texte: #d5ddf5;
+  --lp-pied-fond: #0d1836;
+  --lp-pied-texte: #aab6d6;
+  --lp-pied-lien: #cdd7ef;
+  --lp-ombre-survol: 0 6px 14px rgba(20, 30, 58, 0.12), 0 16px 40px rgba(20, 30, 58, 0.16);
+}
+
 .lp {
   --lp-max: 1120px;
   min-height: 100vh;
@@ -28,7 +54,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--lp-verre);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
@@ -46,7 +72,7 @@
   background: linear-gradient(
     90deg,
     var(--accent) 0 34%,
-    #e8ecf7 34% 67%,
+    var(--lp-lisere-blanc) 34% 67%,
     var(--terra) 67% 100%
   );
 }
@@ -100,9 +126,9 @@
 /* ------------------------- Bandeau de déménagement ------------------------ */
 
 .lp-moved {
-  background: #fff6e0;
-  border-bottom: 1px solid #e8d9ad;
-  color: #6b4c07;
+  background: var(--lp-avis-fond);
+  border-bottom: 1px solid var(--lp-avis-bord);
+  color: var(--lp-avis-texte);
   padding: 0.75rem 0;
   font-size: 0.92rem;
   line-height: 1.55;
@@ -119,8 +145,8 @@
 .lp-hero {
   padding: 3.2rem 0 0;
   background:
-    radial-gradient(circle at 12% 0%, rgba(29, 61, 156, 0.11), transparent 42%),
-    radial-gradient(circle at 94% 12%, rgba(210, 28, 52, 0.06), transparent 38%);
+    radial-gradient(circle at 12% 0%, var(--lp-halo-bleu), transparent 42%),
+    radial-gradient(circle at 94% 12%, var(--lp-halo-rouge), transparent 38%);
 }
 
 .lp-hero-inner {
@@ -128,33 +154,21 @@
   padding-bottom: 2.4rem;
 }
 
-.lp-eyebrow {
-  margin: 0 0 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
 .lp-hero h1 {
   font-size: clamp(1.85rem, 4.2vw, 2.9rem);
   line-height: 1.12;
   margin: 0 auto 1rem;
-  max-width: 32ch;
+  max-width: 22ch;
   text-wrap: balance;
-}
-
-.lp-accent {
-  color: var(--accent);
 }
 
 .lp-lead {
   font-size: clamp(1rem, 1.5vw, 1.16rem);
   line-height: 1.6;
   color: var(--muted);
-  max-width: 62ch;
+  max-width: 48ch;
   margin: 0 auto 1.6rem;
+  text-wrap: balance;
 }
 
 .lp-cta {
@@ -210,7 +224,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.55rem 0.75rem;
-  background: #eef1f8;
+  background: var(--lp-fenetre-barre);
   border-bottom: 1px solid var(--line);
 }
 
@@ -218,7 +232,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #cfd6e6;
+  background: var(--lp-fenetre-pastille);
 }
 
 .lp-shot-wide,
@@ -235,7 +249,7 @@
 }
 
 .lp-shot-dark img {
-  background: #0b1329;
+  background: var(--lp-nuit);
 }
 
 /* ------------------------------- Sections ------------------------------- */
@@ -291,10 +305,10 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 1rem;
-  align-items: start;
+  /* Colonnes « en maçonnerie » : dix familles de longueurs inégales laissaient,
+     en grille, des trous sous les cartes courtes et une carte seule en bas. */
+  columns: 3 300px;
+  column-gap: 1rem;
 }
 
 .lp-famille {
@@ -303,19 +317,16 @@
   border-radius: var(--radius);
   padding: 1.15rem 1.2rem 1.25rem;
   box-shadow: var(--shadow);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.lp-famille:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lift);
+  break-inside: avoid;
+  margin-bottom: 1rem;
 }
 
 .lp-famille-icone {
-  font-size: 1.5rem;
-  line-height: 1;
   display: block;
-  margin-bottom: 0.5rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-bottom: 0.6rem;
+  color: var(--accent);
 }
 
 .lp-famille h3 {
@@ -417,7 +428,7 @@
   height: 30px;
   border-radius: 50%;
   background: var(--accent);
-  color: #fff;
+  color: var(--lp-blanc);
   font-weight: 700;
   font-size: 0.95rem;
   margin-bottom: 0.6rem;
@@ -497,8 +508,8 @@
 
 .lp-final {
   padding: 3.4rem 0;
-  background: linear-gradient(180deg, #101f52, var(--accent));
-  color: #fff;
+  background: linear-gradient(180deg, var(--lp-marine), var(--accent));
+  color: var(--lp-blanc);
   text-align: center;
   position: relative;
 }
@@ -513,7 +524,7 @@
   background: linear-gradient(
     90deg,
     var(--accent) 0 34%,
-    #ffffff 34% 67%,
+    var(--lp-blanc) 34% 67%,
     var(--terra) 67% 100%
   );
 }
@@ -527,7 +538,7 @@
 .lp-final p {
   margin: 0 auto 1.6rem;
   max-width: 58ch;
-  color: #d5ddf5;
+  color: var(--lp-marine-texte);
   line-height: 1.6;
 }
 
@@ -537,19 +548,19 @@
 
 .btn.lp-btn-invert {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.6);
-  color: #fff;
+  border-color: var(--lp-blanc-60);
+  color: var(--lp-blanc);
 }
 
 .btn.lp-btn-invert:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--lp-blanc-12);
 }
 
 /* --------------------------------- Pied --------------------------------- */
 
 .lp-footer {
-  background: #0d1836;
-  color: #aab6d6;
+  background: var(--lp-pied-fond);
+  color: var(--lp-pied-texte);
   padding: 2rem 0 2.4rem;
   padding-bottom: calc(2.4rem + env(safe-area-inset-bottom));
   font-size: 0.88rem;
@@ -561,7 +572,7 @@
 }
 
 .lp-brand-footer {
-  color: #fff;
+  color: var(--lp-blanc);
   font-size: 1rem;
 }
 
@@ -577,7 +588,7 @@
 }
 
 .lp-footer-links a {
-  color: #cdd7ef;
+  color: var(--lp-pied-lien);
   text-decoration: none;
   font-weight: 600;
 }
@@ -597,7 +608,9 @@
 
 .lp-evolution-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  /* `min(…, 100%)` : sur un écran plus étroit que la colonne minimale, la
+     carte se réduit au lieu de faire défiler toute la page de côté. */
+  grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
   gap: 1.4rem;
   align-items: start;
 }
@@ -792,7 +805,7 @@
 }
 
 .lp-shot:hover {
-  box-shadow: 0 6px 14px rgba(20, 30, 58, 0.12), 0 16px 40px rgba(20, 30, 58, 0.16);
+  box-shadow: var(--lp-ombre-survol);
 }
 
 .btn.lp-btn-lg {
@@ -855,4 +868,162 @@
   .lp-header-cta .btn {
     white-space: nowrap;
   }
+}
+
+/* Titres équilibrés, paragraphes sans mot orphelin en dernière ligne. */
+.lp h1,
+.lp h2,
+.lp h3 {
+  text-wrap: balance;
+}
+
+.lp p,
+.lp li {
+  text-wrap: pretty;
+}
+
+.lp a {
+  text-underline-offset: 0.18em;
+}
+
+/* Liens de suivi de la feuille de route : une ligne de 15 px de haut se rate
+   au doigt. La zone tactile s'agrandit sans déplacer le texte. */
+.lp-roadmap-lien {
+  display: inline-block;
+  padding: 0.45rem 0;
+  margin: 0 0 -0.3rem;
+}
+
+/* ---------------------- Quatre gestes, puis l'inventaire ----------------- */
+
+.lp-gestes {
+  list-style: none;
+  margin: 0 0 1.6rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 1.6rem;
+  counter-reset: geste;
+}
+
+.lp-geste {
+  counter-increment: geste;
+  padding-top: 0.9rem;
+  border-top: 3px solid var(--accent);
+}
+
+.lp-geste-icone {
+  width: 1.7rem;
+  height: 1.7rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.lp-geste h3 {
+  font-size: 1.15rem;
+  margin: 0 0 0.35rem;
+}
+
+.lp-geste h3::before {
+  content: counter(geste) '. ';
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.lp-geste p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.lp-inventaire {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-inventaire > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.lp-inventaire > summary::-webkit-details-marker {
+  display: none;
+}
+
+.lp-inventaire > summary::before {
+  content: '';
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease-out;
+}
+
+.lp-inventaire[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.lp-inventaire > summary small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.lp-inventaire > .lp-familles {
+  padding: 0.4rem 0 1.2rem;
+}
+
+/* Marque : logo complet dans l'en-tête, icône seule quand la place va aux
+   deux boutons ; en blanc sur le pied de page sombre. */
+.lp-brand .boule-logo {
+  display: none;
+}
+
+.lp-brand .logo-treizero {
+  height: 1.8rem;
+}
+
+@media (max-width: 560px) {
+  .lp-brand:not(.lp-brand-footer) .logo-treizero {
+    display: none;
+  }
+
+  .lp-brand .boule-logo {
+    display: block;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.lp-brand-footer .logo-treizero {
+  color: var(--lp-blanc);
+}
+
+.lp-brand-footer .marque-rouge {
+  fill: var(--marque-rouge-clair);
+}
+
+/* Légendes des captures : une ligne de 130 caractères se lit mal, la mesure
+   se limite à celle d'un paragraphe. */
+.lp-shot figcaption {
+  padding-right: max(1rem, calc(100% - 78ch));
+}
+
+/* Mesure de lecture : les réponses de la FAQ, les chapeaux de section et la
+   mention du pied de page dépassaient 100 caractères par ligne. Un `ch` vaut
+   la largeur du « 0 », plus large qu'une lettre moyenne : 58ch donnent environ
+   78 caractères réels. */
+.lp-faq-list p,
+.lp-section-lead,
+.lp-footer-note {
+  max-width: 58ch;
 }

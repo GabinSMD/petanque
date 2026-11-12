@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------
-# Pétanque Concours — image de production (client + API dans un conteneur)
+# Treizéro — image de production (client + API dans un conteneur)
 # ------------------------------------------------------------------
 FROM node:22-alpine AS build
 WORKDIR /app

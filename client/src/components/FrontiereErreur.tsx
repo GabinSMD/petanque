@@ -1,3 +1,4 @@
+import { Check, ClipboardList, RotateCw } from 'lucide-react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { analyserIncident, rapportIncident, type PorteeIncident } from '@shared';
 import { APP_COMMIT, APP_VERSION } from '../lib/version';
@@ -98,7 +99,7 @@ export class FrontiereErreur extends Component<Props, State> {
             {incident.action === 'reessayer' ? (
               <>
                 <button className="btn btn-primary" onClick={this.reessayer}>
-                  ↻ Réessayer
+                  <RotateCw className="ic" aria-hidden /> Réessayer
                 </button>
                 <button className="btn btn-ghost" onClick={() => window.location.reload()}>
                   Recharger l'application
@@ -107,7 +108,7 @@ export class FrontiereErreur extends Component<Props, State> {
             ) : (
               <>
                 <button className="btn btn-primary" onClick={() => window.location.reload()}>
-                  ↻ Recharger l'application
+                  <RotateCw className="ic" aria-hidden /> Recharger l'application
                 </button>
                 {essais < 3 && (
                   <button className="btn btn-ghost" onClick={this.reessayer}>
@@ -126,9 +127,9 @@ export class FrontiereErreur extends Component<Props, State> {
             <summary>Détail technique</summary>
             <pre>{rapport}</pre>
             <button className="btn btn-sm btn-ghost" onClick={() => void this.copier(rapport)}>
-              📋 Copier le rapport
+              <ClipboardList className="ic" aria-hidden /> Copier le rapport
             </button>
-            {copie === 'ok' && <span className="hint"> ✓ Copié</span>}
+            {copie === 'ok' && <span className="hint"> <Check className="ic" aria-hidden /> Copié</span>}
             {copie === 'echec' && (
               <span className="form-error">
                 {' '}

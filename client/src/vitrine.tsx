@@ -10,6 +10,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { LandingPage } from './pages/LandingPage';
 import '@fontsource-variable/inter';
+import '@fontsource-variable/bricolage-grotesque/opsz.css';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

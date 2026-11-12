@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Met à jour Pétanque Concours sur la VM : récupère la dernière version de la
+# Met à jour Treizéro sur la VM : récupère la dernière version de la
 # branche, réinstalle, rebuild et redémarre le service. Idempotent.
 #
 # Usage (sur la VM) :  sudo bash /opt/petanque/app/deploy/update.sh [branche]

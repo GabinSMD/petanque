@@ -1,3 +1,5 @@
+import { MenuPlus, MenuPlusItem } from '../../components/MenuPlus';
+import { ArrowDownToLine, Ban, Camera, Check, ClipboardList, Coins, Download, Euro, Globe, Lightbulb, Mail, MapPin, Pencil, Search, Trash2, TriangleAlert, Undo2, User, X } from 'lucide-react';
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { LicenceEtrangereModal } from '../../components/LicenceEtrangereModal';
@@ -7,7 +9,7 @@ import { MultisiteModal } from '../../components/MultisiteModal';
 import type { Concours, Licencie, Player, Poule, RolePetanque, Team } from '@shared';
 import { addTeam, deleteTeam, importerInscrits, insererEquipe, updateTeam } from '../../db/actions';
 import { pouleSummary } from '../../db/actions';
-import { useLicencies } from '../../db/hooks';
+import { useLicencies, useModeFederalActif } from '../../db/hooks';
 import {
   ETATS_MISE,
   PAYS_LICENCE_ETRANGERE,
@@ -120,6 +122,15 @@ export function TeamsTab({ concours, teams, poules }: Props) {
      critères fédéraux, ou au moins un fichier de licenciés importé. */
   const criteresFederaux = aDesCriteresLicence(concours);
   const controlActif = criteresFederaux || licencies.length > 0;
+  /**
+   * Licence, pays et club de chaque joueur : indispensables à un concours
+   * fédéral, du bruit pour un concours amical où l'on ne saisit que des noms.
+   * Ils restent ouverts dès que le contexte s'en sert, et à un clic sinon.
+   */
+  const modeFederal = useModeFederalActif();
+  const [complementsChoisis, setComplementsChoisis] = useState(false);
+  const complementsForces = criteresFederaux || modeFederal || licencies.length > 0;
+  const complements = complementsForces || complementsChoisis;
   const fiches = new Map(licencies.filter((l) => l.licence).map((l) => [l.licence!, l]));
   const controles = new Map<string, ControleEquipe>(
     controlActif
@@ -289,6 +300,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
   const trackPaid = mise > 0;
   const bilan = bilanMises(teams, mise);
   const engagements = teams.filter((t) => !t.forfait).length;
+  const fractionnable = engagements >= 4;
 
   return (
     <div className="tab-content">
@@ -297,12 +309,16 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       {!locked && (
         <div className="export-bar no-print">
           <span className="export-bar-label">Inscrire :</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setScanning(true)}>
-            📷 Au lecteur de licences
-          </button>
-          <span className="hint">Caméra, douchette USB ou saisie du n° de licence.</span>
+          {complementsForces && (
+            <>
+              <button className="btn btn-ghost btn-sm" onClick={() => setScanning(true)}>
+                <Camera className="ic" aria-hidden /> Au lecteur de licences
+              </button>
+              <span className="hint">Caméra, douchette USB ou saisie du n° de licence.</span>
+            </>
+          )}
           <label className="btn btn-ghost btn-sm" title="Reprendre une liste d'inscrits (CSV)">
-            📥 Importer une liste (CSV)
+            <Download className="ic" aria-hidden /> Importer une liste (CSV)
             <input
               type="file"
               accept=".csv,text/csv,text/plain"
@@ -313,24 +329,33 @@ export function TeamsTab({ concours, teams, poules }: Props) {
               }}
             />
           </label>
+          {/* Ce qui ne sert pas à chaque concours : à portée, mais hors du passage. */}
+          {(!complementsForces || fractionnable) && (
+            <MenuPlus>
+              {!complementsForces && (
+                <MenuPlusItem
+                  icone={<Camera className="ic" aria-hidden />}
+                  titre="Inscrire au lecteur de licences"
+                  detail="Caméra, douchette USB ou saisie du n° de licence."
+                  onClick={() => setScanning(true)}
+                />
+              )}
+              {/* Fractionnement multisite (manuel §3.B.10.D) : avant le tirage, et
+                  seulement si l'effectif permet de donner 2 équipes à chaque site. */}
+              {fractionnable && (
+                <MenuPlusItem
+                  icone={<MapPin className="ic" aria-hidden />}
+                  titre="Fractionner en plusieurs sites"
+                  detail="Un concours par site, quand un seul boulodrome n'a pas assez de terrains."
+                  onClick={() => setMultisite(true)}
+                />
+              )}
+            </MenuPlus>
+          )}
         </div>
       )}
 
-      {bilanImport && <p className="banner-warn no-print">📥 {bilanImport}</p>}
-
-      {/* Fractionnement multisite (manuel §3.B.10.D) : avant le tirage, et
-          seulement si l'effectif permet de donner 2 équipes à chaque site. */}
-      {!locked && teams.filter((t) => !t.forfait).length >= 4 && (
-        <div className="export-bar no-print">
-          <span className="export-bar-label">Plusieurs sites :</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setMultisite(true)}>
-            🏟 Fractionner en plusieurs sites
-          </button>
-          <span className="hint">
-            Un concours par site, quand un seul boulodrome n'a pas assez de terrains.
-          </span>
-        </div>
-      )}
+      {bilanImport && <p className="banner-warn no-print"><Download className="ic" aria-hidden /> {bilanImport}</p>}
 
       {multisite && (
         <MultisiteModal concours={concours} teams={teams} onClose={() => setMultisite(false)} />
@@ -345,6 +370,8 @@ export function TeamsTab({ concours, teams, poules }: Props) {
           <div className="team-add-players">
             {Array.from({ length: nbPlayers }, (_, i) => (
               <div key={i} className="player-inputs">
+                <label className="champ champ-nom">
+                  <span>{individual ? 'Joueur' : `Joueur ${i + 1}`}</span>
                 <input
                   ref={i === 0 ? firstInput : undefined}
                   value={names[i] ?? ''}
@@ -353,26 +380,33 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                     setNames(names.map((n, j) => (j === i ? e.target.value : n)));
                     applyLicencie(i, e.target.value);
                   }}
-                  placeholder={individual ? 'Nom du joueur' : `Joueur ${i + 1}`}
+                  placeholder="Prénom Nom"
                   required={i === 0}
                 />
+                </label>
+                {complements && (
+                  <>
                 {/* Colonne « CD » de la grille fédérale, avant le n° de licence
                     comme dans le manuel. Réservée aux concours à critères
                     fédéraux : sur un concours de club, personne ne regarde le
                     comité, et la ligne de saisie est déjà chargée. */}
                 {criteresFederaux && (
+                  <label className="champ champ-cd">
+                    <span>CD</span>
                   <input
                     className="comite-input"
                     value={comites[i] ?? ''}
                     onChange={(e) =>
                       setComites(comites.map((c, j) => (j === i ? e.target.value : c)))
                     }
-                    placeholder="CD"
                     maxLength={3}
                     inputMode="numeric"
                     title="Comité départemental (manuel §3.B.1, zone 15). Prérempli depuis la licence, corrigible : un joueur peut relever d'un autre comité."
                   />
+                  </label>
                 )}
+                <label className="champ champ-licence">
+                  <span>N° de licence</span>
                 <input
                   className="licence-input"
                   value={licences[i] ?? ''}
@@ -380,15 +414,18 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                     setLicences(licences.map((l, j) => (j === i ? e.target.value : l)));
                     applyLicenceNumero(i, e.target.value);
                   }}
-                  placeholder="N° licence"
                 />
+                </label>
                 {!licences[i]?.trim() && (
+                  <span className="champ champ-pays">
+                    <span id={`pays-${i}`}>Fédération de la licence</span>
                   <span className="licence-etrangere-groupe">
                     {/* Une liste et non un code libre : le contingent hors UE se
                         calcule sur ce code, et un « SUI » tapé à la main ne
                         compterait dans aucun contrôle. */}
                     <select
                       className="licence-etrangere"
+                      aria-labelledby={`pays-${i}`}
                       value={etrangeres[i] ?? ''}
                       onChange={(e) =>
                         setEtrangeres(etrangeres.map((v, j) => (j === i ? e.target.value : v)))
@@ -408,17 +445,22 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                       onClick={() => setFicheEtrangere(i)}
                       title="Fiche de licence étrangère, conservée sur la base personnelle"
                     >
-                      🌍 Fiche
+                      <Globe className="ic" aria-hidden /> Fiche
                     </button>
                   </span>
+                  </span>
                 )}
+                <label className="champ">
+                  <span>{i === 0 ? 'Club du joueur' : 'Club du joueur (si différent)'}</span>
                 <input
                   className="club-input club-input-joueur"
                   value={clubs[i] ?? ''}
                   onChange={(e) => setClubs(clubs.map((c, j) => (j === i ? e.target.value : c)))}
-                  placeholder={i === 0 ? 'Club' : 'Club (si différent)'}
                   list="clubs-connus"
                 />
+                </label>
+                  </>
+                )}
                 {avecRoles && (
                   <select
                     className="role-select"
@@ -441,14 +483,30 @@ export function TeamsTab({ concours, teams, poules }: Props) {
               </div>
             ))}
           </div>
-          <input
-            className="club-input"
-            value={club}
-            onChange={(e) => setClub(e.target.value)}
-            placeholder="Club de l'équipe (facultatif)"
-            title="Utilisé pour les joueurs dont le club n'est pas précisé"
-            list="clubs-connus"
-          />
+          {!complementsForces && (
+            <button
+              type="button"
+              className="btn-lien champ-bascule"
+              aria-expanded={complements}
+              onClick={() => setComplementsChoisis(!complementsChoisis)}
+            >
+              {complements
+                ? 'Masquer les licences et clubs par joueur'
+                : 'Ajouter licences et clubs par joueur'}
+            </button>
+          )}
+          <label className="champ champ-club">
+            <span>
+              Club de l'équipe <small>(facultatif)</small>
+            </span>
+            <input
+              className="club-input"
+              value={club}
+              onChange={(e) => setClub(e.target.value)}
+              title="Utilisé pour les joueurs dont le club n'est pas précisé"
+              list="clubs-connus"
+            />
+          </label>
           <datalist id="clubs-connus">
             {[...new Set([
               ...teams.map((t) => t.club),
@@ -473,7 +531,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
 
       {!locked && licencies.length === 0 && teams.length === 0 && (
         <p className="hint no-print">
-          💡 Gagnez du temps : <Link to="/licencies">importez vos licenciés (CSV)</Link>{' '}
+          <Lightbulb className="ic" aria-hidden /> Gagnez du temps : <Link to="/licencies">importez vos licenciés (CSV)</Link>{' '}
           pour l'autocomplétion des noms, licences et clubs.
         </p>
       )}
@@ -490,7 +548,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
 
       {locked && modification && (
         <p className="banner-warn no-print">
-          ✎ Mode modification — vous pouvez remplacer ou ajouter un joueur. Le tirage n'est pas
+          <Pencil className="ic" aria-hidden /> Mode modification — vous pouvez remplacer ou ajouter un joueur. Le tirage n'est pas
           touché : ni les numéros de dossard, ni les places au tableau. Le contrôle des licences se
           refait à chaque changement.{' '}
           <button className="btn-lien" onClick={() => { setModification(false); setEditingId(null); }}>
@@ -505,20 +563,20 @@ export function TeamsTab({ concours, teams, poules }: Props) {
         <div className="export-bar no-print">
           <span className="export-bar-label">Imprimer :</span>
           <Link className="btn btn-ghost btn-sm" to={`/concours/${concours.id}/imprimer/inscrits`}>
-            📋 Liste des inscrits
+            <ClipboardList className="ic" aria-hidden /> Liste des inscrits
           </Link>
           <Link
             className="btn btn-ghost btn-sm"
             to={`/concours/${concours.id}/imprimer/capitaines`}
           >
-            👤 Liste des capitaines
+            <User className="ic" aria-hidden /> Liste des capitaines
           </Link>
           {trackPaid && (
             <Link
               className="btn btn-ghost btn-sm"
               to={`/concours/${concours.id}/imprimer/paiements`}
             >
-              💶 Bilan des paiements
+              <Euro className="ic" aria-hidden /> Bilan des paiements
             </Link>
           )}
           {/* Document distinct, comme à la fédération : on ne relance pas une
@@ -529,12 +587,12 @@ export function TeamsTab({ concours, teams, poules }: Props) {
               className="btn btn-ghost btn-sm"
               to={`/concours/${concours.id}/imprimer/synthese-non-paye`}
             >
-              📮 Synthèse non payé
+              <Mail className="ic" aria-hidden /> Synthèse non payé
             </Link>
           )}
           {teams.some((t) => t.forfait) && (
             <Link className="btn btn-ghost btn-sm" to={`/concours/${concours.id}/imprimer/absents`}>
-              🚫 Équipes absentes
+              <Ban className="ic" aria-hidden /> Équipes absentes
             </Link>
           )}
         </div>
@@ -542,14 +600,14 @@ export function TeamsTab({ concours, teams, poules }: Props) {
 
       {controlActif && nonConformes > 0 && (
         <p className="banner-warn no-print">
-          ⚠ {nonConformes} équipe{nonConformes > 1 ? 's' : ''} en anomalie de licence — survolez
+          <TriangleAlert className="ic" aria-hidden /> {nonConformes} équipe{nonConformes > 1 ? 's' : ''} en anomalie de licence — survolez
           le voyant de la colonne « Licences » pour le détail.
         </p>
       )}
 
       {retenues > 0 && (
         <p className="hint no-print">
-          📋 Liste spécifique : {retenues} équipe{retenues > 1 ? 's' : ''} retenue
+          <ClipboardList className="ic" aria-hidden /> Liste spécifique : {retenues} équipe{retenues > 1 ? 's' : ''} retenue
           {retenues > 1 ? 's' : ''}.{' '}
           <button
             className="btn btn-ghost btn-sm"
@@ -573,7 +631,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       {teams.length >= 8 && (
         <div className="recherche-equipe no-print">
           <label>
-            🔍 Retrouver une équipe
+            <Search className="ic" aria-hidden /> Retrouver une équipe
             <input
               type="search"
               value={recherche}
@@ -603,7 +661,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
         <thead>
           <tr>
             <th className="no-print" title="Liste spécifique (manuel §3.D.1.B.5.1)">
-              ✓
+              <Check className="ic" aria-hidden />
             </th>
             <th>N°</th>
             <th>{individual ? 'Participant' : 'Joueurs'}</th>
@@ -635,6 +693,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   <input
                     type="checkbox"
                     checked={team.retenue ?? false}
+                    aria-label={`Retenir l'équipe n°${team.number} dans la liste spécifique`}
                     title="Retenir dans la liste spécifique"
                     onChange={(e) =>
                       void updateTeam({ ...team, retenue: e.target.checked || undefined })
@@ -650,7 +709,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                       {!p.licence && p.licenceEtrangere && (
                         <em className="licence" title="Licence étrangère">
                           {' '}
-                          🌍 {p.licenceEtrangere}
+                          <Globe className="ic" aria-hidden /> {p.licenceEtrangere}
                         </em>
                       )}
                       {avecRoles && p.role && (
@@ -701,6 +760,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                   {(!locked || modification) && (
                     <button
                       className="btn-icon"
+                      aria-label={`Modifier l'équipe n°${team.number}`}
                       title={
                         locked
                           ? 'Modifier la composition (le tirage n\'est pas touché)'
@@ -708,28 +768,31 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                       }
                       onClick={() => setEditingId(team.id)}
                     >
-                      ✎
+                      <Pencil className="ic" aria-hidden />
                     </button>
                   )}
                   {!locked && (
                     <button
                       className="btn-icon"
+                      aria-label={`Insérer une équipe avant le n°${team.number}`}
                       title={`Insérer une équipe avant le n°${team.number} (les suivants décalent)`}
                       onClick={() => setInsertionAvant(team.number)}
                     >
-                      ↧
+                      <ArrowDownToLine className="ic" aria-hidden />
                     </button>
                   )}
                   <button
                     className="btn-icon"
+                    aria-label={`${team.forfait ? 'Annuler le forfait de' : 'Déclarer forfait'} l'équipe n°${team.number}`}
                     title={team.forfait ? 'Annuler le forfait' : 'Déclarer forfait'}
                     onClick={() => void updateTeam({ ...team, forfait: !team.forfait })}
                   >
-                    {team.forfait ? '↩' : 'FF'}
+                    {team.forfait ? <Undo2 className="ic" aria-hidden /> : 'FF'}
                   </button>
                   {!locked && (
                     <button
                       className="btn-icon btn-icon-danger"
+                      aria-label={`Supprimer l'équipe n°${team.number}`}
                       title="Supprimer"
                       onClick={() => {
                         if (window.confirm(`Supprimer l'équipe n°${team.number} ?`)) {
@@ -737,7 +800,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                         }
                       }}
                     >
-                      🗑
+                      <Trash2 className="ic" aria-hidden />
                     </button>
                   )}
                 </td>
@@ -772,7 +835,7 @@ export function TeamsTab({ concours, teams, poules }: Props) {
 
       {trackPaid && engagements > 0 && (
         <p className="caisse-summary">
-          💰 Caisse : <strong>{bilan.parEtat.paye}/{engagements}</strong> engagement
+          <Coins className="ic" aria-hidden /> Caisse : <strong>{bilan.parEtat.paye}/{engagements}</strong> engagement
           {engagements > 1 ? 's' : ''} réglé{bilan.parEtat.paye > 1 ? 's' : ''} ·{' '}
           <strong>{bilan.encaisse.toLocaleString('fr-FR')} €</strong> encaissés
           {/* Les trois montants restent séparés : mélanger la facturation à
@@ -900,7 +963,7 @@ function ControleBadge({ controle }: { controle?: ControleEquipe }) {
   if (controle.conforme) {
     return (
       <span className="tag tag-ok" title="Licences conformes aux critères du concours">
-        ✓
+        <Check className="ic" aria-hidden />
       </span>
     );
   }
@@ -913,7 +976,7 @@ function ControleBadge({ controle }: { controle?: ControleEquipe }) {
   const texte = [...motifs].join(', ');
   return (
     <span className="tag tag-danger" title={texte}>
-      ⚠ {texte}
+      <TriangleAlert className="ic" aria-hidden /> {texte}
     </span>
   );
 }
@@ -1018,7 +1081,7 @@ function TeamEditRow({
           OK
         </button>
         <button className="btn btn-ghost btn-sm" onClick={onDone}>
-          ✕
+          <X className="ic" aria-hidden />
         </button>
       </td>
     </tr>

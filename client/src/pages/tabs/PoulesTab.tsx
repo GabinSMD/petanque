@@ -1,3 +1,5 @@
+import { MenuPlus, MenuPlusItem } from '../../components/MenuPlus';
+import { AlarmClock, Dices, LayoutGrid, Pause, Printer, Search, Shield, Ticket, Timer, Undo2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
@@ -176,7 +178,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
               onClick={() => setGroupesOuverts(true)}
               title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
             >
-              🛡 Groupes de protection
+              <Shield className="ic" aria-hidden /> Groupes de protection
               {concours.protections?.length ? ` (${concours.protections.length})` : ''}
             </button>
           )}
@@ -201,7 +203,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             disabled={!summary || busy}
             onClick={() => avecControle(() => void doDraw())}
           >
-            🎲 Tirer les poules
+            <Dices className="ic" aria-hidden /> Tirer les poules
           </button>
           {bilanOuvert && bilan && (
             <BilanTirageModal
@@ -240,7 +242,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
                   void updateConcours({ ...concours, tirageDiffere: e.target.checked || undefined })
                 }
               />
-              ⏸ Tirage à la reprise
+              <Pause className="ic" aria-hidden /> Tirage à la reprise
             </label>
           )}
           {enAttente > 0 && (
@@ -249,7 +251,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
               disabled={busy}
               onClick={() => void doPlacer()}
             >
-              🎲 Placer {enAttente} qualifié{enAttente > 1 ? 's' : ''}
+              <Dices className="ic" aria-hidden /> Placer {enAttente} qualifié{enAttente > 1 ? 's' : ''}
             </button>
           )}
           {poules.length > 4 && (
@@ -277,7 +279,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             target="_blank"
             rel="noreferrer"
           >
-            🖨 Feuilles de poules
+            <Printer className="ic" aria-hidden /> Feuilles de poules
           </a>
           <a
             className="btn btn-ghost btn-sm"
@@ -285,15 +287,24 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             target="_blank"
             rel="noreferrer"
           >
-            🎫 Tickets de parties
+            <Ticket className="ic" aria-hidden /> Tickets de parties
           </a>
           {concours.status === 'poules' && (
             <>
-              <button className="btn btn-ghost btn-sm" onClick={() => void doCancel()}>
-                Annuler le tirage
-              </button>
+              <MenuPlus>
+                <MenuPlusItem
+                  danger
+                  icone={<Undo2 className="ic" aria-hidden />}
+                  titre="Annuler le tirage"
+                  detail="Revient aux inscriptions. Tous les scores de poules, et le tableau s'il existe, sont supprimés."
+                  onClick={() => void doCancel()}
+                />
+              </MenuPlus>
+              {/* Bouton principal seulement quand c'est la prochaine action : tant
+                  que des poules se jouent, il ne dispute pas la place à « Placer
+                  les qualifiés ». */}
               <button
-                className="btn btn-primary"
+                className={allComplete ? 'btn btn-primary' : 'btn'}
                 disabled={!allComplete || busy}
                 title={
                   allComplete
@@ -310,12 +321,6 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
               </button>
             </>
           )}
-          {concours.status === 'poules' && (
-            <span className="hint">
-              Les qualifiés entrent au tableau au fil des poules : l'onglet Tableau se remplit
-              sans attendre la dernière.
-            </span>
-          )}
           {scoresLocked && (
             <span className="hint">
               Poules clôturées : annulez le tableau pour les corriger.
@@ -329,7 +334,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
       {stats.length > 0 && concours.status === 'poules' && (
         <details className="stats-poules no-print" open={stats.length <= 6}>
           <summary>
-            🔍 {stats.length} poule{stats.length > 1 ? 's' : ''} en cours
+            <Search className="ic" aria-hidden /> {stats.length} poule{stats.length > 1 ? 's' : ''} en cours
             {stats.some((s) => s.barragePret) && (
               <span className="tag tag-warn">
                 {stats.filter((s) => s.barragePret).length} barrage
@@ -404,7 +409,7 @@ function MatchRetard({ match, locked }: { match: Match; locked: boolean }) {
   return (
     <span className="pmatch-annonce">
       <span className="terrain-heure" title="Heure d'annonce de la partie">
-        ⏱ {heure}
+        <Timer className="ic" aria-hidden /> {heure}
       </span>
       {!locked && !match.done && (
         <button
@@ -416,7 +421,7 @@ function MatchRetard({ match, locked }: { match: Match; locked: boolean }) {
           }
           onClick={() => void setMatchRetard(match, !match.retard)}
         >
-          ⏰
+          <AlarmClock className="ic" aria-hidden />
         </button>
       )}
     </span>
@@ -440,7 +445,7 @@ function PouleMatchTerrain({
   // Clôturé : affichage seul (pas de modification).
   if (locked) {
     return match.terrain != null ? (
-      <span className="pmatch-terrain pmatch-terrain-set">🟦 Terrain {terrain(match.terrain!)}</span>
+      <span className="pmatch-terrain pmatch-terrain-set"><LayoutGrid className="ic" aria-hidden /> Terrain {terrain(match.terrain!)}</span>
     ) : null;
   }
 

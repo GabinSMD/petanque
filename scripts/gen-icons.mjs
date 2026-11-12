@@ -1,129 +1,56 @@
 /**
- * Génère les icônes PWA (PNG) sans dépendance : une boule de pétanque
- * et son cochonnet sur fond vert. Usage : node scripts/gen-icons.mjs
+ * Génère les icônes de l'application installée (PNG) à partir du tracé de la
+ * marque, `client/public/favicon.svg` — lui-même tiré du visuel validé
+ * (`client/src/assets/marque/treizero-icone.svg`).
+ *
+ * Usage : node scripts/gen-icons.mjs
+ *
+ * Le rendu passe par un navigateur : il faut Playwright et son Chromium
+ * (`npx playwright install chromium`). Ce n'est pas une dépendance du projet,
+ * les icônes ne se régénèrent que lorsque le logo change.
  */
-import { deflateSync } from 'node:zlib';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'client', 'public');
-mkdirSync(outDir, { recursive: true });
 
-/* ----------------------------- Encodeur PNG ----------------------------- */
-
-const CRC_TABLE = new Int32Array(256).map((_, n) => {
-  let c = n;
-  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-  return c;
-});
-
-function crc32(buf) {
-  let c = -1;
-  for (const byte of buf) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8);
-  return (c ^ -1) >>> 0;
+let chromium;
+try {
+  ({ chromium } = createRequire(import.meta.url)('playwright'));
+} catch {
+  console.error('Playwright est introuvable : npx playwright install chromium, puis relancer.');
+  process.exit(1);
 }
 
-function chunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(body));
-  return Buffer.concat([len, body, crc]);
-}
-
-function encodePng(size, pixels) {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; // profondeur
-  ihdr[9] = 6; // RGBA
-  const raw = Buffer.alloc(size * (size * 4 + 1));
-  for (let y = 0; y < size; y++) {
-    raw[y * (size * 4 + 1)] = 0; // filtre « aucun »
-    pixels.copy(raw, y * (size * 4 + 1) + 1, y * size * 4, (y + 1) * size * 4);
-  }
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw, { level: 9 })),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
-
-/* ------------------------------- Dessin -------------------------------- */
-
-const hex = (h) => [
-  parseInt(h.slice(1, 3), 16),
-  parseInt(h.slice(3, 5), 16),
-  parseInt(h.slice(5, 7), 16),
-];
-
-const BG = hex('#1d3d9c');
-const STEEL = hex('#d8dde2');
-const STEEL_DARK = hex('#8b969f');
-const RIM = hex('#4a545e');
-const COCHONNET = hex('#d21c34');
-const COCHONNET_RIM = hex('#7c1220');
+const svg = readFileSync(join(outDir, 'favicon.svg'), 'utf8');
 
 /**
- * Dessine la boule + cochonnet sur fond fédéral.
- * `scale` recentre le motif (icône « maskable » : le contenu tient dans la
- * zone de sécurité circulaire de ~80% qu'Android peut rogner).
+ * `part` : place que prend le dessin dans le carré.
+ * - « any » : le système n'y touche pas, le dessin peut respirer large ;
+ * - « maskable » : Android découpe un cercle d'environ 80 % — le but, posé en
+ *   bas à droite de la boule, doit rester dedans ;
+ * - Apple : iOS arrondit les coins lui-même.
  */
-function draw(size, scale = 1) {
-  const px = Buffer.alloc(size * size * 4);
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = size * 0.33 * scale;
-  // Cochonnet décalé du centre, décalage lui aussi mis à l'échelle.
-  const jx = cx + size * 0.22 * scale;
-  const jy = cy + size * 0.23 * scale;
-  const jr = size * 0.1 * scale;
+const ICONES = [
+  ['pwa-192.png', 192, 0.8],
+  ['pwa-512.png', 512, 0.8],
+  ['maskable-192.png', 192, 0.58],
+  ['maskable-512.png', 512, 0.58],
+  ['apple-touch-icon.png', 180, 0.74],
+];
 
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      let color = BG;
-      const db = Math.hypot(x - cx, y - cy);
-      const dj = Math.hypot(x - jx, y - jy);
-
-      if (db <= r) {
-        // Boule acier, éclairée en haut à gauche.
-        const light = Math.hypot(x - (cx - r * 0.45), y - (cy - r * 0.45)) / (2 * r);
-        const t = Math.min(1, light);
-        color = STEEL.map((c, i) => Math.round(c + (STEEL_DARK[i] - c) * t));
-        // Stries horizontales.
-        const dy = Math.abs(y - cy);
-        const band = size * 0.115 * scale;
-        if (Math.abs(dy - band) < size * 0.014 * scale) color = RIM;
-        // Liseré.
-        if (db >= r - size * 0.02 * scale) color = RIM;
-      }
-      if (dj <= jr) {
-        color = dj >= jr - size * 0.018 * scale ? COCHONNET_RIM : COCHONNET;
-      }
-
-      const o = (y * size + x) * 4;
-      px[o] = color[0];
-      px[o + 1] = color[1];
-      px[o + 2] = color[2];
-      px[o + 3] = 255;
-    }
-  }
-  return px;
+const navigateur = await chromium.launch();
+const page = await navigateur.newPage();
+for (const [nom, taille, part] of ICONES) {
+  await page.setViewportSize({ width: taille, height: taille });
+  await page.setContent(
+    `<body style="margin:0;background:#fff;display:grid;place-items:center;height:100vh">
+       <div style="width:${part * 100}%;line-height:0">${svg}</div>
+     </body>`,
+  );
+  writeFileSync(join(outDir, nom), await page.screenshot({ type: 'png' }));
+  console.log(`✔ ${nom}`);
 }
-
-const write = (name, size, scale) => {
-  const file = join(outDir, name);
-  writeFileSync(file, encodePng(size, draw(size, scale)));
-  console.log(`✔ ${file}`);
-};
-
-// Icônes « any » (plein cadre) et « maskable » (motif recentré à 72%).
-write('pwa-192.png', 192, 1);
-write('pwa-512.png', 512, 1);
-write('maskable-192.png', 192, 0.72);
-write('maskable-512.png', 512, 0.72);
-// Icône Apple (opaque, coins arrondis par iOS lui-même).
-write('apple-touch-icon.png', 180, 1);
+await navigateur.close();
