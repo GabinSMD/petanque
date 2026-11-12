@@ -15,6 +15,7 @@ import {
   isTirMode,
   suggestedName,
 } from '../lib/labels';
+import { getDefautsConcours, retenirDefautsConcours } from '../lib/defautsConcours';
 
 interface Props {
   onSubmit: (input: ConcoursInput) => void | Promise<void>;
@@ -43,18 +44,20 @@ const FORMAT_JOUEURS: Record<TeamFormat, number> = {
  */
 export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const today = new Date().toISOString().slice(0, 10);
+  // Le dernier concours créé ici fournit le point de départ du suivant.
+  const [depart] = useState(getDefautsConcours);
   const [step, setStep] = useState(0);
   const [mode, setMode] = useState<ConcoursMode | null>(null);
   const [format, setFormat] = useState<TeamFormat | null>(null);
   const [name, setName] = useState('');
   const [nameTouched, setNameTouched] = useState(false);
   const [date, setDate] = useState(today);
-  const [lieu, setLieu] = useState('');
+  const [lieu, setLieu] = useState(depart.lieu ?? '');
   const [category, setCategory] = useState('');
   const [discipline, setDiscipline] = useState<Discipline>('petanque');
-  const [nbTerrains, setNbTerrains] = useState(8);
-  const [planTerrains, setPlanTerrains] = useState(true);
-  const [scoreMax, setScoreMax] = useState(13);
+  const [nbTerrains, setNbTerrains] = useState(depart.nbTerrains);
+  const [planTerrains, setPlanTerrains] = useState(depart.planTerrains);
+  const [scoreMax, setScoreMax] = useState(depart.scoreMax);
   const [nbRondes, setNbRondes] = useState(4);
   /**
    * Bornes du nombre de parties (§3.D.14). L'appariement strict ne se choisit pas
@@ -65,8 +68,8 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   // Marathon : championnat tronqué. Vide = calendrier complet.
   const [marathonRondes, setMarathonRondes] = useState<number | ''>('');
   const [tempsLimite, setTempsLimite] = useState<number | ''>('');
-  const [miseParJoueur, setMiseParJoueur] = useState<number | ''>('');
-  const [consolante, setConsolante] = useState(true);
+  const [miseParJoueur, setMiseParJoueur] = useState<number | ''>(depart.miseParJoueur ?? '');
+  const [consolante, setConsolante] = useState(depart.consolante);
 
   // Ce qui ne va pas dans la mise, en clair. Vide = champ facultatif non rempli.
   const raisonMise = miseParJoueur === '' ? undefined : raisonRefusMise(Number(miseParJoueur));
@@ -93,6 +96,18 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!mode || !format) return;
+    // Retenues avant l'envoi : un échec d'enregistrement ne doit pas faire
+    // perdre ce que l'organisateur vient de régler. La consolante n'est
+    // retenue que là où la formule la propose — sinon un concours en mêlée
+    // l'éteindrait pour le tableau suivant.
+    retenirDefautsConcours({
+      nbTerrains,
+      scoreMax,
+      planTerrains,
+      consolante: MODE_INFO[mode].consolante ? consolante : depart.consolante,
+      lieu: lieu.trim() || undefined,
+      miseParJoueur: miseParJoueur === '' || raisonMise ? undefined : Number(miseParJoueur),
+    });
     void onSubmit({
       name: name.trim() || suggestedName(mode, format, date),
       date,
