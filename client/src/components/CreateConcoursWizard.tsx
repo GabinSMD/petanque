@@ -111,7 +111,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       nbTerrains,
       scoreMax,
       planTerrains,
-      consolante: MODE_INFO[mode].consolante ? consolante : depart.consolante,
+      consolante: accepteConsolante(mode) ? consolante : depart.consolante,
       lieu: lieu.trim() || undefined,
       miseParJoueur: miseParJoueur === '' || raisonMise ? undefined : Number(miseParJoueur),
     });
