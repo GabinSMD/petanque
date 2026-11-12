@@ -130,6 +130,7 @@ export interface ConcoursInput {
   critereSexe?: CritereSexe;
   critereClassification?: CritereClassification;
   homogene?: boolean;
+  criteresFrance?: boolean;
   scoreMax: number;
   nbTerrains: number;
   nbRondes?: number;

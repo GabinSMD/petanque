@@ -274,6 +274,13 @@ export interface Concours {
   /** Équipes homogènes exigées (tous les joueurs du même club). */
   homogene?: boolean;
   /**
+   * « Critères France » (manuel §3.C) : un seul joueur étranger hors UE et un
+   * seul joueur en mutation externe par équipe. Proposé d'office pour un
+   * championnat ; l'homogénéité club reste la case voisine, que les
+   * championnats jeunes n'exigent pas.
+   */
+  criteresFrance?: boolean;
+  /**
    * Groupes de clubs protégés ensemble au tirage (manuel §3.B.5, niveau 2) :
    * deux clubs d'un même village, une entente… La protection club — niveau 1 —
    * s'applique de toute façon.
