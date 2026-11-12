@@ -1,3 +1,4 @@
+import { Pause, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface Props {
@@ -120,7 +121,7 @@ export function RoundTimer({ concoursId, minutes }: Props) {
       <span className="timer-controls no-print">
         {running ? (
           <button type="button" className="btn btn-ghost btn-sm" onClick={pause}>
-            ⏸ Pause
+            <Pause className="ic" aria-hidden /> Pause
           </button>
         ) : (
           <button type="button" className="btn btn-primary btn-sm" onClick={start}>
@@ -128,7 +129,7 @@ export function RoundTimer({ concoursId, minutes }: Props) {
           </button>
         )}
         <button type="button" className="btn btn-ghost btn-sm" onClick={reset} title="Remettre à zéro">
-          ↺
+          <RotateCcw className="ic" aria-hidden />
         </button>
       </span>
     </div>

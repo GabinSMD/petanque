@@ -1,3 +1,4 @@
+import { Printer } from 'lucide-react';
 import type { BilanAvantTirage } from '@shared';
 import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../lib/labels';
 import { BesoinTerrainsHint } from './BesoinTerrains';
@@ -88,7 +89,7 @@ export function BilanTirageModal({ bilan, concoursId, onTirer, onCorriger }: Pro
           target="_blank"
           rel="noreferrer"
         >
-          🖨 Imprimer le bilan
+          <Printer className="ic" aria-hidden /> Imprimer le bilan
         </a>
         <button className="btn btn-ghost" onClick={onCorriger}>
           ← Corriger d'abord

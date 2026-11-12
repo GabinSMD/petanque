@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import qrcode from 'qrcode-generator';
 import type { Concours } from '@shared';
@@ -83,7 +84,7 @@ export function ShareModal({ concours, onClose }: Props) {
   };
 
   return (
-    <Modal title="🔗 Partager les résultats" onClose={onClose}>
+    <Modal title="Partager les résultats" onClose={onClose}>
       {/* La bannière habille la page publiée : sa place est ici, avec le lien, et
           non sous les photos du podium — l'onglet Résultats ne s'affiche pas
           avant la première partie, si bien qu'un club n'aurait pas pu poser son
@@ -114,7 +115,7 @@ export function ShareModal({ concours, onClose }: Props) {
               <div className="share-url">
                 <input readOnly value={url} onFocus={(e) => e.target.select()} />
                 <button className="btn btn-primary btn-sm" onClick={() => void copy()}>
-                  {copied ? '✓ Copié' : 'Copier'}
+                  {copied ? <><Check className="ic" aria-hidden /> {'Copié'}</> : 'Copier'}
                 </button>
               </div>
               {qrSvg && (

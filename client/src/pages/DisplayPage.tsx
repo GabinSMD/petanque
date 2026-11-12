@@ -1,3 +1,4 @@
+import { Check, Maximize, Trophy } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Concours, Match, Poule, Team } from '@shared';
@@ -67,7 +68,7 @@ export function DisplayPage() {
               void document.documentElement.requestFullscreen?.();
             }}
           >
-            ⛶ Plein écran
+            <Maximize className="ic" aria-hidden /> Plein écran
           </button>
           <Link className="btn btn-ghost btn-sm" to={`/concours/${concours.id}`}>
             ← Gestion
@@ -77,7 +78,7 @@ export function DisplayPage() {
 
       {championTeam && (
         <div className="champion-banner display-champion">
-          🏆 Vainqueur : n°{championTeam.number} {teamDisplayName(championTeam)}
+          <Trophy className="ic" aria-hidden /> Vainqueur : n°{championTeam.number} {teamDisplayName(championTeam)}
         </div>
       )}
 
@@ -230,7 +231,7 @@ function DisplayPoules({
             <h3>
               Poule {poule.index}
               {poule.terrain ? ` — T${terrain(poule.terrain)}` : ''}
-              {outcome.complete && ' ✔'}
+              {outcome.complete && <>{''} <Check className="ic" aria-hidden /></>}
             </h3>
             <ul>
               {pm.map((m) => {

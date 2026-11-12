@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Team } from '@shared';
 import { updateConcours } from '../db/actions';
@@ -77,7 +78,7 @@ export function ProtectionsModal({ concours, teams, onClose }: Props) {
   };
 
   return (
-    <Modal title="🛡 Groupes de protection" onClose={onClose}>
+    <Modal title="Groupes de protection" onClose={onClose}>
       <div className="protections-modal">
         <p className="hint">
           Deux équipes d'un <strong>même club</strong> sont déjà séparées au tirage. Ajoutez ici les
@@ -149,7 +150,7 @@ export function ProtectionsModal({ concours, teams, onClose }: Props) {
                             title="Retirer du groupe"
                             onClick={() => retirer(i, club)}
                           >
-                            ✕
+                            <X className="ic" aria-hidden />
                           </button>
                         </li>
                       ))}

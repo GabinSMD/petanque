@@ -42,7 +42,7 @@ export const FAQ: FaqEntry[] = [
       'Étape 1 — choisissez la formule : chaque carte explique en une phrase à qui elle s\'adresse (poules, élimination directe, mêlée, suisse, championnat).',
       'Étape 2 — choisissez la formation : tête-à-tête, doublette ou triplette.',
       'Étape 3 — le nom est proposé automatiquement ; ajustez date, lieu, terrains, points, rondes ou consolante selon la formule.',
-      'Validez avec « Créer le concours 🎉 ».',
+      'Validez avec « Créer le concours ».',
     ],
     action: { label: 'Aller au tableau de bord', path: '/' },
   },
@@ -53,11 +53,11 @@ export const FAQ: FaqEntry[] = [
     keywords: ['formule', 'choisir', 'quelle', 'mode', 'type', 'difference', 'conseil', 'laquelle'],
     intro: 'Un repère rapide :',
     steps: [
-      '🎯 Poules puis élimination : le classique des concours officiels — équitable, 2 à 5 parties par équipe.',
-      '⚡ Élimination directe : le plus rapide — qui perd sort (ajoutez la consolante pour faire rejouer les perdants du 1er tour).',
-      '🎲 Mêlée tournante : convivial en club — chacun s\'inscrit seul, les équipes changent à chaque ronde, classement individuel.',
-      '⚖️ Système suisse : personne n\'est éliminé, tout le monde joue le même nombre de parties (souvent 4 ou 5).',
-      '🏅 Championnat : chacun rencontre chacun — parfait jusqu\'à 8 équipes environ.',
+      'Poules puis élimination : le classique des concours officiels — équitable, 2 à 5 parties par équipe.',
+      'Élimination directe : le plus rapide — qui perd sort (ajoutez la consolante pour faire rejouer les perdants du 1er tour).',
+      'Mêlée tournante : convivial en club — chacun s\'inscrit seul, les équipes changent à chaque ronde, classement individuel.',
+      'Système suisse : personne n\'est éliminé, tout le monde joue le même nombre de parties (souvent 4 ou 5).',
+      'Championnat : chacun rencontre chacun — parfait jusqu\'à 8 équipes environ.',
     ],
   },
   {
@@ -70,7 +70,7 @@ export const FAQ: FaqEntry[] = [
     steps: [
       'Créez un concours en choisissant « Mêlée tournante », puis la taille des équipes tirées (doublettes en général).',
       'Onglet « Participants » : inscrivez chaque joueur individuellement.',
-      'Onglet « Rondes » : « 🎲 Tirer la ronde 1 » — les équipes s\'affichent, saisissez les scores.',
+      'Onglet « Rondes » : « Tirer la ronde 1 » — les équipes s\'affichent, saisissez les scores.',
       'Quand la ronde est complète, tirez la suivante : nouvelles équipes tirées au sort.',
       'Le classement individuel se met à jour en direct ; clôturez après la dernière ronde.',
     ],
@@ -108,9 +108,9 @@ export const FAQ: FaqEntry[] = [
     keywords: ['preinscription', 'pre inscription', 'inscription en ligne', 'formulaire', 'engagement', 'avant', 'valider'],
     intro: 'Les équipes peuvent s\'inscrire elles-mêmes avant le jour J :',
     steps: [
-      'Tant que le concours est en « Inscriptions », partagez le lien public (🔗 Partager) — QR code / lien.',
-      'Sur ce lien, les équipes remplissent « ✍️ Je m\'inscris » (noms, licences, club).',
-      'À la table de marque, onglet « Équipes » : le panneau « Pré-inscriptions en ligne » liste les demandes — « ✓ Valider » crée l\'équipe, « Refuser » l\'écarte.',
+      'Tant que le concours est en « Inscriptions », partagez le lien public (Partager) — QR code / lien.',
+      'Sur ce lien, les équipes remplissent « Je m\'inscris » (noms, licences, club).',
+      'À la table de marque, onglet « Équipes » : le panneau « Pré-inscriptions en ligne » liste les demandes — « Valider » crée l\'équipe, « Refuser » l\'écarte.',
     ],
     note: 'Gain de temps à l\'accueil : les équipes arrivent déjà saisies, vous n\'avez qu\'à valider.',
   },
@@ -120,7 +120,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Plusieurs concours le même jour / catégories',
     keywords: ['journee', 'categorie', 'seniors', 'veterans', 'feminines', 'jeunes', 'plusieurs concours', 'meme jour', 'groupe'],
     steps: [
-      'À la création (ou dans ⚙ Paramètres), renseignez la catégorie (Seniors, Vétérans, Féminines, Jeunes…).',
+      'À la création (ou dans Paramètres), renseignez la catégorie (Seniors, Vétérans, Féminines, Jeunes…).',
       'Le tableau de bord regroupe automatiquement les concours par journée (date).',
       'Les puces en haut filtrent par catégorie.',
     ],
@@ -130,10 +130,10 @@ export const FAQ: FaqEntry[] = [
     category: 'Poules',
     question: 'Comment gérer le plan des terrains ?',
     keywords: ['terrain', 'plan', 'plateau', 'libre', 'occupe', 'affecter', 'affectation', 'auto', 'jeu'],
-    intro: 'L\'onglet « 🟦 Terrains » montre le plateau en direct :',
+    intro: 'L\'onglet « Terrains » montre le plateau en direct :',
     steps: [
       'Chaque terrain apparaît libre ou occupé (avec la partie en cours).',
-      '« 🎯 Affecter automatiquement » place les parties en attente sur les terrains libres ; vous pouvez aussi cliquer « T3 » sur une partie pour l\'affecter à la main.',
+      '« Affecter automatiquement » place les parties en attente sur les terrains libres ; vous pouvez aussi cliquer « T3 » sur une partie pour l\'affecter à la main.',
       'Un terrain se libère tout seul dès que le score de sa partie est saisi.',
     ],
   },
@@ -161,7 +161,7 @@ export const FAQ: FaqEntry[] = [
       'Cliquez sur « Inscrire » : l\'équipe reçoit automatiquement son numéro de dossard.',
       'Répétez pour chaque équipe — le pied de page indique la répartition en poules prévue.',
     ],
-    note: 'Les inscriptions se verrouillent après le tirage. Utilisez « Annuler le tirage » pour les rouvrir.',
+    note: 'Les inscriptions se verrouillent après le tirage. Pour les rouvrir : menu « Plus » de l\'onglet Poules, puis « Annuler le tirage ».',
     action: { label: 'Ouvrir l\'onglet Équipes', path: '/concours/:id/equipes', needsConcours: true },
   },
   {
@@ -170,9 +170,9 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment modifier ou supprimer une équipe ?',
     keywords: ['modifier', 'supprimer', 'renommer', 'equipe', 'erreur', 'faute', 'orthographe'],
     steps: [
-      'Onglet « Équipes », sur la ligne de l\'équipe : cliquez sur ✎ pour corriger les noms, licences ou le club.',
+      'Onglet « Équipes », sur la ligne de l\'équipe : cliquez sur le crayon pour corriger les noms, licences ou le club.',
       'Validez avec « OK ».',
-      'Pour supprimer : cliquez sur 🗑 (possible uniquement avant le tirage).',
+      'Pour supprimer : cliquez sur la corbeille (possible uniquement avant le tirage).',
     ],
   },
   {
@@ -185,7 +185,7 @@ export const FAQ: FaqEntry[] = [
     steps: [
       'Effectifs possibles : 4, puis 6 et plus (5 équipes ne se répartissent pas).',
       'Le pied de l\'onglet « Équipes » affiche en direct la répartition prévue.',
-      'Si l\'effectif est incompatible, inscrivez une équipe de plus ou passez en élimination directe (⚙ Paramètres).',
+      'Si l\'effectif est incompatible, inscrivez une équipe de plus ou passez en élimination directe (Paramètres).',
     ],
   },
 
@@ -199,10 +199,10 @@ export const FAQ: FaqEntry[] = [
     steps: [
       'Ouvrez l\'onglet « Poules ».',
       'Cochez si besoin « Éviter deux équipes du même club dans une poule ».',
-      'Cliquez sur « 🎲 Tirer les poules ».',
+      'Cliquez sur « Tirer les poules ».',
       'Chaque poule reçoit un terrain par défaut pour ses premières parties — modifiable sur chaque partie.',
     ],
-    note: 'Un tirage peut être annulé tant que le concours n\'est pas terminé : bouton « Annuler le tirage » (les scores de poules sont alors effacés).',
+    note: 'Un tirage peut être annulé tant que le concours n\'est pas terminé : menu « Plus » de l\'onglet Poules, puis « Annuler le tirage » (les scores de poules sont alors effacés).',
     action: { label: 'Ouvrir l\'onglet Poules', path: '/concours/:id/poules', needsConcours: true },
   },
   {
@@ -240,7 +240,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Saisir un score vite quand il y a beaucoup d\'équipes',
     keywords: ['rapide', 'vite', 'nombreux', 'beaucoup', 'numero', 'dossard', 'chercher', 'trouver', '64'],
     intro:
-      'La barre « ⚡ Saisie rapide » en haut du concours évite de chercher dans les poules :',
+      'La barre « Saisie rapide » en haut du concours évite de chercher dans les poules :',
     steps: [
       'Tapez le numéro de dossard de l\'équipe qui vient de finir (ex. 47).',
       'Sa partie en cours s\'affiche aussitôt, avec les deux équipes : saisissez le score et « OK ».',
@@ -266,8 +266,8 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment corriger ou effacer un score ?',
     keywords: ['corriger', 'correction', 'effacer', 'erreur', 'score', 'tromper', 'modifier', 'annuler'],
     steps: [
-      'Sur la partie concernée, cliquez sur ✎ (« Corriger le score »).',
-      'Saisissez le bon score puis « OK » — ou cliquez sur 🗑 pour effacer complètement.',
+      'Sur la partie concernée, cliquez sur le crayon (« Corriger le score »).',
+      'Saisissez le bon score puis « OK » — ou cliquez sur la corbeille pour effacer complètement.',
       'Tout ce qui dépendait de cette partie (partie des gagnants, barrage, tour suivant du tableau…) est réinitialisé automatiquement et proprement.',
     ],
     note: 'Après génération du tableau, les scores de poules sont verrouillés : annulez d\'abord le tableau (onglet « Tableau ») pour les corriger.',
@@ -330,7 +330,7 @@ export const FAQ: FaqEntry[] = [
     keywords: ['consolante', 'repechage', 'elimines', 'perdants', 'deuxieme', 'tableau b'],
     intro: 'La consolante offre un second tableau aux éliminés :',
     steps: [
-      'Activez « Consolante » à la création du concours (ou dans ⚙ Paramètres avant le tableau).',
+      'Activez « Consolante » à la création du concours (ou dans Paramètres avant le tableau).',
       'Formule poules : les éliminés des poules entrent en consolante, générée en même temps que le tableau principal.',
       'Élimination directe : les perdants du 1er tour y entrent au fil des résultats (places « Perdant P1, P2… »).',
       'Dans l\'onglet « Tableau », basculez entre « Concours principal » et « Consolante ».',
@@ -343,7 +343,7 @@ export const FAQ: FaqEntry[] = [
     keywords: ['elimination', 'directe', 'sans poule', 'coupe', 'knockout'],
     steps: [
       'À la création du concours, choisissez la formule « Élimination directe ».',
-      'Inscrivez les équipes (2 minimum), puis onglet « Tableau » → « 🎲 Tirer le tableau ».',
+      'Inscrivez les équipes (2 minimum), puis onglet « Tableau » → « Tirer le tableau ».',
       'L\'option « éviter deux équipes du même club au premier tour » est disponible au tirage.',
     ],
   },
@@ -353,7 +353,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment clôturer ou rouvrir un concours ?',
     keywords: ['cloturer', 'terminer', 'finir', 'rouvrir', 'fin', 'palmares'],
     steps: [
-      'Quand la finale est jouée, un bandeau « 🏆 Vainqueur » apparaît dans l\'onglet « Tableau ».',
+      'Quand la finale est jouée, un bandeau « Vainqueur » apparaît dans l\'onglet « Tableau ».',
       'Cliquez sur « Clôturer le concours » : les saisies sont verrouillées et le concours passe en « Terminé ».',
       'Besoin d\'une correction ? « Rouvrir le concours » au même endroit.',
     ],
@@ -367,8 +367,8 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment afficher les résultats sur une TV ?',
     keywords: ['affichage', 'tv', 'ecran', 'videoprojecteur', 'public', 'projeter', 'television'],
     steps: [
-      'Dans le concours, cliquez sur « 📺 Affichage » (ouvre un nouvel onglet).',
-      'Mettez cet onglet en plein écran (bouton « ⛶ Plein écran ») sur la TV ou le vidéoprojecteur.',
+      'Dans le concours, cliquez sur « Affichage » (ouvre un nouvel onglet).',
+      'Mettez cet onglet en plein écran (bouton « Plein écran ») sur la TV ou le vidéoprojecteur.',
       'La page se met à jour toute seule à chaque saisie : poules, tableaux, vainqueur.',
     ],
     action: { label: 'Ouvrir l\'affichage', path: '/concours/:id/affichage', needsConcours: true },
@@ -381,7 +381,7 @@ export const FAQ: FaqEntry[] = [
     keywords: ['imprimer', 'impression', 'papier', 'feuille', 'pdf'],
     steps: [
       'Affichez l\'onglet à imprimer (Équipes, Poules, Tableau ou Résultats).',
-      'Cliquez sur « 🖨 Imprimer » : la mise en page d\'impression retire boutons et menus.',
+      'Cliquez sur « Imprimer » : la mise en page d\'impression retire boutons et menus.',
       'Astuce : choisissez « Enregistrer en PDF » dans la boîte d\'impression pour un fichier.',
     ],
   },
@@ -394,7 +394,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment partager les résultats avec les joueurs ?',
     keywords: ['partager', 'lien', 'public', 'qr', 'telephone', 'spectateur', 'suivre'],
     steps: [
-      'Dans le concours, cliquez sur « 🔗 Partager » puis « Créer le lien public ».',
+      'Dans le concours, cliquez sur « Partager » puis « Créer le lien public ».',
       'Copiez le lien (ou affichez/imprimez le QR code au boulodrome).',
       'Les joueurs l\'ouvrent sur leur téléphone : poules, tableaux et classements se mettent à jour en direct, sans compte.',
       'Le lien est révocable à tout moment depuis la même fenêtre.',
@@ -408,8 +408,8 @@ export const FAQ: FaqEntry[] = [
     keywords: ['je joue', 'je consulte', 'parcours', 'qr', 'public', 'mode', 'joueur', 'spectateur'],
     intro: 'À l\'ouverture du lien public, deux choix :',
     steps: [
-      '🎯 « Je joue » : saisissez votre numéro d\'équipe — vous ne voyez que ce qui vous concerne (votre partie, la déclaration de votre score, vos notifications).',
-      '📺 « Je consulte » : l\'affichage complet (poules, tableaux, classements) en direct.',
+      '« Je joue » : saisissez votre numéro d\'équipe — vous ne voyez que ce qui vous concerne (votre partie, la déclaration de votre score, vos notifications).',
+      '« Je consulte » : l\'affichage complet (poules, tableaux, classements) en direct.',
       'On bascule d\'un mode à l\'autre à tout moment via les onglets en haut ; le choix est mémorisé sur le téléphone.',
     ],
   },
@@ -421,8 +421,8 @@ export const FAQ: FaqEntry[] = [
     intro:
       'Les équipes peuvent être notifiées sur leur téléphone (barrage, tour suivant…) sans surveiller l\'écran ni venir à la table.',
     steps: [
-      'Partagez le lien public (🔗 Partager) — QR code au boulodrome.',
-      'Le joueur ouvre le lien, choisit « 🎯 Je joue », saisit son n° d\'équipe puis « 🔔 Être prévenu·e ».',
+      'Partagez le lien public (Partager) — QR code au boulodrome.',
+      'Le joueur ouvre le lien, choisit « Je joue », saisit son n° d\'équipe puis « Être prévenu·e ».',
       'À chaque convocation (partie des gagnants/perdants, barrage, nouveau tour, nouvelle ronde), son téléphone reçoit une notification — même application fermée.',
     ],
     note: 'Nécessite un navigateur compatible (Chrome/Edge/Firefox, ou l\'application installée) et l\'autorisation des notifications. La table de marque n\'a rien à faire : les convocations partent automatiquement.',
@@ -435,9 +435,9 @@ export const FAQ: FaqEntry[] = [
     intro:
       'Oui — idéal pour les concours sans arbitre à chaque terrain (auto-arbitrage) :',
     steps: [
-      'Partagez le lien public du concours (🔗 Partager).',
-      'Sur la page publique, une équipe utilise « 📣 Déclarer un score » : partie, son camp, score.',
-      'L\'équipe adverse déclare à son tour depuis son téléphone : si les scores concordent, la déclaration passe « ✓ concordante ».',
+      'Partagez le lien public du concours (Partager).',
+      'Sur la page publique, une équipe utilise « Déclarer un score » : partie, son camp, score.',
+      'L\'équipe adverse déclare à son tour depuis son téléphone : si les scores concordent, la déclaration passe « concordante ».',
       'À la table de marque, un bandeau « scores déclarés à valider » apparaît : appliquez le score concordant en un clic (ou tranchez un divergent).',
     ],
     note: 'La table de marque reste seule décisionnaire : rien ne s\'applique sans votre validation.',
@@ -448,7 +448,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment importer les licenciés (CSV) ?',
     keywords: ['import', 'licencies', 'csv', 'fichier', 'autocompletion', 'gagner du temps'],
     steps: [
-      'Tableau de bord → « 📇 Licenciés » → choisissez votre fichier CSV (colonnes Nom, Prénom, Licence, Club — un modèle est téléchargeable).',
+      'Tableau de bord → « Licenciés » → choisissez votre fichier CSV (colonnes Nom, Prénom, Licence, Club — un modèle est téléchargeable).',
       'À l\'inscription des équipes, tapez les premières lettres d\'un nom : licence et club se remplissent automatiquement.',
       'Réimportez le fichier à jour quand vous voulez : les fiches existantes sont mises à jour, pas dupliquées.',
     ],
@@ -459,7 +459,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment ajouter un co-organisateur (compte club) ?',
     keywords: ['inviter', 'invitation', 'code', 'co organisateur', 'membre', 'rejoindre', 'equipe du club'],
     steps: [
-      'Tableau de bord → « 👥 Mon club » → « Générer un code d\'invitation » (valable 7 jours).',
+      'Tableau de bord → « Mon club » → « Générer un code d\'invitation » (valable 7 jours).',
       'Transmettez le code : sur « Créer un compte club », votre collègue le saisit dans « Code d\'invitation ».',
       'Son compte rejoint votre club : mêmes concours, synchronisés entre tous les appareils.',
     ],
@@ -470,7 +470,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment calculer les indemnités (prix) ?',
     keywords: ['indemnites', 'prix', 'mise', 'argent', 'repartition', 'recompense', 'euros'],
     steps: [
-      'Onglet « Résultats » → section « 💶 Indemnités » → « Calculer ».',
+      'Onglet « Résultats » → section « Indemnités » → « Calculer ».',
       'Saisissez la mise par équipe et les frais d\'organisation (%).',
       'La répartition est suggérée par groupe de classement (le vainqueur touche le double du finaliste, etc.), arrondie à 0,10 €, et s\'imprime avec les résultats.',
     ],
@@ -512,7 +512,7 @@ export const FAQ: FaqEntry[] = [
     keywords: ['invite', 'essai', 'essayer', 'sans compte', 'tester', 'gratuit', 'inscription'],
     intro: 'Oui : le mode invité donne accès à tout, sans compte.',
     steps: [
-      'Sur l\'écran de connexion, choisissez « 🚀 Essayer sans compte ».',
+      'Sur l\'écran de connexion, choisissez « Essayer sans compte ».',
       'Tout fonctionne (formules, tirages, scores, affichage TV…) mais uniquement sur cet appareil : rien n\'est envoyé en ligne.',
       'Pour sauvegarder et synchroniser : cliquez sur « Créer un compte » (badge du haut) — l\'application propose alors de rattacher vos concours invité au compte.',
     ],
@@ -537,7 +537,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment changer les points (13), terrains ou la consolante ?',
     keywords: ['parametres', 'points', '13', '11', 'terrains', 'reglages', 'changer', 'configuration'],
     steps: [
-      'Dans le concours, cliquez sur « ⚙ Paramètres ».',
+      'Dans le concours, cliquez sur « Paramètres ».',
       'Modifiez nom, date, lieu, nombre de terrains, « Parties en » (13, 11…).',
       'La formation, la formule et la consolante ne se changent plus après le tirage.',
     ],
@@ -548,7 +548,7 @@ export const FAQ: FaqEntry[] = [
     question: 'Comment supprimer un concours ?',
     keywords: ['supprimer', 'effacer', 'concours', 'poubelle', 'retirer'],
     steps: [
-      'Sur le tableau de bord, cliquez sur 🗑 en haut de la carte du concours.',
+      'Sur le tableau de bord, cliquez sur la corbeille en haut de la carte du concours.',
       'Confirmez : le concours et toutes ses données sont supprimés (partout, après synchronisation).',
     ],
   },
@@ -559,12 +559,12 @@ export const FAQ: FaqEntry[] = [
     keywords: ['palmares', 'vainqueurs', 'honneur', 'historique', 'gagnants', 'clubs', 'classement'],
     intro: 'Le palmarès rassemble tous les concours clôturés :',
     steps: [
-      'Depuis le tableau de bord, cliquez sur « 🏆 Palmarès ».',
+      'Depuis le tableau de bord, cliquez sur « Palmarès ».',
       'Le tableau d\'honneur liste chaque concours terminé avec son vainqueur et son finaliste.',
       'Le classement des clubs cumule les victoires et les finales.',
       'Un concours apparaît dès qu\'il est clôturé (bouton « Clôturer le concours » sur le tableau).',
     ],
-    action: { label: '🏆 Ouvrir le palmarès', path: '/palmares' },
+    action: { label: 'Ouvrir le palmarès', path: '/palmares' },
   },
   {
     id: 'exporter',
@@ -574,9 +574,9 @@ export const FAQ: FaqEntry[] = [
     keywords: ['exporter', 'export', 'csv', 'json', 'sauvegarde', 'excel', 'tableur', 'classement', 'telecharger'],
     intro: 'Depuis l\'onglet « Résultats » d\'un concours, la barre « Exporter » propose :',
     steps: [
-      '« 📊 Classement (CSV) » : le classement final, ouvrable dans Excel / LibreOffice.',
-      '« 📋 Engagés (CSV) » : la liste des équipes (dossard, joueurs, licences, club, réglé).',
-      '« 💾 Sauvegarde (JSON) » : une copie complète et relisible du concours.',
+      '« Classement (CSV) » : le classement final, ouvrable dans Excel / LibreOffice.',
+      '« Engagés (CSV) » : la liste des équipes (dossard, joueurs, licences, club, réglé).',
+      '« Sauvegarde (JSON) » : une copie complète et relisible du concours.',
     ],
     note: 'Les fichiers CSV utilisent le point-virgule et l\'UTF-8 : ils s\'ouvrent directement dans les tableurs français.',
   },
@@ -592,7 +592,7 @@ export const FAQ: FaqEntry[] = [
       'À zéro, il devient rouge, clignote et émet un bip (« Temps écoulé »).',
       'Le chrono peut être mis en pause puis repris ; il survit au changement d\'onglet.',
     ],
-    note: 'Le temps limité se règle dans « ⚙ Paramètres » du concours.',
+    note: 'Le temps limité se règle dans « Paramètres » du concours.',
   },
   {
     id: 'discipline-paiements',
@@ -614,7 +614,7 @@ export const FAQ: FaqEntry[] = [
     keywords: ['tutoriel', 'visite', 'guide', 'apprendre', 'decouvrir', 'demonstration', 'demo', 'aide'],
     intro: 'Deux façons de (re)découvrir l\'application :',
     steps: [
-      'Cliquez sur « 🎓 Relancer la visite guidée » ci-dessous.',
+      'Cliquez sur « Relancer la visite guidée » ci-dessous.',
       'Ou créez un « concours d\'exemple » pré-rempli depuis l\'écran de bienvenue pour vous entraîner sans risque.',
     ],
   },
@@ -627,7 +627,7 @@ export const FAQ: FaqEntry[] = [
     intro:
       'Pour le championnat des clubs et la Coupe de France, la feuille se remplit dans l\'application :',
     steps: [
-      'Depuis le tableau de bord, ouvrez « 🏅 Feuilles de match ».',
+      'Depuis le tableau de bord, ouvrez « Feuilles de match ».',
       '« + Nouvelle feuille » : renseignez les deux clubs et la date.',
       'Composez les équipes, puis saisissez les résultats des rencontres.',
       'Les deux clubs peuvent échanger leurs compositions par QR code, sans réseau.',
@@ -644,7 +644,7 @@ export const FAQ: FaqEntry[] = [
     intro:
       'L\'application se met à jour toute seule ; le tour d\'horizon de ce qu\'elle a gagné se rouvre à volonté :',
     steps: [
-      'Cliquez sur « ✨ Voir les nouveautés » ci-dessous.',
+      'Cliquez sur « Voir les nouveautés » ci-dessous.',
       'Ou, depuis n\'importe quel écran, sur le numéro de version en bas de page.',
     ],
     note: 'La version exacte que vous utilisez y est affichée : c\'est elle qu\'on vous demandera en cas de souci.',

@@ -1,4 +1,4 @@
-# Héberger Pétanque Concours gratuitement — Oracle Cloud « Always Free »
+# Héberger Treizéro gratuitement — Oracle Cloud « Always Free »
 
 Ce guide déploie l'application sur une **machine virtuelle gratuite à vie**
 d'Oracle Cloud. Contrairement aux offres « gratuites » qui remettent le
@@ -56,11 +56,11 @@ ssh -i votre-cle.key ubuntu@VOTRE_IP_PUBLIQUE
 Le dépôt fournit un script idempotent. Sur la VM :
 
 ```bash
-sudo REPO_URL="https://github.com/GabinSMD/petanque.git" \
+sudo REPO_URL="https://github.com/GabinSMD/treizero.git" \
      BRANCH="claude/saas-concours-offline-faq487" \
      DOMAIN="monclub.duckdns.org" \
      EMAIL="contact@exemple.fr" \
-     bash -c "$(curl -fsSL https://raw.githubusercontent.com/GabinSMD/petanque/claude/saas-concours-offline-faq487/deploy/setup-oracle.sh)"
+     bash -c "$(curl -fsSL https://raw.githubusercontent.com/GabinSMD/treizero/claude/saas-concours-offline-faq487/deploy/setup-oracle.sh)"
 ```
 
 Le script : installe **Node 22**, clone le dépôt, `npm install && npm run
@@ -141,7 +141,7 @@ Configuration (une seule fois) :
    Actions → New repository secret* :
    | Secret | Valeur |
    |---|---|
-   | `DEPLOY_HOST` | `129.151.227.36` (ou `petanque.gabin-simond.fr`) |
+   | `DEPLOY_HOST` | `129.151.227.36` (ou `treizero.gabin-simond.fr`) |
    | `DEPLOY_USER` | `ubuntu` |
    | `DEPLOY_SSH_KEY` | **tout le contenu** du fichier `deploy_key` (clé privée) |
 

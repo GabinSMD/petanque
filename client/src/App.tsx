@@ -9,7 +9,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { useSession } from './db/hooks';
-import { BouleLogo } from './components/BouleLogo';
+import { BouleLogo, LogoTreizero } from './components/BouleLogo';
 import { clearSession } from './lib/session';
 import { wipeLocalData } from './db/local';
 import { vitrineSeparee } from './lib/appUrl';
@@ -52,21 +52,26 @@ function Layout() {
 
   return (
     <div className="app">
+      <a className="skip-link" href="#contenu">
+        Aller au contenu
+      </a>
       <header className="app-header no-print">
         <Link to="/" className="brand">
+          <LogoTreizero />
           <BouleLogo />
-          <span>
-            Pétanque <strong>Concours</strong>
-          </span>
         </Link>
         <div className="header-right">
           <SyncBadge />
           <AlerteEcartees />
           {session && (
             <div className="user-box">
-              <span className="org-name" title={session.user.name}>
-                {session.org.name}
-              </span>
+              {/* En mode invité, le badge dit déjà « Mode invité » : le répéter
+                  ici faisait passer l'en-tête sur trois lignes au téléphone. */}
+              {!guest && (
+                <span className="org-name" title={session.user.name}>
+                  {session.org.name}
+                </span>
+              )}
               {guest && (
                 <Link className="btn btn-sm btn-header-cta" to="/login">
                   Créer un compte
@@ -80,7 +85,7 @@ function Layout() {
         </div>
       </header>
       <AncienneAdresse />
-      <main className="app-main">
+      <main className="app-main" id="contenu" tabIndex={-1}>
         {/* La clé remet la frontière à zéro à chaque changement d'écran :
             naviguer suffit à sortir d'une page en échec. */}
         <FrontiereErreur

@@ -1,3 +1,4 @@
+import { Check, TriangleAlert, Undo2 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import type { Concours, Licencie, Team } from '@shared';
 import {
@@ -140,7 +141,7 @@ export function LicencesTab({ concours, teams }: Props) {
     const lu = lireLicenceAuDepot(licence, teams, ouverte, fiches);
     if (lu.type === 'equipe_ouverte') {
       setEnAttente(null);
-      setMessage(`Licence ${licence} : joueur ${lu.index + 1} de cette équipe. ✓`);
+      setMessage(`Licence ${licence} : joueur ${lu.index + 1} de cette équipe.`);
       return;
     }
     if (lu.type === 'autre_equipe') {
@@ -246,7 +247,7 @@ export function LicencesTab({ concours, teams }: Props) {
                   {team.players.map((p) => p.name).join(' / ')}
                 </span>
                 <span className={controle.conforme ? 'tag tag-ok' : 'tag tag-danger'}>
-                  {controle.conforme ? '✓ conforme' : '⚠ à vérifier'}
+                  {controle.conforme ? <><Check className="ic" aria-hidden /> {'conforme'}</> : <><TriangleAlert className="ic" aria-hidden /> {'à vérifier'}</>}
                 </span>
                 <span className={team.licencesDeposees ? 'tag tag-ok' : 'tag tag-warn'}>
                   {team.licencesDeposees ? 'déposées' : 'non déposées'}
@@ -324,7 +325,7 @@ export function LicencesTab({ concours, teams }: Props) {
 
                   {controle.anomaliesEquipe.length > 0 && (
                     <p className="depot-alerte">
-                      ⚠{' '}
+                      <TriangleAlert className="ic" aria-hidden />{' '}
                       {controle.anomaliesEquipe
                         .map((a) => ANOMALIE_EQUIPE_LABELS[a])
                         .join(', ')}
@@ -477,7 +478,7 @@ export function LicencesTab({ concours, teams }: Props) {
                     const histoire = [
                       ...(team.remplacements ?? []).map((r) => ({
                         at: r.at,
-                        texte: `↔ ${r.avant.name}${r.avant.licence ? ` (${r.avant.licence})` : ''} remplacé par ${r.apres.name}${r.apres.licence ? ` (${r.apres.licence})` : ''}`,
+                        texte: `${r.avant.name}${r.avant.licence ? ` (${r.avant.licence})` : ''} remplacé par ${r.apres.name}${r.apres.licence ? ` (${r.apres.licence})` : ''}`,
                       })),
                       ...(team.ajouts ?? []).map((a) => ({
                         at: a.at,
@@ -506,7 +507,7 @@ export function LicencesTab({ concours, teams }: Props) {
                           className="btn btn-ghost"
                           onClick={() => void setLicencesDeposees(team, false)}
                         >
-                          ↩ Annuler le dépôt
+                          <Undo2 className="ic" aria-hidden /> Annuler le dépôt
                         </button>
                       </>
                     ) : (
@@ -523,7 +524,7 @@ export function LicencesTab({ concours, teams }: Props) {
                         }
                         onClick={() => void setLicencesDeposees(team, true)}
                       >
-                        ✓ Valider le dépôt
+                        <Check className="ic" aria-hidden /> Valider le dépôt
                       </button>
                     )}
                   </div>

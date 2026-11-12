@@ -600,7 +600,7 @@ export function lireFeuilleFichier(
   }
   const enveloppe = brut as Record<string, unknown>;
   if (enveloppe.app !== 'petanque-concours') {
-    return { ok: false, erreur: "Ce fichier n'a pas été écrit par Pétanque Concours." };
+    return { ok: false, erreur: "Ce fichier n'a pas été écrit par Treizéro." };
   }
   // L'erreur qui arrivera vraiment : on mélange les deux sortes de fichiers.
   if (enveloppe.concours !== undefined && enveloppe.feuille === undefined) {

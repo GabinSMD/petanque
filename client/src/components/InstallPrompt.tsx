@@ -1,3 +1,4 @@
+import { Smartphone, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSession } from '../db/hooks';
@@ -105,7 +106,7 @@ export function InstallPrompt() {
   return (
     <div className="install-banner no-print" role="dialog" aria-label="Installer l'application">
       <span className="install-icon" aria-hidden>
-        📲
+        <Smartphone className="ic" aria-hidden />
       </span>
       {deferred ? (
         <>
@@ -117,7 +118,7 @@ export function InstallPrompt() {
               Installer
             </button>
             <button className="btn btn-ghost btn-sm" onClick={close} aria-label="Fermer">
-              ✕
+              <X className="ic" aria-hidden />
             </button>
           </span>
         </>
@@ -130,7 +131,7 @@ export function InstallPrompt() {
           </span>
           <span className="install-actions">
             <button className="btn btn-ghost btn-sm" onClick={close} aria-label="Fermer">
-              ✕
+              <X className="ic" aria-hidden />
             </button>
           </span>
         </>

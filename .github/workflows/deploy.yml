@@ -47,6 +47,12 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           # Mise à jour atomique côté VM (pull + build + redémarrage du service).
-          REMOTE='set -e; A=/opt/petanque/app; sudo -u petanque git -C $A fetch --depth 1 origin main; sudo -u petanque git -C $A reset --hard origin/main; sudo -u petanque npm --prefix $A install; sudo -u petanque npm --prefix $A run build; sudo systemctl restart petanque; echo "Déployé:" $(sudo -u petanque git -C $A rev-parse --short HEAD)'
+          #
+          # Passage au nom Treizéro : avant le build, la VM remplace l'ancien
+          # nom de domaine par le nouveau dans Caddy, le service et les adresses
+          # du client (deploy/renommer-domaine.sh). L'étape ne fait rien dès que
+          # l'ancien nom a disparu de la configuration : elle peut rester là, ou
+          # être retirée une fois le changement constaté.
+          REMOTE='set -e; A=/opt/petanque/app; sudo -u petanque git -C $A fetch --depth 1 origin main; sudo -u petanque git -C $A reset --hard origin/main; sudo bash $A/deploy/renommer-domaine.sh petanque.gabin-simond.fr treizero.gabin-simond.fr; sudo -u petanque npm --prefix $A install; sudo -u petanque npm --prefix $A run build; sudo systemctl restart petanque; echo "Déployé:" $(sudo -u petanque git -C $A rev-parse --short HEAD)'
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
             "${DEPLOY_USER:-ubuntu}@${DEPLOY_HOST}" "$REMOTE"

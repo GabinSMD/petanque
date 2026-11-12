@@ -1,4 +1,4 @@
-# 🎯 Pétanque Concours — gestion de concours en SaaS, avec mode hors-ligne
+# 🎯 Treizéro — gestion de concours de pétanque en SaaS, avec mode hors-ligne
 
 Application web de gestion de concours de pétanque inspirée du logiciel
 [FFPJP Gestion Concours](https://www.ffpjp-gestion-concours.com/), repensée en

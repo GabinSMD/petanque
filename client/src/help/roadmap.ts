@@ -1,3 +1,4 @@
+import { IdCard, Upload, type LucideIcon } from 'lucide-react';
 /**
  * Ce qui est engagé pour la suite, tel qu'on l'annonce publiquement.
  *
@@ -14,7 +15,7 @@
  * journal des nouveautés, plus à la roadmap.
  */
 export interface ChantierRoadmap {
-  icone: string;
+  icone: LucideIcon;
   titre: string;
   texte: string;
   /** Numéro d'issue, pour que la promesse soit vérifiable. */
@@ -23,7 +24,7 @@ export interface ChantierRoadmap {
 
 export const ROADMAP: ChantierRoadmap[] = [
   {
-    icone: '🪪',
+    icone: IdCard,
     titre: 'Inscrire une équipe en scannant les licences',
     texte:
       'Le QR code d’une licence contient déjà le numéro du licencié. Le lire avec ' +
@@ -33,7 +34,7 @@ export const ROADMAP: ChantierRoadmap[] = [
     issue: 8,
   },
   {
-    icone: '📤',
+    icone: Upload,
     titre: 'Remonter les résultats au comité sans ressaisie',
     texte:
       'Produire directement les fichiers attendus par Geslico — résultats ' +
@@ -45,5 +46,5 @@ export const ROADMAP: ChantierRoadmap[] = [
 
 /** Adresse d'une issue du dépôt, pour lier une promesse à son suivi. */
 export function lienIssue(numero: number): string {
-  return `https://github.com/GabinSMD/petanque/issues/${numero}`;
+  return `https://github.com/GabinSMD/treizero/issues/${numero}`;
 }

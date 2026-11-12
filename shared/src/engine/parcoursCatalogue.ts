@@ -476,7 +476,7 @@ export const parcoursDecouverte: Parcours = {
   etapes: [
     {
       cible: null,
-      titre: 'Bienvenue sur Pétanque Concours 👋',
+      titre: 'Bienvenue sur Treizéro 👋',
       texte:
         'En quelques écrans, de quoi organiser un concours de A à Z. Vous pourrez ' +
         'relancer cette visite à tout moment depuis l\'assistant (bulle en bas à droite).',

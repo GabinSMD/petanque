@@ -1,3 +1,4 @@
+import { Bell, Check, CircleCheck, Clock, Hourglass, Megaphone, PenLine, Target, TriangleAlert, Trophy, Tv } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Concours, Match, PhotoConcours, Poule, Team } from '@shared';
@@ -163,7 +164,7 @@ export function PublicPage() {
 
       {championTeam && (
         <div className="champion-banner">
-          🏆 Vainqueur :{' '}
+          <Trophy className="ic" aria-hidden /> Vainqueur :{' '}
           <strong>
             n°{championTeam.number} {teamDisplayName(championTeam)}
           </strong>
@@ -180,13 +181,13 @@ export function PublicPage() {
             className={mode === 'play' ? 'active' : ''}
             onClick={() => chooseMode('play')}
           >
-            🎯 Je joue
+            <Target className="ic" aria-hidden /> Je joue
           </button>
           <button
             className={mode === 'watch' ? 'active' : ''}
             onClick={() => chooseMode('watch')}
           >
-            📺 Je consulte
+            <Tv className="ic" aria-hidden /> Je consulte
           </button>
         </div>
       )}
@@ -195,14 +196,14 @@ export function PublicPage() {
         <div className="public-chooser">
           <p>Que souhaitez-vous faire ?</p>
           <button className="public-choice" onClick={() => chooseMode('play')}>
-            <span className="public-choice-emoji">🎯</span>
+            <span className="public-choice-emoji"><Target className="ic" aria-hidden /></span>
             <span>
               <strong>Je joue</strong>
               <small>Ma partie, déclarer mon score, être prévenu·e</small>
             </span>
           </button>
           <button className="public-choice" onClick={() => chooseMode('watch')}>
-            <span className="public-choice-emoji">📺</span>
+            <span className="public-choice-emoji"><Tv className="ic" aria-hidden /></span>
             <span>
               <strong>Je consulte</strong>
               <small>Tous les résultats en direct</small>
@@ -225,7 +226,7 @@ export function PublicPage() {
 
       {mode === 'watch' && <ResultsView data={data} teamsById={teamsById} />}
 
-      <footer className="public-footer">Résultats en direct — Pétanque Concours</footer>
+      <footer className="public-footer">Résultats en direct — Treizéro</footer>
     </div>
   );
 }
@@ -273,7 +274,7 @@ function RegisterCard({ concours, token }: { concours: Concours; token: string }
   if (done) {
     return (
       <section className="result-section declare-card">
-        <h2>✅ Pré-inscription envoyée</h2>
+        <h2><CircleCheck className="ic" aria-hidden /> Pré-inscription envoyée</h2>
         <p className="hint">
           Votre demande est en attente de validation par l'organisateur. Merci !
         </p>
@@ -294,7 +295,7 @@ function RegisterCard({ concours, token }: { concours: Concours; token: string }
 
   return (
     <section className="result-section declare-card">
-      <h2>✍️ Je m'inscris au concours</h2>
+      <h2><PenLine className="ic" aria-hidden /> Je m'inscris au concours</h2>
       <p className="hint">
         {individual ? 'Inscrivez-vous' : `Formez votre ${formatLabel(concours.format).toLowerCase()}`}{' '}
         — l'organisateur validera votre demande.
@@ -356,7 +357,7 @@ function PlayerPanel({
   if (!team) {
     return (
       <section className="result-section player-ask">
-        <h2>🎯 Votre numéro d'équipe</h2>
+        <h2><Target className="ic" aria-hidden /> Votre numéro d'équipe</h2>
         <p className="hint">Il figure sur votre ticket / dossard.</p>
         <form
           className="player-ask-form"
@@ -378,7 +379,7 @@ function PlayerPanel({
         </form>
         {teamNumber && !team && <p className="form-error">Aucune équipe n°{teamNumber}.</p>}
         <button className="btn btn-ghost btn-block" onClick={onWatch}>
-          📺 ou consulter tous les résultats
+          <Tv className="ic" aria-hidden /> ou consulter tous les résultats
         </button>
       </section>
     );
@@ -405,7 +406,7 @@ function PlayerPanel({
       {pending.length === 0 ? (
         <section className="result-section">
           <p className="player-idle">
-            🕐 Aucune partie à jouer pour l'instant.
+            <Clock className="ic" aria-hidden /> Aucune partie à jouer pour l'instant.
             <br />
             {pushSupported()
               ? 'Activez les notifications ci-dessus : vous serez prévenu·e dès votre prochaine convocation (barrage, tour suivant…).'
@@ -427,7 +428,7 @@ function PlayerPanel({
       )}
 
       <button className="btn btn-ghost btn-block no-print" onClick={onWatch}>
-        📺 Voir tous les résultats
+        <Tv className="ic" aria-hidden /> Voir tous les résultats
       </button>
     </>
   );
@@ -442,14 +443,14 @@ function NotifyButton({ token, teamNumber }: { token: string; teamNumber: number
   if (!pushSupported()) {
     return (
       <p className="hint">
-        🔔 Les notifications ne sont pas gérées par ce navigateur (essayez Chrome, ou
+        <Bell className="ic" aria-hidden /> Les notifications ne sont pas gérées par ce navigateur (essayez Chrome, ou
         installez l'application).
       </p>
     );
   }
 
   if (state === 'done') {
-    return <p className="notify-on">🔔 Notifications activées pour cette équipe.</p>;
+    return <p className="notify-on"><Bell className="ic" aria-hidden /> Notifications activées pour cette équipe.</p>;
   }
 
   return (
@@ -469,7 +470,7 @@ function NotifyButton({ token, teamNumber }: { token: string; teamNumber: number
           }
         }}
       >
-        {state === 'busy' ? '…' : '🔔 Être prévenu·e quand je suis appelé·e'}
+        {state === 'busy' ? '…' : <><Bell className="ic" aria-hidden /> {'Être prévenu·e quand je suis appelé·e'}</>}
       </button>
       {msg && <p className="hint">{msg}</p>}
     </div>
@@ -519,8 +520,8 @@ function MyMatchDeclare({
       if (!res.ok) throw new Error(body.error ?? `Erreur ${res.status}`);
       setMessage(
         body.agreement
-          ? '✅ Score confirmé par les deux équipes — la table de marque va le valider.'
-          : '📨 Déclaration envoyée — en attente de la confirmation de l\'équipe adverse.',
+          ? 'Score confirmé par les deux équipes — la table de marque va le valider.'
+          : 'Déclaration envoyée — en attente de la confirmation de l\'équipe adverse.',
       );
       await onDeclared();
     } catch (err) {
@@ -532,7 +533,7 @@ function MyMatchDeclare({
 
   return (
     <section className="result-section declare-card">
-      <h2>📣 Votre partie</h2>
+      <h2><Megaphone className="ic" aria-hidden /> Votre partie</h2>
       <p className="declare-picked">
         <strong>{matchLabel(match, data.poules, data.matches)}</strong>
         {match.terrain ? ` · Terrain ${terrain(match.terrain)}` : ''}
@@ -581,11 +582,11 @@ function MyMatchDeclare({
           {mine ? `Vous : ${mine.scoreA}–${mine.scoreB}` : 'Vous : pas encore'} ·{' '}
           {other ? `Adverse : ${other.scoreA}–${other.scoreB}` : 'Adverse : en attente'} —{' '}
           {agreement ? (
-            <span className="tag tag-ok">✓ concordant</span>
+            <span className="tag tag-ok"><Check className="ic" aria-hidden /> concordant</span>
           ) : mine && other ? (
-            <span className="tag tag-danger">⚠ divergent</span>
+            <span className="tag tag-danger"><TriangleAlert className="ic" aria-hidden /> divergent</span>
           ) : (
-            <span className="tag tag-info">⏳ en attente</span>
+            <span className="tag tag-info"><Hourglass className="ic" aria-hidden /> en attente</span>
           )}
         </p>
       )}
@@ -667,7 +668,7 @@ function ResultsView({
                     <h3>
                       Poule {poule.index}
                       {poule.terrain ? ` · T${terrain(poule.terrain)}` : ''}
-                      {outcome.complete && ' ✓'}
+                      {outcome.complete && <>{''} <Check className="ic" aria-hidden /></>}
                     </h3>
                     <ul>
                       {pm.map((m) => (

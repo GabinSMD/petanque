@@ -1,3 +1,4 @@
+import { AlarmClock, Hourglass, Lock, LockOpen, Target, Timer, Undo2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
@@ -50,7 +51,7 @@ function HeureAnnonce({ match, maintenant }: { match: Match; maintenant: string 
   const minutes = dureeMinutes(match.lanceeA, maintenant);
   return (
     <span className="terrain-heure" title="Heure d'annonce de la partie">
-      ⏱ {heure}
+      <Timer className="ic" aria-hidden /> {heure}
       {minutes > 0 && <em> · {minutes} min</em>}
     </span>
   );
@@ -149,7 +150,7 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
               }
             }}
           >
-            🎯 Affecter automatiquement
+            <Target className="ic" aria-hidden /> Affecter automatiquement
           </button>
           <span className="terrain-nb no-print">
             <button
@@ -174,14 +175,14 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
             to={`/concours/${concours.id}/imprimer/parties-lancees`}
             title="Relevé des heures d'annonce, pour l'arbitre"
           >
-            ⏱ Parties lancées
+            <Timer className="ic" aria-hidden /> Parties lancées
           </Link>
         </span>
       </div>
 
       {retards.length > 0 && (
         <section className="retards-panel no-print">
-          <h3>⏰ Retards signalés ({retards.length})</h3>
+          <h3><AlarmClock className="ic" aria-hidden /> Retards signalés ({retards.length})</h3>
           <ul>
             {retards.map((m) => (
               <li key={m.id}>
@@ -195,7 +196,7 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
                   title="Le résultat a été annoncé : lever le retard"
                   onClick={() => void setMatchRetard(m, false)}
                 >
-                  ↩ lever
+                  <Undo2 className="ic" aria-hidden /> lever
                 </button>
               </li>
             ))}
@@ -222,7 +223,7 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
                 title={t.bloque ? 'Remettre ce terrain en service' : 'Bloquer ce terrain'}
                 onClick={() => void setTerrainBloque(concours, t.number, !t.bloque)}
               >
-                {t.bloque ? '🔓' : '🔒'}
+                {t.bloque ? <LockOpen className="ic" aria-hidden /> : <Lock className="ic" aria-hidden />}
               </button>
             </div>
             {t.match ? (
@@ -244,14 +245,14 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
                     }
                     onClick={() => void setMatchRetard(t.match!, !t.match!.retard)}
                   >
-                    ⏰
+                    <AlarmClock className="ic" aria-hidden />
                   </button>
                   <button
                     className="btn-icon"
                     title="Libérer ce terrain"
                     onClick={() => void setMatchTerrain(t.match!, null)}
                   >
-                    ✕
+                    <X className="ic" aria-hidden />
                   </button>
                 </span>
               </div>
@@ -266,7 +267,7 @@ export function TerrainsTab({ concours, teams, poules, matches }: Props) {
 
       {waiting.length > 0 && (
         <section className="waiting-list">
-          <h3>⏳ En attente d'un terrain ({waiting.length})</h3>
+          <h3><Hourglass className="ic" aria-hidden /> En attente d'un terrain ({waiting.length})</h3>
           <ul>
             {waiting.map((m) => (
               <li key={m.id}>

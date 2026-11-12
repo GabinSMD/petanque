@@ -1,3 +1,4 @@
+import { Check, ClipboardList } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import qrcode from 'qrcode-generator';
 import type { CompositionEchangee, FeuilleMatch, Player } from '@shared';
@@ -30,7 +31,7 @@ const LIGNES_FEUILLE = 8;
 export function EchangeCompositionModal({ feuille, joueurs, onRecevoir, onClose }: Props) {
   const [mode, setMode] = useState<'envoyer' | 'recevoir'>('envoyer');
   return (
-    <Modal title="🔁 Échanger les compositions" onClose={onClose}>
+    <Modal title="Échanger les compositions" onClose={onClose}>
       <div className="echange-modal">
         <div className="stage-tabs">
           <button
@@ -117,7 +118,7 @@ function Envoyer({ feuille, joueurs }: { feuille: FeuilleMatch; joueurs: Player[
         <summary>Ou recopier le code</summary>
         <textarea className="echange-code" readOnly value={code} rows={6} />
         <button className="btn btn-ghost btn-sm" onClick={() => void copier()}>
-          {copie ? '✓ Copié' : '📋 Copier le code'}
+          {copie ? <><Check className="ic" aria-hidden /> {'Copié'}</> : <><ClipboardList className="ic" aria-hidden /> {'Copier le code'}</>}
         </button>
       </details>
     </>

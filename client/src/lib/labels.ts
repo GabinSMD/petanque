@@ -1,3 +1,4 @@
+import { CircleHelp, Crosshair, Dices, Medal, Scale, Target, Zap, type LucideIcon } from 'lucide-react';
 import type { CategorieCritere, ConcoursMode, ConcoursStatus, EtatMise, CritereClassification, CritereSexe, Discipline, Formule, NiveauConcours, RolePetanque, TeamFormat } from '@shared';
 import type { AnomalieEquipe, ChampLicence } from '@shared';
 import {
@@ -88,7 +89,7 @@ export const FORMULE_CHOICES: Formule[] = [
  * d'un concours au premier mode inconnu.
  */
 export interface ModeInfo {
-  emoji: string;
+  icone: LucideIcon;
   /** Accroche en langage courant, pour les novices. */
   tagline: string;
   description: string;
@@ -96,37 +97,37 @@ export interface ModeInfo {
 
 export const MODE_INFO: Record<ConcoursMode, ModeInfo> = {
   poules: {
-    emoji: '🎯',
+    icone: Target,
     tagline: 'Le classique des concours officiels',
     description:
       'Poules de 3 ou 4 équipes avec barrage : 2 qualifiés par poule, puis tableau final. Le déroulement FFPJP.',
   },
   elimination_directe: {
-    emoji: '⚡',
+    icone: Zap,
     tagline: 'Rapide : qui perd sort',
     description:
       'Un tableau à la coupe, tiré au sort. Avec la consolante, les perdants du 1er tour rejouent dans un second tableau.',
   },
   melee: {
-    emoji: '🎲',
+    icone: Dices,
     tagline: 'Idéal club & amis — chacun pour soi',
     description:
       'Chacun s\'inscrit seul : les équipes sont tirées au sort à chaque ronde (une triplette peut rencontrer une doublette) et le classement est individuel.',
   },
   suisse: {
-    emoji: '⚖️',
+    icone: Scale,
     tagline: 'Personne n\'est éliminé',
     description:
       'Tout le monde joue le même nombre de parties : à chaque ronde, les équipes de niveau égal se rencontrent. Classement aux victoires puis au goal-average.',
   },
   championnat: {
-    emoji: '🏅',
+    icone: Medal,
     tagline: 'Chacun rencontre chacun',
     description:
       'Toutes les rencontres sont jouées (idéal jusqu\'à 8 équipes environ). Le calendrier complet est généré d\'un coup.',
   },
   tir_precision: {
-    emoji: '🏹',
+    icone: Crosshair,
     tagline: 'La discipline de précision',
     description:
       'Chaque tireur réalise des séries de 20 boules sur 5 ateliers (100 points max). Classement à la meilleure série, départage au total.',
@@ -143,7 +144,7 @@ export const MODE_INFO: Record<ConcoursMode, ModeInfo> = {
  */
 function modeInconnu(mode: ConcoursMode): ModeInfo {
   return {
-    emoji: '❓',
+    icone: CircleHelp,
     tagline: 'Formule inconnue de cette version',
     description: `Ce concours annonce la formule « ${String(mode)} », que cette version ne connaît pas. Les équipes et les résultats déjà saisis restent accessibles ; mettez l'application à jour pour la gérer.`,
   };
