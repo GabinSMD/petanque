@@ -16,11 +16,49 @@
  * championnat à l'autre, et celui du CD26 n'est qu'un cas.
  */
 
-import type { CompetitionClubId, ContingentMutations } from './championnat';
+import type { CritereSexe } from '../types';
+import {
+  COMPETITIONS_CLUB,
+  type CompetitionClubId,
+  type ContingentMutations,
+  type FiltresCompetition,
+} from './championnat';
+import type { CategorieCritere } from './licences';
 import { TAILLE_FORMATION } from './formations';
 
 /** Les trois positions admises, pour ne rien reprendre d'autre d'une feuille lue. */
 const CONTINGENTS: ContingentMutations[] = ['tous', 'un_externe', 'aucun'];
+
+const SEXES: CritereSexe[] = ['tous', 'masculin', 'feminin', 'mixte'];
+const CATEGORIES: CategorieCritere[] = [
+  'veterans',
+  'plus55',
+  'seniors',
+  'juniors',
+  'cadets',
+  'minimes',
+  'benjamins',
+];
+
+/**
+ * Relit les filtres libres d'une feuille. Une feuille d'avant ce champ n'en a
+ * pas : `undefined`, et la compétition « autre » prend ses valeurs de départ.
+ * Une valeur abîmée retombe sur ces mêmes valeurs plutôt que d'ouvrir le
+ * contrôle — un sexe inconnu ne devient pas « tous » par accident, il devient
+ * le défaut de la compétition, qui est déjà « tous » mais homogène.
+ */
+function filtresDepuisMemoire(v: unknown): FiltresCompetition | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const f = v as Record<string, unknown>;
+  const autre = COMPETITIONS_CLUB.find((c) => c.id === 'autre')!;
+  return {
+    sexe: SEXES.includes(f.sexe as CritereSexe) ? (f.sexe as CritereSexe) : autre.sexe,
+    categorieAge: CATEGORIES.includes(f.categorieAge as CategorieCritere)
+      ? (f.categorieAge as CategorieCritere)
+      : undefined,
+    homogene: typeof f.homogene === 'boolean' ? f.homogene : autre.homogene,
+  };
+}
 
 /** Formation d'une partie de la rencontre. */
 export type TypePartie = 'tete_a_tete' | 'doublette' | 'triplette';
@@ -315,6 +353,12 @@ export interface FeuilleMatch {
   concoursId: string;
   competition: CompetitionClubId;
   /**
+   * Filtres libres de la compétition « Autre championnat de clubs » (§3.E,
+   * « Filtres à définir »). Ignorés pour une compétition prédéfinie ; absents
+   * des feuilles d'avant ce champ, qui gardent ainsi leur contrôle.
+   */
+  filtres?: FiltresCompetition;
+  /**
    * Lettre de **notre** équipe dans cette compétition (§3.E, « Choix Equipe »).
    * Absente quand le club n'engage qu'une équipe : la feuille porte alors le seul
    * nom du club, comme avant ce lot.
@@ -488,6 +532,7 @@ export function feuilleDepuisMemoire(id: string, brut: unknown): FeuilleMatch {
     competition: (typeof m.competition === 'string'
       ? (m.competition as CompetitionClubId)
       : vierge.competition),
+    filtres: filtresDepuisMemoire(m.filtres),
     maxMutes: typeof m.maxMutes === 'number' ? m.maxMutes : vierge.maxMutes,
     // Le champ s'appelait `horsUE` : c'était déjà le panneau « Mutations », mal
     // nommé, et la position choisie se reprend telle quelle. Une position inconnue

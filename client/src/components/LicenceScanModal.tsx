@@ -144,9 +144,19 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
       return;
     }
     const club = joueurs.find((j) => j.fiche?.club)?.fiche?.club;
+    // §3.B.2 : le club et le comité appartiennent au joueur, pas à l'équipe —
+    // une équipe de national ou de régional réunit des licenciés de clubs et de
+    // comités différents. On les reprend de la fiche quand elle est connue,
+    // comme le remplacement au dépôt (`depot.ts`). Le club de la première fiche
+    // reste le club d'équipe, valeur par défaut des concours de club.
     await addTeam(
       concours.id,
-      joueurs.map((j) => ({ name: j.name.trim(), licence: j.licence })),
+      joueurs.map((j) => ({
+        name: j.name.trim(),
+        licence: j.licence,
+        ...(j.fiche?.club ? { club: j.fiche.club } : {}),
+        ...(j.fiche?.comite ? { comite: j.fiche.comite } : {}),
+      })),
       club,
     );
     setEncours([]);

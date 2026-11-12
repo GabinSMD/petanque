@@ -47,7 +47,8 @@ export type CompetitionClubId =
   | 'cnc_feminin'
   | 'cnc_jeunes'
   | 'cnc_veterans'
-  | 'cnc_plus55';
+  | 'cnc_plus55'
+  | 'autre';
 
 /**
  * Les trois positions du panneau « Mutations » de l'écran Championnat – Coupe
@@ -114,7 +115,47 @@ export const COMPETITIONS_CLUB: CompetitionClub[] = [
     categorieAge: 'plus55',
     homogene: true,
   },
+  // « Sélection Championnat des Clubs autres (Jeunes, Vétérans, etc.) » et ses
+  // « Filtres à définir selon le type de Championnat des clubs à contrôler »
+  // (§3.E, planche p.113). Les valeurs ci-dessous ne sont que le point de
+  // départ : la feuille porte ses propres filtres (`FiltresCompetition`).
+  // Homogène par défaut, comme tous les championnats sauf les jeunes.
+  { id: 'autre', label: 'Autre championnat de clubs', sexe: 'tous', homogene: true },
 ];
+
+/**
+ * Filtres libres d'un « autre » championnat de clubs (§3.E), réglés sur la
+ * feuille de match. Ils reprennent exactement ce qu'une compétition prédéfinie
+ * fixe — sexe, catégorie d'âge, homogénéité club — pour qu'un championnat que
+ * la liste ne connaît pas (un CDC vétérans féminin, un championnat régional
+ * jeunes homogène…) se contrôle avec les mêmes règles. Le contingent de
+ * mutations reste à part : il se règle pour toutes les compétitions.
+ */
+export interface FiltresCompetition {
+  sexe: CritereSexe;
+  categorieAge?: CategorieCritere;
+  homogene: boolean;
+}
+
+/**
+ * La compétition telle qu'elle s'applique : la prédéfinie, ou pour « autre »
+ * ses valeurs de départ recouvertes par les filtres de la feuille. Les filtres
+ * sont ignorés pour une compétition prédéfinie — son règlement ne se discute
+ * pas rencontre par rencontre.
+ */
+export function competitionClub(
+  id: CompetitionClubId,
+  filtres?: FiltresCompetition,
+): CompetitionClub {
+  const base = COMPETITIONS_CLUB.find((c) => c.id === id) ?? COMPETITIONS_CLUB[0]!;
+  if (base.id !== 'autre' || !filtres) return base;
+  return {
+    ...base,
+    sexe: filtres.sexe,
+    categorieAge: filtres.categorieAge,
+    homogene: filtres.homogene,
+  };
+}
 
 /** Critères de contrôle d'une compétition, pour l'année et les quotas donnés. */
 export function criteresCompetition(
@@ -122,8 +163,9 @@ export function criteresCompetition(
   annee: number,
   mutations: ContingentMutations = 'un_externe',
   dateRencontre?: string,
+  filtres?: FiltresCompetition,
 ): CriteresLicence {
-  const competition = COMPETITIONS_CLUB.find((c) => c.id === id) ?? COMPETITIONS_CLUB[0]!;
+  const competition = competitionClub(id, filtres);
   return {
     annee,
     dateConcours: dateRencontre,
