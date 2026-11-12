@@ -8,7 +8,7 @@ import { designationCategorie, estArchive } from '@shared';
 import { db } from '../db/local';
 import { finalRanking } from '../lib/results';
 import { teamDisplayName } from '../components/TeamLabel';
-import { formatDateFr, MODE_INFO } from '../lib/labels';
+import { formatDateFr, modeInfo } from '../lib/labels';
 
 interface Bundle {
   concours: Concours[];
@@ -166,7 +166,7 @@ export function PalmaresPage() {
                   <tr key={p.concours.id}>
                     <td>
                       <Link to={`/concours/${p.concours.id}/resultats`}>
-                        <Icone de={MODE_INFO[p.concours.mode].icone} /> {p.concours.name}
+                        <Icone de={modeInfo(p.concours.mode).icone} /> {p.concours.name}
                       </Link>
                       {designationCategorie(p.concours) && (
                         <span className="tag tag-cat">{designationCategorie(p.concours)}</span>
