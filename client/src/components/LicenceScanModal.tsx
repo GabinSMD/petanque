@@ -1,9 +1,17 @@
-import { Camera, Square, Trash2, TriangleAlert } from 'lucide-react';
+import { Trash2, TriangleAlert } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Concours, Licencie, Player, Team } from '@shared';
-import { TAILLE_FORMATION, parseLicenceQr } from '@shared';
+import {
+  TAILLE_FORMATION,
+  aDesCriteresLicence,
+  controlerEquipe,
+  criteresDuConcours,
+  parseLicenceQr,
+} from '@shared';
 import { addTeam } from '../db/actions';
 import { useLicencies } from '../db/hooks';
+import { ANOMALIE_EQUIPE_LABELS, ANOMALIE_LABELS } from '../lib/labels';
+import { CameraQr } from './CameraQr';
 import { Modal } from './Modal';
 
 interface Props {
@@ -50,21 +58,23 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [alerte, setAlerte] = useState<string | null>(null);
   const [inscrites, setInscrites] = useState(0);
-  const [camera, setCamera] = useState<'inactive' | 'demande' | 'active' | 'refusee'>('inactive');
-  const [cameraErreur, setCameraErreur] = useState<string | null>(null);
 
   const champ = useRef<HTMLInputElement>(null);
-  const video = useRef<HTMLVideoElement>(null);
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const flux = useRef<MediaStream | null>(null);
-  const boucle = useRef<number | null>(null);
-  const dernierScan = useRef<{ brut: string; at: number }>({ brut: '', at: 0 });
+
   /**
-   * jsQR n'est chargé qu'au moment où le repli est nécessaire : il pèse
-   * 140 Ko, inutiles pour qui n'ouvre jamais ce module. Le morceau est
-   * précaché par le service worker, donc disponible hors ligne ensuite.
+   * Contrôle des critères du concours sur l'équipe en cours de scan, comme le
+   * fait l'écran fédéral au moment même de la lecture. Il informe, il ne bloque
+   * pas : le dépôt des licences reste l'endroit où l'arbitre tranche, et un
+   * fichier des licenciés en retard ne doit pas empêcher d'inscrire.
    */
-  const jsQr = useRef<typeof import('jsqr').default | null>(null);
+  const controle = useMemo(() => {
+    if (!aDesCriteresLicence(concours) || encours.length === 0) return null;
+    return controlerEquipe(encours, parLicence, criteresDuConcours(concours));
+  }, [concours, encours, parLicence]);
+  // Sans club d'équipe saisi, les anomalies qui en dépendent n'ont pas de sens ici.
+  const anomaliesEquipe = (controle?.anomaliesEquipe ?? []).filter(
+    (a) => a !== 'clubEquipeErrone' && a !== 'clubEquipeNonHomogene',
+  );
 
   useEffect(() => {
     champ.current?.focus();
@@ -73,22 +83,13 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
   /* ----------------------------- Traitement ----------------------------- */
 
   /**
-   * Ajoute un contenu scanné à l'équipe en cours. La source compte : la
-   * caméra relit le même QR à chaque image, il faut donc ignorer les
-   * répétitions ; une saisie à la douchette est toujours volontaire et doit
-   * recevoir une réponse, quitte à dire « déjà scannée ».
+   * Ajoute un contenu scanné à l'équipe en cours. Les relectures du même QR
+   * par la caméra sont écartées par `CameraQr` ; une saisie à la douchette est
+   * toujours volontaire et reçoit une réponse, quitte à dire « déjà scannée ».
    */
-  const traiter = (contenu: string, source: 'camera' | 'saisie'): void => {
+  const traiter = (contenu: string): void => {
     const decode = parseLicenceQr(contenu);
     if (!decode) return;
-
-    if (source === 'camera') {
-      const maintenant = Date.now();
-      if (decode.brut === dernierScan.current.brut && maintenant - dernierScan.current.at < 2500) {
-        return;
-      }
-      dernierScan.current = { brut: decode.brut, at: maintenant };
-    }
 
     if (!decode.licence) {
       setAlerte(
@@ -159,88 +160,6 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
     void inscrire(encours);
   };
 
-  /* ------------------------------ Caméra -------------------------------- */
-
-  const arreterCamera = (): void => {
-    if (boucle.current !== null) {
-      cancelAnimationFrame(boucle.current);
-      boucle.current = null;
-    }
-    flux.current?.getTracks().forEach((t) => t.stop());
-    flux.current = null;
-  };
-
-  useEffect(() => arreterCamera, []);
-
-  const demarrerCamera = async (): Promise<void> => {
-    setCamera('demande');
-    setCameraErreur(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-      flux.current = stream;
-      if (video.current) {
-        video.current.srcObject = stream;
-        await video.current.play();
-      }
-      setCamera('active');
-      lireImages();
-    } catch (err) {
-      setCamera('refusee');
-      setCameraErreur(
-        err instanceof Error && err.name === 'NotAllowedError'
-          ? 'Accès à la caméra refusé. Autorisez-le dans le navigateur, ou utilisez une douchette.'
-          : 'Caméra indisponible sur cet appareil. Utilisez une douchette ou la saisie manuelle.',
-      );
-    }
-  };
-
-  /**
-   * Décodage image par image. `BarcodeDetector` quand le navigateur l'offre
-   * (Chrome, Android), sinon jsQR — embarqué dans l'application, donc
-   * fonctionnel hors ligne.
-   */
-  const lireImages = (): void => {
-    const Detector = (
-      window as unknown as {
-        BarcodeDetector?: new (o: { formats: string[] }) => {
-          detect: (s: CanvasImageSource) => Promise<{ rawValue: string }[]>;
-        };
-      }
-    ).BarcodeDetector;
-    const detecteur = Detector ? new Detector({ formats: ['qr_code'] }) : null;
-
-    const tick = async (): Promise<void> => {
-      const v = video.current;
-      const c = canvas.current;
-      if (!v || !c || v.readyState !== v.HAVE_ENOUGH_DATA) {
-        boucle.current = requestAnimationFrame(() => void tick());
-        return;
-      }
-      c.width = v.videoWidth;
-      c.height = v.videoHeight;
-      const ctx = c.getContext('2d', { willReadFrequently: true });
-      if (ctx) {
-        ctx.drawImage(v, 0, 0, c.width, c.height);
-        try {
-          if (detecteur) {
-            const codes = await detecteur.detect(c);
-            if (codes[0]?.rawValue) traiter(codes[0].rawValue, 'camera');
-          } else {
-            if (!jsQr.current) jsQr.current = (await import('jsqr')).default;
-            const image = ctx.getImageData(0, 0, c.width, c.height);
-            const code = jsQr.current(image.data, image.width, image.height);
-            if (code?.data) traiter(code.data, 'camera');
-          }
-        } catch {
-          /* image illisible : on tentera la suivante */
-        }
-      }
-      boucle.current = requestAnimationFrame(() => void tick());
-    };
-    boucle.current = requestAnimationFrame(() => void tick());
-  };
 
   /* ------------------------------- Rendu -------------------------------- */
 
@@ -249,10 +168,7 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
   return (
     <Modal
       title="Inscription au lecteur de licences"
-      onClose={() => {
-        arreterCamera();
-        onClose();
-      }}
+      onClose={onClose}
     >
       <div className="scan-modal">
         <label className="checkbox-label">
@@ -269,7 +185,7 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
             e.preventDefault();
             const v = saisie.trim();
             if (!v) return;
-            traiter(v, 'saisie');
+            traiter(v);
             setSaisie('');
           }}
         >
@@ -285,33 +201,7 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
           </label>
         </form>
 
-        <div className="scan-camera">
-          {camera === 'inactive' && (
-            <button className="btn btn-ghost btn-sm" onClick={() => void demarrerCamera()}>
-              <Camera className="ic" aria-hidden /> Utiliser la caméra
-            </button>
-          )}
-          {camera === 'demande' && <p className="hint">Autorisation de la caméra…</p>}
-          {camera === 'refusee' && <p className="hint scan-alerte">{cameraErreur}</p>}
-          <video
-            ref={video}
-            className={camera === 'active' ? 'scan-video' : 'scan-video scan-video-off'}
-            muted
-            playsInline
-          />
-          <canvas ref={canvas} className="scan-canvas" />
-          {camera === 'active' && (
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => {
-                arreterCamera();
-                setCamera('inactive');
-              }}
-            >
-              <Square className="ic" aria-hidden /> Arrêter la caméra
-            </button>
-          )}
-        </div>
+        <CameraQr onCode={(contenu) => traiter(contenu)} />
 
         <ol className="scan-places">
           {places.map((joueur, i) => (
@@ -330,6 +220,11 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
                   />
                   <span className="scan-licence">{joueur.licence}</span>
                   {!joueur.fiche && <span className="tag tag-warn">hors fichier</span>}
+                  {controle?.joueurs[i]?.anomalies.map((a) => (
+                    <span key={a} className="tag tag-danger">
+                      {ANOMALIE_LABELS[a]}
+                    </span>
+                  ))}
                   <button
                     className="btn-icon btn-icon-danger"
                     title="Retirer"
@@ -345,6 +240,12 @@ export function LicenceScanModal({ concours, teams, onClose }: Props) {
           ))}
         </ol>
 
+        {anomaliesEquipe.length > 0 && (
+          <p className="scan-alerte">
+            <TriangleAlert className="ic" aria-hidden />{' '}
+            {anomaliesEquipe.map((a) => ANOMALIE_EQUIPE_LABELS[a]).join(', ')}
+          </p>
+        )}
         {alerte && <p className="scan-alerte"><TriangleAlert className="ic" aria-hidden /> {alerte}</p>}
         {message && <p className="hint scan-message">{message}</p>}
 
