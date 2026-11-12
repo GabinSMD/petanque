@@ -26,6 +26,7 @@ export * from './engine/finales';
 export * from './engine/formules';
 export * from './engine/groupes';
 export * from './engine/impressions';
+export * from './engine/fichesDeJeu';
 export * from './engine/inscritsImport';
 export * from './engine/inscritsExport';
 export * from './engine/indemnites';
