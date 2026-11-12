@@ -302,7 +302,7 @@ if (existsSync(CLIENT_DIST)) {
 
 app
   .listen({ port: PORT, host: HOST })
-  .then(() => app.log.info(`Pétanque Concours prêt sur le port ${PORT}`))
+  .then(() => app.log.info(`Treizéro prêt sur le port ${PORT}`))
   .catch((err) => {
     app.log.error(err);
     process.exit(1);

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Concours, Site, Team } from '@shared';
@@ -73,7 +74,7 @@ export function MultisiteModal({ concours, teams, onClose }: Props) {
   };
 
   return (
-    <Modal title="🏟 Fractionner en plusieurs sites" onClose={onClose}>
+    <Modal title="Fractionner en plusieurs sites" onClose={onClose}>
       <div className="multisite-modal">
         <p className="hint">
           Pour un concours qu'un seul boulodrome ne peut pas accueillir — un qualificatif de
@@ -119,7 +120,7 @@ export function MultisiteModal({ concours, teams, onClose }: Props) {
                       title="Retirer ce site"
                       onClick={() => setSites(sites.filter((_, j) => j !== i))}
                     >
-                      ✕
+                      <X className="ic" aria-hidden />
                     </button>
                   )}
                 </td>

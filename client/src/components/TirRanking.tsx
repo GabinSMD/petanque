@@ -1,8 +1,7 @@
+import { Rang } from './Icone';
 import type { Match, Team } from '@shared';
 import { tirStandings } from '@shared';
 import { teamDisplayName } from './TeamLabel';
-
-const MEDALS = ['🥇', '🥈', '🥉'];
 
 /** Classement du tir de précision (meilleure série puis total). */
 export function TirRanking({
@@ -34,7 +33,7 @@ export function TirRanking({
           const t = teamsById.get(s.id);
           return (
             <tr key={s.id} className={i < 3 && s.best > 0 ? 'standing-top' : ''}>
-              <td className="standing-rank">{s.best > 0 ? (MEDALS[i] ?? i + 1) : '—'}</td>
+              <td className="standing-rank">{s.best > 0 ? <Rang index={i} /> : '—'}</td>
               <td>
                 {t ? (
                   <>

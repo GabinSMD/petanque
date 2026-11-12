@@ -1,3 +1,4 @@
+import { LayoutGrid, TriangleAlert } from 'lucide-react';
 import type { BesoinTerrains as Besoin } from '@shared';
 
 /**
@@ -20,7 +21,7 @@ export function BesoinTerrainsHint({ besoin }: { besoin: Besoin | undefined }) {
   if (disponibles <= 0) {
     return (
       <p className="hint">
-        🟦 Ce tirage occupera jusqu'à <strong>{necessaires}</strong> terrain
+        <LayoutGrid className="ic" aria-hidden /> Ce tirage occupera jusqu'à <strong>{necessaires}</strong> terrain
         {necessaires > 1 ? 's' : ''} en même temps. Renseignez le nombre de terrains disponibles
         pour être prévenu s'ils manquent.
       </p>
@@ -30,7 +31,7 @@ export function BesoinTerrainsHint({ besoin }: { besoin: Besoin | undefined }) {
   if (suffisants) {
     return (
       <p className="hint">
-        🟦 {necessaires} terrain{necessaires > 1 ? 's' : ''} nécessaire
+        <LayoutGrid className="ic" aria-hidden /> {necessaires} terrain{necessaires > 1 ? 's' : ''} nécessaire
         {necessaires > 1 ? 's' : ''} au maximum, {disponibles} disponible
         {disponibles > 1 ? 's' : ''}.
       </p>
@@ -39,7 +40,7 @@ export function BesoinTerrainsHint({ besoin }: { besoin: Besoin | undefined }) {
 
   return (
     <p className="hint hint-attention">
-      ⚠ Ce tirage occupera jusqu'à <strong>{necessaires}</strong> terrains en même temps et vous
+      <TriangleAlert className="ic" aria-hidden /> Ce tirage occupera jusqu'à <strong>{necessaires}</strong> terrains en même temps et vous
       en déclarez <strong>{disponibles}</strong> : il en manque {manquants}. Les parties
       attendront un jeu libre — rien ne bloque le tirage, mais autant le savoir maintenant.
     </p>

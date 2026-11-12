@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import type { LicencieEtranger, Sexe } from '@shared';
 import {
@@ -100,7 +101,7 @@ export function LicenceEtrangereModal({ onChoisir, onClose }: Props) {
                   title="Retirer de la base personnelle"
                   onClick={() => void deleteLicencieEtranger(f.id)}
                 >
-                  🗑
+                  <Trash2 className="ic" aria-hidden />
                 </button>
               </li>
             ))}

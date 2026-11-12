@@ -1,6 +1,7 @@
+import { Rocket } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BouleLogo } from '../components/BouleLogo';
+import { LogoTreizero } from '../components/BouleLogo';
 import { siteUrl } from '../lib/appUrl';
 import {
   adoptLocalDataForNewOrg,
@@ -131,9 +132,8 @@ export function LoginPage() {
       <div className="login-page">
         <div className="login-card login-card-attente">
           <div className="login-brand">
-            <BouleLogo />
             <h1>
-              Pétanque <strong>Concours</strong>
+              <LogoTreizero />
             </h1>
           </div>
           <p className="login-tagline">Ouverture du mode invité…</p>
@@ -146,9 +146,8 @@ export function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <BouleLogo />
           <h1>
-            Pétanque <strong>Concours</strong>
+            <LogoTreizero />
           </h1>
         </div>
         <p className="login-tagline">
@@ -184,6 +183,7 @@ export function LoginPage() {
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
                     placeholder="La Boule Joyeuse"
+                    autoComplete="organization"
                     required
                     minLength={2}
                   />
@@ -205,6 +205,7 @@ export function LoginPage() {
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder="Prénom Nom"
+                  autoComplete="name"
                   required
                   minLength={2}
                 />
@@ -218,6 +219,8 @@ export function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="club@example.fr"
+              autoComplete="email"
+              inputMode="email"
               required
             />
           </label>
@@ -230,6 +233,7 @@ export function LoginPage() {
               required
               minLength={8}
               placeholder="8 caractères minimum"
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             />
           </label>
           {error && <p className="form-error">{error}</p>}
@@ -256,7 +260,7 @@ export function LoginPage() {
               type="button"
               onClick={() => void startGuest()}
             >
-              🚀 Essayer sans compte (mode invité)
+              <Rocket className="ic" aria-hidden /> Essayer sans compte (mode invité)
             </button>
             <p className="login-guest-hint">
               Tout fonctionne, mais uniquement sur cet appareil. Créez un compte plus

@@ -1,3 +1,4 @@
+import { PenLine } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface Props {
@@ -119,7 +120,7 @@ export function SignaturePad({ valeur, onSigner, qui, quand, empeche }: Props) {
               Recommencer
             </button>
             <button className="btn btn-primary btn-sm" onClick={valider} disabled={!trace}>
-              ✍ Valider la signature de {qui || '…'}
+              <PenLine className="ic" aria-hidden /> Valider la signature de {qui || '…'}
             </button>
           </div>
         </>

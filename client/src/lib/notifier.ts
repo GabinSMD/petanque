@@ -51,7 +51,7 @@ export function useCallNotifier(
     const calls: CallPayload[] = fresh.map((m) => ({
       matchId: m.id,
       teamNumbers: matchTeamNumbers(m, teamsById),
-      title: '🔔 Votre équipe est appelée',
+      title: 'Votre équipe est appelée',
       body: `${matchLabel(m, poules, matches)}${
         m.terrain
           ? ` · Terrain ${libelleTerrain(m.terrain, concours.libelleTerrains, concours.decalageTerrain)}`

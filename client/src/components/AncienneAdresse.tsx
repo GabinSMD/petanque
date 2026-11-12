@@ -1,3 +1,4 @@
+import { Package, Save } from 'lucide-react';
 import { useState } from 'react';
 import { useSession } from '../db/hooks';
 import { appIsElsewhere, appUrl } from '../lib/appUrl';
@@ -58,7 +59,7 @@ export function AncienneAdresse() {
   return (
     <>
       <div className="demenagement-bandeau no-print">
-        <span aria-hidden>📦</span>
+        <span aria-hidden><Package className="ic" aria-hidden /></span>
         <p>
           Cette adresse n’héberge plus l’application : elle a déménagé sur{' '}
           <strong>{hote(destination)}</strong>.
@@ -74,7 +75,7 @@ export function AncienneAdresse() {
       </div>
 
       {fenetre && (
-        <Modal title="📦 L’application a déménagé" onClose={fermer}>
+        <Modal title="L’application a déménagé" onClose={fermer}>
           <p>
             Elle vit désormais sur <strong>{hote(destination)}</strong>. Cette adresse-ci
             ne garde que la page de présentation — mais votre appareil continue d’ouvrir
@@ -91,7 +92,7 @@ export function AncienneAdresse() {
               </p>
               <p>
                 Avant de partir, exportez chacun d’eux — onglet <strong>Résultats</strong>{' '}
-                du concours, bouton <strong>💾 Sauvegarde (JSON)</strong> — puis
+                du concours, bouton <strong><Save className="ic" aria-hidden /> Sauvegarde (JSON)</strong> — puis
                 réimportez-les à la nouvelle adresse depuis{' '}
                 <strong>Importer une sauvegarde</strong>. Un concours en cours de journée
                 peut attendre la fin du concours : rien ne presse.
