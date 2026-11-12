@@ -19,6 +19,7 @@ import { StandingsTable } from '../../components/StandingsTable';
 import { PhasesFinalesPanel } from '../../components/PhasesFinalesPanel';
 import { TeamLabel, teamDisplayName } from '../../components/TeamLabel';
 import { formateurTerrain } from '../../lib/terrain';
+import { campNumeros } from '../../lib/matchLabel';
 import {
   ROLE_ABREGE,
   ROLE_LABELS,
@@ -302,6 +303,10 @@ export function RondesTab({ concours, teams, matches }: Props) {
                           <ScoreForm
                             concours={concours}
                             match={m}
+                            // Les boutons disaient « A gagne 13 » : on nomme
+                            // les équipes, comme en poule et au tableau.
+                            labelA={campNumeros(m, 'A', teamsById)}
+                            labelB={campNumeros(m, 'B', teamsById)}
                             disabled={locked}
                             onSaved={() => auSauve(m)}
                           />

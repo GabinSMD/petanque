@@ -52,6 +52,7 @@ import {
   type NiveauConcours,
   ajouterMeneBornee,
   inverserResultat,
+  partiesEffaceesEnAval,
   menesPourScore,
   validerScoreEnCours,
   retirerDerniereMene,
@@ -1279,6 +1280,23 @@ export async function clearScore(concours: Concours, match: Match): Promise<void
     done: false,
   });
   await recomputeAfter(concours, match);
+}
+
+/**
+ * Ce qu'écrire `apres` effacerait de déjà joué en aval, calculé à blanc (rien
+ * n'est écrit). Les poules, parties et équipes reviennent avec : l'écran en a
+ * besoin pour nommer les parties perdues.
+ */
+export async function partiesEffaceesSi(
+  concours: Concours,
+  apres: Match,
+): Promise<{ effacees: Match[]; matches: Match[]; poules: Poule[]; teams: Team[] }> {
+  const [matches, poules, teams] = await Promise.all([
+    listByConcours('match', concours.id),
+    listByConcours('poule', concours.id),
+    listByConcours('team', concours.id),
+  ]);
+  return { effacees: partiesEffaceesEnAval(matches, poules, apres), matches, poules, teams };
 }
 
 /** Répercute une saisie : poule ou tableau, corrections en cascade comprises. */

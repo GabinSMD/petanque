@@ -98,3 +98,55 @@ export function pendingMatchesForTeam(teamId: string, matches: Match[]): Match[]
         a.position - b.position,
     );
 }
+
+/**
+ * Dernières parties jouées par l'équipe, la plus récente d'abord : de quoi
+ * corriger un score par le dossard, sans chercher la carte de la partie.
+ */
+export function playedMatchesForTeam(teamId: string, matches: Match[], max = 2): Match[] {
+  return matches
+    .filter((m) => m.done && !isByeMatch(m) && teamSideInMatch(m, teamId) !== null)
+    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
+    .slice(0, max);
+}
+
+/** Numéros d'un seul camp : « n°9 », ou « n°3·n°8 » pour un camp de mêlée. */
+export function campNumeros(m: Match, camp: 'A' | 'B', teamsById: Map<string, Team>): string {
+  const ids =
+    (camp === 'A' ? m.playersA : m.playersB) ??
+    ((camp === 'A' ? m.teamAId : m.teamBId) ? [(camp === 'A' ? m.teamAId : m.teamBId)!] : []);
+  const nums = ids
+    .map((id) => teamsById.get(id)?.number)
+    .filter((n): n is number => typeof n === 'number');
+  return nums.length > 0 ? nums.map((n) => `n°${n}`).join('·') : '?';
+}
+
+/** « des Gagnants (poule 3) », « du Barrage (poule 1) », ou le libellé d'un tour de tableau. */
+function nomDePartie(m: Match, poules: Poule[], matches: Match[]): string {
+  if (m.stage === 'poule') {
+    const poule = poules.find((p) => p.id === m.pouleId);
+    const ou = poule ? ` (poule ${poule.index})` : '';
+    if (m.pouleSlot === 'GAGNANTS') return `des Gagnants${ou}`;
+    if (m.pouleSlot === 'PERDANTS') return `des Perdants${ou}`;
+    if (m.pouleSlot === 'BARRAGE') return `du Barrage${ou}`;
+  }
+  return `de « ${matchLabel(m, poules, matches)} »`;
+}
+
+/**
+ * Phrase qui nomme une partie jouée qu'une correction va effacer :
+ * « Le 13-0 des Gagnants (poule 1), n°10 contre n°5, sera effacé. »
+ * Les numéros suivent l'ordre du score, pour qu'on lise qui a marqué quoi.
+ */
+export function phraseEffacement(
+  m: Match,
+  poules: Poule[],
+  matches: Match[],
+  teamsById: Map<string, Team>,
+): string {
+  const resultat =
+    m.scoreA !== null && m.scoreB !== null
+      ? `Le ${m.scoreA}-${m.scoreB}`
+      : `Le résultat (${campNumeros(m, m.vainqueur === 'B' ? 'B' : 'A', teamsById)} gagne)`;
+  return `${resultat} ${nomDePartie(m, poules, matches)}, ${campNumeros(m, 'A', teamsById)} contre ${campNumeros(m, 'B', teamsById)}, sera effacé.`;
+}

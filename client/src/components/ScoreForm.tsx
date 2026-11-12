@@ -1,36 +1,19 @@
-import { Check, Pencil, RotateCw, Trash2, Undo, X } from 'lucide-react';
-import { useRef, useState, type FocusEvent, type FormEvent } from 'react';
+import { Check, Pencil, RotateCw, Trash2, TriangleAlert, Undo, X } from 'lucide-react';
+import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type ReactNode } from 'react';
 import type { Concours, Match } from '@shared';
-import { evolutionEnTexte } from '@shared';
+import { evolutionEnTexte, inverserResultat, validateScore } from '@shared';
 import {
   ajouterMeneAuMatch,
   clearScore,
   inverserResultatDuMatch,
+  partiesEffaceesSi,
   retirerMeneDuMatch,
   setMatchVainqueur,
   setScore,
 } from '../db/actions';
+import { phraseEffacement } from '../lib/matchLabel';
 
-/**
- * « Inverser Résultat » (planche p.97, à côté de `Modifier Score` et `Gommer`,
- * et texte p.101). La flèche circulaire est l'icône du manuel.
- *
- * Défini **hors** de `ScoreForm` : à l'intérieur, React verrait un type de
- * composant neuf à chaque rendu et le remonterait.
- */
-function BoutonInverser({ concours, match }: { concours: Concours; match: Match }) {
-  return (
-    <button
-      type="button"
-      className="btn-icon"
-      onClick={() => void inverserResultatDuMatch(concours, match)}
-      title="Inverser Résultat : le mauvais camp a été désigné"
-      aria-label="Inverser Résultat"
-    >
-      <RotateCw className="ic" aria-hidden />
-    </button>
-  );
-}
+type Camp = 'a' | 'b';
 
 interface Props {
   concours: Concours;
@@ -43,6 +26,32 @@ interface Props {
   editOnly?: boolean;
   /** Appelé après une saisie réussie (saisie rapide : revenir au champ n°). */
   onSaved?: () => void;
+  /**
+   * Ordre d'affichage des camps. La saisie rapide met en tête l'équipe dont on
+   * vient de taper le numéro : c'est d'elle qu'on parle. Les données ne
+   * bougent pas — la case de gauche reste rattachée à son camp.
+   */
+  ordre?: 'AB' | 'BA';
+  /**
+   * Annoncer en toutes lettres le vainqueur désigné (« n°9 gagne 13 contre
+   * n°3 : __ ») avec de quoi se reprendre. Utile quand c'est Entrée, et non un
+   * bouton nommé, qui a désigné le vainqueur.
+   */
+  annonce?: boolean;
+  /**
+   * Désignation du vainqueur venue de l'extérieur (Entrée dans la saisie
+   * rapide). Le jeton change à chaque demande, pour qu'une même équipe puisse
+   * être redésignée.
+   */
+  demande?: { camp: Camp; jeton: number };
+  /** Écrire « corriger » à côté du crayon d'une partie jouée. */
+  motCorriger?: boolean;
+}
+
+/** Une action qui effacerait des parties déjà jouées, en attente d'accord. */
+interface AConfirmer {
+  phrases: string[];
+  action: () => Promise<void>;
 }
 
 /**
@@ -50,7 +59,19 @@ interface Props {
  * Les deux scores se valident automatiquement (touche Entrée, ou dès qu'on
  * quitte les cases une fois les deux remplies) — aucun bouton à cliquer.
  */
-export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly, onSaved }: Props) {
+export function ScoreForm({
+  concours,
+  match,
+  labelA,
+  labelB,
+  disabled,
+  editOnly,
+  onSaved,
+  ordre = 'AB',
+  annonce,
+  demande,
+  motCorriger,
+}: Props) {
   const [editing, setEditing] = useState(false);
   const [a, setA] = useState('');
   const [b, setB] = useState('');
@@ -59,7 +80,50 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
   const [scoreQuandMeme, setScoreQuandMeme] = useState(false);
   /** Panneau des mènes, replié par défaut. */
   const [menesOuvertes, setMenesOuvertes] = useState(false);
+  /** Camp désigné vainqueur par « gagne 13 » ou par Entrée. */
+  const [designe, setDesigne] = useState<Camp | null>(null);
+  const [aConfirmer, setAConfirmer] = useState<AConfirmer | null>(null);
+  /** Case à prendre au prochain rendu (ouverture d'une correction). */
+  const [focusSur, setFocusSur] = useState<Camp | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const champA = useRef<HTMLInputElement>(null);
+  const champB = useRef<HTMLInputElement>(null);
+  const champ = (camp: Camp) => (camp === 'a' ? champA : champB).current;
+  const nom = (camp: Camp) => (camp === 'a' ? (labelA ?? 'A') : (labelB ?? 'B'));
+  const autre = (camp: Camp): Camp => (camp === 'a' ? 'b' : 'a');
+
+  /**
+   * Le geste du manuel : « un écran pour indiquer le score de la partie apparaît,
+   * avec 13 automatiquement pour l'équipe gagnante. Vous mettez le score de
+   * l'équipe perdante » (p.46, dialogue montré p.97). On désigne le vainqueur,
+   * son score est prérempli à `scoreMax`, et il ne reste qu'un nombre à taper.
+   *
+   * Le champ reste modifiable : une partie peut se gagner à un autre score.
+   */
+  const designerVainqueur = (camp: Camp): void => {
+    const gagnant = String(concours.scoreMax);
+    setA(camp === 'a' ? gagnant : '');
+    setB(camp === 'b' ? gagnant : '');
+    setDesigne(camp);
+    setError(null);
+    // Le focus part sur le perdant : c'est le seul nombre qui reste à saisir.
+    champ(autre(camp))?.focus();
+  };
+
+  useEffect(() => {
+    if (demande) designerVainqueur(demande.camp);
+    // Seul le jeton déclenche : une nouvelle demande, pas un nouveau rendu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demande?.jeton]);
+
+  useEffect(() => {
+    if (!focusSur) return;
+    const el = champ(focusSur);
+    el?.focus();
+    el?.select();
+    setFocusSur(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusSur]);
 
   if (match.byeA || match.byeB) {
     return <span className="score-view score-bye">exempt</span>;
@@ -73,19 +137,64 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
   const ready = !match.done;
   const showForm = ready || editing;
 
+  const fermer = () => {
+    setEditing(false);
+    setA('');
+    setB('');
+    setDesigne(null);
+    setAConfirmer(null);
+  };
+
+  /**
+   * Garde-fou des corrections : inverser, gommer ou changer le gagnant d'une
+   * partie dont la suite est jouée effacerait cette suite. On la calcule à
+   * blanc ; s'il y a quelque chose à perdre, on le nomme et on attend l'accord.
+   * Sinon, rien ne s'interpose — la correction ordinaire reste d'un geste.
+   */
+  const avecGardeFou = async (apres: Match, action: () => Promise<void>): Promise<void> => {
+    const { effacees, matches, poules, teams } = await partiesEffaceesSi(concours, apres);
+    if (effacees.length === 0) {
+      setAConfirmer(null);
+      await action();
+      return;
+    }
+    const teamsById = new Map(teams.map((t) => [t.id, t]));
+    setAConfirmer({
+      phrases: effacees.map((m) => phraseEffacement(m, poules, matches, teamsById)),
+      action,
+    });
+  };
+
   /** Valide dès que les deux cases sont remplies ; sinon ne fait rien. */
   const tryCommit = async () => {
     if (a.trim() === '' || b.trim() === '') return;
     setError(null);
-    try {
-      await setScore(concours, match, Number(a), Number(b));
-      setEditing(false);
-      setA('');
-      setB('');
-      onSaved?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Score invalide');
+    const scoreA = Number(a);
+    const scoreB = Number(b);
+    const enregistrer = async () => {
+      try {
+        await setScore(concours, match, scoreA, scoreB);
+        fermer();
+        onSaved?.();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Score invalide');
+      }
+    };
+    if (!match.done) {
+      await enregistrer();
+      return;
     }
+    // Une correction : le score doit être valable avant qu'on parle de
+    // l'aval, sinon on demanderait un accord pour une saisie refusée.
+    const check = validateScore(scoreA, scoreB, concours.scoreMax);
+    if (!check.ok) {
+      setError(check.error ?? 'Score invalide');
+      return;
+    }
+    await avecGardeFou(
+      { ...match, scoreA, scoreB, vainqueur: undefined, done: true },
+      enregistrer,
+    );
   };
 
   const submit = (e: FormEvent) => {
@@ -103,27 +212,85 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
     setA(match.scoreA !== null ? String(match.scoreA) : '');
     setB(match.scoreB !== null ? String(match.scoreB) : '');
     setEditing(true);
+    setDesigne(null);
     setError(null);
+    // On corrige presque toujours le score du perdant : sa case est prise et
+    // son contenu sélectionné, le nouveau chiffre le remplace.
+    if (match.scoreA !== null && match.scoreB !== null) {
+      setFocusSur(match.scoreA < match.scoreB ? 'a' : 'b');
+    }
   };
 
-  const erase = async () => {
-    await clearScore(concours, match);
-    setEditing(false);
-    setA('');
-    setB('');
-  };
+  const erase = () =>
+    avecGardeFou(
+      { ...match, scoreA: null, scoreB: null, menes: undefined, vainqueur: undefined, done: false },
+      async () => {
+        await clearScore(concours, match);
+        fermer();
+      },
+    );
+
+  /**
+   * « Inverser Résultat » (planche p.97, à côté de `Modifier Score` et
+   * `Gommer`, et texte p.101). Rangé dans la correction et non plus à côté du
+   * crayon : d'un seul toucher, à 26 px du crayon, il effaçait la suite.
+   */
+  const inverser = () =>
+    avecGardeFou(inverserResultat(match), async () => {
+      await inverserResultatDuMatch(concours, match);
+      fermer();
+    });
+
+  /** Panneau d'accord, quand une correction emporterait des parties jouées. */
+  const confirmation = aConfirmer && (
+    <div className="score-confirmer" role="alertdialog" aria-label="Parties jouées effacées">
+      <p>
+        <TriangleAlert className="ic" aria-hidden />{' '}
+        <strong>
+          {aConfirmer.phrases.length > 1
+            ? 'Cette correction efface des parties déjà jouées :'
+            : 'Cette correction efface une partie déjà jouée :'}
+        </strong>
+      </p>
+      <ul>
+        {aConfirmer.phrases.map((p) => (
+          <li key={p}>{p}</li>
+        ))}
+      </ul>
+      <span className="score-confirmer-actions">
+        <button
+          type="button"
+          className="btn btn-danger btn-sm score-outil"
+          onClick={() => {
+            const { action } = aConfirmer;
+            setAConfirmer(null);
+            void action();
+          }}
+        >
+          Confirmer et effacer
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm score-outil"
+          onClick={() => setAConfirmer(null)}
+        >
+          Annuler
+        </button>
+      </span>
+    </div>
+  );
+
+  const crayon = (titre: string, mot?: string) => (
+    <button type="button" className="btn-icon score-crayon" onClick={startEdit} title={titre}>
+      <Pencil className="ic" aria-hidden />
+      {mot ? ` ${mot}` : null}
+    </button>
+  );
 
   if (!showForm) {
     if (editOnly) {
       if (disabled) return null;
-      return (
-        <span className="score-view score-done">
-          <button type="button" className="btn-icon" onClick={startEdit} title="Corriger le score">
-            <Pencil className="ic" aria-hidden /> corriger
-          </button>
-          <BoutonInverser concours={concours} match={match} />
-        </span>
-      );
+      return <span className="score-view score-done">{crayon('Corriger le score', 'corriger')}</span>;
     }
     if (match.scoreA === null || match.scoreB === null) {
       // Vainqueur désigné sans score.
@@ -132,40 +299,20 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
           <strong className="score-win">
             {match.vainqueur === 'A' ? (labelA ?? 'A') : (labelB ?? 'B')} gagne
           </strong>
-          {!disabled && (
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={startEdit}
-              title="Corriger : saisir le score ou changer le vainqueur"
-            >
-              <Pencil className="ic" aria-hidden />
-            </button>
-          )}
-          {!disabled && <BoutonInverser concours={concours} match={match} />}
+          {!disabled && crayon('Corriger : saisir le score, changer ou inverser le vainqueur')}
         </span>
       );
     }
+    // Le score se lit dans l'ordre des équipes affichées autour.
+    const [s1, s2] =
+      ordre === 'BA' ? [match.scoreB!, match.scoreA!] : [match.scoreA!, match.scoreB!];
     return (
       <span className="score-view score-done">
-        <strong className={match.scoreA! > match.scoreB! ? 'score-win' : ''}>
-          {match.scoreA}
-        </strong>
+        <strong className={s1 > s2 ? 'score-win' : ''}>{s1}</strong>
         <span className="score-sep">–</span>
-        <strong className={match.scoreB! > match.scoreA! ? 'score-win' : ''}>
-          {match.scoreB}
-        </strong>
-        {!disabled && (
-          <button
-            type="button"
-            className="btn-icon"
-            onClick={startEdit}
-            title="Corriger le score"
-          >
-            <Pencil className="ic" aria-hidden />
-          </button>
-        )}
-        {!disabled && <BoutonInverser concours={concours} match={match} />}
+        <strong className={s2 > s1 ? 'score-win' : ''}>{s2}</strong>
+        {!disabled &&
+          crayon('Corriger, inverser ou effacer le score', motCorriger ? 'corriger' : undefined)}
       </span>
     );
   }
@@ -175,24 +322,24 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
   // Concours au vainqueur seul : deux boutons, et le score reste accessible
   // pour qui veut le noter quand même.
   if (concours.vainqueurSeul && !scoreQuandMeme) {
+    const designer = (cote: 'A' | 'B') => {
+      const ecrire = async () => {
+        await setMatchVainqueur(concours, match, cote);
+        fermer();
+        onSaved?.();
+      };
+      if (!match.done) return void ecrire();
+      void avecGardeFou(
+        { ...match, vainqueur: cote, scoreA: null, scoreB: null, done: true },
+        ecrire,
+      );
+    };
     return (
       <span className="score-vainqueur">
-        <button
-          type="button"
-          className="btn btn-sm"
-          onClick={() => {
-            void setMatchVainqueur(concours, match, 'A').then(() => onSaved?.());
-          }}
-        >
+        <button type="button" className="btn btn-sm" onClick={() => designer('A')}>
           {labelA ?? 'A'} gagne
         </button>
-        <button
-          type="button"
-          className="btn btn-sm"
-          onClick={() => {
-            void setMatchVainqueur(concours, match, 'B').then(() => onSaved?.());
-          }}
-        >
+        <button type="button" className="btn btn-sm" onClick={() => designer('B')}>
           {labelB ?? 'B'} gagne
         </button>
         <button
@@ -208,74 +355,77 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
             <Trash2 className="ic" aria-hidden />
           </button>
         )}
+        {confirmation}
       </span>
     );
   }
 
-  /**
-   * Le geste du manuel : « un écran pour indiquer le score de la partie apparaît,
-   * avec 13 automatiquement pour l'équipe gagnante. Vous mettez le score de
-   * l'équipe perdante » (p.46, dialogue montré p.97). On désigne le vainqueur,
-   * son score est prérempli à `scoreMax`, et il ne reste qu'un nombre à taper.
-   *
-   * Le champ reste modifiable : une partie peut se gagner à un autre score.
-   */
-  const designerVainqueur = (camp: 'a' | 'b'): void => {
-    const gagnant = String(concours.scoreMax);
-    setA(camp === 'a' ? gagnant : '');
-    setB(camp === 'b' ? gagnant : '');
-    setError(null);
-    // Le focus part sur le perdant : c'est le seul nombre qui reste à saisir.
-    const perdant = formRef.current?.querySelectorAll('input')[camp === 'a' ? 1 : 0];
-    (perdant as HTMLInputElement | undefined)?.focus();
-  };
+  const valeur = (camp: Camp) => (camp === 'a' ? a : b);
+  const ordreCamps: [Camp, Camp] = ordre === 'BA' ? ['b', 'a'] : ['a', 'b'];
+
+  const boutonGagne = (camp: Camp): ReactNode => (
+    <button
+      key={camp}
+      type="button"
+      className="btn btn-sm score-gagne"
+      onClick={() => designerVainqueur(camp)}
+      title={`${nom(camp)} gagne — score prérempli à ${concours.scoreMax}`}
+    >
+      {nom(camp)} gagne {concours.scoreMax}
+    </button>
+  );
+
+  const case_ = (camp: Camp): ReactNode => (
+    <input
+      key={camp}
+      ref={camp === 'a' ? champA : champB}
+      type="number"
+      inputMode="numeric"
+      min={0}
+      max={concours.scoreMax}
+      value={valeur(camp)}
+      onChange={(e) => (camp === 'a' ? setA : setB)(e.target.value)}
+      // Entrer dans une case la sélectionne entière : en correction, le
+      // chiffre tapé remplace l'ancien au lieu de s'y ajouter.
+      onFocus={(e) => e.currentTarget.select()}
+      aria-label={camp === 'a' ? 'Score équipe A' : 'Score équipe B'}
+      placeholder="–"
+    />
+  );
+
+  // L'annonce ne dit que ce qui est vrai : le camp désigné porte toujours le
+  // score de victoire.
+  const annonceVisible =
+    annonce && designe !== null && valeur(designe) === String(concours.scoreMax);
 
   return (
     <>
     <form ref={formRef} className="score-form" onSubmit={submit} onBlur={onBlur}>
+      {annonceVisible && designe && (
+        <p className="score-annonce" role="status">
+          <span>
+            <strong>
+              {nom(designe)} gagne {concours.scoreMax} contre {nom(autre(designe))}
+            </strong>{' '}
+            : <span className="score-annonce-perdant">{valeur(autre(designe)) || '__'}</span>
+          </span>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm score-gagne"
+            onClick={() => designerVainqueur(autre(designe))}
+          >
+            Non, {nom(autre(designe))} a gagné
+          </button>
+        </p>
+      )}
       {/* Seulement en saisie neuve : pendant une correction, les deux scores
           sont déjà là et ces boutons les effaceraient. */}
       {a.trim() === '' && b.trim() === '' && (
-        <span className="score-vainqueur">
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => designerVainqueur('a')}
-            title={`${labelA ?? 'A'} gagne — score prérempli à ${concours.scoreMax}`}
-          >
-            {labelA ?? 'A'} gagne {concours.scoreMax}
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => designerVainqueur('b')}
-            title={`${labelB ?? 'B'} gagne — score prérempli à ${concours.scoreMax}`}
-          >
-            {labelB ?? 'B'} gagne {concours.scoreMax}
-          </button>
-        </span>
+        <span className="score-vainqueur">{ordreCamps.map(boutonGagne)}</span>
       )}
-      <input
-        type="number"
-        inputMode="numeric"
-        min={0}
-        max={concours.scoreMax}
-        value={a}
-        onChange={(e) => setA(e.target.value)}
-        aria-label="Score équipe A"
-        placeholder="–"
-      />
+      {case_(ordreCamps[0])}
       <span className="score-sep">–</span>
-      <input
-        type="number"
-        inputMode="numeric"
-        min={0}
-        max={concours.scoreMax}
-        value={b}
-        onChange={(e) => setB(e.target.value)}
-        aria-label="Score équipe B"
-        placeholder="–"
-      />
+      {case_(ordreCamps[1])}
       {/* Bouton de confirmation optionnel (surtout utile sur tablette). */}
       {a.trim() !== '' && b.trim() !== '' && (
         <button
@@ -289,24 +439,35 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
         </button>
       )}
       {editing && (
-        <>
+        <span className="score-outils">
           <button
             type="button"
-            className="btn-icon"
-            onClick={() => setEditing(false)}
+            className="btn btn-sm score-outil"
+            onClick={() => void inverser()}
+            title="Inverser Résultat : le mauvais camp a été désigné"
+            aria-label="Inverser Résultat"
+          >
+            <RotateCw className="ic" aria-hidden /> Inverser
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm score-outil btn-icon-danger"
+            onClick={() => void erase()}
+            title="Effacer le score"
+            aria-label="Effacer le score"
+          >
+            <Trash2 className="ic" aria-hidden /> Effacer
+          </button>
+          <button
+            type="button"
+            className="btn-icon score-outil"
+            onClick={fermer}
             title="Annuler la correction"
+            aria-label="Annuler la correction"
           >
             <X className="ic" aria-hidden />
           </button>
-          <button
-            type="button"
-            className="btn-icon btn-icon-danger"
-            onClick={() => void erase()}
-            title="Effacer le score"
-          >
-            <Trash2 className="ic" aria-hidden />
-          </button>
-        </>
+        </span>
       )}
       {error && <span className="score-error">{error}</span>}
       <button
@@ -318,6 +479,7 @@ export function ScoreForm({ concours, match, labelA, labelB, disabled, editOnly,
       >
         ⊕ mènes
       </button>
+      {confirmation}
     </form>
     {menesOuvertes && (
       <MenesInline concours={concours} match={match} labelA={labelA} labelB={labelB} />
