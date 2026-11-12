@@ -4,7 +4,7 @@
 # « Always Free »). Idempotent : relançable sans risque.
 #
 # Usage (en root, sur la VM) :
-#   sudo REPO_URL="https://github.com/GabinSMD/petanque.git" \
+#   sudo REPO_URL="https://github.com/GabinSMD/treizero.git" \
 #        BRANCH="claude/saas-concours-offline-faq487" \
 #        DOMAIN="monclub.duckdns.org" \
 #        EMAIL="contact@exemple.fr" \
