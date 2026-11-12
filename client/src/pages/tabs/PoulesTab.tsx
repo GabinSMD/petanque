@@ -31,6 +31,7 @@ import { BesoinTerrainsHint } from '../../components/BesoinTerrains';
 import { useBilanAvantTirage, useModeFederalActif } from '../../db/hooks';
 import { BilanTirageModal } from '../../components/BilanTirageModal';
 import { TeamLabel } from '../../components/TeamLabel';
+import { FicheEquipeModal } from '../../components/FicheEquipe';
 import { POULE_SLOT_LABELS } from '../../lib/labels';
 
 interface Props {
@@ -51,6 +52,9 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
   // Repli des poules : undefined = défaut (les terminées sont repliées).
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
   const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  /** Équipe dont la fiche est ouverte (manuel §3.D.1.C). */
+  const [ficheId, setFicheId] = useState<string | null>(null);
+  const fiche = ficheId ? teamsById.get(ficheId) : undefined;
 
   const activeTeams = teams.filter((t) => !t.forfait);
   const summary = pouleSummary(activeTeams.length, concours.nbTerrains);
@@ -390,10 +394,22 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
               onToggle={() =>
                 setOverrides((o) => ({ ...o, [poule.id]: !collapsed }))
               }
+              onFiche={(t) => setFicheId(t.id)}
             />
           );
         })}
       </div>
+
+      {fiche && (
+        <FicheEquipeModal
+          key={fiche.id}
+          concours={concours}
+          team={fiche}
+          poules={poules}
+          matches={matches}
+          onClose={() => setFicheId(null)}
+        />
+      )}
     </div>
   );
 }
@@ -501,6 +517,7 @@ function PouleCard({
   locked,
   collapsed,
   onToggle,
+  onFiche,
 }: {
   concours: Concours;
   poule: Poule;
@@ -510,6 +527,7 @@ function PouleCard({
   locked: boolean;
   collapsed: boolean;
   onToggle: () => void;
+  onFiche: (team: Team) => void;
 }) {
   const ordered = [...matches].sort((a, b) => a.position - b.position);
   const remaining = pouleRemaining(matches);
@@ -569,7 +587,7 @@ function PouleCard({
           const b = badge(tid);
           return (
             <li key={tid} className={b === 'éliminé' ? 'team-eliminated' : ''}>
-              <TeamLabel team={teamsById.get(tid)} />
+              <TeamLabel team={teamsById.get(tid)} onFiche={onFiche} />
               {b && b !== 'éliminé' && (
                 <span className={`tag ${b === '1er' ? 'tag-ok' : 'tag-info'}`}>
                   Qualifié {b}
@@ -598,7 +616,7 @@ function PouleCard({
             </div>
             <div className="pmatch-versus">
               <span className="pmatch-side">
-                <TeamLabel team={m.teamAId ? teamsById.get(m.teamAId) : null} compact />
+                <TeamLabel team={m.teamAId ? teamsById.get(m.teamAId) : null} compact onFiche={onFiche} />
               </span>
               <div className="pmatch-score">
                 <ScoreForm
@@ -610,7 +628,7 @@ function PouleCard({
                 />
               </div>
               <span className="pmatch-side pmatch-side-right">
-                <TeamLabel team={m.teamBId ? teamsById.get(m.teamBId) : null} compact />
+                <TeamLabel team={m.teamBId ? teamsById.get(m.teamBId) : null} compact onFiche={onFiche} />
               </span>
             </div>
           </li>

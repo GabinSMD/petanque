@@ -1,4 +1,4 @@
-import { ChartColumn, ClipboardList, Euro, FolderOpen, Medal, Newspaper, Receipt, Save, Ticket, Trophy } from 'lucide-react';
+import { ChartColumn, ClipboardList, Euro, FolderOpen, Medal, Newspaper, Receipt, Save, Search, Ticket, Trophy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Concours, Match, MatchStage, Poule, Team } from '@shared';
@@ -16,6 +16,8 @@ import {
   classementRondes,
   permutationsActives,
   raisonRefusMise,
+  resultatsClub,
+  type EtatParcoursEquipe,
   type RankGroup,
 } from '@shared';
 import { updateConcours } from '../../db/actions';
@@ -85,6 +87,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
       <div className="tab-content results">
         <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
         <PhotosPodium concours={concours} />
+        <ResultatsClubSection teams={teams} poules={poules} matches={matches} />
         {finales.map(({ stage, titre }) => {
           const groups = bracketRanking(matches, stage);
           if (groups.length === 0) return null;
@@ -163,6 +166,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
     <div className="tab-content results">
       <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
         <PhotosPodium concours={concours} />
+      <ResultatsClubSection teams={teams} poules={poules} matches={matches} />
       {principalGroups.length > 0 && (
         <section className="result-section">
           <h2>Concours principal</h2>
@@ -516,6 +520,111 @@ function ExportBar({ concours, teams, poules, matches }: Props) {
         <Save className="ic" aria-hidden /> Sauvegarde (JSON)
       </button>
     </div>
+  );
+}
+
+const ETAT_PARCOURS_LABELS: Record<EtatParcoursEquipe, string> = {
+  en_jeu: 'En jeu',
+  eliminee: 'Éliminée',
+  vainqueur: 'Vainqueur',
+  qualifiee: 'Qualifiée',
+  forfait: 'Forfait',
+  non_tiree: 'Non tirée',
+};
+
+const ETAT_PARCOURS_TAG: Record<EtatParcoursEquipe, string> = {
+  en_jeu: 'tag-info',
+  eliminee: '',
+  vainqueur: 'tag-ok',
+  qualifiee: 'tag-ok',
+  forfait: 'tag-danger',
+  non_tiree: '',
+};
+
+/**
+ * « Recherche Résultats Club » (manuel §3.D.1.D) : le président de club passe
+ * à la table et demande où en sont ses équipes. On tape le club, on lit pour
+ * chacune son concours, son dernier tour ou sa place, et si elle joue encore.
+ */
+function ResultatsClubSection({
+  teams,
+  poules,
+  matches,
+}: {
+  teams: Team[];
+  poules: Poule[];
+  matches: Match[];
+}) {
+  const [requete, setRequete] = useState('');
+  const res = useMemo(
+    () => resultatsClub(teams, poules, matches, requete),
+    [teams, poules, matches, requete],
+  );
+  const cherche = requete.trim().length >= 2;
+
+  return (
+    <section className="result-section no-print">
+      <h2>
+        <Search className="ic" aria-hidden /> Résultats d'un club
+      </h2>
+      <div className="recherche-equipe">
+        <label>
+          Club
+          <input
+            type="search"
+            value={requete}
+            placeholder="Nom du club, en entier ou en partie"
+            onChange={(e) => setRequete(e.target.value)}
+          />
+        </label>
+        {cherche && (
+          <span className="hint">
+            {res.equipes.length === 0
+              ? 'Aucune équipe de ce club.'
+              : `${res.equipes.length} équipe${res.equipes.length > 1 ? 's' : ''} — ${res.clubs.join(', ')}`}
+          </span>
+        )}
+      </div>
+      {cherche && res.equipes.length > 0 && (
+        <div className="table-scroll">
+          <table className="rank-table">
+            <thead>
+              <tr>
+                <th>Équipe</th>
+                <th>Concours</th>
+                <th>Parcours</th>
+                <th>État</th>
+              </tr>
+            </thead>
+            <tbody>
+              {res.equipes.map((e) => (
+                <tr key={e.team.id}>
+                  <td>
+                    <TeamLabel team={e.team} compact />
+                    {!e.homogene && (
+                      <span className="hint" title="Le club n'y a qu'une partie des joueurs">
+                        {' '}
+                        (mixte)
+                      </span>
+                    )}
+                  </td>
+                  <td>{e.concours ?? '—'}</td>
+                  <td>
+                    {e.libelle}
+                    {e.place !== undefined && e.place > 1 && ` (${e.place}e)`}
+                  </td>
+                  <td>
+                    <span className={`tag ${ETAT_PARCOURS_TAG[e.etat]}`}>
+                      {ETAT_PARCOURS_LABELS[e.etat]}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

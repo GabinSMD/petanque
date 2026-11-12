@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { LicenceEtrangereModal } from '../../components/LicenceEtrangereModal';
 import { LicenceScanModal } from '../../components/LicenceScanModal';
 import { Modal } from '../../components/Modal';
+import { parametresSaisie, useSaisieEquipe } from '../../components/FicheEquipe';
 import { MultisiteModal } from '../../components/MultisiteModal';
 import type { Concours, Licencie, Player, Poule, RolePetanque, Team } from '@shared';
 import { addTeam, deleteTeam, importerInscrits, insererEquipe, updateTeam } from '../../db/actions';
@@ -17,7 +18,6 @@ import {
   aDesCriteresLicence,
   bilanMises,
   miseEquipe,
-  TAILLE_FORMATION,
   etatMise,
   poserMise,
   type EtatMise,
@@ -32,7 +32,6 @@ import { exportListeSpecifique } from '../../lib/export';
 import {
   ROLE_ABREGE,
   ROLE_LABELS,
-  isIndividualMode,
   formatLabel,
 } from '../../lib/labels';
 
@@ -53,16 +52,8 @@ export function TeamsTab({ concours, teams, poules }: Props) {
   const [modification, setModification] = useState(false);
   const [erreurModif, setErreurModif] = useState<string | null>(null);
   const [bilanImport, setBilanImport] = useState<string | null>(null);
-  const individual = isIndividualMode(concours.mode);
-  const nbPlayers = individual ? 1 : TAILLE_FORMATION[concours.format];
+  const { individual, nbPlayers, avecRoles, rolesProposes } = parametresSaisie(concours);
   const locked = concours.status !== 'inscriptions';
-  /**
-   * Le rôle de jeu ne sert qu'au tirage des mêlées : il n'a pas de sens quand
-   * les équipes sont déjà constituées, ni en tête-à-tête.
-   */
-  const avecRoles = concours.mode === 'melee' && concours.format !== 'tete_a_tete';
-  const rolesProposes: RolePetanque[] =
-    concours.format === 'triplette' ? ['pointeur', 'milieu', 'tireur'] : ['pointeur', 'tireur'];
   const [names, setNames] = useState<string[]>(Array(nbPlayers).fill(''));
   const [licences, setLicences] = useState<string[]>(Array(nbPlayers).fill(''));
   const [clubs, setClubs] = useState<string[]>(Array(nbPlayers).fill(''));
@@ -998,34 +989,14 @@ function TeamEditRow({
   onErreur: (message: string | null) => void;
   onDone: () => void;
 }) {
-  const [names, setNames] = useState<string[]>(
-    Array.from({ length: nbPlayers }, (_, i) => team.players[i]?.name ?? ''),
-  );
-  const [licences, setLicences] = useState<string[]>(
-    Array.from({ length: nbPlayers }, (_, i) => team.players[i]?.licence ?? ''),
-  );
-  const [roles, setRoles] = useState<(RolePetanque | '')[]>(
-    Array.from({ length: nbPlayers }, (_, i) => team.players[i]?.role ?? ''),
-  );
-  const [club, setClub] = useState(team.club ?? '');
+  const saisie = useSaisieEquipe(team, nbPlayers);
+  const { names, licences, roles, club, setClub } = saisie;
 
   const save = async () => {
-    const players: Player[] = names
-      // On repart de la fiche existante : le club du joueur et tout ce que la
-      // ligne de modification n'affiche pas doivent survivre à un « OK ».
-      .map((name, i) => ({
-        ...team.players[i],
-        name: name.trim(),
-        licence: licences[i]?.trim() || undefined,
-        role: roles[i] || undefined,
-      }))
-      .filter((p) => p.name.length > 0);
-    if (players.length === 0) return;
-    try {
-      await updateTeam({ ...team, players, club: club.trim() || undefined });
-    } catch (err) {
-      // Refus de la règle d'après-tirage : on le montre au lieu de perdre la saisie.
-      onErreur(err instanceof Error ? err.message : String(err));
+    const refus = await saisie.enregistrer();
+    // Refus de la règle d'après-tirage : on le montre au lieu de perdre la saisie.
+    if (refus) {
+      onErreur(refus);
       return;
     }
     onDone();
@@ -1040,26 +1011,20 @@ function TeamEditRow({
           <div key={i} className="player-inputs">
             <input
               value={names[i] ?? ''}
-              onChange={(e) => setNames(names.map((n, j) => (j === i ? e.target.value : n)))}
+              onChange={(e) => saisie.setNom(i, e.target.value)}
               placeholder={`Joueur ${i + 1}`}
             />
             <input
               className="licence-input"
               value={licences[i] ?? ''}
-              onChange={(e) =>
-                setLicences(licences.map((l, j) => (j === i ? e.target.value : l)))
-              }
+              onChange={(e) => saisie.setLicence(i, e.target.value)}
               placeholder="N° licence"
             />
             {avecRoles && (
               <select
                 className="role-select"
                 value={roles[i] ?? ''}
-                onChange={(e) =>
-                  setRoles(
-                    roles.map((r, j) => (j === i ? (e.target.value as RolePetanque | '') : r)),
-                  )
-                }
+                onChange={(e) => saisie.setRole(i, e.target.value as RolePetanque | '')}
               >
                 <option value="">Rôle indifférent</option>
                 {rolesProposes.map((r) => (
