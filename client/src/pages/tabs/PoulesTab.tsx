@@ -1,5 +1,5 @@
 import { MenuPlus, MenuPlusItem } from '../../components/MenuPlus';
-import { AlarmClock, Dices, LayoutGrid, Pause, Printer, Search, Shield, Ticket, Timer, Undo2 } from 'lucide-react';
+import { AlarmClock, Dices, FileText, LayoutGrid, Pause, Printer, Search, Shield, Ticket, Timer, Undo2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
 import {
@@ -288,6 +288,16 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             rel="noreferrer"
           >
             <Ticket className="ic" aria-hidden /> Tickets de parties
+          </a>
+          {/* Fiches de jeu (§3.D.1.B.4.2) : la trace papier de chaque équipe,
+              pour finir le concours à la main en cas de panne. */}
+          <a
+            className="btn btn-ghost btn-sm"
+            href={`/concours/${concours.id}/imprimer/fiches`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <FileText className="ic" aria-hidden /> Fiches de jeu
           </a>
           {concours.status === 'poules' && (
             <>
