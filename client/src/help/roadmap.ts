@@ -46,5 +46,5 @@ export const ROADMAP: ChantierRoadmap[] = [
 
 /** Adresse d'une issue du dépôt, pour lier une promesse à son suivi. */
 export function lienIssue(numero: number): string {
-  return `https://github.com/GabinSMD/petanque/issues/${numero}`;
+  return `https://github.com/GabinSMD/treizero/issues/${numero}`;
 }
