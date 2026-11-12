@@ -7,6 +7,7 @@ import {
   TAILLE_FORMATION,
   accepteConsolante,
   bornesParties,
+  defautsPersonnalises,
   raisonRefusMise,
 } from '@shared';
 import type { ConcoursInput } from '../db/actions';
@@ -214,6 +215,11 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
             {!isTirMode(mode) && ` · ${FORMAT_LABELS[format]}`}
             {isIndividualMode(mode) && ' · inscriptions individuelles'}
           </p>
+          {/* Sans cette ligne, un lieu ou un nombre de terrains prérempli
+              semble sortir de nulle part. */}
+          {defautsPersonnalises(depart) && (
+            <p className="hint wizard-repris">Repris de votre dernier concours.</p>
+          )}
           <label>
             Nom du concours
             <input
@@ -312,7 +318,8 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
                 />
                 {bornes && (
                   <span className="hint">
-                    De {bornes.min} à {bornes.max} parties (manuel §3.D.14).
+                    {/* Bornes du manuel §3.D.14. */}
+                    De {bornes.min} à {bornes.max} parties.
                   </span>
                 )}
               </label>

@@ -70,7 +70,8 @@ export function LicenceEtrangereModal({ onChoisir, onClose }: Props) {
     <Modal title="Licence étrangère — base personnelle" onClose={onClose}>
       <div className="etrangere-modal">
         <p className="hint">
-          Joueur affilié à la fédération de son pays (manuel §3.B.1, zone 21). La fiche est
+          {/* Manuel §3.B.1, zone 21. */}
+          Joueur affilié à la fédération de son pays. La fiche est
           conservée sur votre base personnelle : au prochain concours, son nom suffira.
         </p>
 

@@ -153,12 +153,18 @@ export function renommerIdentifiants(
 }
 
 /** Résumé lisible d'une sauvegarde, à montrer avant d'importer. */
+/** `2026-11-12` → `12/11/2026` : la date ISO du fichier ne se lit pas d'un coup d'œil. */
+function dateFr(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+
 export function resumeSauvegarde(s: Sauvegarde): string {
   const parties = s.matches.length;
   const jouees = s.matches.filter((m) => m.done).length;
   return [
     s.concours.name,
-    s.concours.date,
+    dateFr(s.concours.date),
     `${s.teams.length} équipe${s.teams.length > 1 ? 's' : ''}`,
     s.poules.length > 0 ? `${s.poules.length} poule${s.poules.length > 1 ? 's' : ''}` : '',
     parties > 0 ? `${jouees}/${parties} partie${parties > 1 ? 's' : ''} jouée${jouees > 1 ? 's' : ''}` : '',

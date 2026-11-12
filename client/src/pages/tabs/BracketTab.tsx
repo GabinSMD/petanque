@@ -1,4 +1,4 @@
-import { MenuPlus, MenuPlusItem } from '../../components/MenuPlus';
+import { MenuPlus, MenuPlusItem, ouvrirFichesDeJeu } from '../../components/MenuPlus';
 import { Dices, FileText, Shield, Ticket, Trophy, Undo2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
@@ -118,7 +118,7 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
               type="button"
               className="btn btn-ghost btn-sm"
               onClick={() => setGroupesOuverts(true)}
-              title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
+              title="Traiter plusieurs clubs comme un seul au tirage"
             >
               <Shield className="ic" aria-hidden /> Groupes de protection
               {concours.protections?.length ? ` (${concours.protections.length})` : ''}
@@ -134,7 +134,8 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
                   })
                 }
               />
-              Retirage à chaque tour (manuel §3.D.1.A)
+              {/* Manuel §3.D.1.A. */}
+              Retirage à chaque tour
               <span className="hint">
                 Les vainqueurs sont tirés au sort dans le tour suivant, comme le logiciel fédéral :
                 aucun chemin n'est connu d'avance. Décoché, le tableau est un arbre figé au tirage et
@@ -321,18 +322,17 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
           >
             <Ticket className="ic" aria-hidden /> Tickets de parties
           </a>
-          {/* Fiches de jeu (§3.D.1.B.4.2) : la trace papier de chaque équipe,
-              pour finir le concours à la main en cas de panne. */}
-          <a
-            className="btn btn-ghost btn-sm"
-            href={`/concours/${concours.id}/imprimer/fiches`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FileText className="ic" aria-hidden /> Fiches de jeu
-          </a>
-          {!locked && (
-            <MenuPlus>
+          <MenuPlus>
+            {/* Fiches de jeu (§3.D.1.B.4.2) : la trace papier de chaque équipe,
+                pour finir le concours à la main en cas de panne. Utiles, mais
+                rares : elles n'ont pas leur place parmi les boutons du jour. */}
+            <MenuPlusItem
+              icone={<FileText className="ic" aria-hidden />}
+              titre="Fiches de jeu"
+              detail="Une fiche par équipe, pour finir le concours sur papier en cas de panne."
+              onClick={() => ouvrirFichesDeJeu(concours.id)}
+            />
+            {!locked && (
               <MenuPlusItem
                 danger
                 icone={<Undo2 className="ic" aria-hidden />}
@@ -351,8 +351,8 @@ export function BracketTab({ concours, teams, matches, poules }: Props) {
                   }
                 }}
               />
-            </MenuPlus>
-          )}
+            )}
+          </MenuPlus>
           {championTeam && !locked && (
             <button
               className="btn btn-primary"

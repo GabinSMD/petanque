@@ -400,7 +400,8 @@ export async function insererEquipe(
   club?: string,
 ): Promise<void> {
   if (concours.status !== 'inscriptions') {
-    throw new Error('Le tirage est fait : les dossards ne changent plus (§3.B.8).');
+    // Manuel §3.B.8.
+    throw new Error('Le tirage est fait : les dossards ne changent plus.');
   }
   const teams = await listByConcours('team', concours.id);
   const changements = renumeroterPourInsertion(teams, dossard);

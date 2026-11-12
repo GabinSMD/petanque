@@ -53,19 +53,22 @@ export const MODE_LABELS: Record<ConcoursMode, string> = {
  */
 export const FORMULE_LABELS: Record<Formule, string> = {
   a: 'Un seul tableau',
-  ab: 'Tableau + consolante, sans récupération',
-  ab_recup: 'Tableau + consolante, avec repêchage au cadrage (A-B récup.)',
+  // Le choix habituel garde le nom court ; la variante avec récupération
+  // (« A-B récup. » du manuel, §3.D.9) doit tenir dans un <select> sur téléphone.
+  ab: 'Tableau + consolante',
+  ab_recup: 'Tableau + consolante avec repêchage',
   abc: 'Tableau + consolante + complémentaire',
   abc_recup: 'Avec repêchage au cadrage (A-B-C récup.)',
   abc_cd19: 'Avec repêchage vers le complémentaire (CD19)',
   abc_cd53: 'Double repêchage au cadrage (CD53)',
 };
 
+// Références du manuel, hors des textes affichés : ab §3.D.11, ab_recup §3.D.9.
 export const FORMULE_HINTS: Record<Formule, string> = {
   a: 'Qui perd sort, définitivement.',
-  ab: 'Les perdants du 1er tour rejouent dans la consolante, sans récupération (§3.D.11) : qui perd ensuite au tableau principal sort.',
+  ab: 'Les perdants du 1er tour rejouent dans la consolante, sans récupération : qui perd ensuite au tableau principal sort.',
   ab_recup:
-    'Les perdants du 1er tour rejouent dans la consolante, et ceux du 2e tour du tableau principal entrent directement au 2e tour de la consolante, le « cadrage » (§3.D.9).',
+    'Les perdants du 1er tour rejouent dans la consolante, et ceux du 2e tour du tableau principal entrent directement au 2e tour de la consolante, le « cadrage ».',
   abc: 'Les perdants du 1er tour de la consolante rejouent dans un 3e tableau.',
   abc_recup:
     'Comme ci-dessus, et les perdants du 2e tour du tableau principal entrent directement au 2e tour de la consolante (le « cadrage ») — la formule des concours officiels A-B-C.',
@@ -313,7 +316,7 @@ export const ANOMALIE_LABELS: Record<ChampLicence, string> = {
   sexe: 'sexe',
   classification: 'classification',
   certificatMedical: 'certificat médical',
-  club: 'club',
+  club: 'autre club',
   suspension: 'licencié suspendu',
 };
 

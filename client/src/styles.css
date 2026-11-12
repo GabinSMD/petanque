@@ -1681,10 +1681,55 @@ form label select {
 /* Dossard cliquable (§3.D.1.C) : même pastille, avec ce qu'il faut pour se
    savoir bouton — curseur, survol, anneau de focus au clavier. */
 button.team-number-fiche {
+  position: relative;
   border: 0;
   font-family: inherit;
   line-height: inherit;
   cursor: pointer;
+  /* Indice visible au toucher, où le `title` et le survol n'existent pas : le
+     numéro souligné se lit comme un lien, sans grossir la pastille. */
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+/* La pastille fait environ 22 × 15 px : trop petite pour un doigt. Le
+   pseudo-élément porte la zone touchable à 44 × 44 px, sans changer son
+   dessin. Elle descend sur le nom de l'équipe (du texte, sans action) plutôt
+   que de monter : au-dessus du dossard se trouvent le sélecteur de terrain
+   d'une partie de poule, ou la partie précédente du tableau. Vérifié sur
+   capture, à 1280 et 390 px : aucun bouton de score n'est touché. */
+button.team-number-fiche::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  width: max(100%, 44px);
+  height: 44px;
+  transform: translateX(-50%);
+}
+/* Dans la liste des équipes d'une poule, les lignes se suivent à 22 px : une
+   cible plus haute recouvrirait le dossard voisin. Elle prend la hauteur de
+   la ligne, et garde sa largeur. */
+.poule-teams button.team-number-fiche::after {
+  top: 50%;
+  height: 1.4rem;
+  transform: translate(-50%, -50%);
+}
+/* Dans une case du tableau, les deux équipes se suivent parfois à 26 px :
+   la cible se cale sur la ligne de l'équipe (toute sa hauteur, 52 px de
+   large depuis le bord), et ne déborde jamais sur la ligne voisine. */
+.match-box-row {
+  position: relative;
+}
+.match-box-row button.team-number-fiche {
+  position: static;
+}
+.match-box-row button.team-number-fiche::after {
+  left: 0;
+  top: 0;
+  width: 52px;
+  height: 100%;
+  transform: none;
 }
 button.team-number-fiche:hover {
   background: var(--accent);
@@ -4233,6 +4278,9 @@ button.team-number-fiche:focus-visible {
 /* Inscription au lecteur de licences */
 .scan-modal {
   display: grid;
+  /* `minmax(0, 1fr)` : sans lui, la piste s'élargit à la ligne la plus
+     longue et toute la modale défile à l'horizontale sur téléphone. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.8rem;
 }
 
@@ -4268,6 +4316,7 @@ button.team-number-fiche:focus-visible {
 
 .scan-place {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   border: 1px dashed var(--border);
@@ -4281,8 +4330,8 @@ button.team-number-fiche:focus-visible {
 }
 
 .scan-place input {
-  flex: 1;
-  min-width: 8rem;
+  flex: 1 1 8rem;
+  min-width: 0;
 }
 
 .scan-licence {
@@ -4302,6 +4351,15 @@ button.team-number-fiche:focus-visible {
 
 .scan-message {
   margin: 0;
+}
+
+.scan-modal .form-actions {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.scan-modal .form-actions .hint {
+  flex: 1 1 100%;
 }
 
 .tag-warn {
@@ -6078,6 +6136,8 @@ h2 {
   width: 11rem;
 }
 
+/* Fiches de jeu : traits à l'encre des documents (`--ink`, que `.print-page`
+   fixe au thème clair quel que soit l'écran), plutôt qu'un noir en dur. */
 .fiches-jeu {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -6085,7 +6145,7 @@ h2 {
 }
 
 .fiche-jeu {
-  border: 1.5px solid #000;
+  border: 1.5px solid var(--ink);
   padding: 0.45rem 0.55rem;
   break-inside: avoid;
   font-size: 0.82rem;
@@ -6096,10 +6156,10 @@ h2 {
 }
 
 .fiche-jeu-concours {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  border-bottom: 1px solid #000;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--ink);
   padding-bottom: 0.2rem;
   margin-bottom: 0.3rem !important;
 }
@@ -6113,7 +6173,7 @@ h2 {
 .fiche-jeu-dossard {
   font-size: 1.15rem;
   font-weight: 800;
-  border: 1.5px solid #000;
+  border: 1.5px solid var(--ink);
   padding: 0.05rem 0.4rem;
   white-space: nowrap;
 }
@@ -6139,7 +6199,7 @@ h2 {
 
 .fiche-jeu-table th,
 .fiche-jeu-table td {
-  border: 1px solid #000;
+  border: 1px solid var(--ink);
   padding: 0.12rem 0.25rem;
   height: 1.9rem;
   text-align: center;
@@ -6172,4 +6232,120 @@ h2 {
   .fiches-jeu {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* Résultats d'un club : repliée sous les classements, titre au rang des
+   « Photos du podium ». */
+.resultats-club > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.resultats-club > summary::-webkit-details-marker {
+  display: none;
+}
+.resultats-club > summary h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+.resultats-club > summary h3::after {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  margin-left: 0.3rem;
+  opacity: 0.6;
+}
+.resultats-club[open] > summary h3::after {
+  transform: rotate(-135deg) translateY(-2px);
+}
+.resultats-club[open] > summary {
+  margin-bottom: 0.6rem;
+}
+.resultats-club-table td {
+  vertical-align: top;
+}
+.resultats-club-etat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.4rem;
+}
+.resultats-club-etat .tag {
+  white-space: nowrap;
+}
+.resultats-club-detail {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.15rem;
+}
+
+/* Import d'une sauvegarde : trois issues en boutons radio. */
+.import-options {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.import-options legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+.import-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 400;
+}
+.import-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.import-option input {
+  margin-top: 0.2rem;
+  flex: none;
+}
+.import-option small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.1rem;
+}
+
+/* Feuille de match, « Autre championnat » : sans `min-width: 0`, le
+   sélecteur de catégorie d'âge imposait sa largeur à la colonne et sortait
+   de la carte. */
+.feuille-filtres-autre > label {
+  min-width: 0;
+}
+.feuille-filtres-autre select {
+  width: 100%;
+  min-width: 0;
+}
+.feuille-filtres-autre > .checkbox-label {
+  margin-bottom: 0.8rem;
+}
+/* Même garde pour les autres lignes de la feuille : un champ texte garde sa
+   largeur naturelle (environ 260 px) et poussait la colonne de droite hors
+   du contenu de la carte. */
+.feuille-verrou .form-row > label {
+  min-width: 0;
+}
+.feuille-verrou .form-row > label > :is(input, select) {
+  max-width: 100%;
+}
+
+/* Assistant : d'où viennent les valeurs préremplies. */
+.wizard-repris {
+  margin: -0.5rem 0 0.9rem;
+  font-size: 0.85rem;
 }

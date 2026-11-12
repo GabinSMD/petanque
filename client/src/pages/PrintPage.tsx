@@ -398,7 +398,8 @@ export function PrintPage() {
         <div className="print-arbitrage">
           <h2 className="print-arbitrage-title">{delegue.titre}</h2>
           <p className="hint print-arbitrage-intro">
-            Phases finales — document du délégué (manuel §3.D.15). Les sections vont du perdant le
+            {/* Manuel §3.D.15. */}
+            Phases finales — document du délégué. Les sections vont du perdant le
             plus précoce au champion, comme sur la feuille fédérale.
           </p>
           {delegue.sections.map((section) => (

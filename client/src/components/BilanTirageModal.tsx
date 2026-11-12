@@ -80,7 +80,8 @@ export function BilanTirageModal({ bilan, concoursId, onTirer, onCorriger }: Pro
       </ul>
       <p className="hint">
         Une licence se corrige tant que l'équipe est devant vous. Après le tirage, la composition
-        reste modifiable mais pas le dossard (§3.B.8).
+        reste modifiable mais pas le dossard.
+        {/* Manuel §3.B.8. */}
       </p>
       <div className="form-actions">
         <a

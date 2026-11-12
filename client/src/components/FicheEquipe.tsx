@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { Concours, Match, Player, Poule, RolePetanque, Team } from '@shared';
-import { TAILLE_FORMATION, libelleClubs, parcoursEquipe } from '@shared';
+import { TAILLE_FORMATION, aDesCriteresLicence, libelleClubs, parcoursEquipe } from '@shared';
 import { updateTeam } from '../db/actions';
+import { useLicenciesCount, useModeFederalActif } from '../db/hooks';
 import { ROLE_LABELS, isIndividualMode } from '../lib/labels';
 import { Modal } from './Modal';
 
@@ -47,7 +48,7 @@ export function useSaisieEquipe(team: Team, nbPlayers: number) {
    * Enregistre. Rend `null` si c'est fait, sinon la raison du refus — la règle
    * d'après-tirage de `updateTeam`, ou une équipe vidée de ses joueurs.
    */
-  const enregistrer = async (): Promise<string | null> => {
+  const enregistrer = async (autres: Partial<Team> = {}): Promise<string | null> => {
     const players: Player[] = names
       // On repart de la fiche existante : le club du joueur et tout ce que le
       // formulaire n'affiche pas doivent survivre à un « OK ».
@@ -60,7 +61,7 @@ export function useSaisieEquipe(team: Team, nbPlayers: number) {
       .filter((p) => p.name.length > 0);
     if (players.length === 0) return 'Il faut au moins un joueur.';
     try {
-      await updateTeam({ ...team, players, club: club.trim() || undefined });
+      await updateTeam({ ...team, ...autres, players, club: club.trim() || undefined });
     } catch (err) {
       return err instanceof Error ? err.message : String(err);
     }
@@ -107,9 +108,21 @@ export function FicheEquipeModal({
   const [erreur, setErreur] = useState<string | null>(null);
   const clubs = libelleClubs(team.players, team.club);
   const parcours = parcoursEquipe(team, poules, matches);
+  // Même règle que l'onglet Inscriptions (`complementsForces`) : la licence et
+  // la liste spécifique servent au concours fédéral ; en concours de club, ce
+  // sont des champs de trop. Une valeur déjà saisie reste toutefois visible,
+  // pour ne pas cacher ce qu'on enregistrerait.
+  const modeFederal = useModeFederalActif();
+  const nbLicencies = useLicenciesCount();
+  const federal = aDesCriteresLicence(concours) || modeFederal || nbLicencies > 0;
+  const avecLicence = federal || team.players.some((p) => p.licence);
+  const avecListe = federal || team.retenue === true;
+  // La case n'est écrite qu'avec le reste, par « Enregistrer » : « Annuler »
+  // doit tout annuler.
+  const [retenue, setRetenue] = useState(team.retenue ?? false);
 
   const valider = async (): Promise<void> => {
-    const refus = await saisie.enregistrer();
+    const refus = await saisie.enregistrer({ retenue: retenue || undefined });
     if (refus) setErreur(refus);
     else onClose();
   };
@@ -140,13 +153,15 @@ export function FicheEquipeModal({
                 Nom
                 <input value={saisie.names[i] ?? ''} onChange={(e) => saisie.setNom(i, e.target.value)} />
               </label>
-              <label>
-                N° licence
-                <input
-                  value={saisie.licences[i] ?? ''}
-                  onChange={(e) => saisie.setLicence(i, e.target.value)}
-                />
-              </label>
+              {avecLicence && (
+                <label>
+                  N° licence
+                  <input
+                    value={saisie.licences[i] ?? ''}
+                    onChange={(e) => saisie.setLicence(i, e.target.value)}
+                  />
+                </label>
+              )}
             </div>
             {avecRoles && (
               <label>
@@ -172,17 +187,13 @@ export function FicheEquipeModal({
           <input value={saisie.club} onChange={(e) => saisie.setClub(e.target.value)} />
         </label>
 
-        {/* Case du manuel : « Rajouter à la Liste Spécifique ». Elle s'écrit
-            tout de suite, comme la case de l'onglet Inscriptions : ce n'est pas
-            une modification de la composition. */}
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={team.retenue ?? false}
-            onChange={(e) => void updateTeam({ ...team, retenue: e.target.checked || undefined })}
-          />
-          Rajouter à la liste spécifique
-        </label>
+        {/* Case du manuel : « Rajouter à la Liste Spécifique » (§3.D.1.C). */}
+        {avecListe && (
+          <label className="checkbox-label">
+            <input type="checkbox" checked={retenue} onChange={(e) => setRetenue(e.target.checked)} />
+            Rajouter à la liste spécifique
+          </label>
+        )}
 
         {erreur && <p className="form-error">{erreur}</p>}
         <div className="form-actions">

@@ -29,6 +29,9 @@ export function ImportSauvegarde() {
   const input = useRef<HTMLInputElement>(null);
   const [sauvegarde, setSauvegarde] = useState<Sauvegarde | null>(null);
   const [existeDeja, setExisteDeja] = useState(false);
+  // Fusionner d'office quand le concours existe : c'est le cas courant (les
+  // scores d'un autre appareil) et le seul qui n'écrase ni ne duplique rien.
+  const [choix, setChoix] = useState<ChoixImport>('fusionner');
   const [bilan, setBilan] = useState<FusionResultats | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,6 +39,7 @@ export function ImportSauvegarde() {
   const reinitialiser = (): void => {
     setSauvegarde(null);
     setExisteDeja(false);
+    setChoix('fusionner');
     setBilan(null);
     if (input.current) input.current.value = '';
   };
@@ -48,8 +52,11 @@ export function ImportSauvegarde() {
       if (input.current) input.current.value = '';
       return;
     }
+    // L'existence se lit avant d'ouvrir la modale : ouverte d'abord, elle
+    // poserait le focus sur une version sans les choix, puis changerait.
+    const existe = await concoursExiste(lecture.sauvegarde.concours.id);
+    setExisteDeja(existe);
     setSauvegarde(lecture.sauvegarde);
-    setExisteDeja(await concoursExiste(lecture.sauvegarde.concours.id));
   };
 
   const importer = async (mode: 'nouveau' | 'remplacer'): Promise<void> => {
@@ -121,29 +128,27 @@ export function ImportSauvegarde() {
             <p className="import-resume">{resumeSauvegarde(sauvegarde)}</p>
 
             {existeDeja ? (
-              <>
-                <p>
-                  Ce concours est <strong>déjà présent sur cet appareil</strong>. Trois façons de
-                  procéder :
-                </p>
-                <ul className="import-choix">
-                  <li>
-                    <strong>Fusionner les résultats</strong> — les scores saisis sur l'autre
-                    appareil sont repris dans ce concours, et les vainqueurs avancent comme après
-                    une saisie. Si une partie a deux scores différents, le plus récent l'emporte ;
-                    le bilan les liste.
-                  </li>
-                  <li>
-                    <strong>Importer une copie</strong> — la sauvegarde arrive à côté, sous de
-                    nouveaux identifiants. Rien n'est écrasé.
-                  </li>
-                  <li>
-                    <strong>Restaurer par-dessus</strong> — l'état actuel du concours est{' '}
-                    <strong>remplacé</strong> par celui du fichier. Les équipes et parties
-                    enregistrées depuis cette sauvegarde seront perdues.
-                  </li>
-                </ul>
-              </>
+              <fieldset className="import-options">
+                <legend>
+                  Ce concours est <strong>déjà présent sur cet appareil</strong>. Que faire du
+                  fichier ?
+                </legend>
+                {CHOIX_IMPORT.map((c) => (
+                  <label key={c.valeur} className="import-option">
+                    <input
+                      type="radio"
+                      name="choix-import"
+                      value={c.valeur}
+                      checked={choix === c.valeur}
+                      onChange={() => setChoix(c.valeur)}
+                    />
+                    <span>
+                      <strong>{c.titre}</strong>
+                      <small>{c.detail}</small>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
             ) : (
               <p>Ce concours n'existe pas encore sur cet appareil : il sera ajouté tel quel.</p>
             )}
@@ -152,36 +157,36 @@ export function ImportSauvegarde() {
               <button className="btn btn-ghost" onClick={reinitialiser} disabled={busy}>
                 Annuler
               </button>
-              {existeDeja && (
-                <button
-                  className="btn btn-danger"
-                  disabled={busy}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Restaurer « ${sauvegarde.concours.name} » par-dessus la version actuelle ?\n\n` +
-                          'Tout ce qui a été saisi depuis cette sauvegarde sera perdu.',
-                      )
-                    ) {
-                      void importer('remplacer');
-                    }
-                  }}
-                >
-                  Restaurer par-dessus
-                </button>
-              )}
               <button
-                className={existeDeja ? 'btn btn-ghost' : 'btn btn-primary'}
+                className={existeDeja && choix === 'remplacer' ? 'btn btn-danger' : 'btn btn-primary'}
                 disabled={busy}
-                onClick={() => void importer('nouveau')}
+                onClick={() => {
+                  if (!existeDeja || choix === 'copie') {
+                    void importer('nouveau');
+                  } else if (choix === 'fusionner') {
+                    void fusionner();
+                  } else if (
+                    window.confirm(
+                      `Restaurer « ${sauvegarde.concours.name} » par-dessus la version actuelle ?\n\n` +
+                        'Tout ce qui a été saisi depuis cette sauvegarde sera perdu.',
+                    )
+                  ) {
+                    void importer('remplacer');
+                  }
+                }}
               >
-                {existeDeja ? 'Importer une copie' : 'Importer'}
+                {!existeDeja ? (
+                  'Importer'
+                ) : choix === 'fusionner' ? (
+                  <>
+                    <GitMerge className="ic" aria-hidden /> Fusionner
+                  </>
+                ) : choix === 'copie' ? (
+                  'Importer une copie'
+                ) : (
+                  'Restaurer par-dessus'
+                )}
               </button>
-              {existeDeja && (
-                <button className="btn btn-primary" disabled={busy} onClick={() => void fusionner()}>
-                  <GitMerge className="ic" aria-hidden /> Fusionner les résultats dans ce concours
-                </button>
-              )}
             </div>
           </div>
         </Modal>
@@ -189,6 +194,32 @@ export function ImportSauvegarde() {
     </>
   );
 }
+
+type ChoixImport = 'fusionner' | 'copie' | 'remplacer';
+
+/**
+ * Les trois issues, de la plus sûre à la plus lourde. Des boutons radio et un
+ * seul bouton de validation : quatre boutons côte à côte mettaient la
+ * restauration, en rouge plein, plus en vue que la fusion.
+ */
+const CHOIX_IMPORT: { valeur: ChoixImport; titre: string; detail: string }[] = [
+  {
+    valeur: 'fusionner',
+    titre: 'Fusionner les résultats',
+    detail:
+      "Les scores saisis sur l'autre appareil rejoignent ce concours. Deux scores différents pour une partie : le plus récent l'emporte.",
+  },
+  {
+    valeur: 'copie',
+    titre: 'Importer une copie',
+    detail: 'Le fichier arrive à côté, comme un second concours. Rien n\'est écrasé.',
+  },
+  {
+    valeur: 'remplacer',
+    titre: 'Restaurer par-dessus',
+    detail: 'Le concours actuel est remplacé par le fichier : ce qui a été saisi depuis est perdu.',
+  },
+];
 
 const RAISONS: Record<RaisonEcart, string> = {
   absente: "partie absente de ce concours (tirage fait sur l'autre appareil)",
@@ -244,9 +275,16 @@ function BilanFusion({ sauvegarde, bilan }: { sauvegarde: Sauvegarde; bilan: Fus
           <ul className="import-choix fusion-conflits">
             {bilan.conflits.map((c) => (
               <li key={c.matchId}>
-                <strong>{libelle(c.matchId)}</strong> — ici {score(c.local)}, fichier{' '}
-                {score(c.distant)} : retenu{' '}
-                <strong>{c.retenu === 'local' ? 'ici' : 'fichier'}</strong>
+                <strong>{libelle(c.matchId)}</strong>
+                <br />
+                Gardé :{' '}
+                {c.retenu === 'local'
+                  ? `le score de cet appareil (${score(c.local)})`
+                  : `le score du fichier (${score(c.distant)})`}
+                <span className="hint">
+                  {' '}
+                  · l'autre était {score(c.retenu === 'local' ? c.distant : c.local)}
+                </span>
               </li>
             ))}
           </ul>

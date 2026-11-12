@@ -338,7 +338,7 @@ export function FeuilleMatchPage() {
             ne connaît pas, on règle soi-même ce que fixe une compétition
             prédéfinie. */}
         {etat.competition === 'autre' && (
-          <div className="form-row">
+          <div className="form-row feuille-filtres-autre">
             <label>
               Sexe
               <select

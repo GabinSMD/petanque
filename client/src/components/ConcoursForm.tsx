@@ -525,7 +525,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
                 De {bornes.min} à {bornes.max} parties
                 {ggStrict
                   ? " : au-delà, l'appariement strict n'a plus d'équipes à égalité à opposer."
-                  : ' (manuel §3.D.14).'}
+                  : '.' /* bornes du manuel §3.D.14 */}
               </span>
             )}
           </label>
@@ -545,7 +545,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             />
             <small>
               Vide : chacun rencontre chacun.
-              {bornes && ` Sinon de ${bornes.min} à ${bornes.max} parties (manuel §3.D.14).`}
+              {/* Bornes du manuel §3.D.14. */}
+              {bornes && ` Sinon de ${bornes.min} à ${bornes.max} parties.`}
             </small>
           </label>
         )}
@@ -647,7 +648,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
             onChange={(e) => setParGroupes(e.target.checked)}
             disabled={lockStructure}
           />
-          Formule par groupes A-B-C (manuel §3.D.5) : tout le monde continue
+          {/* Manuel §3.D.5. */}
+          Formule par groupes A-B-C : tout le monde continue
           <span className="hint">
             Groupes de 4 sans barrage. L'équipe à 2 victoires va au concours A, les deux à 1 victoire
             au B, celle à 2 défaites au C — personne ne rentre après deux parties.
@@ -667,7 +669,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
               if (nouvelles && nbRondes > nouvelles.max) setNbRondes(nouvelles.max);
             }}
           />
-          Gagnant contre gagnant strict (manuel §3.D.14.C)
+          {/* Manuel §3.D.14.C. */}
+          Gagnant contre gagnant strict
           <span className="hint">
             N'oppose que des équipes à égalité stricte de victoires. Un groupe impair laisse une
             équipe exempte, créditée d'un 13-7 comme un forfait. Sans l'option, l'appariement suit

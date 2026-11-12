@@ -77,3 +77,11 @@ export function MenuPlusItem({
     </button>
   );
 }
+
+/**
+ * Ouvre les fiches de jeu dans un nouvel onglet, comme le faisait le lien
+ * `target="_blank"` qu'une entrée de menu (un bouton) remplace.
+ */
+export function ouvrirFichesDeJeu(concoursId: string): void {
+  window.open(`/concours/${concoursId}/imprimer/fiches`, '_blank', 'noopener');
+}

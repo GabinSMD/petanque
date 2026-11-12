@@ -392,7 +392,8 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                     }
                     maxLength={3}
                     inputMode="numeric"
-                    title="Comité départemental (manuel §3.B.1, zone 15). Prérempli depuis la licence, corrigible : un joueur peut relever d'un autre comité."
+                    // Manuel §3.B.1, zone 15.
+                    title="Comité départemental. Prérempli depuis la licence, corrigible : un joueur peut relever d'un autre comité."
                   />
                   </label>
                 )}
@@ -421,7 +422,8 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                       onChange={(e) =>
                         setEtrangeres(etrangeres.map((v, j) => (j === i ? e.target.value : v)))
                       }
-                      title="Manuel §3.B.1, zone 21 : joueur affilié à la fédération de son pays. Le pays compte au contingent hors UE."
+                      // Manuel §3.B.1, zone 21.
+                      title="Joueur affilié à la fédération de son pays. Le pays compte au contingent hors UE."
                     >
                       <option value="">Licence française</option>
                       {PAYS_LICENCE_ETRANGERE.map((p) => (
@@ -651,7 +653,8 @@ export function TeamsTab({ concours, teams, poules }: Props) {
       <table className="teams-table">
         <thead>
           <tr>
-            <th className="no-print" title="Liste spécifique (manuel §3.D.1.B.5.1)">
+            {/* Manuel §3.D.1.B.5.1. */}
+            <th className="no-print" title="Liste spécifique">
               <Check className="ic" aria-hidden />
             </th>
             <th>N°</th>
@@ -728,7 +731,8 @@ export function TeamsTab({ concours, teams, poules }: Props) {
                       onChange={(e) =>
                         void updateTeam(poserMise(team, e.target.value as EtatMise))
                       }
-                      title="Mise de l'équipe (manuel §3.B.1, zone 19)"
+                      // Manuel §3.B.1, zone 19.
+                      title="Mise de l'équipe"
                     >
                       {ETATS_MISE.map((etat) => (
                         <option key={etat} value={etat}>

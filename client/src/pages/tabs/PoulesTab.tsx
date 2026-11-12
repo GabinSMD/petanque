@@ -1,4 +1,4 @@
-import { MenuPlus, MenuPlusItem } from '../../components/MenuPlus';
+import { MenuPlus, MenuPlusItem, ouvrirFichesDeJeu } from '../../components/MenuPlus';
 import { AlarmClock, Dices, FileText, LayoutGrid, Pause, Printer, Search, Shield, Ticket, Timer, Undo2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Concours, Match, Poule, Team } from '@shared';
@@ -196,7 +196,7 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
               type="button"
               className="btn btn-ghost btn-sm"
               onClick={() => setGroupesOuverts(true)}
-              title="Traiter plusieurs clubs comme un seul au tirage (manuel 3.B.5)"
+              title="Traiter plusieurs clubs comme un seul au tirage"
             >
               <Shield className="ic" aria-hidden /> Groupes de protection
               {concours.protections?.length ? ` (${concours.protections.length})` : ''}
@@ -210,26 +210,33 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
             />
           )}
           <SeedPicker teams={teams} seeds={seeds} onChange={setSeeds} />
+          {/* Réglage rare, au défaut déjà juste : replié pour que le profil
+              club n'y voie pas une question à trancher avant chaque tirage.
+              Libellés courts pour tenir dans un <select> sur téléphone. */}
           {toursCadrage.length > 1 && (
-            <label className="champ">
-              Cadrage du tableau final
-              <select
-                value={tourCadrageRetenu}
-                onChange={(e) => setTourCadrage(Number(e.target.value))}
-              >
-                {toursCadrage.map((tour) => (
-                  <option key={tour} value={tour}>
-                    {tour === 0
-                      ? `Au 1er tour après les poules — ${formeCadrage(nbQualifiesPoules, 0)[0]!.exempts} qualifiés exempts`
-                      : `Au tour ${tour + 1} — tous les qualifiés jouent ${tour} partie${tour > 1 ? 's' : ''} d'abord`}
-                  </option>
-                ))}
-              </select>
-              <span className="hint">
-                {nbQualifiesPoules} qualifiés attendus. Différer le cadrage évite qu'une partie
-                d'entre eux passe un tour sans jouer (manuel §3.D.2).
-              </span>
-            </label>
+            <details className="form-details">
+              <summary>Options du tableau final</summary>
+              <label className="champ">
+                Cadrage du tableau final
+                <select
+                  value={tourCadrageRetenu}
+                  onChange={(e) => setTourCadrage(Number(e.target.value))}
+                >
+                  {toursCadrage.map((tour) => (
+                    <option key={tour} value={tour}>
+                      {tour === 0
+                        ? `Au 1er tour (${formeCadrage(nbQualifiesPoules, 0)[0]!.exempts} exempts)`
+                        : `Au tour ${tour + 1} (tous jouent ${tour} partie${tour > 1 ? 's' : ''})`}
+                    </option>
+                  ))}
+                </select>
+                {/* Manuel §3.D.2. */}
+                <span className="hint">
+                  {nbQualifiesPoules} qualifiés attendus. Différer le cadrage évite qu'une partie
+                  d'entre eux passe un tour sans jouer.
+                </span>
+              </label>
+            </details>
           )}
           {/* Le besoin en terrains se dit avant le tirage, pour tout concours —
               le rapport de contrôle des licences, lui, ne s'ouvre que sur un
@@ -274,7 +281,8 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
           {!scoresLocked && (
             <label
               className="checkbox-label checkbox-inline"
-              title="Manuel §3.D.1.A : les qualifiés attendent que vous tiriez, au lieu d'entrer au tableau au fil des poules"
+              // Manuel §3.D.1.A.
+              title="Les qualifiés attendent que vous tiriez, au lieu d'entrer au tableau au fil des poules"
             >
               <input
                 type="checkbox"
@@ -330,27 +338,28 @@ export function PoulesTab({ concours, teams, poules, matches }: Props) {
           >
             <Ticket className="ic" aria-hidden /> Tickets de parties
           </a>
-          {/* Fiches de jeu (§3.D.1.B.4.2) : la trace papier de chaque équipe,
-              pour finir le concours à la main en cas de panne. */}
-          <a
-            className="btn btn-ghost btn-sm"
-            href={`/concours/${concours.id}/imprimer/fiches`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FileText className="ic" aria-hidden /> Fiches de jeu
-          </a>
+          <MenuPlus>
+            {/* Fiches de jeu (§3.D.1.B.4.2) : la trace papier de chaque équipe,
+                pour finir le concours à la main en cas de panne. Utiles, mais
+                rares : elles n'ont pas leur place parmi les boutons du jour. */}
+            <MenuPlusItem
+              icone={<FileText className="ic" aria-hidden />}
+              titre="Fiches de jeu"
+              detail="Une fiche par équipe, pour finir le concours sur papier en cas de panne."
+              onClick={() => ouvrirFichesDeJeu(concours.id)}
+            />
+            {concours.status === 'poules' && (
+              <MenuPlusItem
+                danger
+                icone={<Undo2 className="ic" aria-hidden />}
+                titre="Annuler le tirage"
+                detail="Revient aux inscriptions. Tous les scores de poules, et le tableau s'il existe, sont supprimés."
+                onClick={() => void doCancel()}
+              />
+            )}
+          </MenuPlus>
           {concours.status === 'poules' && (
             <>
-              <MenuPlus>
-                <MenuPlusItem
-                  danger
-                  icone={<Undo2 className="ic" aria-hidden />}
-                  titre="Annuler le tirage"
-                  detail="Revient aux inscriptions. Tous les scores de poules, et le tableau s'il existe, sont supprimés."
-                  onClick={() => void doCancel()}
-                />
-              </MenuPlus>
               {/* Bouton principal seulement quand c'est la prochaine action : tant
                   que des poules se jouent, il ne dispute pas la place à « Placer
                   les qualifiés ». */}

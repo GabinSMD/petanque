@@ -87,7 +87,6 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
       <div className="tab-content results">
         <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
         <PhotosPodium concours={concours} />
-        <ResultatsClubSection teams={teams} poules={poules} matches={matches} />
         {finales.map(({ stage, titre }) => {
           const groups = bracketRanking(matches, stage);
           if (groups.length === 0) return null;
@@ -117,6 +116,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
             teamsById={teamsById}
           />
         </section>
+        <ResultatsClubSection teams={teams} poules={poules} matches={matches} />
       </div>
     );
   }
@@ -165,8 +165,7 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
   return (
     <div className="tab-content results">
       <ExportBar concours={concours} teams={teams} poules={poules} matches={matches} />
-        <PhotosPodium concours={concours} />
-      <ResultatsClubSection teams={teams} poules={poules} matches={matches} />
+      <PhotosPodium concours={concours} />
       {principalGroups.length > 0 && (
         <section className="result-section">
           <h2>Concours principal</h2>
@@ -228,6 +227,10 @@ export function ResultsTab({ concours, teams, poules, matches }: Props) {
           </table>
         </section>
       )}
+
+      {/* Outil de la table de marque, consulté à la demande : sous les
+          classements, qui sont ce qu'on vient lire ici. */}
+      <ResultatsClubSection teams={teams} poules={poules} matches={matches} />
     </div>
   );
 }
@@ -542,6 +545,16 @@ const ETAT_PARCOURS_TAG: Record<EtatParcoursEquipe, string> = {
 };
 
 /**
+ * Les lettres A, B et C ne parlent qu'aux habitués du graphique fédéral : on
+ * nomme les tableaux comme dans l'onglet Tableau.
+ */
+const CONCOURS_CLUB_LABELS: Record<'A' | 'B' | 'C', string> = {
+  A: 'Principal',
+  B: 'Consolante',
+  C: 'Complémentaire',
+};
+
+/**
  * « Recherche Résultats Club » (manuel §3.D.1.D) : le président de club passe
  * à la table et demande où en sont ses équipes. On tape le club, on lit pour
  * chacune son concours, son dernier tour ou sa place, et si elle joue encore.
@@ -563,10 +576,15 @@ function ResultatsClubSection({
   const cherche = requete.trim().length >= 2;
 
   return (
-    <section className="result-section no-print">
-      <h2>
-        <Search className="ic" aria-hidden /> Résultats d'un club
-      </h2>
+    // Repliée : c'est une question qu'on pose à la demande (« où en sont mes
+    // équipes ? »), pas ce qu'on vient lire sur cet onglet. Ouverte d'office
+    // si une recherche est en cours, pour ne pas la perdre au rendu.
+    <details className="result-section resultats-club no-print" open={requete.length > 0 || undefined}>
+      <summary>
+        <h3>
+          <Search className="ic" aria-hidden /> Résultats d'un club
+        </h3>
+      </summary>
       <div className="recherche-equipe">
         <label>
           Club
@@ -586,18 +604,27 @@ function ResultatsClubSection({
         )}
       </div>
       {cherche && res.equipes.length > 0 && (
-        <div className="table-scroll">
-          <table className="rank-table">
-            <thead>
-              <tr>
-                <th>Équipe</th>
-                <th>Concours</th>
-                <th>Parcours</th>
-                <th>État</th>
-              </tr>
-            </thead>
-            <tbody>
-              {res.equipes.map((e) => (
+        // Deux colonnes seulement : à 390 px, quatre colonnes écrasaient les
+        // noms sur trois lignes et coupaient « En jeu » en deux. Le concours,
+        // l'état et le parcours tiennent ensemble dans la seconde.
+        <table className="rank-table resultats-club-table">
+          <thead>
+            <tr>
+              <th>Équipe</th>
+              <th>Où en est-elle</th>
+            </tr>
+          </thead>
+          <tbody>
+            {res.equipes.map((e) => {
+              const etat = ETAT_PARCOURS_LABELS[e.etat];
+              // « En jeu : Quarts de finale » sous l'étiquette « En jeu » le
+              // dirait deux fois ; « Vainqueur » sous « Vainqueur » aussi.
+              const detail = e.libelle.startsWith('En jeu : ')
+                ? e.libelle.slice('En jeu : '.length)
+                : e.libelle === etat
+                  ? ''
+                  : e.libelle;
+              return (
                 <tr key={e.team.id}>
                   <td>
                     <TeamLabel team={e.team} compact />
@@ -608,23 +635,25 @@ function ResultatsClubSection({
                       </span>
                     )}
                   </td>
-                  <td>{e.concours ?? '—'}</td>
                   <td>
-                    {e.libelle}
-                    {e.place !== undefined && e.place > 1 && ` (${e.place}e)`}
-                  </td>
-                  <td>
-                    <span className={`tag ${ETAT_PARCOURS_TAG[e.etat]}`}>
-                      {ETAT_PARCOURS_LABELS[e.etat]}
+                    <span className="resultats-club-etat">
+                      <span className={`tag ${ETAT_PARCOURS_TAG[e.etat]}`}>{etat}</span>
+                      {e.concours && <span>{CONCOURS_CLUB_LABELS[e.concours]}</span>}
                     </span>
+                    {(detail || (e.place !== undefined && e.place > 1)) && (
+                      <span className="resultats-club-detail">
+                        {detail}
+                        {e.place !== undefined && e.place > 1 && ` (${e.place}e)`}
+                      </span>
+                    )}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              );
+            })}
+          </tbody>
+        </table>
       )}
-    </section>
+    </details>
   );
 }
 
