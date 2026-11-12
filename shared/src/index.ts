@@ -58,6 +58,7 @@ export * from './engine/replication';
 export * from './engine/retards';
 export * from './engine/statistiquesPoules';
 export * from './engine/sauvegarde';
+export * from './engine/fusionSauvegarde';
 export * from './engine/rondes';
 export * from './engine/tir';
 export * from './engine/terrains';
