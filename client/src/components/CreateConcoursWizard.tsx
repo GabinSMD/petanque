@@ -2,7 +2,13 @@ import { Icone } from './Icone';
 import { PartyPopper, User } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import type { ConcoursMode, Discipline, TeamFormat } from '@shared';
-import { MAX_MISE, TAILLE_FORMATION, bornesParties, raisonRefusMise } from '@shared';
+import {
+  MAX_MISE,
+  TAILLE_FORMATION,
+  accepteConsolante,
+  bornesParties,
+  raisonRefusMise,
+} from '@shared';
 import type { ConcoursInput } from '../db/actions';
 import {
   CATEGORY_SUGGESTIONS,
@@ -14,6 +20,7 @@ import {
   isRondesMode,
   isTirMode,
   suggestedName,
+  formatLabel,
 } from '../lib/labels';
 import { getDefautsConcours, retenirDefautsConcours } from '../lib/defautsConcours';
 
@@ -116,7 +123,7 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
       mode,
       discipline,
       category: category.trim() || undefined,
-      consolante: MODE_INFO[mode].consolante ? consolante : false,
+      consolante: accepteConsolante(mode) ? consolante : false,
       scoreMax,
       nbTerrains,
       planTerrains,
@@ -361,12 +368,12 @@ export function CreateConcoursWizard({ onSubmit, onCancel }: Props) {
               {miseParJoueur !== '' && format && (
                 <small className="form-hint">
                   soit {(Number(miseParJoueur) * TAILLE_FORMATION[format]).toLocaleString('fr-FR')} €
-                  par équipe en {FORMAT_LABELS[format].toLowerCase()}
+                  par équipe en {formatLabel(format).toLowerCase()}
                 </small>
               )}
             </label>
           </div>
-          {MODE_INFO[mode].consolante && (
+          {accepteConsolante(mode) && (
             <label className="checkbox-label">
               <input
                 type="checkbox"

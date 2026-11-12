@@ -12,6 +12,7 @@ import type {
 } from '@shared';
 import {
   CATEGORIES_AGE_CONCOURS,
+  accepteConsolante,
   JEUX_FEDERAUX,
   MAX_DECALAGE,
   MAX_MISE,
@@ -52,10 +53,10 @@ import {
   FORMULE_LABELS,
   DISCIPLINE_LABELS,
   FORMAT_LABELS,
-  MODE_INFO,
   MODE_LABELS,
   isRondesMode,
   isTirMode,
+  formatLabel,
 } from '../lib/labels';
 
 interface Props {
@@ -319,8 +320,8 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
         : {
             // Formule par groupes : le concours B n'est pas une consolante, et il
             // n'y a pas de repêchage — la donnée doit le dire.
-            consolante: parGroupes ? false : MODE_INFO[mode].consolante ? consolante : false,
-            complementaire: MODE_INFO[mode].consolante && consolante ? complementaire : false,
+            consolante: parGroupes ? false : accepteConsolante(mode) ? consolante : false,
+            complementaire: accepteConsolante(mode) && consolante ? complementaire : false,
             recupCadrage:
               mode === 'poules' && consolante && recupCadrage && !parGroupes ? true : undefined,
             parGroupes: mode === 'poules' && parGroupes ? true : undefined,
@@ -585,7 +586,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           {miseParJoueur !== '' && (
             <small className="form-hint">
               soit {(Number(miseParJoueur) * TAILLE_FORMATION[format]).toLocaleString('fr-FR')} € par
-              équipe en {FORMAT_LABELS[format].toLowerCase()}
+              équipe en {formatLabel(format).toLowerCase()}
             </small>
           )}
           {miseParJoueur === '' && miseHeritee !== undefined && (
@@ -672,7 +673,7 @@ export function ConcoursForm({ initial, onSubmit, onCancel, lockStructure }: Pro
           </span>
         </label>
       )}
-      {mode !== 'elimination_directe' && MODE_INFO[mode].consolante && !parGroupes && (
+      {mode !== 'elimination_directe' && accepteConsolante(mode) && !parGroupes && (
         <>
           <label className="checkbox-label">
             <input

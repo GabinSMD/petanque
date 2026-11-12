@@ -14,6 +14,7 @@ import {
   MODE_LABELS,
   NIVEAU_LABELS,
   isRondesMode,
+  modeLabel,
 } from './labels';
 import { finalRanking } from './results';
 
@@ -206,7 +207,7 @@ export function concoursSummaryLine(concours: Concours): string {
     concours.date,
     concours.discipline === 'jeu_provencal' ? DISCIPLINE_LABELS.jeu_provencal : 'Pétanque',
     FORMAT_LABELS[concours.format],
-    MODE_LABELS[concours.mode],
+    modeLabel(concours.mode),
   ];
   const categorie = designationCategorie(concours);
   if (categorie) parts.push(categorie);

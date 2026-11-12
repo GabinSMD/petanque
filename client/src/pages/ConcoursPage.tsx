@@ -32,6 +32,8 @@ import {
   isRondesMode,
   isTirMode,
   statusLabel,
+  formatLabel,
+  modeLabel,
 } from '../lib/labels';
 import { FrontiereErreur } from '../components/FrontiereErreur';
 import { TeamsTab } from './tabs/TeamsTab';
@@ -132,7 +134,7 @@ export function ConcoursPage() {
               ? ` · ${DISCIPLINE_LABELS.jeu_provencal}`
               : ''}
             {designationCategorie(concours) ? ` · ${designationCategorie(concours)}` : ''}
-            {!tirMode && ` · ${FORMAT_LABELS[concours.format]}`} · {MODE_LABELS[concours.mode]}
+            {!tirMode && ` · ${formatLabel(concours.format)}`} · {modeLabel(concours.mode)}
             {concours.consolante ? ' · Consolante' : ''}
             {!tirMode && ` · Parties en ${concours.scoreMax} pts`}
             {concours.tempsLimite ? ` · Temps limité ${concours.tempsLimite} min` : ''}
@@ -229,7 +231,7 @@ export function ConcoursPage() {
         <h1>{concours.name}</h1>
         <p>
           {formatDateFr(concours.date)}
-          {concours.lieu ? ` · ${concours.lieu}` : ''} · {FORMAT_LABELS[concours.format]}
+          {concours.lieu ? ` · ${concours.lieu}` : ''} · {formatLabel(concours.format)}
         </p>
       </div>
 
