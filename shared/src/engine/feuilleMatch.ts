@@ -533,6 +533,14 @@ export function feuilleDepuisMemoire(id: string, brut: unknown): FeuilleMatch {
       ? (m.competition as CompetitionClubId)
       : vierge.competition),
     filtres: filtresDepuisMemoire(m.filtres),
+    // Les lettres d'équipe étaient perdues à la relecture : une feuille importée
+    // d'un fichier ne disait plus laquelle des équipes du club elle concernait.
+    ...(LETTRES_EQUIPE.includes(m.equipe as LettreEquipe)
+      ? { equipe: m.equipe as LettreEquipe }
+      : {}),
+    ...(LETTRES_EQUIPE.includes(m.equipeAdverse as LettreEquipe)
+      ? { equipeAdverse: m.equipeAdverse as LettreEquipe }
+      : {}),
     maxMutes: typeof m.maxMutes === 'number' ? m.maxMutes : vierge.maxMutes,
     // Le champ s'appelait `horsUE` : c'était déjà le panneau « Mutations », mal
     // nommé, et la position choisie se reprend telle quelle. Une position inconnue

@@ -177,3 +177,14 @@ describe('filtres libres d un autre championnat de clubs (§3.E)', () => {
     expect(f.filtres).toEqual({ sexe: 'tous', categorieAge: undefined, homogene: true });
   });
 });
+
+describe('relecture des lettres d équipe', () => {
+  it('garde les lettres valides et écarte les autres', () => {
+    const f = feuilleDepuisMemoire('x', { equipe: 'B', equipeAdverse: 'C' });
+    expect(f.equipe).toBe('B');
+    expect(f.equipeAdverse).toBe('C');
+    const abimee = feuilleDepuisMemoire('y', { equipe: 'Z', equipeAdverse: 3 });
+    expect(abimee.equipe).toBeUndefined();
+    expect(abimee.equipeAdverse).toBeUndefined();
+  });
+});
