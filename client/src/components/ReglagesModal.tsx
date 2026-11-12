@@ -1,7 +1,8 @@
-import { besoinModeFederal } from '@shared';
+import { besoinModeFederal, defautsPersonnalises } from '@shared';
 import { useConcoursList, useLicenciesCount } from '../db/hooks';
 import { useModeFederal } from '../lib/modeFederal';
 import { useTheme, type Theme } from '../lib/theme';
+import { oublierDefautsConcours, useDefautsConcours } from '../lib/defautsConcours';
 import { Modal } from './Modal';
 
 /**
@@ -20,6 +21,7 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
   const besoin = besoinModeFederal({ concours, licencies });
   const { actif, preference, choisir, oublier } = useModeFederal(besoin);
   const apparence = useTheme();
+  const defauts = useDefautsConcours();
 
   return (
     <Modal title="Réglages" onClose={onClose}>
@@ -78,6 +80,30 @@ export function ReglagesModal({ onClose }: { onClose: () => void }) {
             Ce choix vaut pour cet appareil. Les documents imprimés et l’écran d’affichage ne
             changent pas.
           </p>
+        </fieldset>
+
+        <fieldset className="reglages-apparence">
+          <legend>Nouveaux concours</legend>
+          <p className="hint">
+            Chaque concours créé sur cet appareil repart des réglages du précédent :{' '}
+            <strong>
+              {defauts.nbTerrains} terrain{defauts.nbTerrains > 1 ? 's' : ''}, parties en{' '}
+              {defauts.scoreMax} points
+              {defauts.consolante ? ', avec consolante' : ', sans consolante'}
+              {defauts.miseParJoueur !== undefined
+                ? `, mise de ${defauts.miseParJoueur.toLocaleString('fr-FR')} € par joueur`
+                : ''}
+              {defauts.lieu ? `, à ${defauts.lieu}` : ''}
+            </strong>
+            . Tout reste modifiable à la création.
+          </p>
+          {defautsPersonnalises(defauts) && (
+            <p className="hint">
+              <button className="btn-lien" onClick={oublierDefautsConcours}>
+                Revenir aux valeurs d’origine
+              </button>
+            </p>
+          )}
         </fieldset>
 
         <div className="form-actions">
